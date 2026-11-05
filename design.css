@@ -959,3 +959,10 @@ html.classroom-assessments-hidden body[data-module=sitzplan] .room-grid .cell.cl
 body[data-module=sitzplan] .room-grid .cell.classroom-seat-material-missing{position:relative;overflow:visible!important}
 body[data-module=sitzplan] .room-grid .cell.classroom-seat-material-missing::after{content:attr(data-material);position:absolute;left:-8px;bottom:-8px;z-index:2;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:999px;background:#e39a3b;color:#fff;font-size:10.5px;font-weight:800;line-height:18px;text-align:center;box-shadow:0 1px 3px #0003;pointer-events:none}
 html.classroom-assessments-hidden body[data-module=sitzplan] .room-grid .cell.classroom-seat-material-missing::after,html.classroom-beamer body[data-module=sitzplan] .room-grid .cell.classroom-seat-material-missing::after{display:none!important}
+/* 7.56: Umschalter Unterrichts-/Noten-Manager exakt mittig – drei Spalten (Titel | Umschalter | Knöpfe); reicht der Platz nicht, weichen die Spalten aus statt sich zu überlappen; schmaler als 1101 px (iPad) bleibt die bisherige Anordnung */
+@media (min-width:1101px){
+ .app-header{display:grid!important;grid-template-columns:minmax(max-content,1fr) auto minmax(max-content,1fr)}
+ .app-header>.brand{justify-self:start}
+ .app-header>.module-tabs{justify-self:center}
+ .app-header>.classroom-global-actions{justify-self:end}
+}
