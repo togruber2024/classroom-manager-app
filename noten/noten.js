@@ -4121,6 +4121,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   if(/^Sonstige Mitarbeit/i.test(t))return 'Sonst.';if(/^Selbsteinsch/i.test(t))return 'Selbst';if(/^Quartalsnote/i.test(t))return 'Quartalsnote';
   if(/^Klassenarbeit/i.test(t))return 'KA';if(/^Klausur/i.test(t))return 'Klausur';if(/^Tests?\b/i.test(t))return 'Tests';
   return t.length>14?t.slice(0,13)+'…':t};
+ const points=()=>{try{return typeof classUsesGradePoints==='function'&&!!classUsesGradePoints()}catch{return false}};
+ function gradeNumber(t){t=String(t||'').trim().replace(/[−–—]/g,'-');if(!t||t==='-')return null;let m=/^(\d+(?:,\d+)?)$/.exec(t);if(m)return Number(m[1].replace(',','.'));m=/^([1-6])\s*([+-])$/.exec(t);if(m)return Number(m[1])+(m[2]==='+'?-1/3:1/3);m=/^(\d+)\s*-\s*(\d+)$/.exec(t);if(m)return (Number(m[1])+Number(m[2]))/2;return null}
+ const longLabel=t=>{t=String(t||'').replace(/\s+/g,' ').trim();if(/^MM · Mittelwert/i.test(t))return 'MM Ø';if(/^Sonstige Mitarbeit/i.test(t))return 'Sonstige';if(/^Tests · Mittelwert/i.test(t))return 'Tests';return t.replace(/ · Mittelwert$/,' Ø').replace(/^Quartalsnote · /,'Quartalsnote ')};
  function editProxy(orig,label,after){
   const l=document.createElement('label');l.className='qs-edit';const s=document.createElement('span');s.textContent=label;const inp=document.createElement('input');inp.type='text';inp.value=orig.value;inp.placeholder=orig.placeholder||'—';inp.className=orig.className;inp.setAttribute('aria-label',orig.getAttribute('aria-label')||label);inp.autocomplete='off';
   inp.onchange=()=>{orig.value=inp.value;orig.dispatchEvent(new Event('input',{bubbles:true}));orig.dispatchEvent(new Event('change',{bubbles:true}));inp.value=orig.value;inp.className=orig.className;after?.();schedule()};
@@ -4188,7 +4191,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    const card=document.createElement('article');card.className='qs-card';
    const top=document.createElement('div');top.className='qs-top';const nm=document.createElement('b');nm.className='qs-name';nm.textContent=name;
    const big=document.createElement('span');big.className='qs-big';top.append(nm,big);card.append(top);
-   const chips=document.createElement('div');chips.className='qs-chips';const edits=document.createElement('div');edits.className='qs-edits';
+   const chips=document.createElement('div');chips.className='qs-chips';const bars=document.createElement('div');bars.className='qs-bars';const edits=document.createElement('div');edits.className='qs-edits';
    let bigText='',bigCls='';
    cells.forEach((cell,i)=>{if(!i||cell.classList.contains('previous-quarter-history-cell'))return;const label=short(heads[i]);
     if(cell.classList.contains('quarter-summary-edit-cell')){const orig=cell.querySelector('input');if(!orig)return;
@@ -4198,11 +4201,15 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
     const chip=document.createElement('span');chip.className='qs-chip';const k=document.createElement('small');k.textContent=label;const v=document.createElement('i');v.textContent=text||'—';if(src?.className)v.className=src.className;
     if(/fehlt/.test(label)&&Number(text.replace(',','.'))>=3)chip.classList.add('qs-alert');
     if(src?.dataset.parentMailPage){chip.classList.add('qs-mail');chip.title='Eltern-Mail vorbereiten';chip.onclick=()=>src.click()}
-    chip.append(k,v);chips.append(chip);
+    chip.append(k,v);
+    // Variante A: Notenwerte als Balken (je länger, desto besser); Zählwerte (fehlend) bleiben kleine Marken
+    const num=gradeNumber(text);if(!/fehl/i.test(heads[i])&&num!==null){const row=document.createElement('div');row.className='qs-bar';if(chip.classList.contains('qs-mail')){row.classList.add('qs-mail');row.onclick=chip.onclick}
+     const l=document.createElement('span');l.className='qs-bar-label';l.textContent=longLabel(heads[i]);const track=document.createElement('span');track.className='qs-bar-track';const fill=document.createElement('span');fill.className=(src?.className||'')+' qs-bar-fill';fill.style.width=Math.round(Math.max(.04,Math.min(1,points()?num/15:(6-num)/5))*100)+'%';track.append(fill);const n=document.createElement('b');n.textContent=text;row.append(l,track,n);bars.append(row)}
+    else chips.append(chip);
    });
    if(!bigText){const cands=cells.filter(c=>!c.classList.contains('previous-quarter-history-cell')&&c.classList.contains('quarter-summary-average')&&!/fehl/i.test(heads[cells.indexOf(c)])&&/\d/.test(c.textContent)),pick=re=>cands.find(c=>re.test(heads[cells.indexOf(c)])),avg=pick(/^Halbjahresnote/)||pick(/^Sonstige Mitarbeit/)||cands.at(-1);if(avg){bigText=avg.textContent.trim();bigCls=(avg.querySelector('span')?.className||'')+' qs-soft'}}
    big.textContent=bigText||'—';big.className='qs-big '+(bigCls||'qs-empty');
-   card.append(chips);if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card)openDetail(panel,name)};frag.append(card);
+   if(bars.childElementCount)card.append(bars);if(chips.childElementCount)card.append(chips);if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card)openDetail(panel,name)};frag.append(card);
   }
   box.replaceChildren(frag);
   if(detail?.panel===panel&&!sheet.hidden&&!sheet.contains(document.activeElement))renderDetail();
@@ -4225,12 +4232,15 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   +'.qs-big{flex:none;min-width:46px;height:40px;padding:0 8px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;font-size:20px;font-weight:750;background:#eef2f7;color:#243247}'
   +'.qs-big.qs-empty{color:#9aa6b6;font-weight:600}.qs-big.qs-soft{opacity:.75}'
   +'.qs-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}'
+  +'.qs-bars{display:grid;gap:6px;margin-top:10px}.qs-bar{display:grid;grid-template-columns:96px minmax(0,1fr) 40px;align-items:center;gap:8px;font-size:12.5px;color:#66758a}.qs-bar.qs-mail{cursor:pointer}'
+  +'.qs-bar-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qs-bar-track{height:12px;border-radius:6px;background:#eef2f7;overflow:hidden;display:block}'
+  +':where(.qs-bar-fill){background:#b9c3d1}'+'.qs-bar-fill:not(#_){display:block;height:100%;min-width:0;padding:0;margin:0;border:0;border-radius:6px;box-shadow:none;font-size:0}.qs-bar b{text-align:right;color:#243247;font-size:13px}'
   +'.qs-chip{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 4px 0 9px;border:1px solid #e3e8f0;border-radius:999px;background:#f7f9fc;font-size:12.5px;color:#66758a}'
   +'.qs-chip small{font-size:12px}.qs-chip i{font-style:normal;min-width:22px;padding:2px 7px;border-radius:999px;text-align:center;font-weight:700;color:#243247;background:#fff}'
   +'.qs-chip.qs-alert{border-color:#e9a4a0;background:#fdf0ef;color:#b42318}.qs-chip.qs-mail{cursor:pointer}'
-  +'.qs-edits{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid #eef2f7}'
-  +'.qs-edit{flex:1 1 140px;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:#66758a}'
-  +'.qs-edit input{width:64px;min-height:36px;box-sizing:border-box;padding:4px 6px;border:1px solid #cbd6e5;border-radius:9px;text-align:center;font:inherit;font-size:16px;font-weight:650;color:#243247;background:#fff}'
+  +'.qs-edits{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid #eef2f7}'
+  +'.qs-edit{min-width:0;display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:#66758a}.qs-edit>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+  +'.qs-edit input{width:100%;min-height:36px;box-sizing:border-box;padding:4px 6px;border:1px solid #cbd6e5;border-radius:9px;text-align:center;font:inherit;font-size:16px;font-weight:650;color:#243247;background:#fff}'
   +'.qs-card{cursor:pointer}.qs-card:active{background:#f7f9fc}'
   +'.qs-detail:not([hidden]){display:block;position:fixed;inset:0;z-index:9800}.qd-back{position:absolute;inset:0;background:#1c2b4645}'
   +'.qd-panel{position:absolute;left:0;right:0;bottom:0;max-height:86%;display:flex;flex-direction:column;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -12px 34px #1c2b4633}'
