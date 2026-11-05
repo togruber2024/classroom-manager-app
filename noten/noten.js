@@ -3661,7 +3661,7 @@ function classroomSelectTestQuarter(){const holder=classesBySubject[currentSubje
  const style=document.createElement('style');style.textContent='[data-hatching-toggle][hidden]{display:none!important}html.hatching-off .classroom-unstriped:not(.grade-four-fail){background-image:none!important;background-color:var(--unstriped-color)!important}';document.head.append(style);
  function apply(){
   observer.disconnect();
-  if(!enabled)for(const el of document.querySelectorAll('td span,td input,td select,td button,.cell,.classroom-rating-choice,.qs-big,.qs-bar-fill,.qs-edit input,.qs-sq i,.qs-chip i,.qd-val,.pe-grid button')){const fill=getComputedStyle(el).backgroundImage;if(!fill.includes('gradient')||el.classList.contains('grade-four-fail'))continue;/* 4 Notenpunkte bleiben immer schraffiert. */el.classList.remove('classroom-unstriped');const base=getComputedStyle(el).backgroundColor,color=base&&!/rgba\(0, 0, 0, 0\)|transparent/.test(base)?base:fill.match(/rgba?\([^)]+\)|#[\da-f]{3,8}/i)?.[0];/* Ohne Schraffur gilt die Grundfarbe der Note (z. B. 2+ grün-gelb wie 2). */if(color){if(el.style.getPropertyValue('--unstriped-color')!==color)el.style.setProperty('--unstriped-color',color);if(!el.classList.contains('classroom-unstriped'))el.classList.add('classroom-unstriped')}}
+  if(!enabled)for(const el of document.querySelectorAll('td span,td input,td select,td button,.cell,.classroom-rating-choice,.qs-big,.qs-bar-fill,.qs-edit input,.qs-sq i,.qs-val i,.qs-chip i,.qd-val,.pe-grid button')){const fill=getComputedStyle(el).backgroundImage;if(!fill.includes('gradient')||el.classList.contains('grade-four-fail'))continue;/* 4 Notenpunkte bleiben immer schraffiert. */el.classList.remove('classroom-unstriped');const base=getComputedStyle(el).backgroundColor,color=base&&!/rgba\(0, 0, 0, 0\)|transparent/.test(base)?base:fill.match(/rgba?\([^)]+\)|#[\da-f]{3,8}/i)?.[0];/* Ohne Schraffur gilt die Grundfarbe der Note (z. B. 2+ grün-gelb wie 2). */if(color){if(el.style.getPropertyValue('--unstriped-color')!==color)el.style.setProperty('--unstriped-color',color);if(!el.classList.contains('classroom-unstriped'))el.classList.add('classroom-unstriped')}}
   document.documentElement.classList.toggle('hatching-off',!enabled);
   // Schraffuren-Schalter: neben „Kompaktansicht“, auf Übersichtsseiten ohne Kompaktansicht vor „Drucken“.
   const anchors=[...document.querySelectorAll('.compact-view-toggle')];
@@ -4127,10 +4127,10 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function gradeNumber(t){t=String(t||'').trim().replace(/[−–—]/g,'-');if(!t||t==='-')return null;let m=/^(\d+(?:,\d+)?)$/.exec(t);if(m)return Number(m[1].replace(',','.'));m=/^([1-6])\s*([+-])$/.exec(t);if(m)return Number(m[1])+(m[2]==='+'?-1/3:1/3);m=/^(\d+)\s*-\s*(\d+)$/.exec(t);if(m)return (Number(m[1])+Number(m[2]))/2;return null}
  const longLabel=t=>{t=String(t||'').replace(/\s+/g,' ').trim();if(/^MM · Mittelwert/i.test(t))return 'MM Ø';if(/^Sonstige Mitarbeit/i.test(t))return 'Sonstige';if(/^Tests · Mittelwert/i.test(t))return 'Tests';return t.replace(/ · Mittelwert$/,' Ø').replace(/^Quartalsnote · /,'Quartalsnote ')};
  // Variante C: Balken als Baum mit Gewichtung (Prozente aus den Eingabefeldern der Seite)
- function barRow(it,pct,lvl){const row=document.createElement('div');row.className='qs-bar'+(lvl?' qs-lvl'+lvl:'');if(it.click){row.classList.add('qs-mail');row.onclick=it.click}
-  const l=document.createElement('span');l.className='qs-bar-label';const t=document.createElement('span');t.className='qs-bar-name';t.textContent=it.label||longLabel(it.head);l.append(t);if(pct!=null){const w=document.createElement('span');w.className='qs-w';w.textContent=fmtPct(pct)+' %';l.append(w)}
-  const track=document.createElement('span');track.className='qs-bar-track';if(it.num!=null){const fill=document.createElement('span');fill.className=it.cls+' qs-bar-fill';fill.style.width=Math.round(Math.max(.04,Math.min(1,points()?it.num/15:(6-it.num)/5))*100)+'%';track.append(fill)}
-  const n=document.createElement('b');n.textContent=it.text;row.append(l,track,n);return row}
+ /* 7.92: keine Balken mehr – jede Zeile: Bezeichnung links, Note rechts in einem farbigen Kasten */
+ function barRow(it,pct,lvl){return sect(it.label||longLabel(it.head),pct,it,null,lvl)}
+ function valBox(it,avg){const w=document.createElement('span');w.className='qs-val';const t=it?.text&&it.text!=='—'?it.text:'';
+  if(avg&&t){const o=document.createElement('small');o.textContent='Ø';w.append(o)}const i=document.createElement('i');i.textContent=t||'—';i.className=t&&it.cls?it.cls:'qs-abs qs-none';w.append(i);return w}
  function caption(text,pct,lvl){const c=document.createElement('div');c.className='qs-cap'+(lvl?' qs-lvl'+lvl:'');c.textContent=text;if(pct!=null){const w=document.createElement('span');w.className='qs-w';w.textContent=fmtPct(pct)+' %';c.append(w)}return c}
  const fmtPct=v=>String(Math.round(Number(v)*10)/10).replace('.',',');
  function weight(panel,sel){const i=panel.querySelector(sel);const v=i?Number(i.value):NaN;return i&&i.value!==''&&Number.isFinite(v)?v:null}
@@ -4140,7 +4140,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  /* Variante A (7.91): ein Abschnitt je Bereich – Überschrift mit Anteil und Ø rechts, darunter alle Einzelnoten als Kästchen mit Datum (keine schmalen Balken) */
  function sect(label,pct,it,list,lvl,o={}){const w=document.createElement('div');w.className='qs-sect'+(lvl?' qs-lvl'+lvl:'');const h=document.createElement('div');h.className='qs-sh';if(it?.click){h.classList.add('qs-mail');h.onclick=it.click}
   const l=document.createElement('span');l.className='qs-sh-l';const t=document.createElement('span');t.textContent=label;l.append(t);if(pct!=null){const c=document.createElement('span');c.className='qs-w';c.textContent=fmtPct(pct)+' %';l.append(c)}if(o.tag){const c=document.createElement('span');c.className='qs-w qs-hj';c.textContent=o.tag;l.append(c)}
-  const b=document.createElement('b');b.textContent=it?((o.avg&&it.text&&it.text!=='—'?'Ø ':'')+it.text):'—';h.append(l,b);w.append(h);if(list?.length)w.append(tiles(list,o.kind));return w}
+  h.append(l,valBox(it,o.avg));w.append(h);if(list?.length)w.append(tiles(list,o.kind));return w}
  function tree(box,items,panel,mmList=[],testList=[],examDates={}){
   const ka=re=>/^Klassenarbeit/i.test(re.head)?'Klassenarbeit':longLabel(re.head);
   const take=re=>{const k=items.findIndex(it=>re.test(it.head));return k<0?null:items.splice(k,1)[0]};
@@ -4182,7 +4182,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const fn=name=>({ha:ha?ha.get(normName(name))||[]:null,mat:mat?mat.get(normName(name))||[]:null});
   missCache={key,at:Date.now(),fn};return fn}
  function missingRow(label,list){const box=document.createElement('div');box.className='qs-miss'+(list.length>=3?' is-alert':'');
-  const h=document.createElement('div');h.className='qs-miss-h';const l=document.createElement('span');l.textContent=label+' fehlend im Halbjahr';const n=document.createElement('b');n.textContent=String(list.length);h.append(l,n);box.append(h);
+  const h=document.createElement('div');h.className='qs-miss-h';const l=document.createElement('span');l.textContent=label+' fehlend im Halbjahr';const n=document.createElement('b');n.className='qs-miss-n'+(list.length?' has-miss':'');n.textContent=String(list.length);h.append(l,n);box.append(h);
   if(list.length){const r=document.createElement('div');r.className='qs-seq qs-miss-seq';for(const m of list){const c=document.createElement('span');c.className='qs-sq'+(m.q===0?' is-q1':'');const i=document.createElement('i');i.textContent='✗';const d=document.createElement('small');d.textContent=m.date?m.date.slice(8,10)+'.'+m.date.slice(5,7)+'.':'—';c.title=(m.q+1)+'. Quartal';c.append(i,d);r.append(c)}box.append(r)}
   return box}
  function editProxy(orig,label,after){
@@ -4358,6 +4358,10 @@ return}
   +'.qd-val{display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:32px;padding:0 8px;box-sizing:border-box;border-radius:9px;font-style:normal;font-weight:700;font-size:15px;background:#eef2f7;color:#243247}'
   +'.qd-val.qd-alert{background:#fdf0ef;color:#b42318;border:1px solid #e9a4a0}.qd-none{color:#9aa6b6;font-size:13px}'
   +'.qd-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;font-size:14.5px}'
+  /* 7.92: Werte rechts als farbige Kästchen, fehlende HA/Material als rote Zahl im Kästchen */
+  +'.qs-val{display:inline-flex;align-items:center;gap:5px;flex:none}.qs-val small{font-size:11px;color:#8794a7;font-weight:600}.qs-val i:not(#_){font-style:normal;min-width:38px;height:26px;padding:0 7px;box-sizing:border-box;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:750;color:#243247}.qs-val i.qs-none:not(#_){background:#f1f3f7;color:#9aa6b6;font-weight:600}'
+  +'.qs-sect>.qs-sh{min-height:28px}.qs-bars{gap:8px}'
+  +'.qs-miss-h b.qs-miss-n:not(#_){min-width:38px;height:26px;padding:0 7px;box-sizing:border-box;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:750;background:#f1f3f7;color:#9aa6b6}.qs-miss-h b.qs-miss-n.has-miss:not(#_){background:#fdf0ef;color:#b42318;border:1px solid #e9a4a0}.qs-miss.is-alert .qs-miss-h b.qs-miss-n:not(#_){background:#f6d4d0;border-color:#d9675e}'
   +'.qd-edits{border-top:0}.qd-prev{background:#f7f9fc;margin:6px -16px 0;padding:10px 16px}.qd-prev h4{color:#66758a}'
   +'}';
  document.head.append(st);
@@ -4467,17 +4471,22 @@ return}
   }finally{busy=false;if(acted&&tries++<12)setTimeout(ensure,350);if(!acted)tries=0}
  }
  function schedule(){if(planned)return;planned=true;setTimeout(()=>{planned=false;ensure()},30)}
- // Kopfzeile über den Karten: Halbjahr · Sortierung · Stand
+ // Kopfzeile über den Karten: Halbjahr · Tendenzen (Aus/Schraffiert/Rahmen) · Stand
+ /* Tendenzen-Schalter: nutzt den vorhandenen Dreifachschalter der Seite (gleiche Einstellung wie am Mac/iPad) */
+ const ls=k=>{try{return localStorage.getItem(k)}catch{return null}};
+ const hatchMode=()=>ls('classroom-manager-hatching-v1')==='off'?'off':(ls('classroom-hatch-style-v1')==='frame'?'frame':'hatch');
+ function setHatch(v){const b=document.querySelector('.hatch-seg [data-hatch="'+v+'"]');if(b){b.click();return}const inp=document.querySelector('[data-hatching-toggle] input');if(inp&&inp.checked!==(v!=='off'))inp.click();if(v!=='off'){try{localStorage.setItem('classroom-hatch-style-v1',v)}catch{}}window.classroomHatchSync?.()}
+ function syncHatch(bar){const m=hatchMode();for(const b of bar.querySelectorAll('[data-ph-hatch]')){b.setAttribute('aria-pressed',String(b.dataset.phHatch===m));b.setAttribute('role','radio');b.setAttribute('aria-checked',String(b.dataset.phHatch===m))}}
  function topBar(panel,sel){
   let bar=panel.querySelector(':scope>.pl-bar');
-  if(!bar){bar=document.createElement('div');bar.className='pl-bar';bar.innerHTML='<div class="pl-row"><span class="pl-seg pl-half"></span><span class="pl-seg pl-sort"><button type="button" data-sort="name">A–Z</button><button type="button" data-sort="grade">Note</button></span></div><div class="pl-stand"></div>';
-   bar.addEventListener('click',e=>{const h=e.target.closest('[data-half]'),s=e.target.closest('[data-sort]');
+  if(!bar){bar=document.createElement('div');bar.className='pl-bar';bar.innerHTML='<div class="pl-row"><span class="pl-seg pl-half"></span><span class="pl-seg pl-hatch" role="radiogroup" aria-label="Tendenzen"><button type="button" data-ph-hatch="off">Aus</button><button type="button" data-ph-hatch="hatch">Schraffiert</button><button type="button" data-ph-hatch="frame">Rahmen</button></span></div><div class="pl-stand"></div>';
+   bar.addEventListener('click',e=>{const h=e.target.closest('[data-half]'),s=e.target.closest('[data-ph-hatch]');
     if(h){ss.set(sk(),h.dataset.half);done.clear();schedule()}
-    if(s){ss.set('classroom-lite-sort',s.dataset.sort);sortCards(panel)}});
+    if(s){setHatch(s.dataset.phHatch);setTimeout(()=>syncHatch(bar),0)}});
    panel.prepend(bar)}
   const hs=bar.querySelector('.pl-half'),ys=years(),sig=ys.map(y=>y.id+y.label).join('|')+currentHalfYearId;
   if(hs.dataset.sig!==sig){hs.dataset.sig=sig;hs.replaceChildren(...ys.map(y=>{const b=document.createElement('button');b.type='button';b.dataset.half=y.id;b.textContent=y.label||'Halbjahr';b.setAttribute('aria-pressed',String(y.id===currentHalfYearId));return b}));hs.hidden=ys.length<2}
-  const sort=ss.get('classroom-lite-sort')||'name';for(const b of bar.querySelectorAll('[data-sort]'))b.setAttribute('aria-pressed',String(b.dataset.sort===sort));
+  syncHatch(bar);
   const y=ys.find(g=>g.id===currentHalfYearId),name=typeof classroomQuarterPeriodName==='function'&&y?classroomQuarterPeriodName(y,sel):(sel+1)+'. Quartal';
   bar.querySelector('.pl-stand').textContent='Stand '+name+' · Antippen zeigt alle Einträge';
   sortCards(panel);
@@ -4485,7 +4494,7 @@ return}
  const gradeOf=card=>{const t=(card.querySelector('.qs-big')?.textContent||'').trim().replace(/[−–—]/g,'-');let m=/^(\d+(?:,\d+)?)$/.exec(t);if(m)return Number(m[1].replace(',','.'));m=/^([1-6])\s*([+-])$/.exec(t);if(m)return Number(m[1])+(m[2]==='+'?-.33:.33);m=/^(\d)\s*-\s*(\d)$/.exec(t);if(m)return (Number(m[1])+Number(m[2]))/2;return 99};
  function sortCards(panel){const box=panel.querySelector('.qs-cards');if(!box)return;const cards=[...box.children];if(!cards.length)return;
   if(!box.dataset.order||cards.some(c=>!c.dataset.idx))cards.forEach((c,i)=>{if(!c.dataset.idx)c.dataset.idx=String(i)});
-  const byGrade=(ss.get('classroom-lite-sort')||'name')==='grade';
+  const byGrade=false;
   const sorted=[...cards].sort((a,b)=>byGrade?(gradeOf(a)-gradeOf(b))||(a.dataset.idx-b.dataset.idx):a.dataset.idx-b.dataset.idx);
   if(sorted.some((c,i)=>c!==cards[i]))box.append(...sorted)}
  // Klasse ohne Quartalsübersicht
@@ -4498,9 +4507,9 @@ return}
  PH.addEventListener?.('change',()=>{tries=0;ensure()});PL.addEventListener?.('change',()=>{tries=0;ensure()});addEventListener('resize',()=>{if(isPhone()!==document.documentElement.classList.contains('ph-lite')){tries=0;ensure()}});setTimeout(ensure,400);window.classroomPhoneLite={ensure,wantedHalf,wantedQuarter};
  const st=document.createElement('style');st.textContent='.pl-bar,.pl-empty{display:none}'
   +'@media (max-width:540px) and (orientation:portrait),(max-height:500px) and (orientation:landscape) and (pointer:coarse){'
-  +'html.ph-lite .pl-bar{display:block;margin:0 0 10px}.pl-row{display:flex;justify-content:space-between;align-items:center;gap:8px}'
+  +'html.ph-lite .pl-bar{display:block;margin:0 0 10px}.pl-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}'
   +'.pl-seg{display:inline-flex;padding:3px;gap:2px;border-radius:11px;background:#e7edf6}.pl-seg[hidden]{display:none}.pl-seg button{min-height:32px;padding:0 11px;border:0;border-radius:8px;background:transparent;color:#66758a;font:inherit;font-size:13px;font-weight:650;cursor:pointer}.pl-seg button[aria-pressed=true]{background:#fff;color:#2f5f9b;box-shadow:0 1px 3px #233d6018}'
-  +'.pl-sort{margin-left:auto}.pl-stand{font-size:11.5px;color:#8794a7;margin-top:6px}'
+  +'.pl-hatch{margin-left:auto}.pl-stand{font-size:11.5px;color:#8794a7;margin-top:6px}'
   /* Alles außer den Karten ausblenden: Titel, Schalter, Hinweistext, Gewichtung, Karten/Tabelle */
   +'html.ph-lite [data-quarter-summary]>.section-title,html.ph-lite [data-quarter-summary]>.section-title+p,html.ph-lite [data-quarter-summary] .qs-phone-bar,html.ph-lite [data-quarter-summary] .qs-wt,html.ph-lite [data-quarter-summary] .quarter-summary-weight-controls,html.ph-lite [data-quarter-summary] .semester-weight-container,html.ph-lite [data-quarter-summary]>p,html.ph-lite [data-quarter-summary] .previous-quarter-empty{display:none!important}'
   +'html.ph-lite .pl-empty{display:block;position:fixed;inset:0;z-index:50;padding:28px 22px;background:#f6f8fc}.pl-empty b{font-size:17px}.pl-empty p{color:#66758a;font-size:14px;line-height:1.5}.pl-empty button{min-height:44px;padding:0 18px;border:0;border-radius:12px;background:#2f5f9b;color:#fff;font:inherit;font-weight:650}'
