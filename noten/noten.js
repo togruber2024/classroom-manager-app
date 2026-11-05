@@ -100,6 +100,13 @@
    +'html.classroom-privacy body .room-grid .cell.cell.besetzt{background-image:none!important;border:1px solid transparent!important;box-shadow:none!important;outline:0!important}';
   for(let r=0;r<10;r++)for(let c=0;c<10;c++){let h=Math.imul(((r+1)*73856093)^((c+1)*19349663)^((seed+1)*83492791),2654435761);h=(h^(h>>>15))>>>0;h=(h>>>7)%5;rules+='html.classroom-privacy body .room-grid .cell.cell.besetzt[data-row="'+r+'"][data-col="'+c+'"]{background:'+PAL[h%5]+'!important}'}
   for(let j=0;j<3;j++)for(let k=0;k<5;k++)rules+='html.classroom-privacy .so-section:nth-of-type(3n+'+(j+1)+') :nth-child(5n+'+(k+1)+')>.so-val,html.classroom-privacy .so-section:nth-of-type(3n+'+(j+1)+') .so-val:nth-child(5n+'+(k+1)+'){background-color:'+PAL[(k*2+j*3+seed)%5]+'!important}';
+  // iPhone-Karten und Detailblatt (Noten): Namen unscharf, Noten unkenntlich mit Zufallsfarben
+  rules+='html.classroom-privacy :is(.qs-name,.qd-title b,.qs-stand){color:transparent!important;text-shadow:0 0 7px rgba(36,51,71,.75)!important;-webkit-user-select:none!important;user-select:none!important}'
+   +'html.classroom-privacy :is(.qs-big,.qs-val i,.qs-sq i,.qs-q1chip i,.qd-val,.qs-miss-n,.qs-chip i){color:transparent!important;text-shadow:0 0 8px rgba(36,51,71,.6)!important;background-image:none!important;box-shadow:none!important;border-color:transparent!important}'
+   +'html.classroom-privacy :is(.qs-card,.qd-panel){pointer-events:none!important}html.classroom-privacy .qd-head{pointer-events:auto!important}';
+  for(let a=0;a<5;a++){rules+='html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-big,html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-q1chip i{background-color:'+PAL[(a+seed)%5]+'!important}';
+   for(let c=0;c<4;c++)rules+='html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-sect:nth-child(4n+'+(c+1)+') .qs-val i:not(.qs-none),html.classroom-privacy .qd-sec:nth-child(5n+'+(a+1)+') .qd-item:nth-child(4n+'+(c+1)+') .qd-val,html.classroom-privacy .qd-sec:nth-child(5n+'+(a+1)+') .qd-row:nth-child(4n+'+(c+1)+') .qd-val{background-color:'+PAL[(a*2+c+seed)%5]+'!important}'
+    +'html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-sq:nth-child(4n+'+(c+1)+') i:not(.qs-x){background-color:'+PAL[(a+c*3+seed)%5]+'!important}'}
   return rules;
  }
  let style=null;
@@ -134,6 +141,8 @@
  if(top){const st=document.createElement('style');st.textContent='.classroom-global-actions>.classroom-privacy-button{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:40px;min-width:40px;padding:0!important;flex:none}.classroom-global-actions>.classroom-privacy-button svg{width:20px;height:20px}.classroom-global-actions>.classroom-privacy-button.is-on{background:#2f5f9b!important;color:#fff!important;border-color:#2f5f9b!important}'
   +'.classroom-privacy-banner{position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:9000;max-width:calc(100vw - 24px);box-sizing:border-box;padding:5px 14px;border-radius:999px;background:#2f5f9b;color:#fff;font:600 13px/1.3 ui-sans-serif,system-ui,-apple-system,sans-serif;text-align:center;box-shadow:0 4px 12px #233d6033;pointer-events:none}'
   +'@media screen and (max-width:540px) and (orientation:portrait){.app-header .classroom-global-actions:has(>.classroom-privacy-button){grid-template-columns:42px 42px minmax(0,1fr) minmax(0,1fr)!important}.app-header .classroom-global-actions>.classroom-privacy-button{order:-1;width:42px!important;padding:0!important}.app-header .classroom-global-actions>.classroom-help-button{order:-2}}'
+  /* iPhone: Hinweis über der unteren Leiste statt hinter der Kopfzeile */
+  +'@media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){.classroom-privacy-banner{top:auto;bottom:calc(84px + env(safe-area-inset-bottom));font-size:11px;white-space:nowrap;padding:5px 12px}}'
   +'@media print{.classroom-privacy-banner{display:none}}';(document.head||document.documentElement).append(st)}
 })();
 ;
@@ -4125,7 +4134,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   return t.length>14?t.slice(0,13)+'…':t};
  const points=()=>{try{return typeof classUsesGradePoints==='function'&&!!classUsesGradePoints()}catch{return false}};
  function gradeNumber(t){t=String(t||'').trim().replace(/[−–—]/g,'-');if(!t||t==='-')return null;let m=/^(\d+(?:,\d+)?)$/.exec(t);if(m)return Number(m[1].replace(',','.'));m=/^([1-6])\s*([+-])$/.exec(t);if(m)return Number(m[1])+(m[2]==='+'?-1/3:1/3);m=/^(\d+)\s*-\s*(\d+)$/.exec(t);if(m)return (Number(m[1])+Number(m[2]))/2;return null}
- const longLabel=t=>{t=String(t||'').replace(/\s+/g,' ').trim();if(/^MM · Mittelwert/i.test(t))return 'MM Ø';if(/^Sonstige Mitarbeit/i.test(t))return 'Sonstige';if(/^Tests · Mittelwert/i.test(t))return 'Tests';return t.replace(/ · Mittelwert$/,' Ø').replace(/^Quartalsnote · /,'Quartalsnote ')};
+ const longLabel=t=>{t=String(t||'').replace(/\s+/g,' ').trim();if(/^MM · Mittelwert/i.test(t))return 'MM Ø';if(/^Sonstige Mitarbeit/i.test(t))return 'Sonstige Mitarbeit';if(/^Tests · Mittelwert/i.test(t))return 'Tests';return t.replace(/ · Mittelwert$/,' Ø').replace(/^Quartalsnote · /,'Quartalsnote ')};
  // Variante C: Balken als Baum mit Gewichtung (Prozente aus den Eingabefeldern der Seite)
  /* 7.92: keine Balken mehr – jede Zeile: Bezeichnung links, Note rechts in einem farbigen Kasten */
  function barRow(it,pct,lvl){return sect(it.label||longLabel(it.head),pct,it,null,lvl)}
@@ -4160,12 +4169,12 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    box.append(caption('Halbjahresnote ='));
    if(other)box.append(barRow(other,wo,0));
    if(q1)box.append(sect('1. Quartal',50,q1,null,1));
-   if(mm||tests){box.append(caption('2. Quartal',50,1));if(mm)box.append(sect('Mündlich',wm,mm,mmList,2,{avg:1}));if(tests)box.append(sect('Tests',wt,tests,testList,2,{avg:1,kind:'t'}))}
+   if(mm||tests){box.append(caption('2. Quartal',50,1));if(mm)box.append(sect('Mündliche Mitarbeit',wm,mm,mmList,2,{avg:1}));if(tests)box.append(sect('Tests',wt,tests,testList,2,{avg:1,kind:'t'}))}
    const kaTile=e=>[{text:e.text,cls:e.cls,date:examDates[e.head]||''}].filter(x=>x.text&&x.text!=='—');
    if(exams.length===1)box.append(sect(ka(exams[0]),we,exams[0],kaTile(exams[0]),0,{kind:'ka'}));else if(exams.length){box.append(caption('Klausuren',we,0));for(const e of exams)box.append(sect(ka(e),null,e,kaTile(e),1,{kind:'ka'}))}
   }else{
-   if(other)box.append(barRow(other,null,0));if(mm||prev.mm?.length)box.append(sect('Mündlich',wm,mm,mmList,0,{avg:1,prev:prev.mm}));if(tests||prev.tests?.length)box.append(sect('Tests',wt,tests,testList,0,{avg:1,kind:'t',prev:prev.tests}));
-   /* Klassenarbeit ganz unten in der Karte (nach HA/Material) */for(const e of exams)tail.push(sect(ka(e),null,e,[{text:e.text,cls:e.cls,date:examDates[e.head]||''}].filter(x=>x.text&&x.text!=='—'),0,{tag:'Halbjahr',kind:'ka'}))
+   if(other)box.append(barRow(other,null,0));if(mm||prev.mm?.length)box.append(sect('Mündliche Mitarbeit',wm,mm,mmList,0,{avg:1,prev:prev.mm}));if(tests||prev.tests?.length)box.append(sect('Tests',wt,tests,testList,0,{avg:1,kind:'t',prev:prev.tests}));
+   /* Klassenarbeit ganz unten in der Karte (nach HA/Material) */for(const e of exams)tail.push(sect(ka(e),null,e,[{text:e.text,cls:e.cls,date:examDates[e.head]||''}].filter(x=>x.text&&x.text!=='—'),0,{kind:'ka'}))
   }
   for(const it of items)box.append(barRow(it,null,0));
  }
@@ -4194,7 +4203,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const val=document.createElement('span');val.className='qs-val qs-cnt';
   const n=(v,cls)=>{const b=document.createElement('b');b.className='qs-miss-n '+cls+(v?' has-miss':'')+(v>=3?' is-alert':'');b.textContent=String(v);return b};
   val.append(n(cur.length,'qs-cnt-q'));if(split)val.append(n(cur.length+prev.length,'qs-cnt-h'));
-  const w=sect(label+' fehlend',null,null,cur.map(fmt),0,{val,prev:prev.map(fmt),tag:split?'Halbjahr':''});w.classList.add('qs-miss');if(split)w.classList.add('qs-split');
+  const w=sect(label+' fehlend',null,null,cur.map(fmt),0,{val,prev:prev.map(fmt)});w.classList.add('qs-miss');if(split)w.classList.add('qs-split');
   return w}
  function editProxy(orig,label,after){
   const l=document.createElement('label');l.className='qs-edit';const s=document.createElement('span');s.textContent=label;const inp=document.createElement('input');inp.type='text';inp.value=orig.value;inp.placeholder=orig.placeholder||'—';inp.className=orig.className;inp.style.setProperty('--unstriped-color',orig.style.getPropertyValue('--unstriped-color'));inp.setAttribute('aria-label',orig.getAttribute('aria-label')||label);inp.autocomplete='off';
