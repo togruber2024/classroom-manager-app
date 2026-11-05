@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 05.11.2026 · Version 7.72
+Stand: 05.11.2026 · Version 7.73
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -954,3 +954,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.71: iPhone: mündliche Noten auf den Eingabeseiten mit dem bunten Fenster als Blatt (ohne Tastatur), Zurück/Weiter je Termin
 
 7.72: Klassenarbeiten/Klausuren erscheinen in der Quartalsübersicht nicht mehr als „Q1 · …“ (sie gehören nur zum Halbjahr); iPhone-Detailblatt zeigt das 1. Quartal getrennt
+
+7.73: Excel-Export: Klassenarbeiten/Klausuren nur noch in der Halbjahresübersicht, nicht mehr in den Quartalsblöcken
