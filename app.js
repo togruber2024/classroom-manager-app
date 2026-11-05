@@ -1515,6 +1515,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['iPhone: Mündlich mit dem bunten Fenster','Auf den Seiten der mündlichen Mitarbeit öffnet ein Tipp in ein Notenfeld auf dem iPhone das bunte Bewertungsfenster als Blatt (ohne Tastatur): zehn Zeichen, Abwesend, Löschen; „Weiter ›“ springt zur nächsten Person im selben Termin.','iPhone → Noten → Mündliche Mitarbeit → Feld antippen','7.71'],
    ['iPhone: alle Einträge einer Person','Ein Tipp auf eine Karte der Quartals- oder Halbjahresübersicht öffnet ein Blatt mit allen mündlichen Noten (mit Datum), fehlenden Hausaufgaben, Sonstiger Mitarbeit und Klassenarbeit. Selbsteinschätzung und Quartalsnote sind dort eintragbar; ‹ › oder Wischen wechselt zur nächsten Person.','iPhone → Noten → Quartalsnote → Karte antippen','7.70'],
    ['iPhone: Quartalsnoten als Karten','Auf dem iPhone (hochkant) zeigt die Quartals- und Halbjahresübersicht eine Karte pro Person: Note groß, darunter MM Ø, fehlende Hausaufgaben, Sonstige Mitarbeit, Klassenarbeit. Selbsteinschätzung und Quartalsnote lassen sich direkt in der Karte eintragen. Umschalter „Karten | Tabelle“.','iPhone → Noten → Quartalsnote','7.69'],
    ['iPhone: Sitzplan kompakter','Auf dem iPhone nutzt der Sitzplan die ganze Breite: ohne Spaltenbuchstaben und Reihennummern, ohne Hinweistext, Zoom nur mit − und +; „Einpassen“ und „100 %“ stehen unter ⋯.','iPhone → Unterricht','7.68'],
@@ -1523,8 +1524,7 @@ window.addEventListener('message',event=>{
    ['Backup sofort wiederherstellen','Der Knopf ⬆ neben „Backup“ lädt das neueste Backup (am Mac aus dem festen Ordner, sonst per Dateiauswahl) – mit Rückfrage. Jede Wiederherstellung lässt sich rückgängig machen.','oben rechts → ⬆ neben „Backup“','7.55'],
    ['Hinweis auf neue Versionen','Gibt es eine neuere Version, erscheint oben „Neue Version … verfügbar“ – „Jetzt aktualisieren“ lädt sie sofort, die Daten bleiben erhalten.','oben unter der Kopfzeile','7.52'],
    ['„Fehlend“ zählt übers Halbjahr','Auf den Hausaufgaben- und Materialseiten des 2. (4.) Quartals zählt die Spalte „Fehlend“ die fehlenden Einträge aus dem 1. (3.) Quartal mit – auch für die Eltern-Mail.','Noten-Manager → Hausaufgaben','7.48'],
-   ['„M“ für fehlendes Material','Im Sitzplan zeigt ein oranges „M“ unten links am Tisch fehlendes Material; ab dem 3. Mal im Halbjahr steht dort die Anzahl.','Unterrichts-Manager → Sitzplan','7.42'],
-   ['Zählung übers ganze Halbjahr','Mündliche Noten, fehlende Hausaufgaben und fehlendes Material werden im 2. (4.) Quartal mit dem 1. (3.) zusammengezählt; mit dem neuen Halbjahr beginnt es bei 0.','Unterrichts-Manager → Sitzplan','7.42']]},
+   ['„M“ für fehlendes Material','Im Sitzplan zeigt ein oranges „M“ unten links am Tisch fehlendes Material; ab dem 3. Mal im Halbjahr steht dort die Anzahl.','Unterrichts-Manager → Sitzplan','7.42']]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
    ['Zwei Bereiche','Oben wechselst du zwischen Unterrichts-Manager (Sitzplan, Mitarbeit und Hausaufgaben im Unterricht) und Noten-Manager (Bewertungen, Tests, Klausuren, Zeugnisnoten). Beide nutzen dieselben Klassen und Schülerlisten.'],

@@ -4243,6 +4243,65 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
 })();
 ;
 
+/* ==== noten/phone-entry.js ==== */
+/* iPhone hochkant: Mündliche Noten auf den Eingabeseiten mit dem bunten Bewertungsfenster eintragen.
+   Antippen eines Feldes öffnet ein Blatt von unten (keine Tastatur): zehn Bewertungszeichen, „Abwesend“, „Löschen“,
+   darunter „‹ Zurück | Weiter ›“ (gleiche Spalte, nächste Person). Gespeichert wird wie beim Eintippen. */
+(()=>{
+ const PH=matchMedia('(max-width:540px) and (orientation:portrait)'),SEL='input.participation-grade-input[data-student-grade][data-task-id]';
+ const SYMBOLS=['++','++/+','+','+/o','o','o/-','-','-/--','--','--/---','---'],PALETTE=['','#b8e9ce','#e0f2ce','#fffbb8','#ffedb8','#fbcbc7','#edb8b8'];
+ const norm=v=>String(v||'').replace(/[−–—]/g,'-').replace(/\s+/g,'').toLowerCase();
+ // Auf dem iPhone Felder schreibgeschützt (keine Tastatur), sonst normal
+ function lock(){for(const i of document.querySelectorAll(SEL)){if(PH.matches){if(!i.readOnly){i.readOnly=true;i.dataset.phRo='1'}}else if(i.dataset.phRo){i.readOnly=false;delete i.dataset.phRo}}}
+ let lp=false;new MutationObserver(()=>{if(lp)return;lp=true;requestAnimationFrame(()=>{lp=false;lock();if(cur&&!sheet.hidden)paint()})}).observe(document.body,{subtree:true,childList:true});
+ PH.addEventListener?.('change',()=>{close();lock()});lock();
+ const sheet=document.createElement('div');sheet.className='pe-sheet';sheet.hidden=true;
+ sheet.innerHTML='<div class="pe-panel" role="dialog" aria-label="Mündliche Mitarbeit eintragen"><div class="pe-grab"></div><div class="pe-head"><div><b class="pe-name"></b><small class="pe-date"></small></div><small class="pe-pos"></small><button type="button" class="pe-x" aria-label="Schließen">✕</button></div><div class="pe-grid"></div><div class="pe-extra"><button type="button" data-v="A">Abwesend</button><button type="button" data-v="">Löschen</button></div><div class="pe-nav"><button type="button" data-step="-1">‹ Zurück</button><button type="button" data-step="1" class="pe-next">Weiter ›</button></div></div>';
+ document.body.append(sheet);
+ const grid=sheet.querySelector('.pe-grid');
+ SYMBOLS.forEach((s,i)=>{if(s==='--/---')return;const g=1+i/2,lo=Math.floor(g),hi=Math.ceil(g),b=document.createElement('button');b.type='button';b.dataset.v=s;b.textContent=s;b.style.background=lo===hi?PALETTE[lo]:`repeating-linear-gradient(135deg,${PALETTE[lo]} 0 9px,${PALETTE[hi]} 9px 18px)`;grid.append(b)});
+ let cur=null;// {sid,tid}
+ const find=()=>cur&&document.querySelector(`input.participation-grade-input[data-student-grade="${CSS.escape(cur.sid)}"][data-task-id="${CSS.escape(cur.tid)}"]`);
+ const column=()=>{const i=find();const t=i?.closest('table');return t?[...t.querySelectorAll(`input.participation-grade-input[data-task-id="${CSS.escape(cur.tid)}"]`)]:[]};
+ function close(){sheet.hidden=true;document.querySelector('.pe-current')?.classList.remove('pe-current');cur=null;document.body.style.paddingBottom=''}
+ function paint(){
+  const i=find();if(!i){close();return}
+  document.querySelectorAll('.pe-current').forEach(e=>e!==i&&e.classList.remove('pe-current'));i.classList.add('pe-current');
+  const label=i.getAttribute('aria-label')||'',k=label.lastIndexOf(' für ');
+  const row=i.closest('tr'),nameInput=row?.querySelector('[data-student-name]');
+  sheet.querySelector('.pe-name').textContent=(nameInput?.value||(k>=0?label.slice(k+5):'')).trim();
+  sheet.querySelector('.pe-date').textContent=k>=0?label.slice(0,k):'';
+  const col=column(),n=col.indexOf(i);sheet.querySelector('.pe-pos').textContent=(n+1)+' von '+col.length;
+  sheet.querySelector('[data-step="-1"]').disabled=n<=0;sheet.querySelector('[data-step="1"]').disabled=n>=col.length-1;
+  const v=norm(i.value);for(const b of sheet.querySelectorAll('.pe-grid button,.pe-extra button'))b.setAttribute('aria-pressed',String(b.dataset.v!==''&&norm(b.dataset.v)===v));
+ }
+ function open(input){cur={sid:input.dataset.studentGrade,tid:input.dataset.taskId};sheet.hidden=false;paint();document.body.style.paddingBottom=(sheet.querySelector('.pe-panel').offsetHeight+16)+'px';
+  requestAnimationFrame(()=>{const i=find();if(!i)return;const r=i.getBoundingClientRect(),top=sheet.querySelector('.pe-panel').getBoundingClientRect().top;if(r.bottom>top-8)scrollBy(0,r.bottom-top+24);else if(r.top<60)scrollBy(0,r.top-80)})}
+ function set(value){const i=find();if(!i)return;const ro=i.readOnly;i.readOnly=false;i.value=value;i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new Event('change',{bubbles:true}));const j=find();if(j&&ro)j.readOnly=true;paint()}
+ document.addEventListener('click',e=>{if(!PH.matches)return;const i=e.target.closest?.(SEL);if(!i)return;e.preventDefault();i.blur();open(i)},true);
+ sheet.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.classList.contains('pe-x')){close();return}
+  if(b.dataset.step){const col=column(),n=col.indexOf(find()),next=col[n+Number(b.dataset.step)];if(next)open(next);return}
+  if('v' in b.dataset){const i=find();set(b.dataset.v!==''&&norm(i?.value)===norm(b.dataset.v)?'':b.dataset.v)}});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&cur)close()});
+ const st=document.createElement('style');st.textContent='.pe-sheet{display:none}'
+  +'@media (max-width:540px) and (orientation:portrait){'
+  +'.pe-sheet:not([hidden]){display:block;position:fixed;left:0;right:0;bottom:0;z-index:9800}'
+  +'.pe-panel{padding:8px 14px 12px;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -12px 34px #1c2b4633}'
+  +'.pe-grab{width:40px;height:5px;border-radius:3px;background:#cbd6e5;margin:0 auto 8px}'
+  +'.pe-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}.pe-head>div{flex:1;min-width:0}.pe-name{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pe-date{display:block;color:#66758a;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pe-pos{color:#66758a;font-size:12.5px;white-space:nowrap}'
+  +'.pe-x{flex:none;width:36px;height:36px;border:0;background:none;color:#66758a;font-size:16px}'
+  +'.pe-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}'
+  +'.pe-grid button{min-height:50px;border:1px solid #d6dde8;border-radius:11px;color:#24334b;font:inherit;font-size:16px;font-weight:750;cursor:pointer}'
+  +'.pe-grid button[aria-pressed=true],.pe-extra button[aria-pressed=true]{outline:3px solid #2f5f9b;outline-offset:1px}'
+  +'.pe-extra{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.pe-extra button{min-height:40px;border:1px solid #d6dde8;border-radius:11px;background:#f7f9fc;color:#2f5f9b;font:inherit;font-size:14.5px;cursor:pointer}'
+  +'.pe-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.pe-nav button{min-height:44px;border:1px solid #cbd6e5;border-radius:12px;background:#fff;color:#2f5f9b;font:inherit;font-size:15px;font-weight:650;cursor:pointer}.pe-nav .pe-next{background:#2f5f9b;border-color:#2f5f9b;color:#fff}.pe-nav button:disabled{opacity:.4}'
+  +'input.participation-grade-input.pe-current{outline:3px solid #2f5f9b!important;outline-offset:1px}'
+  +'}';
+ document.head.append(st);
+})();
+;
+
 /* ==== no-contacts.js ==== */
 /* Safari/iOS soll bei Schülernamen keine Einträge aus den eigenen Kontakten vorschlagen (Datenschutz, z. B. am Beamer).
    Namensfelder erhalten autocomplete="off" und ein name-Attribut, das Safari nicht als Kontaktfeld erkennt. */

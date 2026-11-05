@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 05.11.2026 · Version 7.70
+Stand: 05.11.2026 · Version 7.71
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -309,6 +309,7 @@ Auf dem iPhone öffnet ein Tisch das Bewertungsfenster als Blatt (hochkant unten
 Auf dem iPhone zeigt der Sitzplan keine Spaltenbuchstaben und Reihennummern und keinen Hinweistext; der Zoom hat nur − und +, „Einpassen“ und „100 %“ stehen unter ⋯. So nutzen die Tische die ganze Breite.
 Auf dem iPhone (hochkant) zeigt die Quartals- und Halbjahresübersicht im Noten-Manager eine Karte pro Person statt der breiten Tabelle: Note groß, darunter die Mittelwerte (MM Ø, HA fehlt, Sonstige Mitarbeit, Klassenarbeit). Selbsteinschätzung und Quartals-/Halbjahresnote sind direkt in der Karte eintragbar. Mit „Karten | Tabelle“ lässt sich umschalten; die Wahl wird gemerkt.
 Ein Tipp auf eine Karte öffnet ein Blatt mit allen Einträgen dieser Person im Quartal (mündliche Noten mit Datum, fehlende Hausaufgaben, Sonstige Mitarbeit, Klassenarbeit) sowie Selbsteinschätzung und Quartalsnote zum Eintragen. Mit ‹ › oder durch seitliches Wischen geht es zur nächsten Person.
+Auf den Seiten der mündlichen Mitarbeit öffnet ein Tipp in ein Notenfeld auf dem iPhone (hochkant) das bunte Bewertungsfenster als Blatt von unten, ohne Tastatur: zehn Bewertungszeichen, „Abwesend“ und „Löschen“. „Weiter ›“ und „‹ Zurück“ gehen im selben Termin zur nächsten bzw. vorigen Person; erneutes Antippen des gewählten Zeichens entfernt es wieder.
 
 SITZREGELN, RÄUME, HISTORIE UND ABWESENHEIT
 Verteilung: einzeln, Zufallspaare, gleichgeschlechtliche oder feste Paare; Reihenfolge und Richtung
@@ -949,3 +950,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.69: iPhone: Quartals- und Halbjahresübersicht als Karten mit Umschalter Karten/Tabelle; Selbsteinschätzung und Quartalsnote in der Karte eintragbar
 
 7.70: iPhone: Karte antippen öffnet ein Blatt mit allen Einträgen der Person; ‹ › oder Wischen zur nächsten Person
+
+7.71: iPhone: mündliche Noten auf den Eingabeseiten mit dem bunten Fenster als Blatt (ohne Tastatur), Zurück/Weiter je Termin
