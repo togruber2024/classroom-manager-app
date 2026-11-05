@@ -1515,6 +1515,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['iPhone: Bewerten Tisch für Tisch','Auf dem iPhone öffnet sich das Bewertungsfenster als Blatt (hochkant unten, quer rechts). Es bleibt nach einer Bewertung offen; „Weiter ›“ springt zum nächsten Tisch, der aktuelle Tisch ist blau umrandet. Quer sitzt die Leiste am linken Rand.','iPhone → Unterricht → Tisch antippen','7.67'],
    ['iPhone: neue Bedienung','Auf dem iPhone (hochkant) oben nur noch Symbol, Auswahl und Rückgängig; die Auswahl öffnet sich als Blatt von unten. Unten die Leiste Unterricht · Noten · Backup · Mehr.','iPhone hochkant','7.64'],
    ['Backup sofort wiederherstellen','Der Knopf ⬆ neben „Backup“ lädt das neueste Backup (am Mac aus dem festen Ordner, sonst per Dateiauswahl) – mit Rückfrage. Jede Wiederherstellung lässt sich rückgängig machen.','oben rechts → ⬆ neben „Backup“','7.55'],
    ['Hinweis auf neue Versionen','Gibt es eine neuere Version, erscheint oben „Neue Version … verfügbar“ – „Jetzt aktualisieren“ lädt sie sofort, die Daten bleiben erhalten.','oben unter der Kopfzeile','7.52'],
@@ -1523,8 +1524,7 @@ window.addEventListener('message',event=>{
    ['Zählung übers ganze Halbjahr','Mündliche Noten, fehlende Hausaufgaben und fehlendes Material werden im 2. (4.) Quartal mit dem 1. (3.) zusammengezählt; mit dem neuen Halbjahr beginnt es bei 0.','Unterrichts-Manager → Sitzplan','7.42'],
    ['Wer braucht noch mündliche Noten?','Tische von Schüler:innen mit weniger als 3 mündlichen Noten im Halbjahr werden getönt und mit „0/3“, „1/3“ oder „2/3“ markiert – sobald jemand 3 hat und die letzte Bewertung 2 Stunden her ist.','Unterrichts-Manager → Sitzplan','7.41'],
    ['Hausaufgaben-Rahmen wird dicker','Ab der dritten fehlenden Hausaufgabe im Halbjahr wird der rote Rahmen am Tisch mit jeder weiteren etwas dicker.','Unterrichts-Manager → Sitzplan','7.41'],
-   ['Kurze Titel in der Übersicht','Lange Themen von Klassenarbeiten werden in der Übersicht gekürzt (z. B. „L15“); der volle Titel erscheint beim Darüberfahren.','Klassenarbeiten-Übersicht','7.41'],
-   ['Schnell-Backup','Der kleine Knopf mit Download-Symbol neben „Backup“ speichert sofort ein Backup – ein grüner Haken bestätigt es.','oben rechts → neben „Backup“','7.40']]},
+   ['Kurze Titel in der Übersicht','Lange Themen von Klassenarbeiten werden in der Übersicht gekürzt (z. B. „L15“); der volle Titel erscheint beim Darüberfahren.','Klassenarbeiten-Übersicht','7.41']]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
    ['Zwei Bereiche','Oben wechselst du zwischen Unterrichts-Manager (Sitzplan, Mitarbeit und Hausaufgaben im Unterricht) und Noten-Manager (Bewertungen, Tests, Klausuren, Zeugnisnoten). Beide nutzen dieselben Klassen und Schülerlisten.'],
@@ -1783,12 +1783,12 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
 ;
 
 /* ==== phone.js ==== */
-/* iPhone-Ansicht (hochkant, bis 540 px): schmale Kopfzeile (Symbol · Auswahl „Fach · Klasse · …“ · Rückgängig),
+/* iPhone-Ansicht (hochkant bis 540 px breit; quer bis 500 px hoch mit Leiste links): schmale Kopfzeile (Symbol · Auswahl „Fach · Klasse · …“ · Rückgängig),
    Auswahlmenü als Blatt von unten, Leiste unten (Unterricht · Noten · Backup · Mehr). iPad und Mac bleiben unverändert.
    Die bestehenden Elemente werden nur umgehängt bzw. per CSS anders angeordnet; alle Funktionen bleiben dieselben. */
 (()=>{
  if(window!==parent)return;
- const PHONE=matchMedia('(max-width:540px) and (orientation:portrait)');
+ const PHONE=matchMedia('(max-width:540px) and (orientation:portrait), (max-height:500px) and (pointer:coarse) and (orientation:landscape)');
  const icon={
   sitzplan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="14" y="4" width="7" height="6" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg>',
   noten:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M2 20h20"/></svg>',
@@ -1837,7 +1837,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   '.phone-tabbar,.phone-sheet{display:none}'
   /* Mit viewport-fit=cover: Inhalt nicht unter Home-Balken oder Kamera-Aussparung (iPhone/iPad als App) */
   +'body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}'
-  +'@media (max-width:540px) and (orientation:portrait){'
+  +'@media (max-width:540px) and (orientation:portrait), (max-height:500px) and (pointer:coarse) and (orientation:landscape){'
   +'body:not(#_){padding-bottom:calc(64px + max(env(safe-area-inset-bottom),10px))}'
   +'.app-header:not(#_){position:relative;z-index:9450;display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:8px!important;padding:8px 12px!important}'
   +'.app-header .brand{flex:none!important;gap:0!important}.app-header .brand>div{display:none!important}.app-header .brand-mark{width:32px!important;height:32px!important}'
@@ -1871,6 +1871,13 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   +'.phone-sheet button>span,.phone-sheet button>svg{display:inline-flex;justify-content:center;width:26px;color:#2f5f9b;font-weight:700}.phone-sheet button svg{width:22px;height:22px}.phone-sheet .ph-up svg{transform:rotate(180deg)}'
   +'.classroom-update-banner,.classroom-restore-banner,.classroom-storage-warning{margin:8px 10px 0!important}'
   +'.classroom-beamer-active .phone-tabbar{display:none!important}'
+  +'}'
+  /* iPhone quer: Leiste als schmale Spalte am linken Rand, Inhalt daneben */
+  +'@media (max-height:500px) and (pointer:coarse) and (orientation:landscape){'
+  +'body:not(#_){padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) calc(68px + env(safe-area-inset-left))}'
+  +'.phone-tabbar:not(#_){top:0;bottom:0;right:auto;width:calc(68px + env(safe-area-inset-left));box-sizing:border-box;flex-direction:column;justify-content:center;gap:4px;padding:env(safe-area-inset-top) 4px env(safe-area-inset-bottom) calc(4px + env(safe-area-inset-left));border-top:0;border-right:1px solid #e3e8f0}'
+  +'.phone-tabbar button:not(#_){flex:none;min-height:58px}'
+  +'.app-header:not(#_){padding:6px 10px!important}'
   +'}';
  document.head.append(st);
 })();

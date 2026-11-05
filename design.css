@@ -1017,3 +1017,29 @@ body[data-module] label.notenspiegel-mode-toggle[style*="display: none"]:not(#_)
 }
 /* 7.66: iPhone quer – App-Name ausblenden (wurde abgeschnitten); Version steht unter Hilfe bzw. „Mehr“ */
 @media (max-height:500px) and (pointer:coarse) and (max-width:1000px){.app-header .brand>div{display:none!important}.app-header .brand{gap:0!important}}
+/* 7.67 iPhone: Bewertungsfenster als Blatt (hochkant unten, quer rechts) mit Zurück/Weiter, aktueller Tisch blau umrandet */
+.classroom-quick .cq-nav,.classroom-quick .cq-pos{display:none}
+.classroom-quick.is-sheet:not(#_){position:fixed;left:0;right:0;top:auto;bottom:0;width:auto;max-width:none;max-height:78%;overflow:auto;padding:16px 14px 12px;border:0;border-radius:20px 20px 0 0;box-shadow:0 -10px 30px #1c2b4633;box-sizing:border-box}
+.classroom-quick.is-sheet::before{content:"";position:absolute;top:6px;left:50%;width:40px;height:5px;margin-left:-20px;border-radius:3px;background:#cbd6e5}
+.classroom-quick.is-sheet .classroom-quick-top{margin:4px 0 10px}
+.classroom-quick.is-sheet .classroom-quick-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:4px}
+.classroom-quick.is-sheet .classroom-quick-heading strong{font-size:17px}
+.classroom-quick.is-sheet .cq-pos{display:inline;color:#66758a;font-size:12.5px;white-space:nowrap}
+.classroom-quick.is-sheet .classroom-quick-absence{margin-top:10px;padding-top:10px}
+.classroom-quick.is-sheet p:empty{display:none}
+.classroom-quick.is-sheet .cq-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.classroom-quick.is-sheet .cq-nav button{min-height:44px;border:1px solid #cbd6e5;border-radius:12px;background:#fff;color:#2f5f9b;font:inherit;font-size:15px;font-weight:650;cursor:pointer}
+.classroom-quick.is-sheet .cq-nav .cq-next{background:#2f5f9b;border-color:#2f5f9b;color:#fff}
+.classroom-quick.is-sheet .cq-nav button:disabled{opacity:.4;cursor:default}
+@media (orientation:landscape){.classroom-quick.is-sheet:not(#_){left:auto;top:0;bottom:0;right:0;width:min(360px,52vw);max-height:none;border-radius:20px 0 0 20px;box-shadow:-10px 0 30px #1c2b4633;padding-top:12px}.classroom-quick.is-sheet::before{display:none}}
+.room-grid .cell.classroom-seat-current{outline:5px solid #2f5f9b!important;outline-offset:3px;z-index:3}
+@media (max-height:500px) and (pointer:coarse) and (orientation:landscape){
+body[data-module=sitzplan]:not(#_){padding-left:8px;padding-right:8px}body[data-module=sitzplan] .grid-container:not(#_){padding:10px 12px}
+.classroom-quick.is-sheet:not(#_){width:min(330px,46vw);padding:8px 12px 0}
+.classroom-quick.is-sheet .classroom-quick-top:not(#_){margin:0 0 6px;gap:8px}.classroom-quick.is-sheet .classroom-quick-top button:not(#_){min-height:34px;padding:4px 6px;font-size:14px}
+.classroom-quick.is-sheet .classroom-quick-heading strong{font-size:15px}
+.classroom-quick.is-sheet .classroom-grade-buttons:not(#_){margin:2px 0 4px;gap:5px}.classroom-quick.is-sheet .classroom-grade-buttons legend{font-size:13px;margin-bottom:4px}
+.classroom-quick.is-sheet .classroom-grade-buttons button:not(#_){min-height:38px;padding:2px}
+.classroom-quick.is-sheet .classroom-quick-absence:not(#_){margin-top:4px;padding-top:6px;font-size:14px}
+.classroom-quick.is-sheet .cq-nav:not(#_){position:sticky;bottom:0;margin:6px -12px 0;padding:6px 12px 8px;background:#fff}.classroom-quick.is-sheet .cq-nav button{min-height:38px}
+}

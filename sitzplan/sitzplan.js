@@ -2057,6 +2057,34 @@ document.body.append(classroomQuick);
 const materialButton=document.createElement('button');materialButton.type='button';materialButton.id='classroomQuickMaterialButton';materialButton.textContent='Material fehlt';materialButton.setAttribute('aria-pressed','false');
 const quickTop=document.createElement('div');quickTop.className='classroom-quick-top';const originalHomeworkButton=document.getElementById('classroomQuickHomeworkButton');originalHomeworkButton.before(quickTop);quickTop.append(originalHomeworkButton,materialButton);
 let quickMaterialMissing=false;
+// iPhone: Fenster als Blatt (hochkant unten, quer rechts) mit „‹ Zurück | Weiter ›“; bleibt nach einer Bewertung offen.
+const QE_PHONE=matchMedia('(max-width:540px) and (orientation:portrait), (max-height:500px) and (pointer:coarse) and (orientation:landscape)');
+const qeSheet=()=>QE_PHONE.matches;
+const qePos=document.createElement('small');qePos.className='cq-pos';document.querySelector('.classroom-quick-heading').append(qePos);
+const qeNav=document.createElement('div');qeNav.className='cq-nav';qeNav.innerHTML='<button type="button" data-step="-1">‹ Zurück</button><button type="button" data-step="1" class="cq-next">Weiter ›</button>';classroomQuick.append(qeNav);
+let qeName=null;
+function qeSeats(){
+ const group=classroomCurrentGroup();if(!group)return [];
+ const list=[];for(const cell of document.querySelectorAll('.room-grid .cell')){if(cell.style.display==='none')continue;const name=gridData[Number(cell.dataset.row)]?.[Number(cell.dataset.col)];if(!name||!group.students.some(s=>!s.deleted&&ClassroomCore.normalize(s.name)===ClassroomCore.normalize(name)))continue;const r=cell.getBoundingClientRect();list.push({cell,name,top:Math.round(r.top),left:r.left})}
+ list.sort((a,b)=>a.top-b.top||a.left-b.left);let row=0,last=null;for(const it of list){if(last===null||Math.abs(it.top-last)>4){row++;last=it.top}it.row=row}return list}
+function qeMarkCurrent(){for(const c of document.querySelectorAll('.room-grid .classroom-seat-current'))c.classList.remove('classroom-seat-current');if(!qeName||classroomQuick.hidden)return;const it=qeSeats().find(x=>x.name===qeName);it?.cell.classList.add('classroom-seat-current')}
+function qeLayout(){
+ const on=qeSheet()&&!classroomQuick.hidden;classroomQuick.classList.toggle('is-sheet',on);
+ const land=on&&matchMedia('(orientation:landscape)').matches;
+ document.body.style.paddingBottom=on&&!land?(classroomQuick.offsetHeight+12)+'px':'';document.body.style.paddingRight=land?(classroomQuick.offsetWidth+8)+'px':'';
+}
+function qeAfterOpen(name){
+ qeName=name;if(!qeSheet()){qeLayout();return}
+ classroomQuick.style.left='';classroomQuick.style.top='';qeLayout();
+ const seats=qeSeats(),i=seats.findIndex(x=>x.name===name);qePos.textContent=i<0?'':'Reihe '+seats[i].row+' · '+(i+1)+' von '+seats.length;
+ qeNav.querySelector('[data-step="-1"]').disabled=i<=0;qeNav.querySelector('[data-step="1"]').disabled=i<0||i>=seats.length-1;
+ qeMarkCurrent();
+ // Aktuellen Tisch sichtbar halten (über bzw. links neben dem Blatt)
+ const cell=seats[i]?.cell;if(cell)requestAnimationFrame(()=>{const r=cell.getBoundingClientRect(),q=classroomQuick.getBoundingClientRect(),land=matchMedia('(orientation:landscape)').matches,limit=land?innerHeight:q.top;
+  if(r.bottom>limit-8)scrollBy(0,r.bottom-limit+16);else if(r.top<8)scrollBy(0,r.top-16)});
+}
+qeNav.addEventListener('click',e=>{const b=e.target.closest('[data-step]');if(!b||b.disabled||quickPending)return;const seats=qeSeats(),i=seats.findIndex(x=>x.name===qeName),next=seats[i+Number(b.dataset.step)];if(next)classroomOpenStudent(next.name)});
+QE_PHONE.addEventListener?.('change',()=>quickClose());
 function classroomMaterialTarget(){const targets=lessonSource()?.targets||[],grade=targets.find(t=>t.key===lessonGrade.value);return targets.find(t=>t.type==='material'&&(!grade||t.halfYearId===grade.halfYearId&&t.quarterIndex===grade.quarterIndex))}
 materialButton.onclick=()=>{if(performance.now()-classroomQuickOpenedAt<60||quickPending)return;quickMaterialMissing=!quickMaterialMissing;materialButton.setAttribute('aria-pressed',String(quickMaterialMissing));quickSave('material')};
 
@@ -2078,7 +2106,7 @@ homeworkButton.onclick=()=>{if(performance.now()-classroomQuickOpenedAt<60||quic
 let quickPerson=null,quickPending=null,lessonGroup=null,quickCloseAfterSave=false;
 const lessonChoices=new Map();
 let classroomLastSavedGrade=null;
-function quickClose(){classroomQuick.hidden=true;quickPerson=null}
+function quickClose(){classroomQuick.hidden=true;quickPerson=null;if(typeof qeLayout==='function'){qeLayout();qeMarkCurrent()}}
 
 function lessonSource(){return classroomLinkedSnapshot?.classes.find(s=>s.id===lessonSubject.value)}
 function fillLesson(select,items,preferred){select.replaceChildren();for(const item of items){const option=document.createElement('option');option.value=item.key??item.id;option.textContent=item.label??item.subject;select.append(option)}if([...select.options].some(o=>o.value===preferred))select.value=preferred;select.disabled=!items.length;if(!items.length){const option=document.createElement('option');option.textContent='Noch nicht angelegt';option.value='';select.append(option)}}
@@ -2133,19 +2161,20 @@ function classroomOpenStudent(name,point){
  classroomQuick.style.top=Math.max(0,Math.min(anchorY-offsetY,innerHeight-classroomQuick.offsetHeight))+'px';
  classroomQuickOpenedAt=performance.now();
  homeworkButton.focus({preventScroll:true});
+ qeAfterOpen(name);
 }
 function quickSave(type){
  if(!quickPerson||quickPending)return;
  if(type==='grade')mmLastMark(mmKey());
- const group=classroomCurrentGroup(),requestId=crypto.randomUUID();quickCloseAfterSave=true;quickPending=requestId;materialButton.disabled=true;quickGrade.disabled=true;quickHomework.disabled=true;homeworkButton.disabled=true;quickStatus.textContent='Wird gespeichert …';
+ const group=classroomCurrentGroup(),requestId=crypto.randomUUID();quickCloseAfterSave=!qeSheet();quickPending=requestId;materialButton.disabled=true;quickGrade.disabled=true;quickHomework.disabled=true;homeworkButton.disabled=true;quickStatus.textContent='Wird gespeichert …';
  parent.postMessage({type:'classroom:save-record',requestId,payload:{classId:group.id,studentId:quickPerson.id,sourceClass:lessonSubject.value,date:classroomDate.value,attendanceChanged:false,gradePage:lessonGrade.value,grade:type==='grade'?(Array.from(quickGrade.querySelectorAll('button')).find(button=>button.value===quickGrade.value)?.dataset.ratingSymbol||''):quickGrade.value,gradeChanged:type==='grade',homeworkPage:lessonHomework.value,homework:quickHomework.checked?'missing':'done',materialPage:classroomMaterialTarget()?.key,material:quickMaterialMissing?'missing':'done',materialChanged:type==='material',homeworkChanged:type==='homework',initializeHomework:type==='homework'&&quickHomework.checked}},'*');
 }
 quickHomework.onchange=()=>quickSave('homework');
-quickAbsent.onchange=()=>{if(!quickPerson||quickPending)return;const group=classroomCurrentGroup(),absent=quickAbsent.checked;group.attendance??={};group.attendance[classroomDate.value]??={};group.attendance[classroomDate.value][quickPerson.id]=absent;parent.postMessage({type:'classroom:attendance',classId:group.id,studentId:quickPerson.id,date:classroomDate.value,absent},'*');classroomMarkAbsent();quickClose()};
+quickAbsent.onchange=()=>{if(!quickPerson||quickPending)return;const group=classroomCurrentGroup(),absent=quickAbsent.checked;group.attendance??={};group.attendance[classroomDate.value]??={};group.attendance[classroomDate.value][quickPerson.id]=absent;parent.postMessage({type:'classroom:attendance',classId:group.id,studentId:quickPerson.id,date:classroomDate.value,absent},'*');classroomMarkAbsent();if(qeSheet()){quickReadValues();qeMarkCurrent()}else quickClose()};
 window.addEventListener('message',event=>{if(event.source!==parent||event.data?.type!=='classroom:save-result'||event.data.requestId!==quickPending)return;quickPending=null;if(event.data.ok&&event.data.historyContext){classroomLastSavedGrade=event.data.historyContext;classroomRefreshLesson()}if(event.data.ok&&quickCloseAfterSave){quickCloseAfterSave=false;quickClose();return}quickCloseAfterSave=false;quickReadValues();quickStatus.textContent=event.data.ok?'Gespeichert':event.data.message||'Speichern fehlgeschlagen. Bitte erneut auswählen.'});
 document.addEventListener('pointerdown',event=>{if(!classroomQuick.hidden&&!classroomQuick.contains(event.target))quickClose()},true);
 document.addEventListener('keydown',event=>{if(event.key==='Escape')quickClose()});
-window.addEventListener('resize',quickClose);window.addEventListener('scroll',quickClose,true);
+window.addEventListener('resize',()=>{if(qeSheet()){if(!classroomQuick.hidden)qeLayout()}else quickClose()});window.addEventListener('scroll',()=>{if(!qeSheet())quickClose()},true);
 
 // Seat colours always reflect the chosen lesson, date and pupil identity.
 function classroomPaintAssessments(){
@@ -2174,6 +2203,7 @@ function classroomPaintAssessments(){
   cell.title=`${person.name} · ${classroomDate.value.split('-').reverse().join('.')} · Note ${label}${homeworkMissing?' · Hausaufgabe fehlt':''}`;
  }
  classroomPaintParticipation(group);
+ qeMarkCurrent();
 }
 // Hinweise: (a) weniger als 3 mündliche Noten im gewählten Bewertungsblatt – erst wenn mindestens ein Mitschüler 3 hat
 // und die letzte mündliche Bewertung in dieser Lerngruppe mindestens 2 Stunden her ist (Tisch getönt + Zähler „n/3“);
