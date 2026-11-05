@@ -1515,6 +1515,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['iPhone: Quartalsnoten als Karten','Auf dem iPhone (hochkant) zeigt die Quartals- und Halbjahresübersicht eine Karte pro Person: Note groß, darunter MM Ø, fehlende Hausaufgaben, Sonstige Mitarbeit, Klassenarbeit. Selbsteinschätzung und Quartalsnote lassen sich direkt in der Karte eintragen. Umschalter „Karten | Tabelle“.','iPhone → Noten → Quartalsnote','7.69'],
    ['iPhone: Sitzplan kompakter','Auf dem iPhone nutzt der Sitzplan die ganze Breite: ohne Spaltenbuchstaben und Reihennummern, ohne Hinweistext, Zoom nur mit − und +; „Einpassen“ und „100 %“ stehen unter ⋯.','iPhone → Unterricht','7.68'],
    ['iPhone: Bewerten Tisch für Tisch','Auf dem iPhone öffnet sich das Bewertungsfenster als Blatt (hochkant unten, quer rechts). Es bleibt nach einer Bewertung offen; „Weiter ›“ springt zum nächsten Tisch, der aktuelle Tisch ist blau umrandet. Quer sitzt die Leiste am linken Rand.','iPhone → Unterricht → Tisch antippen','7.67'],
    ['iPhone: neue Bedienung','Auf dem iPhone (hochkant) oben nur noch Symbol, Auswahl und Rückgängig; die Auswahl öffnet sich als Blatt von unten. Unten die Leiste Unterricht · Noten · Backup · Mehr.','iPhone hochkant','7.64'],
@@ -1523,8 +1524,7 @@ window.addEventListener('message',event=>{
    ['„Fehlend“ zählt übers Halbjahr','Auf den Hausaufgaben- und Materialseiten des 2. (4.) Quartals zählt die Spalte „Fehlend“ die fehlenden Einträge aus dem 1. (3.) Quartal mit – auch für die Eltern-Mail.','Noten-Manager → Hausaufgaben','7.48'],
    ['„M“ für fehlendes Material','Im Sitzplan zeigt ein oranges „M“ unten links am Tisch fehlendes Material; ab dem 3. Mal im Halbjahr steht dort die Anzahl.','Unterrichts-Manager → Sitzplan','7.42'],
    ['Zählung übers ganze Halbjahr','Mündliche Noten, fehlende Hausaufgaben und fehlendes Material werden im 2. (4.) Quartal mit dem 1. (3.) zusammengezählt; mit dem neuen Halbjahr beginnt es bei 0.','Unterrichts-Manager → Sitzplan','7.42'],
-   ['Wer braucht noch mündliche Noten?','Tische von Schüler:innen mit weniger als 3 mündlichen Noten im Halbjahr werden getönt und mit „0/3“, „1/3“ oder „2/3“ markiert – sobald jemand 3 hat und die letzte Bewertung 2 Stunden her ist.','Unterrichts-Manager → Sitzplan','7.41'],
-   ['Hausaufgaben-Rahmen wird dicker','Ab der dritten fehlenden Hausaufgabe im Halbjahr wird der rote Rahmen am Tisch mit jeder weiteren etwas dicker.','Unterrichts-Manager → Sitzplan','7.41']]},
+   ['Wer braucht noch mündliche Noten?','Tische von Schüler:innen mit weniger als 3 mündlichen Noten im Halbjahr werden getönt und mit „0/3“, „1/3“ oder „2/3“ markiert – sobald jemand 3 hat und die letzte Bewertung 2 Stunden her ist.','Unterrichts-Manager → Sitzplan','7.41']]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
    ['Zwei Bereiche','Oben wechselst du zwischen Unterrichts-Manager (Sitzplan, Mitarbeit und Hausaufgaben im Unterricht) und Noten-Manager (Bewertungen, Tests, Klausuren, Zeugnisnoten). Beide nutzen dieselben Klassen und Schülerlisten.'],

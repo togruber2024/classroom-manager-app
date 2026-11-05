@@ -4108,6 +4108,90 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  document.head.append(st)})();
 ;
 
+/* ==== noten/phone-cards.js ==== */
+/* iPhone hochkant: Quartals- und Halbjahresübersicht als Karten (eine Karte pro Person) statt der breiten Tabelle.
+   Umschalter „Karten | Tabelle“ (gemerkt). Die Karten werden aus der fertigen Tabelle gebaut; Selbsteinschätzung und
+   Quartals-/Halbjahresnote sind in der Karte eintragbar und werden in die Tabelle übernommen (gleiches Speichern). */
+(()=>{
+ const PH=matchMedia('(max-width:540px) and (orientation:portrait)'),KEY='classroom-phone-cards-v1';
+ const mode=()=>{try{return localStorage.getItem(KEY)||'cards'}catch{return 'cards'}};
+ const short=t=>{t=String(t||'').replace(/\s+/g,' ').trim();
+  if(/^MM · Mittelwert/i.test(t))return 'MM Ø';if(/^HA · Fehlend/i.test(t))return 'HA fehlt';if(/^Material · Fehlend/i.test(t))return 'Mat. fehlt';
+  if(/^Sonstige Mitarbeit/i.test(t))return 'Sonst.';if(/^Selbsteinsch/i.test(t))return 'Selbst';if(/^Quartalsnote/i.test(t))return 'Quartalsnote';
+  if(/^Klassenarbeit/i.test(t))return 'KA';if(/^Klausur/i.test(t))return 'Klausur';if(/^Tests?\b/i.test(t))return 'Tests';
+  return t.length>14?t.slice(0,13)+'…':t};
+ let planned=false;
+ function schedule(){if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;run()})}
+ function run(){for(const panel of document.querySelectorAll('[data-quarter-summary]'))build(panel)}
+ function build(panel){
+  const table=panel.querySelector('table');if(!table||!table.tHead?.rows[0]||!table.tBodies[0])return;
+  const wrap=table.closest('.table-wrap')||table.parentElement;
+  let bar=panel.querySelector(':scope .qs-phone-bar');
+  if(!bar){bar=document.createElement('div');bar.className='qs-phone-bar';bar.innerHTML='<div class="qs-seg" role="group" aria-label="Darstellung"><button type="button" data-qs="cards">Karten</button><button type="button" data-qs="table">Tabelle</button></div>';
+   bar.onclick=e=>{const b=e.target.closest('[data-qs]');if(!b)return;try{localStorage.setItem(KEY,b.dataset.qs)}catch{}run()};}
+  if(bar.nextElementSibling!==wrap&&wrap.parentElement)wrap.before(bar);
+  let box=panel.querySelector(':scope .qs-cards');if(!box){box=document.createElement('div');box.className='qs-cards'}
+  if(bar.nextElementSibling!==box)bar.after(box);
+  const on=PH.matches&&mode()==='cards';panel.classList.toggle('qs-cards-on',on);
+  for(const b of bar.querySelectorAll('[data-qs]'))b.setAttribute('aria-pressed',String(b.dataset.qs===mode()));
+  if(!on){box.replaceChildren();box.dataset.sig='';return}
+  const heads=[...table.tHead.rows[0].cells].map(c=>c.textContent.replace(/\s+/g,' ').trim());
+  const sig=table.tBodies[0].rows.length+'|'+heads.join('|')+'|'+table.tBodies[0].textContent.length+'|'+[...table.querySelectorAll('input')].map(i=>i.value).join(',');
+  if(box.dataset.sig===sig&&box.childElementCount)return;box.dataset.sig=sig;
+  const frag=document.createDocumentFragment();
+  for(const row of table.tBodies[0].rows){
+   const cells=[...row.cells],name=cells[0]?.textContent.trim();if(!name)continue;
+   const card=document.createElement('article');card.className='qs-card';
+   const top=document.createElement('div');top.className='qs-top';const nm=document.createElement('b');nm.className='qs-name';nm.textContent=name;
+   const big=document.createElement('span');big.className='qs-big';top.append(nm,big);card.append(top);
+   const chips=document.createElement('div');chips.className='qs-chips';const edits=document.createElement('div');edits.className='qs-edits';
+   let bigText='',bigCls='';
+   cells.forEach((cell,i)=>{if(!i)return;const label=short(heads[i]);
+    if(cell.classList.contains('quarter-summary-edit-cell')){const orig=cell.querySelector('input');if(!orig)return;
+     const l=document.createElement('label');l.className='qs-edit';const s=document.createElement('span');s.textContent=label;const inp=document.createElement('input');inp.type='text';inp.value=orig.value;inp.placeholder=orig.placeholder||'—';inp.className=orig.className;inp.setAttribute('aria-label',orig.getAttribute('aria-label')||label);inp.inputMode='text';inp.autocomplete='off';
+     inp.onchange=()=>{orig.value=inp.value;orig.dispatchEvent(new Event('input',{bubbles:true}));orig.dispatchEvent(new Event('change',{bubbles:true}));inp.value=orig.value;inp.className=orig.className;box.dataset.sig='';schedule()};
+     l.append(s,inp);edits.append(l);if(orig.value.trim()){bigText=orig.value;bigCls=orig.className}else if(!bigText&&orig.placeholder&&orig.placeholder!=='—'){bigText=orig.placeholder;bigCls='qs-soft'}return}
+    if(!cell.classList.contains('quarter-summary-average'))return;
+    const src=cell.querySelector('span'),text=(src||cell).textContent.trim();
+    const chip=document.createElement('span');chip.className='qs-chip';const k=document.createElement('small');k.textContent=label;const v=document.createElement('i');v.textContent=text||'—';if(src?.className)v.className=src.className;
+    if(/fehlt/.test(label)&&Number(text.replace(',','.'))>=3)chip.classList.add('qs-alert');
+    if(src?.dataset.parentMailPage){chip.classList.add('qs-mail');chip.title='Eltern-Mail vorbereiten';chip.onclick=()=>src.click()}
+    chip.append(k,v);chips.append(chip);
+   });
+   if(!bigText){const avg=[...cells].reverse().find(c=>c.classList.contains('quarter-summary-average')&&!/fehl/i.test(heads[cells.indexOf(c)])&&/\d/.test(c.textContent));if(avg){bigText=avg.textContent.trim();bigCls=(avg.querySelector('span')?.className||'')+' qs-soft'}}
+   big.textContent=bigText||'—';big.className='qs-big '+(bigCls||'qs-empty');
+   card.append(chips);if(edits.childElementCount)card.append(edits);frag.append(card);
+  }
+  box.replaceChildren(frag);
+ }
+ new MutationObserver(list=>{if(list.some(m=>!m.target.closest?.('.qs-cards,.qs-phone-bar')))schedule()}).observe(document.body,{subtree:true,childList:true,characterData:true});
+ PH.addEventListener?.('change',schedule);schedule();
+ const st=document.createElement('style');st.textContent=
+  '.qs-phone-bar,.qs-cards{display:none}'
+  +'@media (max-width:540px) and (orientation:portrait){'
+  +'.qs-phone-bar{display:flex;justify-content:flex-end;margin:4px 0 10px}'
+  +'.qs-seg{display:inline-flex;padding:3px;gap:2px;border-radius:12px;background:#e7edf6}'
+  +'.qs-seg button{min-height:34px;padding:0 14px;border:0;border-radius:9px;background:transparent;color:#66758a;font:inherit;font-size:14px;font-weight:650;cursor:pointer}'
+  +'.qs-seg button[aria-pressed=true]{background:#fff;color:#2f5f9b;box-shadow:0 1px 4px #233d6018}'
+  +'.qs-cards-on .qs-cards{display:grid;gap:10px}'
+  +'.qs-cards-on .table-wrap,.qs-cards-on>table{display:none!important}'
+  +'.qs-card{padding:10px 12px;border:1px solid #dbe3ef;border-radius:14px;background:#fff;box-shadow:0 1px 3px #233d600d}'
+  +'.qs-top{display:flex;align-items:center;justify-content:space-between;gap:10px}'
+  +'.qs-name{font-size:16px;font-weight:650;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+  +'.qs-big{flex:none;min-width:46px;height:40px;padding:0 8px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;font-size:20px;font-weight:750;background:#eef2f7;color:#243247}'
+  +'.qs-big.qs-empty{color:#9aa6b6;font-weight:600}.qs-big.qs-soft{opacity:.75}'
+  +'.qs-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}'
+  +'.qs-chip{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 4px 0 9px;border:1px solid #e3e8f0;border-radius:999px;background:#f7f9fc;font-size:12.5px;color:#66758a}'
+  +'.qs-chip small{font-size:12px}.qs-chip i{font-style:normal;min-width:22px;padding:2px 7px;border-radius:999px;text-align:center;font-weight:700;color:#243247;background:#fff}'
+  +'.qs-chip.qs-alert{border-color:#e9a4a0;background:#fdf0ef;color:#b42318}.qs-chip.qs-mail{cursor:pointer}'
+  +'.qs-edits{display:flex;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid #eef2f7}'
+  +'.qs-edit{flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:#66758a}'
+  +'.qs-edit input{width:64px;min-height:36px;box-sizing:border-box;padding:4px 6px;border:1px solid #cbd6e5;border-radius:9px;text-align:center;font:inherit;font-size:16px;font-weight:650;color:#243247;background:#fff}'
+  +'}';
+ document.head.append(st);
+})();
+;
+
 /* ==== no-contacts.js ==== */
 /* Safari/iOS soll bei Schülernamen keine Einträge aus den eigenen Kontakten vorschlagen (Datenschutz, z. B. am Beamer).
    Namensfelder erhalten autocomplete="off" und ein name-Attribut, das Safari nicht als Kontaktfeld erkennt. */

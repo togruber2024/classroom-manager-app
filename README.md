@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 05.11.2026 · Version 7.68
+Stand: 05.11.2026 · Version 7.69
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -307,6 +307,7 @@ Manuell 10–150 %. Bei Drehung des iPads wird neu angepasst. Menüs und Buttons
 Auf dem aufgeklappten iPhone Duo im Querformat bleibt die Seitenleiste sichtbar.
 Auf dem iPhone öffnet ein Tisch das Bewertungsfenster als Blatt (hochkant unten, quer rechts). Es bleibt nach einer Bewertung offen; „Weiter ›“ und „‹ Zurück“ gehen Tisch für Tisch durch die Reihen („Reihe 1 · 3 von 24“), der aktuelle Tisch ist blau umrandet. Im Querformat steht die Leiste Unterricht · Noten · Backup · Mehr am linken Rand.
 Auf dem iPhone zeigt der Sitzplan keine Spaltenbuchstaben und Reihennummern und keinen Hinweistext; der Zoom hat nur − und +, „Einpassen“ und „100 %“ stehen unter ⋯. So nutzen die Tische die ganze Breite.
+Auf dem iPhone (hochkant) zeigt die Quartals- und Halbjahresübersicht im Noten-Manager eine Karte pro Person statt der breiten Tabelle: Note groß, darunter die Mittelwerte (MM Ø, HA fehlt, Sonstige Mitarbeit, Klassenarbeit). Selbsteinschätzung und Quartals-/Halbjahresnote sind direkt in der Karte eintragbar. Mit „Karten | Tabelle“ lässt sich umschalten; die Wahl wird gemerkt.
 
 SITZREGELN, RÄUME, HISTORIE UND ABWESENHEIT
 Verteilung: einzeln, Zufallspaare, gleichgeschlechtliche oder feste Paare; Reihenfolge und Richtung
@@ -943,3 +944,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.67: iPhone: Bewertungsfenster als Blatt mit Zurück/Weiter, bleibt nach der Bewertung offen, aktueller Tisch blau umrandet; quer Leiste links
 
 7.68: iPhone-Sitzplan kompakter: ohne Koordinaten und Hinweistext, Zoom nur mit −/+, Raumtitel und Moduswechsel in einer Zeile
+
+7.69: iPhone: Quartals- und Halbjahresübersicht als Karten mit Umschalter Karten/Tabelle; Selbsteinschätzung und Quartalsnote in der Karte eintragbar
