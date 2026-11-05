@@ -4173,7 +4173,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    const kaTile=e=>[{text:e.text,cls:e.cls,date:examDates[e.head]||''}].filter(x=>x.text&&x.text!=='—');
    if(exams.length===1)box.append(sect(ka(exams[0]),we,exams[0],kaTile(exams[0]),0,{kind:'ka'}));else if(exams.length){box.append(caption('Klausuren',we,0));for(const e of exams)box.append(sect(ka(e),null,e,kaTile(e),1,{kind:'ka'}))}
   }else{
-   if(other)box.append(barRow(other,null,0));if(mm||prev.mm?.length)box.append(sect('Mündliche Mitarbeit',wm,mm,mmList,0,{avg:1,prev:prev.mm}));if(tests||prev.tests?.length)box.append(sect('Tests',wt,tests,testList,0,{avg:1,kind:'t',prev:prev.tests}));
+   if(other)box.append(barRow(other,null,0));/* Bestandteile der Sonstigen Mitarbeit leicht eingerückt mit senkrechtem Strich */const sub=document.createElement('div');sub.className='qs-sub';if(mm||prev.mm?.length)sub.append(sect('Mündliche Mitarbeit',wm,mm,mmList,0,{avg:1,prev:prev.mm}));if(tests||prev.tests?.length)sub.append(sect('Tests',wt,tests,testList,0,{avg:1,kind:'t',prev:prev.tests}));if(sub.childElementCount){if(!other)sub.className='qs-sub-flat';box.append(sub)}
    /* Klassenarbeit ganz unten in der Karte (nach HA/Material) */for(const e of exams)tail.push(sect(ka(e),null,e,[{text:e.text,cls:e.cls,date:examDates[e.head]||''}].filter(x=>x.text&&x.text!=='—'),0,{kind:'ka'}))
   }
   for(const it of items)box.append(barRow(it,null,0));
@@ -4219,7 +4219,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&detail)closeDetail()});
  const step=d=>{if(!detail)return;const rows=[...(detail.panel.querySelector('table')?.tBodies[0]?.rows||[])],i=rows.findIndex(r=>r.cells[0]?.textContent.trim()===detail.name),n=rows[i+d];if(n){detail.name=n.cells[0].textContent.trim();renderDetail();sheet.querySelector('.qd-body').scrollTop=0}};
  sheet.querySelectorAll('.qd-nav').forEach(b=>b.onclick=()=>step(Number(b.dataset.d)));
- {let x0=null,y0=0;const pnl=sheet.querySelector('.qd-panel');pnl.addEventListener('touchstart',e=>{if(e.target.closest('input'))return;x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});pnl.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)step(dx<0?1:-1)},{passive:true})}
+ /* Wischen: waagerecht = nächste/vorige Person; nach unten (oben am Blatt oder ganz hochgescrollt) = Blatt schließen (7.95) */
+ {let x0=null,y0=0,down=false,dy=0;const pnl=sheet.querySelector('.qd-panel'),body=sheet.querySelector('.qd-body');
+  pnl.addEventListener('touchstart',e=>{if(e.target.closest('input'))return;x0=e.touches[0].clientX;y0=e.touches[0].clientY;dy=0;down=!body.contains(e.target)||body.scrollTop<=0;pnl.style.transition='none'},{passive:true});
+  pnl.addEventListener('touchmove',e=>{if(x0===null||!down)return;const mx=e.touches[0].clientX-x0;dy=e.touches[0].clientY-y0;if(dy>0&&dy>Math.abs(mx)){pnl.style.transform='translateY('+dy+'px)';if(e.cancelable)e.preventDefault()}else if(dy<0){down=false;pnl.style.transform=''}},{passive:false});
+  pnl.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,ddy=e.changedTouches[0].clientY-y0;x0=null;pnl.style.transition='transform .18s ease';
+   if(down&&ddy>90&&ddy>Math.abs(dx)){pnl.style.transform='translateY(100%)';setTimeout(()=>{closeDetail();pnl.style.transition='none';pnl.style.transform=''},180);return}
+   pnl.style.transform='';if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(ddy)*1.5)step(dx<0?1:-1)},{passive:true})}
  const groupName=p=>({MM:'Mündliche Mitarbeit',HA:'Hausaufgaben',Material:'Material'}[p]||p);
  function openDetail(panel,name){detail={panel,name};renderDetail();sheet.hidden=false;sheet.querySelector('.qd-body').scrollTop=0}
  function renderDetail(){
@@ -4393,7 +4399,11 @@ return}
   +'.qs-split .qs-hj{display:none}.q1-open .qs-split .qs-hj{display:inline-block}.qs-cnt-h{display:none!important}.q1-open .qs-cnt-h{display:inline-flex!important}.q1-open .qs-split .qs-cnt-q{display:none!important}'
   +'.qs-sq i.qs-x:not(#_){background:#fdf0ef;color:#b42318;border:1px solid #e9a4a0;font-size:11px}.qs-miss{margin-top:0}'
   +'b.qs-miss-n.is-alert:not(#_){background:#f6d4d0;border-color:#d9675e}'
-  +'.qs-top>.qs-name{flex:1;min-width:0}.qs-q1chip{display:inline-flex;flex-direction:column;align-items:center;gap:5px;margin-top:-6px;margin-right:2px}.qs-q1chip small{font-size:9px;font-weight:700;color:#2f5f9b;line-height:1}.qs-q1chip i:not(#_){font-style:normal;min-width:40px;height:30px;padding:0 6px;box-sizing:border-box;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#243247;box-shadow:0 0 0 2.5px #2f5f9b}'
+  +'.qs-top>.qs-name{flex:1;min-width:0}.qs-q1chip{display:inline-flex;flex-direction:column;align-items:center;gap:5px;margin-top:-6px;margin-right:2px}.qs-q1chip small{font-size:9px;font-weight:700;color:#2f5f9b;line-height:1}.qs-q1chip i:not(#_){font-style:normal;min-width:40px;height:30px;padding:0 6px;box-sizing:border-box;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#243247;outline:2.5px solid #2f5f9b;outline-offset:0}'
+  /* 7.95: Wert rechts genau auf Höhe der Kästchen; Bestandteile der Sonstigen Mitarbeit eingerückt */
+  +'.qs-row>.qs-val{margin-top:2px;align-self:flex-start}.qs-row>.qs-val>:is(i,b):not(#_){height:24px;min-height:24px;line-height:1}.qs-row:has(.qs-ka)>.qs-val{margin-top:4px}'
+  +'.qs-sub,.qs-sub-flat{display:grid;gap:8px}.qs-sub{margin-left:3px;padding-left:10px;border-left:2px solid #e3e8f0}'
+  +'.qd-panel{will-change:transform}'
   +'.qd-edits{border-top:0}.qd-prev{background:#f7f9fc;margin:6px -16px 0;padding:10px 16px}.qd-prev h4{color:#66758a}'
   +'}';
  document.head.append(st);
