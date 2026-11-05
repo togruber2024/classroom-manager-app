@@ -1834,8 +1834,10 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
  const tryPlace=()=>{place();if(!document.querySelector('.compact-navigation'))setTimeout(tryPlace,300)};tryPlace();
  const st=document.createElement('style');st.textContent=
   '.phone-tabbar,.phone-sheet{display:none}'
+  /* Mit viewport-fit=cover: Inhalt nicht unter Home-Balken oder Kamera-Aussparung (iPhone/iPad als App) */
+  +'body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}'
   +'@media (max-width:540px) and (orientation:portrait){'
-  +'body{padding-bottom:calc(62px + env(safe-area-inset-bottom))}'
+  +'body:not(#_){padding-bottom:calc(66px + max(env(safe-area-inset-bottom),10px))}'
   +'.app-header:not(#_){position:relative;z-index:9450;display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:8px!important;padding:8px 12px!important}'
   +'.app-header .brand{flex:none!important;gap:0!important}.app-header .brand>div{display:none!important}.app-header .brand-mark{width:32px!important;height:32px!important}'
   +'.app-header>.module-tabs{display:none!important}'
@@ -1856,8 +1858,8 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   +'.app-header>.compact-navigation .compact-navigation-flyout::before{content:"";position:absolute;top:9px;left:50%;width:40px;height:5px;margin-left:-20px;border-radius:3px;background:#cbd6e5}'
   +'.app-header>.compact-navigation .compact-navigation-row:not(#_){gap:8px;margin:0 0 12px}'
   +'.compact-navigation-backdrop:not([hidden]){position:fixed!important;inset:0!important;z-index:9400!important;background:#1c2b4645!important}'
-  +'.phone-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:9000;justify-content:space-around;padding:6px 6px env(safe-area-inset-bottom);background:#fffffff2;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid #e3e8f0}'
-  +'.phone-tabbar button{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:52px;padding:4px 0;border:0;background:none;color:#8794a7;font:inherit;font-size:10.5px;font-weight:600;cursor:pointer}'
+  +'.phone-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:9000;justify-content:space-around;padding:6px calc(18px + env(safe-area-inset-right)) max(env(safe-area-inset-bottom),10px) calc(18px + env(safe-area-inset-left));background:#fffffff2;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid #e3e8f0}'
+  +'.phone-tabbar button{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:56px;padding:6px 0 4px;border:0;background:none;color:#8794a7;font:inherit;font-size:10.5px;font-weight:600;cursor:pointer}'
   +'.phone-tabbar button svg{width:24px;height:24px}.phone-tabbar button.on{color:#2f5f9b;font-weight:750}'
   +'.phone-tabbar .ph-dot{position:absolute;top:3px;left:calc(50% + 6px);width:9px;height:9px;border-radius:50%;background:#e39a3b;border:2px solid #fff}'
   +'.phone-sheet:not([hidden]){display:block;position:fixed;inset:0;z-index:9600}.phone-sheet .ph-back{position:absolute;inset:0;background:#1c2b4645}'
