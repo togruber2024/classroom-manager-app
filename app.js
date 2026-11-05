@@ -110,7 +110,7 @@
  }
  const BLOCK=/^(drucken|drucken …|backup|excel.*|export.*|abgleich senden|abgleich einlesen|jetzt teilen|als excel.*|pdf.*|word.*)$/i;
  const say=()=>{(window.classroomAlert||alert)('Im Datenschutzmodus nicht verfügbar. Bitte den Datenschutzmodus zuerst ausschalten.')};
- document.addEventListener('click',e=>{if(!document.documentElement.classList.contains('classroom-privacy'))return;const b=e.target.closest?.('button,a,[role=menuitem]');if(!b)return;const t=(b.textContent||'').replace(/\s+/g,' ').trim();if(BLOCK.test(t)||b.id==='classroomBackupButton'||b.id==='classroomQuickBackup'||b.matches('.page-print-button,[data-print],#exportButton')){e.preventDefault();e.stopImmediatePropagation();say()}},true);
+ document.addEventListener('click',e=>{if(!document.documentElement.classList.contains('classroom-privacy'))return;const b=e.target.closest?.('button,a,[role=menuitem]');if(!b)return;const t=(b.textContent||'').replace(/\s+/g,' ').trim();if(BLOCK.test(t)||b.id==='classroomBackupButton'||b.id==='classroomQuickBackup'||b.id==='classroomQuickRestore'||b.id==='classroomRestoreUndoButton'||b.matches('.cr-undo')||b.matches('.page-print-button,[data-print],#exportButton')){e.preventDefault();e.stopImmediatePropagation();say()}},true);
  document.addEventListener('copy',e=>{if(document.documentElement.classList.contains('classroom-privacy'))e.preventDefault()},true);
  const nativePrint=window.print?.bind(window);window.print=function(){if(document.documentElement.classList.contains('classroom-privacy'))return say();return nativePrint?.()};
  window.addEventListener('message',e=>{if(e.data?.type==='classroom:privacy')apply(e.data.state)});
@@ -551,11 +551,35 @@ document.getElementById('classroomExportBackup').onclick=async()=>{
  }catch(error){status.textContent=error.name==='AbortError'?'Speichern abgebrochen.':error.message}
 };
 document.getElementById('classroomImportBackup').onclick=()=>document.getElementById('classroomBackupFile').click();
+// Wiederherstellen (Datei-Auswahl, Schnell-Wiederherstellen ⬆ und „Rückgängig“ nutzen denselben Weg).
+// Vor jedem Wiederherstellen wird der aktuelle Stand in IndexedDB gesichert, damit er sich zurückholen lässt.
+const classroomUndoDb=()=>new Promise((resolve,reject)=>{const r=indexedDB.open('classroom-manager-restore-undo',1);r.onupgradeneeded=()=>r.result.createObjectStore('snap');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});
+async function classroomUndoStore(value){const d=await classroomUndoDb();try{return await new Promise((resolve,reject)=>{const tx=d.transaction('snap',value===undefined?'readonly':'readwrite'),st=tx.objectStore('snap');let out;const r=value===undefined?st.get('last'):value===null?st.delete('last'):st.put(value,'last');r.onsuccess=()=>{out=r.result};tx.oncomplete=()=>resolve(out);tx.onerror=()=>reject(tx.error)})}finally{d.close()}}
+window.classroomRestoreUndoInfo=async()=>{try{const v=await classroomUndoStore();return v?{at:v.at,label:v.label,restored:v.restored}:null}catch{return null}};
+async function classroomRestoreBackup(backup,{confirmText,restoredLabel}={}){
+ const status=document.getElementById('classroomBackupStatus');let before;
+ try{
+  if(confirmText&&!await classroomConfirm(confirmText))return false;
+  before=await classroomBackupData();
+  try{await classroomUndoStore({data:before,at:new Date().toISOString(),restored:restoredLabel||''})}catch(e){window.classroomLogError?.('Wiederherstellen: Sicherung für „Rückgängig“ nicht möglich ('+e.message+')','classroom-link.js')}
+  classroomRestoring=true;let classroomDirect=false;
+  try{if(classroomBackupWasDirect)throw new Error('Die Anwendung antwortet nicht (bereits beim Sichern).');await Promise.all([classroomCall(classroomNotes,'classroom:restore',{values:backup.notes}),classroomCall(classroomSeats,'classroom:restore',{values:backup.seats})])}catch(error){if(!/antwortet/.test(error.message))throw error;window.classroomLogError?.('Wiederherstellen: direkt in den Speicher geschrieben ('+error.message+')','classroom-link.js');classroomDirectRestore(backup);classroomDirect=true}
+  classroomModel=backup.model;classroomPersist();window.classroomSyncReset?.();try{sessionStorage.setItem('classroom-restore-done',restoredLabel||'Backup')}catch{}backupDialog.close();if(classroomDirect){classroomNotes.remove();classroomSeats.remove()}location.reload();return true;
+ }catch(error){if(before&&classroomRestoring){try{await Promise.all([classroomCall(classroomNotes,'classroom:restore',{values:before.notes}),classroomCall(classroomSeats,'classroom:restore',{values:before.seats})]);classroomModel=before.model;classroomPersist();if(status)status.textContent='Das Laden wurde abgebrochen. Die bisherigen Daten wurden wiederhergestellt.'}catch(rollback){if(status)status.textContent='Die Wiederherstellung ist fehlgeschlagen. Bitte das zuvor gespeicherte Backup laden.'}}else if(status)status.textContent=error.message;classroomRestoring=false;throw error}
+}
+const classroomStamp=iso=>{if(!iso)return '';const d=new Date(iso);return isNaN(d)?'':d.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})};
+window.classroomRestoreFile=async file=>{
+ const fromExcel=/\.xlsx$/i.test(file.name)||/spreadsheetml/.test(file.type),backup=classroomValidBackup(await (window.classroomMaybeDecrypt||(x=>x))(JSON.parse(fromExcel?await classroomBackupFromXlsx(file):await file.text())));const stamp=classroomStamp(backup.createdAt);
+ return classroomRestoreBackup(backup,{restoredLabel:stamp?'Backup vom '+stamp:'Backup',confirmText:fromExcel?`Die Excel-Datei enthält ein vollständiges Backup${stamp?' vom '+stamp:''}. Es ersetzt alle Daten im Classroom-Manager. Änderungen, die nachträglich in Excel vorgenommen wurden, werden nicht übernommen. Fortfahren?`:`Das gemeinsame Backup${stamp?' vom '+stamp:''} ersetzt alle Daten im Classroom-Manager. Fortfahren?`});
+};
+window.classroomRestoreUndo=async()=>{
+ const snap=await classroomUndoStore();if(!snap?.data){await classroomAlert('Es gibt keine Wiederherstellung, die sich rückgängig machen lässt.');return false}
+ const backup=classroomValidBackup(snap.data),at=classroomStamp(snap.at);
+ return classroomRestoreBackup(backup,{restoredLabel:'Stand von '+at+' (vor der Wiederherstellung)',confirmText:`Den Stand von ${at}, also vor der letzten Wiederherstellung, zurückholen? Die jetzigen Daten werden dabei ersetzt – auch das lässt sich wieder rückgängig machen.`});
+};
 document.getElementById('classroomBackupFile').onchange=async event=>{
- const file=event.target.files[0];if(!file)return;const status=document.getElementById('classroomBackupStatus');let before;
- try{const fromExcel=/\.xlsx$/i.test(file.name)||/spreadsheetml/.test(file.type),backup=classroomValidBackup(await (window.classroomMaybeDecrypt||(x=>x))(JSON.parse(fromExcel?await classroomBackupFromXlsx(file):await file.text())));const stamp=backup.createdAt?new Date(backup.createdAt).toLocaleString('de-DE',{dateStyle:'medium',timeStyle:'short'}):'';if(!await classroomConfirm(fromExcel?`Die Excel-Datei enthält ein vollständiges Backup${stamp?' vom '+stamp:''}. Es ersetzt alle Daten im Classroom-Manager. Änderungen, die nachträglich in Excel vorgenommen wurden, werden nicht übernommen. Fortfahren?`:'Das gemeinsame Backup ersetzt alle Daten im Classroom-Manager. Fortfahren?'))return;before=await classroomBackupData();classroomRestoring=true;let classroomDirect=false;
-  try{if(classroomBackupWasDirect)throw new Error('Die Anwendung antwortet nicht (bereits beim Sichern).');await Promise.all([classroomCall(classroomNotes,'classroom:restore',{values:backup.notes}),classroomCall(classroomSeats,'classroom:restore',{values:backup.seats})])}catch(error){if(!/antwortet/.test(error.message))throw error;window.classroomLogError?.('Wiederherstellen: direkt in den Speicher geschrieben ('+error.message+')','classroom-link.js');classroomDirectRestore(backup);classroomDirect=true}classroomModel=backup.model;classroomPersist();window.classroomSyncReset?.();backupDialog.close();if(classroomDirect){classroomNotes.remove();classroomSeats.remove()}location.reload();
- }catch(error){if(before&&classroomRestoring){try{await Promise.all([classroomCall(classroomNotes,'classroom:restore',{values:before.notes}),classroomCall(classroomSeats,'classroom:restore',{values:before.seats})]);classroomModel=before.model;classroomPersist();status.textContent='Das Laden wurde abgebrochen. Die bisherigen Daten wurden wiederhergestellt.'}catch(rollback){status.textContent='Die Wiederherstellung ist fehlgeschlagen. Bitte das zuvor gespeicherte Backup laden.'}}else status.textContent=error.message;classroomRestoring=false;}finally{event.target.value=''}
+ const file=event.target.files[0];if(!file)return;const status=document.getElementById('classroomBackupStatus');
+ try{await window.classroomRestoreFile(file)}catch(error){if(status&&!status.textContent)status.textContent=error.message}finally{event.target.value=''}
 };
 const rosterDialog=document.createElement('dialog');rosterDialog.className='classroom-dialog';rosterDialog.innerHTML='<h2>Gemeinsame Klassenliste</h2><label>Klasse<select id="classroomRosterClass"></select></label><p>Die Namen gelten in allen Fächern, im Sitzplan und auf den Bewertungsseiten dieser Klasse.</p><div id="classroomRosterRows"></div><button type="button" id="classroomRosterAdd">+ Schüler:in</button><p role="status" id="classroomRosterError"></p><div class="classroom-dialog-actions"><button type="button" id="classroomRosterCancel">Abbrechen</button><button type="button" id="classroomRosterSave">Speichern</button></div>';
 document.body.append(rosterDialog);let rosterDraft=[];
@@ -1062,6 +1086,30 @@ window.addEventListener('message',event=>{
   const msg=(status?.textContent||'').trim(),ok=/gespeichert|bereitgestellt/i.test(msg);
   if(ok){q.classList.add('is-ok');q.innerHTML=OK;q.title=msg;setTimeout(()=>{q.classList.remove('is-ok');q.innerHTML=ICON;q.title='Backup sofort speichern (JSON)'},2000)}
   else if(msg&&!/abgebrochen/i.test(msg)){main.click()}};
+ // ⬆ Neuestes Backup sofort wiederherstellen: am Mac (Chrome/Edge) aus dem festen Ordner bzw. dem Ordner der
+ // automatischen Sicherung, sonst (Safari, iPad) über die Dateiauswahl. Rückfrage und „Rückgängig“ wie beim normalen Wiederherstellen.
+ const UP='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V9"/><path d="m7 14 5-5 5 5"/><path d="M5 5h14"/></svg>';
+ const r=document.createElement('button');r.type='button';r.id='classroomQuickRestore';r.className='cb-quick cb-restore';r.innerHTML=UP;r.title='Neuestes Backup wiederherstellen (mit Rückfrage, lässt sich rückgängig machen)';r.setAttribute('aria-label','Neuestes Backup wiederherstellen');wrap.append(r);
+ const st2=document.createElement('style');st2.textContent='.cb-split>.cb-quick+.cb-quick{border-left:1px solid #cbd6e5!important}.cb-split>.cb-quick:not(:last-child){border-top-right-radius:0!important;border-bottom-right-radius:0!important}.classroom-restore-banner{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:10px 16px 0;padding:10px 14px;border:1px solid #b7dfc4;border-radius:12px;background:#eefaf2;color:#1f5133;font-size:.92rem}.classroom-restore-banner .cr-actions{display:flex;gap:8px;flex:0 0 auto}.classroom-restore-banner button,.classroom-restore-undo{box-sizing:border-box;height:36px;padding:0 14px;border:1px solid #cbd6e5;border-radius:9px;background:#fff;color:#2f5f9b;font:inherit;font-size:.9rem;cursor:pointer}.classroom-restore-undo{width:100%;margin-top:10px}@media (max-width:540px){.cb-split>.cb-quick{flex:0 0 34px!important;width:34px!important;min-width:34px!important}.cb-split>#classroomBackupButton{min-width:0!important;padding-inline:6px!important;font-size:.86rem!important}}@media screen and (max-width:540px) and (orientation:portrait){.app-header .classroom-global-actions.classroom-global-actions:has(.cb-restore){grid-template-columns:42px 42px minmax(0,.9fr) minmax(0,1.1fr)!important}.app-header .cb-split{width:100%}.app-header .cb-split>#classroomBackupButton{flex:1 1 auto}}';document.head.append(st2);
+ const idb=(name,key)=>new Promise(res=>{try{const q=indexedDB.open(name,1);q.onupgradeneeded=()=>{q.result.createObjectStore('settings')};q.onerror=()=>res(null);q.onsuccess=()=>{const d=q.result;try{const g=d.transaction('settings','readonly').objectStore('settings').get(key);g.onsuccess=()=>{d.close();res(g.result||null)};g.onerror=()=>{d.close();res(null)}}catch{d.close();res(null)}}}catch{res(null)}});
+ async function folders(){const out=[];let mode='';try{mode=localStorage.getItem('classroom-backup-location-v1')||''}catch{}
+  if(mode==='folder'){const v=await idb('classroom-manager-backup-location','folder');if(v?.handle)out.push(v.handle)}
+  const a=await idb('classroom-manager-auto-backup','folder');if(a?.enabled&&a.handle)out.push(a.handle);return out}
+ async function newest(handles){let best=null;for(const h of handles){try{let p=await h.queryPermission({mode:'read'});if(p!=='granted')p=await h.requestPermission({mode:'read'});if(p!=='granted')continue;
+   for await(const [name,entry] of h.entries()){if(entry.kind!=='file'||!/^Classroom-Manager-.*\.(json|xlsx)$/i.test(name)||/archiv/i.test(name))continue;const f=await entry.getFile();if(!best||f.lastModified>best.lastModified)best=f}}catch(e){console.warn(e)}}return best}
+ const picker=()=>document.getElementById('classroomBackupFile')?.click();
+ r.onclick=async()=>{if(typeof window.showDirectoryPicker!=='function'){picker();return}
+  const hs=await folders();if(!hs.length){picker();return}
+  const f=await newest(hs);if(!f){await (window.classroomAlert||alert)('Im Backup-Ordner wurde kein Backup gefunden. Bitte die Datei auswählen.');picker();return}
+  try{await window.classroomRestoreFile(f)}catch(e){await (window.classroomAlert||alert)('Das Backup „'+f.name+'“ konnte nicht geladen werden: '+e.message)}};
+ // Nach dem Wiederherstellen: Hinweis mit „Rückgängig“; im Backup-Dialog bleibt die letzte Wiederherstellung rückgängig zu machen.
+ let done=null;try{done=sessionStorage.getItem('classroom-restore-done');sessionStorage.removeItem('classroom-restore-done')}catch{}
+ if(done){const b=document.createElement('div');b.className='classroom-restore-banner';b.setAttribute('role','status');b.innerHTML='<span class="cr-text"></span><span class="cr-actions"><button type="button" class="cr-undo">Rückgängig</button><button type="button" class="cr-ok">OK</button></span>';b.querySelector('.cr-text').textContent='✓ '+done+' wiederhergestellt.';b.querySelector('.cr-ok').onclick=()=>b.remove();b.querySelector('.cr-undo').onclick=()=>window.classroomRestoreUndo?.();
+  const place=()=>{const h=document.querySelector('.app-header');if(h){h.after(b);return true}return false};if(!place())addEventListener('DOMContentLoaded',place,{once:true})}
+ const undoBtn=document.createElement('button');undoBtn.type='button';undoBtn.className='classroom-restore-undo';undoBtn.id='classroomRestoreUndoButton';undoBtn.hidden=true;undoBtn.onclick=()=>window.classroomRestoreUndo?.();
+ (dialog?.querySelector('.classroom-dialog-actions')||dialog?.lastElementChild)?.after(undoBtn);
+ async function refreshUndo(){const i=await window.classroomRestoreUndoInfo?.();undoBtn.hidden=!i;if(i)undoBtn.textContent='↶ Letzte Wiederherstellung rückgängig machen · Stand von '+new Date(i.at).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}
+ if(dialog)new MutationObserver(()=>{if(dialog.open)refreshUndo()}).observe(dialog,{attributes:true,attributeFilter:['open']});
 })();
 ;
 
@@ -1467,6 +1515,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['Backup sofort wiederherstellen','Der Knopf ⬆ neben „Backup“ lädt das neueste Backup (am Mac aus dem festen Ordner, sonst per Dateiauswahl) – mit Rückfrage. Jede Wiederherstellung lässt sich rückgängig machen.','oben rechts → ⬆ neben „Backup“','7.55'],
    ['Hinweis auf neue Versionen','Gibt es eine neuere Version, erscheint oben „Neue Version … verfügbar“ – „Jetzt aktualisieren“ lädt sie sofort, die Daten bleiben erhalten.','oben unter der Kopfzeile','7.52'],
    ['„Fehlend“ zählt übers Halbjahr','Auf den Hausaufgaben- und Materialseiten des 2. (4.) Quartals zählt die Spalte „Fehlend“ die fehlenden Einträge aus dem 1. (3.) Quartal mit – auch für die Eltern-Mail.','Noten-Manager → Hausaufgaben','7.48'],
    ['„M“ für fehlendes Material','Im Sitzplan zeigt ein oranges „M“ unten links am Tisch fehlendes Material; ab dem 3. Mal im Halbjahr steht dort die Anzahl.','Unterrichts-Manager → Sitzplan','7.42'],
@@ -1475,8 +1524,7 @@ window.addEventListener('message',event=>{
    ['Hausaufgaben-Rahmen wird dicker','Ab der dritten fehlenden Hausaufgabe im Halbjahr wird der rote Rahmen am Tisch mit jeder weiteren etwas dicker.','Unterrichts-Manager → Sitzplan','7.41'],
    ['Kurze Titel in der Übersicht','Lange Themen von Klassenarbeiten werden in der Übersicht gekürzt (z. B. „L15“); der volle Titel erscheint beim Darüberfahren.','Klassenarbeiten-Übersicht','7.41'],
    ['Schnell-Backup','Der kleine Knopf mit Download-Symbol neben „Backup“ speichert sofort ein Backup – ein grüner Haken bestätigt es.','oben rechts → neben „Backup“','7.40'],
-   ['„＋ Test“ und „＋ Klassenarbeit“','Neue Tests und Arbeiten legst du mit dem gestrichelten Kasten im Kopf der rechten Spalte an.','Tests- bzw. Klassenarbeiten-Übersicht','7.40'],
-   ['Aus | Schraffur | Rahmen als Symbole','Der Umschalter für Tendenzen zeigt drei kleine Bilder statt Text; beim Darüberfahren steht, was sie bedeuten.','Ergebnisse → rechts oben','7.40']]},
+   ['„＋ Test“ und „＋ Klassenarbeit“','Neue Tests und Arbeiten legst du mit dem gestrichelten Kasten im Kopf der rechten Spalte an.','Tests- bzw. Klassenarbeiten-Übersicht','7.40']]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
    ['Zwei Bereiche','Oben wechselst du zwischen Unterrichts-Manager (Sitzplan, Mitarbeit und Hausaufgaben im Unterricht) und Noten-Manager (Bewertungen, Tests, Klausuren, Zeugnisnoten). Beide nutzen dieselben Klassen und Schülerlisten.'],
@@ -1511,6 +1559,7 @@ window.addEventListener('message',event=>{
    ['Drucken und Excel','„Drucken“ auf jeder Seite erzeugt eine A4-Hochformat-Ansicht. Eine Excel-Datei mit allen Bewertungstabellen erhältst du im Backup-Dialog mit dem Format „Excel“.']]},
   {id:'backup',title:'Backup und Datenschutz',items:[
    ['Backup speichern','„Backup“ oben rechts → „Speichern“. JSON ist die reine Sicherungsdatei; Excel enthält zusätzlich alle Bewertungstabellen und lässt sich ebenfalls wiederherstellen. Ein orangefarbener Punkt am Backup-Button erinnert, wenn das letzte Backup älter als 7 Tage ist. Schneller geht es mit dem kleinen Download-Knopf rechts neben „Backup“: Er speichert sofort ein JSON-Backup, ein grüner Haken bestätigt es.'],
+   ['Backup sofort wiederherstellen','Der Knopf ⬆ ganz rechts neben „Backup“ lädt das neueste Backup – am Mac (Chrome/Edge) automatisch aus dem festen Ordner bzw. dem Ordner der automatischen Sicherung, sonst über die Dateiauswahl. Vorher kommt eine Rückfrage mit Datum. Danach erscheint oben „Rückgängig“; im Backup-Dialog lässt sich die letzte Wiederherstellung auch später noch zurücknehmen.'],
    ['Speicheranzeige','Backup → „Speicher“ zeigt, wie voll der Browserspeicher ist und was den meisten Platz braucht. Ab 85 % erscheint oben eine Warnung mit „Backup öffnen“.'],
    ['Wiederherstellen','Im Backup-Dialog „Wiederherstellen“ und eine JSON- oder Excel-Sicherung wählen. Das ersetzt alle aktuellen Daten – vorher ggf. ein Backup speichern.'],
    ['Speicherort für Backups','Am Desktop (Chrome, Edge) unter Backup → Speicherort: Downloads, jedes Mal fragen oder ein fester Ordner (z. B. in iCloud Drive). Chrome fragt höchstens einmal pro Sitzung nach der Schreiberlaubnis. Auf iPad/iPhone wird wie gewohnt über „Teilen / In Dateien sichern“ gespeichert.'],

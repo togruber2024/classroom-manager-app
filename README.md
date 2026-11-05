@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 05.11.2026 · Version 7.54
+Stand: 05.11.2026 · Version 7.55
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -37,6 +37,12 @@ Daten werden im Browserprofil des jeweiligen Geräts gespeichert, nicht in der H
 • „Speichern“, „Wiederherstellen“, „Schließen“. Wiederherstellen ersetzt alle Daten nach Bestätigung.
 • Schnell-Backup: Der kleine Download-Knopf rechts neben „Backup“ speichert sofort ein JSON-Backup
   (am gewählten Speicherort); ein grüner Haken bestätigt es. Klappt das nicht, öffnet sich der Backup-Dialog.
+• Schnell-Wiederherstellen (⬆ ganz rechts): lädt das neueste Backup – am Mac in Chrome/Edge automatisch aus dem
+  festen Ordner bzw. dem Ordner der automatischen Sicherung, sonst (Safari, iPad) über die Dateiauswahl. Rückfrage mit
+  Datum des Backups.
+• Jede Wiederherstellung lässt sich rückgängig machen: Vorher wird der aktuelle Stand im Browser gesichert. Danach
+  erscheint oben „… wiederhergestellt · Rückgängig“; im Backup-Dialog bleibt „Letzte Wiederherstellung rückgängig
+  machen“ bis zur nächsten Wiederherstellung.
 • „Speicher“ (aufklappbar): zeigt, wie voll der Browserspeicher ist und welcher Bereich den meisten
   Platz braucht. Ab 85 % erscheint oben in der App eine Warnung („Backup öffnen“ · „Später“).
 Das Backup enthält Fächer, Klassen, Namen, Geschlechtsangaben, Bewertungen, Hausaufgaben,
@@ -907,3 +913,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.53: Datenschutzmodus im Sitzplan: Namen auch auf bewerteten Tischen unscharf, jeder Tisch eine echte Zufallsfarbe, Rahmen und Hinweise ausgeblendet
 
 7.54: Sitzplan: „Perspektive“ steht jetzt links neben „Schüler finden“
+
+7.55: Backup sofort wiederherstellen (⬆ neben „Backup“); jede Wiederherstellung lässt sich rückgängig machen; Rückfrage nennt das Datum des Backups
