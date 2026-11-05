@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 05.11.2026 · Version 7.85
+Stand: 05.11.2026 · Version 7.86
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -982,3 +982,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.84: iPhone-Kopfzeile: Backup speichern ⬇ | wiederherstellen ⬆ als runde Doppel-Pille, runder Rückgängig-Knopf, schmalere Auswahl; Version als Marke hinter „Hilfe“ im Blatt „Mehr“
 
 7.85: iPhone: Leiste unten Unterricht · Noten · Aktuell · Hilfe; „Aktuell“ öffnet die Lerngruppe laut Stundenplan (sonst die zuletzt unterrichtete); oben nur Lerngruppe, Datenschutz, Backup und Rückgängig
+
+7.86: iPhone-Kopfzeile: Rückgängig-Pfeil mittig, alle runden Knöpfe gleich groß, Kopfzeile passt wieder in die Breite
