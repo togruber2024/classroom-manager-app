@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 05.11.2026 · Version 7.75
+Stand: 05.11.2026 · Version 7.76
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -960,3 +960,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.74: iPhone: Karten-Ansicht lässt sich nicht mehr seitlich verschieben (nur senkrecht scrollen); Halbjahresübersicht zeigt groß die Halbjahresnote
 
 7.75: iPhone-Karten: Noten als farbige Balken je Bereich (je länger, desto besser); Eintragefelder in einer Zeile
+
+7.76: iPhone-Karten zeigen die Gewichtung: Balken als Rechenbaum mit Prozenten (Halbjahresnote = Sonstige + KA; Sonstige = 1./2. Quartal bzw. MM + Tests)
