@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 7.92
+Stand: 06.11.2026 · Version 7.93
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -997,3 +997,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.91: iPhone-Karten: Mündlich, Tests und Klassenarbeit als farbige Kästchen mit Datum statt schmaler Balken
 
 7.92: iPhone-Karten: keine Balken mehr, Noten rechts im farbigen Kästchen, fehlende HA rot; oben Tendenzen-Schalter Aus/Schraffiert/Rahmen statt Sortierung
+
+7.93: iPhone-Karten: „1. Quartal“ blendet die Noten des 1. Quartals blass vor dem 2. Quartal ein (Quartalsnote Q1 blau umrandet oben); HA/Material quartalsweise, aufgeklappt mit Halbjahressumme; Werte auf Höhe der Kästchen; Klassenarbeit ganz unten
