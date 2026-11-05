@@ -4115,7 +4115,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    Quartals-/Halbjahresnote sind in der Karte eintragbar und werden in die Tabelle übernommen (gleiches Speichern). */
 (()=>{
  const PH=matchMedia('(max-width:540px) and (orientation:portrait)'),KEY='classroom-phone-cards-v1';
- const mode=()=>{try{return localStorage.getItem(KEY)||'cards'}catch{return 'cards'}};
+ const mode=()=>{if(document.documentElement.classList.contains('ph-lite'))return 'cards';try{return localStorage.getItem(KEY)||'cards'}catch{return 'cards'}};
+ const q1Open=new Set();
  const short=t=>{t=String(t||'').replace(/\s+/g,' ').trim();
   if(/^MM · Mittelwert/i.test(t))return 'MM Ø';if(/^HA · Fehlend/i.test(t))return 'HA fehlt';if(/^Material · Fehlend/i.test(t))return 'Mat. fehlt';
   if(/^Sonstige Mitarbeit/i.test(t))return 'Sonst.';if(/^Selbsteinsch/i.test(t))return 'Selbst';if(/^Quartalsnote/i.test(t))return 'Quartalsnote';
@@ -4250,7 +4251,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    const big=document.createElement('span');big.className='qs-big';top.append(nm,big);card.append(top);
    const chips=document.createElement('div');chips.className='qs-chips';const bars=document.createElement('div');bars.className='qs-bars';const items=[],mmList=[];const edits=document.createElement('div');edits.className='qs-edits';
    let bigText='',bigCls='';
-   cells.forEach((cell,i)=>{if(!i||cell.classList.contains('previous-quarter-history-cell'))return;const label=short(heads[i]);
+   const prevSum=[],prevMm=[];let prevQn='';
+   cells.forEach((cell,i)=>{if(i&&cell.classList.contains('previous-quarter-history-cell')){const h=heads[i].replace(/^Q1 · /,''),sp=cell.querySelector('span'),tx=(sp||cell).textContent.trim();const md=/^MM · (\d\d\.\d\d\.)\d{4}/.exec(h);if(md){if(tx&&tx!=='—')prevMm.push({date:md[1],text:tx,cls:sp?.className||''})}else if(/^Quartalsnote/.test(h)){prevQn=tx&&tx!=='—'?tx:''}else if(!/^Selbst/.test(h)&&!/fehl/i.test(h)&&cell.classList.contains('quarter-summary-average'))prevSum.push({head:h,num:gradeNumber(tx),text:tx||'—',cls:(sp?.className||'').replace(/\bprevious-quarter-value\b/g,'')});return}
+    if(!i||cell.classList.contains('previous-quarter-history-cell'))return;const label=short(heads[i]);
     if(cell.classList.contains('quarter-summary-edit-cell')){const orig=cell.querySelector('input');if(!orig)return;
      edits.append(editProxy(orig,label,()=>{box.dataset.sig=''}));if(orig.value.trim()){bigText=orig.value;bigCls=orig.className}else{bigText='';bigCls=''}return}
     if(!cell.classList.contains('quarter-summary-average')){const md=/^MM · (\d\d\.\d\d\.)\d{4}/.exec(heads[i]);if(md){const sp=cell.querySelector('span'),tx=(sp||cell).textContent.trim();if(tx&&tx!=='—')mmList.push({date:md[1],text:tx,cls:sp?.className||''})}return}
@@ -4265,7 +4268,14 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    if(!bigText){const cands=cells.filter(c=>!c.classList.contains('previous-quarter-history-cell')&&c.classList.contains('quarter-summary-average')&&!/fehl/i.test(heads[cells.indexOf(c)])&&/\d/.test(c.textContent)),pick=re=>cands.find(c=>re.test(heads[cells.indexOf(c)])),avg=pick(/^Halbjahresnote/)||pick(/^Sonstige Mitarbeit/)||cands.at(-1);if(avg){bigText=avg.textContent.trim();bigCls=(avg.querySelector('span')?.className||'')+' qs-soft'}}
    big.textContent=bigText||'—';big.className='qs-big '+(bigCls||'qs-empty');
    tree(bars,items,panel,mmList);
-   if(bars.childElementCount)card.append(bars);if(chips.childElementCount)card.append(chips);if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card)openDetail(panel,name)};frag.append(card);
+   if(bars.childElementCount)card.append(bars);if(chips.childElementCount)card.append(chips);
+   // 1. Quartal je Karte aufklappbar (nur wenn das 1. Quartal mitgeladen ist)
+   if(prevSum.length||prevMm.length||prevQn){const sec=document.createElement('div');sec.className='qs-q1';const h=document.createElement('div');h.className='qs-q1h';h.textContent='1. Quartal'+(prevQn?' · Quartalsnote '+prevQn:'');sec.append(h);const b2=document.createElement('div');b2.className='qs-bars';const other=prevSum.find(x=>/^Sonstige/.test(x.head)),mmA=prevSum.find(x=>/^MM · Mittelwert/.test(x.head)),te=prevSum.find(x=>/^Tests · Mittelwert/.test(x.head));
+    if(other)b2.append(barRow(other,null,0));if(mmA)b2.append(barRow(mmA,null,other?1:0));if(prevMm.length){const r=document.createElement('div');r.className='qs-seq'+(other?' qs-lvl1':'');for(const m of prevMm){const c=document.createElement('span');c.className='qs-sq';const ii=document.createElement('i');ii.textContent=m.text;ii.className=(/^a$/i.test(m.text)||!m.cls)?'qs-abs':m.cls;const d=document.createElement('small');d.textContent=m.date;c.append(ii,d);r.append(c)}b2.append(r)}if(te)b2.append(barRow(te,null,other?1:0));
+    for(const x of prevSum)if(x!==other&&x!==mmA&&x!==te)b2.append(barRow(x,null,0));sec.append(b2);sec.hidden=!q1Open.has(name);card.append(sec);
+    const t=document.createElement('button');t.type='button';t.className='qs-q1t';const upd=()=>{const o=q1Open.has(name);t.textContent=(o?'▾':'▸')+' 1. Quartal';t.setAttribute('aria-expanded',String(o));sec.hidden=!o};upd();t.onclick=e=>{e.stopPropagation();q1Open.has(name)?q1Open.delete(name):q1Open.add(name);upd()};
+    const ft=document.createElement('div');ft.className='qs-ft';ft.append(t);if(edits.childElementCount)ft.append(edits);card.append(ft)}
+   else if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card)openDetail(panel,name)};frag.append(card);
   }
   box.replaceChildren(frag);
   if(detail?.panel===panel&&!sheet.hidden&&!sheet.contains(document.activeElement))renderDetail();
@@ -4297,7 +4307,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   +'.qs-big.qs-empty{color:#9aa6b6;font-weight:600}.qs-big.qs-soft{opacity:.75}'
   +'.qs-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}'
   +'.qs-bars{display:grid;gap:6px;margin-top:10px}.qs-bar{display:grid;grid-template-columns:132px minmax(0,1fr) 40px;align-items:center;gap:8px;font-size:12.5px;color:#66758a}.qs-bar.qs-mail{cursor:pointer}'
-  +'.qs-bar-label{display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}.qs-bar-name{min-width:0;overflow:hidden;text-overflow:ellipsis}.qs-w{flex:none;padding:0 5px;border-radius:6px;background:#eaf0fa;color:#2f5f9b;font-size:10.5px;font-weight:700;line-height:16px}.qs-seq{display:flex;flex-wrap:wrap;gap:4px;padding-top:2px;padding-bottom:2px}.qs-seq.qs-lvl1,.qs-seq.qs-lvl2{border-left:0;margin-left:0;padding-left:0}.qs-seq.qs-lvl1{padding-left:18px}.qs-seq.qs-lvl2{padding-left:32px}.qs-sq{display:flex;flex-direction:column;align-items:center;gap:1px}.qs-sq i:not(#_){font-style:normal;min-width:28px;height:24px;padding:0 4px;box-sizing:border-box;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:750;color:#243247;border:0;box-shadow:none;margin:0}.qs-sq i:where(:not([class])),.qs-sq i.qs-abs:not(#_){background:#f1f3f7;color:#9aa6b6}.qs-sq small{font-size:9.5px;color:#8794a7}.qs-w.qs-hj{background:#eef2f7;color:#66758a;font-weight:600}.qs-cap{display:flex;align-items:center;gap:4px;font-size:11px;color:#8794a7;margin-bottom:-2px}.qs-bar-label{align-self:stretch}.qs-lvl1 .qs-bar-label,.qs-cap.qs-lvl1{margin-left:4px;padding-left:12px;border-left:2px solid #e3e8f0}.qs-lvl2 .qs-bar-label,.qs-cap.qs-lvl2{margin-left:4px;padding-left:26px;border-left:2px solid #e3e8f0;background:linear-gradient(#e3e8f0,#e3e8f0) 14px 0/2px 100% no-repeat}.qs-lvl1 .qs-bar-track,.qs-lvl2 .qs-bar-track{height:8px}.qs-bar-track{height:12px;border-radius:6px;background:#eef2f7;overflow:hidden;display:block}'
+  +'.qs-bar-label{display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}.qs-bar-name{min-width:0;overflow:hidden;text-overflow:ellipsis}.qs-w{flex:none;padding:0 5px;border-radius:6px;background:#eaf0fa;color:#2f5f9b;font-size:10.5px;font-weight:700;line-height:16px}.qs-seq{display:flex;flex-wrap:wrap;gap:4px;padding-top:2px;padding-bottom:2px}.qs-seq.qs-lvl1,.qs-seq.qs-lvl2{border-left:0;margin-left:0;padding-left:0}.qs-seq.qs-lvl1{padding-left:18px}.qs-seq.qs-lvl2{padding-left:32px}.qs-sq{display:flex;flex-direction:column;align-items:center;gap:1px}.qs-sq i:not(#_){font-style:normal;min-width:28px;height:24px;padding:0 4px;box-sizing:border-box;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:750;color:#243247;border:0;box-shadow:none;margin:0}.qs-sq i:where(:not([class])),.qs-sq i.qs-abs:not(#_){background:#f1f3f7;color:#9aa6b6}.qs-sq small{font-size:9.5px;color:#8794a7}.qs-q1{margin-top:8px;padding:8px;border-radius:10px;background:#f7f9fc}.qs-q1[hidden]{display:none}.qs-q1h{font-size:12px;font-weight:650;color:#66758a}.qs-q1 .qs-bars{margin-top:4px}.qs-ft{display:flex;align-items:flex-end;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid #eef2f7}.qs-ft .qs-edits{flex:1;margin:0;padding:0;border:0}.qs-q1t{flex:none;min-height:30px;padding:0 10px;border:1px solid #cbd6e5;border-radius:999px;background:#fff;color:#66758a;font:inherit;font-size:12.5px;white-space:nowrap;cursor:pointer}.qs-q1t[aria-expanded=true]{background:#eaf0fa;border-color:#8fb0dc;color:#2f5f9b;font-weight:700}.qs-w.qs-hj{background:#eef2f7;color:#66758a;font-weight:600}.qs-cap{display:flex;align-items:center;gap:4px;font-size:11px;color:#8794a7;margin-bottom:-2px}.qs-bar-label{align-self:stretch}.qs-lvl1 .qs-bar-label,.qs-cap.qs-lvl1{margin-left:4px;padding-left:12px;border-left:2px solid #e3e8f0}.qs-lvl2 .qs-bar-label,.qs-cap.qs-lvl2{margin-left:4px;padding-left:26px;border-left:2px solid #e3e8f0;background:linear-gradient(#e3e8f0,#e3e8f0) 14px 0/2px 100% no-repeat}.qs-lvl1 .qs-bar-track,.qs-lvl2 .qs-bar-track{height:8px}.qs-bar-track{height:12px;border-radius:6px;background:#eef2f7;overflow:hidden;display:block}'
   +':where(.qs-bar-fill){background:#b9c3d1}'+'.qs-bar-fill:not(#_){display:block;height:100%;min-width:0;padding:0;margin:0;border:0;border-radius:6px;box-shadow:none;font-size:0}.qs-bar b{text-align:right;color:#243247;font-size:13px}'
   +'.qs-chip{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 4px 0 9px;border:1px solid #e3e8f0;border-radius:999px;background:#f7f9fc;font-size:12.5px;color:#66758a}'
   +'.qs-chip small{font-size:12px}.qs-chip i{font-style:normal;min-width:22px;padding:2px 7px;border-radius:999px;text-align:center;font-weight:700;color:#243247;background:#fff}'
@@ -4329,7 +4339,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    Antippen eines Feldes öffnet ein Blatt von unten (keine Tastatur): zehn Bewertungszeichen, „Abwesend“, „Löschen“,
    darunter „‹ Zurück | Weiter ›“ (gleiche Spalte, nächste Person). Gespeichert wird wie beim Eintippen. */
 (()=>{
- const PH=matchMedia('(max-width:540px) and (orientation:portrait)'),SEL='input.participation-grade-input[data-student-grade][data-task-id]';
+ const PH=matchMedia('(max-width:540px) and (orientation:portrait) and (pointer:coarse) and (min-width:280px)'),SEL='input.participation-grade-input[data-student-grade][data-task-id]';
  const SYMBOLS=['++','++/+','+','+/o','o','o/-','-','-/--','--','--/---','---'],PALETTE=['','#b8e9ce','#e0f2ce','#fffbb8','#ffedb8','#fbcbc7','#edb8b8'];
  const norm=v=>String(v||'').replace(/[−–—]/g,'-').replace(/\s+/g,'').toLowerCase();
  // Auf dem iPhone Felder schreibgeschützt (keine Tastatur), sonst normal
@@ -4378,6 +4388,89 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   +'.pe-extra{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.pe-extra button{min-height:40px;border:1px solid #d6dde8;border-radius:11px;background:#f7f9fc;color:#2f5f9b;font:inherit;font-size:14.5px;cursor:pointer}'
   +'.pe-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.pe-nav button{min-height:44px;border:1px solid #cbd6e5;border-radius:12px;background:#fff;color:#2f5f9b;font:inherit;font-size:15px;font-weight:650;cursor:pointer}.pe-nav .pe-next{background:#2f5f9b;border-color:#2f5f9b;color:#fff}.pe-nav button:disabled{opacity:.4}'
   +'input.participation-grade-input.pe-current{outline:3px solid #2f5f9b!important;outline-offset:1px}'
+  +'}';
+ document.head.append(st);
+})();
+;
+
+/* ==== noten/phone-lite.js ==== */
+/* iPhone hochkant: schlanker Noten-Manager zum Nachschauen.
+   Nur Fach und Klasse werden gewählt; Halbjahr und Quartal ergeben sich aus dem Datum (Halbjahr umschaltbar).
+   Angezeigt wird immer die Quartalsübersicht als Karten; eintragen lassen sich nur Selbsteinschätzung und Quartalsnote.
+   Mac und iPad bleiben unverändert. */
+(()=>{
+ const PH=matchMedia('(max-width:540px) and (orientation:portrait) and (pointer:coarse)');
+ /* Nur auf einem echten iPhone: ein ausgeblendeter Rahmen (0 px) am Mac darf nie als „Handy“ gelten. */
+ const isPhone=()=>PH.matches&&innerWidth>=280&&innerHeight>=400;
+ const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+ const sk=()=>'classroom-lite-half:'+currentSubject+':'+currentClassId;
+ const ss={get:k=>{try{return sessionStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{sessionStorage.setItem(k,v)}catch{}}};
+ let busy=false,tries=0,planned=false;
+ const years=()=>subjectExamGroups(currentSubject).filter(g=>g.type==='halfYear');
+ const holder=()=>(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId);
+ function wantedHalf(){const ys=years();if(!ys.length)return null;const chosen=ss.get(sk());if(chosen&&ys.some(y=>y.id===chosen))return chosen;
+  const t=today(),dated=ys.map(y=>({id:y.id,start:typeof classroomPeriodDate==='function'?classroomPeriodDate(y,'start'):''})).filter(y=>y.start&&y.start<=t).sort((a,b)=>a.start<b.start?1:-1);
+  return dated[0]?.id||currentHalfYearId||ys[0].id}
+ function wantedQuarter(){const y=years().find(g=>g.id===currentHalfYearId),sel=Number(holder()?.sharedQuarterSelection?.[currentHalfYearId])||0;
+  return typeof classroomQuarterForDate==='function'?classroomQuarterForDate(y,today(),sel):sel}
+ function ensure(){
+  const on=isPhone();document.documentElement.classList.toggle('ph-lite',on);if(!on||busy||!currentClassId)return;
+  busy=true;let acted=false;try{
+   const nf=document.getElementById('navigationFrame');if(!nf)return;
+   // 1. Halbjahr
+   const half=wantedHalf();if(half&&half!==currentHalfYearId){const b=nf.querySelector(`.half-year-picker .page-tab[data-half-year-id="${CSS.escape(half)}"]`);if(b&&tries++<6){b.click();acted=true;return}}
+   // 2. Quartal nach Datum
+   const q=wantedQuarter(),qTabs=[...nf.querySelectorAll('.shared-quarter-picker .page-tab')],sel=Number(holder()?.sharedQuarterSelection?.[currentHalfYearId])||0;
+   if(qTabs[q]&&sel!==q&&tries++<6){qTabs[q].click();acted=true;return}
+   // 3. Quartalsübersicht öffnen (ggf. für dieses Quartal freischalten)
+   const sum=subjectExamGroups(currentSubject).find(g=>g.type==='quarterSummary'&&g.halfYearId===currentHalfYearId);
+   showEmpty(!sum);if(!sum)return;
+   if(Array.isArray(sum.enabledQuarters)&&!sum.enabledQuarters.includes(sel)){sum.enabledQuarters.push(sel);if(typeof persistExamGroups==='function')persistExamGroups(currentSubject)}
+   if(!sum.pages?.includes(activePage)&&tries++<6){setPage(sum.pages[0]);acted=true;return}
+   // 4. Im 2. Quartal das 1. Quartal mitladen (in den Karten einzeln aufklappbar)
+   const panel=document.querySelector(`[data-custom-panel="${CSS.escape(activePage)}"]`);
+   const prev=[...(panel?.querySelectorAll('.previous-quarter-toggle input')||[])][0];if(prev&&sel>0&&!prev.checked&&tries++<6){prev.click();acted=true;return}
+   tries=0;if(panel)topBar(panel,sel);
+  }finally{busy=false;if(acted)setTimeout(ensure,350)}
+ }
+ function schedule(){if(planned)return;planned=true;setTimeout(()=>{planned=false;ensure()},30)}
+ // Kopfzeile über den Karten: Halbjahr · Sortierung · Stand
+ function topBar(panel,sel){
+  let bar=panel.querySelector(':scope>.pl-bar');
+  if(!bar){bar=document.createElement('div');bar.className='pl-bar';bar.innerHTML='<div class="pl-row"><span class="pl-seg pl-half"></span><span class="pl-seg pl-sort"><button type="button" data-sort="name">A–Z</button><button type="button" data-sort="grade">Note</button></span></div><div class="pl-stand"></div>';
+   bar.addEventListener('click',e=>{const h=e.target.closest('[data-half]'),s=e.target.closest('[data-sort]');
+    if(h){ss.set(sk(),h.dataset.half);tries=0;schedule()}
+    if(s){ss.set('classroom-lite-sort',s.dataset.sort);sortCards(panel)}});
+   panel.prepend(bar)}
+  const hs=bar.querySelector('.pl-half'),ys=years(),sig=ys.map(y=>y.id+y.label).join('|')+currentHalfYearId;
+  if(hs.dataset.sig!==sig){hs.dataset.sig=sig;hs.replaceChildren(...ys.map(y=>{const b=document.createElement('button');b.type='button';b.dataset.half=y.id;b.textContent=y.label||'Halbjahr';b.setAttribute('aria-pressed',String(y.id===currentHalfYearId));return b}));hs.hidden=ys.length<2}
+  const sort=ss.get('classroom-lite-sort')||'name';for(const b of bar.querySelectorAll('[data-sort]'))b.setAttribute('aria-pressed',String(b.dataset.sort===sort));
+  const y=ys.find(g=>g.id===currentHalfYearId),name=typeof classroomQuarterPeriodName==='function'&&y?classroomQuarterPeriodName(y,sel):(sel+1)+'. Quartal';
+  bar.querySelector('.pl-stand').textContent='Stand '+name+' · Antippen zeigt alle Einträge';
+  sortCards(panel);
+ }
+ const gradeOf=card=>{const t=(card.querySelector('.qs-big')?.textContent||'').trim().replace(/[−–—]/g,'-');let m=/^(\d+(?:,\d+)?)$/.exec(t);if(m)return Number(m[1].replace(',','.'));m=/^([1-6])\s*([+-])$/.exec(t);if(m)return Number(m[1])+(m[2]==='+'?-.33:.33);m=/^(\d)\s*-\s*(\d)$/.exec(t);if(m)return (Number(m[1])+Number(m[2]))/2;return 99};
+ function sortCards(panel){const box=panel.querySelector('.qs-cards');if(!box)return;const cards=[...box.children];if(!cards.length)return;
+  if(!box.dataset.order||cards.some(c=>!c.dataset.idx))cards.forEach((c,i)=>{if(!c.dataset.idx)c.dataset.idx=String(i)});
+  const byGrade=(ss.get('classroom-lite-sort')||'name')==='grade';
+  const sorted=[...cards].sort((a,b)=>byGrade?(gradeOf(a)-gradeOf(b))||(a.dataset.idx-b.dataset.idx):a.dataset.idx-b.dataset.idx);
+  if(sorted.some((c,i)=>c!==cards[i]))box.append(...sorted)}
+ // Klasse ohne Quartalsübersicht
+ let empty=null;
+ function showEmpty(show){if(!show){empty?.remove();empty=null;return}
+  if(!empty){empty=document.createElement('div');empty.className='pl-empty';empty.innerHTML='<b>Noch keine Quartalsübersicht</b><p>Für diese Klasse gibt es im gewählten Halbjahr noch keine Seite „Quartalsnoten“. Sie fasst mündliche Mitarbeit, Hausaufgaben, Tests und Klassenarbeiten pro Person zusammen.</p><button type="button">Quartalsübersicht anlegen</button>';
+   empty.querySelector('button').onclick=()=>{const add=[...document.querySelectorAll('button.add-subject-button')].find(b=>b.textContent.includes('Quartalsnoten'));add?.click();tries=0;schedule()};document.body.append(empty)}}
+ classroomHooks.add('refreshExamNavigation','phone-lite: Quartalsübersicht',{after(){schedule()}});
+ new MutationObserver(list=>{if(!isPhone())return;if(list.some(m=>m.target.closest?.('.qs-cards')))for(const p of document.querySelectorAll('[data-quarter-summary]'))sortCards(p)}).observe(document.body,{subtree:true,childList:true});
+ PH.addEventListener?.('change',()=>{tries=0;ensure()});addEventListener('resize',()=>{if(isPhone()!==document.documentElement.classList.contains('ph-lite')){tries=0;ensure()}});setTimeout(ensure,400);window.classroomPhoneLite={ensure,wantedHalf,wantedQuarter};
+ const st=document.createElement('style');st.textContent='.pl-bar,.pl-empty{display:none}'
+  +'@media (max-width:540px) and (orientation:portrait){'
+  +'html.ph-lite .pl-bar{display:block;margin:0 0 10px}.pl-row{display:flex;justify-content:space-between;align-items:center;gap:8px}'
+  +'.pl-seg{display:inline-flex;padding:3px;gap:2px;border-radius:11px;background:#e7edf6}.pl-seg[hidden]{display:none}.pl-seg button{min-height:32px;padding:0 11px;border:0;border-radius:8px;background:transparent;color:#66758a;font:inherit;font-size:13px;font-weight:650;cursor:pointer}.pl-seg button[aria-pressed=true]{background:#fff;color:#2f5f9b;box-shadow:0 1px 3px #233d6018}'
+  +'.pl-sort{margin-left:auto}.pl-stand{font-size:11.5px;color:#8794a7;margin-top:6px}'
+  /* Alles außer den Karten ausblenden: Titel, Schalter, Hinweistext, Gewichtung, Karten/Tabelle */
+  +'html.ph-lite [data-quarter-summary]>.section-title,html.ph-lite [data-quarter-summary]>.section-title+p,html.ph-lite [data-quarter-summary] .qs-phone-bar,html.ph-lite [data-quarter-summary] .qs-wt,html.ph-lite [data-quarter-summary] .quarter-summary-weight-controls,html.ph-lite [data-quarter-summary] .semester-weight-container,html.ph-lite [data-quarter-summary]>p,html.ph-lite [data-quarter-summary] .previous-quarter-empty{display:none!important}'
+  +'html.ph-lite .pl-empty{display:block;position:fixed;inset:0;z-index:50;padding:28px 22px;background:#f6f8fc}.pl-empty b{font-size:17px}.pl-empty p{color:#66758a;font-size:14px;line-height:1.5}.pl-empty button{min-height:44px;padding:0 18px;border:0;border-radius:12px;background:#2f5f9b;color:#fff;font:inherit;font-weight:650}'
   +'}';
  document.head.append(st);
 })();

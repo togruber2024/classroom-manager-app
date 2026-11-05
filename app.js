@@ -1515,6 +1515,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['iPhone: Noten zum Nachschauen','Auf dem iPhone (hochkant) zeigt der Noten-Manager nur noch die Karten der Klasse: Fach und Klasse wählen, Halbjahr und Quartal ergeben sich aus dem Datum. Jede Karte lässt das 1. Quartal aufklappen; eintragen lassen sich nur Selbsteinschätzung und Quartalsnote. Alles andere im Bereich „Unterricht“ bzw. am Mac/iPad.','iPhone → Noten','7.82'],
    ['iPhone: Mündlich mit dem bunten Fenster','Auf den Seiten der mündlichen Mitarbeit öffnet ein Tipp in ein Notenfeld auf dem iPhone das bunte Bewertungsfenster als Blatt (ohne Tastatur): zehn Zeichen, Abwesend, Löschen; „Weiter ›“ springt zur nächsten Person im selben Termin.','iPhone → Noten → Mündliche Mitarbeit → Feld antippen','7.71'],
    ['iPhone: alle Einträge einer Person','Ein Tipp auf eine Karte der Quartals- oder Halbjahresübersicht öffnet ein Blatt mit allen mündlichen Noten (mit Datum), fehlenden Hausaufgaben, Sonstiger Mitarbeit und Klassenarbeit. Selbsteinschätzung und Quartalsnote sind dort eintragbar; ‹ › oder Wischen wechselt zur nächsten Person.','iPhone → Noten → Quartalsnote → Karte antippen','7.70'],
    ['iPhone: Quartalsnoten als Karten','Auf dem iPhone (hochkant) zeigt die Quartals- und Halbjahresübersicht eine Karte pro Person: Note groß, darunter jeder Bereich als farbiger Balken (je länger, desto besser), aufgebaut wie die Rechnung mit der Gewichtung in Prozent, fehlende Hausaufgaben als Zahl. Selbsteinschätzung und Quartalsnote lassen sich direkt in der Karte eintragen. Umschalter „Karten | Tabelle“.','iPhone → Noten → Quartalsnote','7.69'],
@@ -1523,8 +1524,7 @@ window.addEventListener('message',event=>{
    ['iPhone: neue Bedienung','Auf dem iPhone (hochkant) oben nur noch Symbol, Auswahl und Rückgängig; die Auswahl öffnet sich als Blatt von unten. Unten die Leiste Unterricht · Noten · Backup · Mehr.','iPhone hochkant','7.64'],
    ['Backup sofort wiederherstellen','Der Knopf ⬆ neben „Backup“ lädt das neueste Backup (am Mac aus dem festen Ordner, sonst per Dateiauswahl) – mit Rückfrage. Jede Wiederherstellung lässt sich rückgängig machen.','oben rechts → ⬆ neben „Backup“','7.55'],
    ['Hinweis auf neue Versionen','Gibt es eine neuere Version, erscheint oben „Neue Version … verfügbar“ – „Jetzt aktualisieren“ lädt sie sofort, die Daten bleiben erhalten.','oben unter der Kopfzeile','7.52'],
-   ['„Fehlend“ zählt übers Halbjahr','Auf den Hausaufgaben- und Materialseiten des 2. (4.) Quartals zählt die Spalte „Fehlend“ die fehlenden Einträge aus dem 1. (3.) Quartal mit – auch für die Eltern-Mail.','Noten-Manager → Hausaufgaben','7.48'],
-   ['„M“ für fehlendes Material','Im Sitzplan zeigt ein oranges „M“ unten links am Tisch fehlendes Material; ab dem 3. Mal im Halbjahr steht dort die Anzahl.','Unterrichts-Manager → Sitzplan','7.42']]},
+   ['„Fehlend“ zählt übers Halbjahr','Auf den Hausaufgaben- und Materialseiten des 2. (4.) Quartals zählt die Spalte „Fehlend“ die fehlenden Einträge aus dem 1. (3.) Quartal mit – auch für die Eltern-Mail.','Noten-Manager → Hausaufgaben','7.48']]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
    ['Zwei Bereiche','Oben wechselst du zwischen Unterrichts-Manager (Sitzplan, Mitarbeit und Hausaufgaben im Unterricht) und Noten-Manager (Bewertungen, Tests, Klausuren, Zeugnisnoten). Beide nutzen dieselben Klassen und Schülerlisten.'],
@@ -1821,7 +1821,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   else if(t==='backup')document.getElementById('classroomBackupButton')?.click();
   else if(t==='mehr'){ver();sheet.hidden=!sheet.hidden}});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
- function sync(){for(const t of ['sitzplan','noten']){const on=document.getElementById('tab-'+t)?.getAttribute('aria-selected')==='true';bar.querySelector('[data-ph="'+t+'"]').classList.toggle('on',on)}
+ function sync(){for(const t of ['sitzplan','noten']){const on=document.getElementById('tab-'+t)?.getAttribute('aria-selected')==='true';bar.querySelector('[data-ph="'+t+'"]').classList.toggle('on',on);if(t==='noten')document.documentElement.classList.toggle('ph-noten',on)}
   bar.querySelector('.ph-dot').hidden=!document.getElementById('classroomBackupButton')?.classList.contains('backup-due');
   const priv=document.documentElement.classList.contains('classroom-privacy');sheet.querySelector('[data-act=privacy]').lastChild.textContent=priv?'Datenschutzmodus beenden':'Datenschutzmodus'}
  new MutationObserver(sync).observe(document.body,{subtree:true,attributes:true,attributeFilter:['aria-selected','class']});
@@ -1880,6 +1880,8 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   +'.classroom-update-banner,.classroom-restore-banner,.classroom-storage-warning{margin:8px 10px 0!important}'
   +'.classroom-beamer-active .phone-tabbar{display:none!important}'
   +'}'
+  /* Schlanker Noten-Manager (nur hochkant): im Auswahl-Blatt nur Fach und Klasse */
+  +'@media (max-width:540px) and (orientation:portrait){html.ph-noten .app-header>.compact-navigation .compact-navigation-trail .compact-navigation-chip+.compact-navigation-separator+.compact-navigation-chip~*:not(#_){display:none!important}html.ph-noten .app-header>.compact-navigation :is(.half-year-picker,.exam-picker,.rename-row-button,.add-subject-button):not(#_){display:none!important}html.ph-noten .app-header>.compact-navigation .compact-navigation-flyout::after{content:"Eintragen: mündliche Noten, Hausaufgaben und Material im Bereich „Unterricht“. Tests, Klassenarbeiten, neue Seiten und Schülerlisten am Mac oder iPad.";display:block;margin-top:14px;padding:10px 12px;border-radius:12px;background:#f7f9fc;color:#66758a;font-size:12.5px;line-height:1.45}}'
   /* iPhone quer: Leiste als schmale Spalte am linken Rand, Inhalt daneben */
   +'@media (max-height:500px) and (pointer:coarse) and (orientation:landscape){'
   +'body:not(#_){padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) calc(68px + env(safe-area-inset-left))}'

@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 05.11.2026 · Version 7.81
+Stand: 05.11.2026 · Version 7.82
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -310,6 +310,7 @@ Auf dem iPhone zeigt der Sitzplan keine Spaltenbuchstaben und Reihennummern und 
 Auf dem iPhone (hochkant) zeigt die Quartals- und Halbjahresübersicht im Noten-Manager eine Karte pro Person statt der breiten Tabelle: Note groß, darunter die Mittelwerte (MM Ø, HA fehlt, Sonstige Mitarbeit, Klassenarbeit). Selbsteinschätzung und Quartals-/Halbjahresnote sind direkt in der Karte eintragbar. Mit „Karten | Tabelle“ lässt sich umschalten; die Wahl wird gemerkt.
 Ein Tipp auf eine Karte öffnet ein Blatt mit allen Einträgen dieser Person im Quartal (mündliche Noten mit Datum, fehlende Hausaufgaben, Sonstige Mitarbeit, Klassenarbeit) sowie Selbsteinschätzung und Quartalsnote zum Eintragen. Mit ‹ › oder durch seitliches Wischen geht es zur nächsten Person.
 Auf den Seiten der mündlichen Mitarbeit öffnet ein Tipp in ein Notenfeld auf dem iPhone (hochkant) das bunte Bewertungsfenster als Blatt von unten, ohne Tastatur: zehn Bewertungszeichen, „Abwesend“ und „Löschen“. „Weiter ›“ und „‹ Zurück“ gehen im selben Termin zur nächsten bzw. vorigen Person; erneutes Antippen des gewählten Zeichens entfernt es wieder.
+Auf dem iPhone (hochkant) ist der Noten-Manager eine schlanke Lese-Version: Im Auswahl-Blatt stehen nur Fach und Klasse; Halbjahr und Quartal ergeben sich aus dem Datum (bei mehreren Halbjahren umschaltbar). Gezeigt wird die Quartalsübersicht als Karten, sortierbar nach Name oder Note; jede Karte kann das 1. Quartal aufklappen. Eintragen lassen sich dort nur Selbsteinschätzung und Quartalsnote – mündliche Noten, Hausaufgaben und Material im Bereich „Unterricht“, alles Weitere am Mac oder iPad.
 
 SITZREGELN, RÄUME, HISTORIE UND ABWESENHEIT
 Verteilung: einzeln, Zufallspaare, gleichgeschlechtliche oder feste Paare; Reihenfolge und Richtung
@@ -972,3 +973,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.80: iPhone-Karten: alle mündlichen Noten des Quartals als farbige Kästchen mit Datum unter „MM Ø“
 
 7.81: Schraffur-Schalter gilt jetzt auch für die iPhone-Karten, das Detailblatt und das bunte Eingabefenster
+
+7.82: iPhone: Noten-Manager als schlanke Lese-Version – nur Fach und Klasse wählen, Karten der Quartalsübersicht nach Datum, 1. Quartal je Karte aufklappbar, Sortierung nach Name oder Note
