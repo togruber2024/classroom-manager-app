@@ -4132,7 +4132,10 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function caption(text,pct,lvl){const c=document.createElement('div');c.className='qs-cap'+(lvl?' qs-lvl'+lvl:'');c.textContent=text;if(pct!=null){const w=document.createElement('span');w.className='qs-w';w.textContent=fmtPct(pct)+' %';c.append(w)}return c}
  const fmtPct=v=>String(Math.round(Number(v)*10)/10).replace('.',',');
  function weight(panel,sel){const i=panel.querySelector(sel);const v=i?Number(i.value):NaN;return i&&i.value!==''&&Number.isFinite(v)?v:null}
- function tree(box,items,panel){
+ function tree(box,items,panel,mmList=[]){
+  // Variante A: alle mündlichen Noten des Quartals als farbige Kästchen mit Datum unter „MM Ø“
+  const seq=lvl=>{if(!mmList.length)return null;const r=document.createElement('div');r.className='qs-seq'+(lvl?' qs-lvl'+lvl:'');for(const m of mmList){const c=document.createElement('span');c.className='qs-sq';const i=document.createElement('i');i.textContent=m.text;i.className=(/^a$/i.test(m.text)||!m.cls)?'qs-abs':m.cls;const d=document.createElement('small');d.textContent=m.date;c.append(i,d);r.append(c)}return r};
+  const mmSeq=(lvl)=>{const r=seq(lvl);if(r)box.append(r)};
   const take=re=>{const k=items.findIndex(it=>re.test(it.head));return k<0?null:items.splice(k,1)[0]};
   const exams=[];for(let k=items.length-1;k>=0;k--)if(items[k].th?.classList.contains('quarter-exam-column'))exams.unshift(items.splice(k,1)[0]);
   const semester=!!panel.querySelector('[data-final-mix]');
@@ -4144,10 +4147,10 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    box.append(caption('Halbjahresnote ='));
    if(other)box.append(barRow(other,wo,0));
    if(q1)box.append(barRow({...q1,label:'1. Quartal'},50,1));
-   if(mm||tests){box.append(caption('2. Quartal',50,1));if(mm)box.append(barRow(mm,wm,2));if(tests)box.append(barRow(tests,wt,2))}
+   if(mm||tests){box.append(caption('2. Quartal',50,1));if(mm){box.append(barRow(mm,wm,2));mmSeq(2)}if(tests)box.append(barRow(tests,wt,2))}
    if(exams.length===1)box.append(barRow({...exams[0],label:/^Klassenarbeit/i.test(exams[0].head)?'KA':longLabel(exams[0].head)},we,0));else if(exams.length){box.append(caption('Klausuren',we,0));for(const e of exams)box.append(barRow(e,null,1))}
   }else{
-   if(other){box.append(barRow(other,null,0));if(mm)box.append(barRow(mm,wm,1));if(tests)box.append(barRow(tests,wt,1))}else{if(mm)box.append(barRow(mm,wm,0));if(tests)box.append(barRow(tests,wt,0))}
+   if(other){box.append(barRow(other,null,0));if(mm){box.append(barRow(mm,wm,1));mmSeq(1)}if(tests)box.append(barRow(tests,wt,1))}else{if(mm){box.append(barRow(mm,wm,0));mmSeq(0)}if(tests)box.append(barRow(tests,wt,0))}
    for(const e of exams){const r=barRow({...e,label:/^Klassenarbeit/i.test(e.head)?'KA':longLabel(e.head)},null,0);const t=document.createElement('span');t.className='qs-w qs-hj';t.textContent='Halbjahr';r.querySelector('.qs-bar-label').append(t);box.append(r)}
   }
   for(const it of items)box.append(barRow(it,null,0));
@@ -4245,12 +4248,12 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    const card=document.createElement('article');card.className='qs-card';
    const top=document.createElement('div');top.className='qs-top';const nm=document.createElement('b');nm.className='qs-name';nm.textContent=name;
    const big=document.createElement('span');big.className='qs-big';top.append(nm,big);card.append(top);
-   const chips=document.createElement('div');chips.className='qs-chips';const bars=document.createElement('div');bars.className='qs-bars';const items=[];const edits=document.createElement('div');edits.className='qs-edits';
+   const chips=document.createElement('div');chips.className='qs-chips';const bars=document.createElement('div');bars.className='qs-bars';const items=[],mmList=[];const edits=document.createElement('div');edits.className='qs-edits';
    let bigText='',bigCls='';
    cells.forEach((cell,i)=>{if(!i||cell.classList.contains('previous-quarter-history-cell'))return;const label=short(heads[i]);
     if(cell.classList.contains('quarter-summary-edit-cell')){const orig=cell.querySelector('input');if(!orig)return;
      edits.append(editProxy(orig,label,()=>{box.dataset.sig=''}));if(orig.value.trim()){bigText=orig.value;bigCls=orig.className}else{bigText='';bigCls=''}return}
-    if(!cell.classList.contains('quarter-summary-average'))return;
+    if(!cell.classList.contains('quarter-summary-average')){const md=/^MM · (\d\d\.\d\d\.)\d{4}/.exec(heads[i]);if(md){const sp=cell.querySelector('span'),tx=(sp||cell).textContent.trim();if(tx&&tx!=='—')mmList.push({date:md[1],text:tx,cls:sp?.className||''})}return}
     const src=cell.querySelector('span'),text=(src||cell).textContent.trim();
     const chip=document.createElement('span');chip.className='qs-chip';const k=document.createElement('small');k.textContent=label;const v=document.createElement('i');v.textContent=text||'—';if(src?.className)v.className=src.className;
     if(/fehlt/.test(label)&&Number(text.replace(',','.'))>=3)chip.classList.add('qs-alert');
@@ -4261,7 +4264,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    });
    if(!bigText){const cands=cells.filter(c=>!c.classList.contains('previous-quarter-history-cell')&&c.classList.contains('quarter-summary-average')&&!/fehl/i.test(heads[cells.indexOf(c)])&&/\d/.test(c.textContent)),pick=re=>cands.find(c=>re.test(heads[cells.indexOf(c)])),avg=pick(/^Halbjahresnote/)||pick(/^Sonstige Mitarbeit/)||cands.at(-1);if(avg){bigText=avg.textContent.trim();bigCls=(avg.querySelector('span')?.className||'')+' qs-soft'}}
    big.textContent=bigText||'—';big.className='qs-big '+(bigCls||'qs-empty');
-   tree(bars,items,panel);
+   tree(bars,items,panel,mmList);
    if(bars.childElementCount)card.append(bars);if(chips.childElementCount)card.append(chips);if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card)openDetail(panel,name)};frag.append(card);
   }
   box.replaceChildren(frag);
@@ -4294,7 +4297,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   +'.qs-big.qs-empty{color:#9aa6b6;font-weight:600}.qs-big.qs-soft{opacity:.75}'
   +'.qs-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}'
   +'.qs-bars{display:grid;gap:6px;margin-top:10px}.qs-bar{display:grid;grid-template-columns:132px minmax(0,1fr) 40px;align-items:center;gap:8px;font-size:12.5px;color:#66758a}.qs-bar.qs-mail{cursor:pointer}'
-  +'.qs-bar-label{display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}.qs-bar-name{min-width:0;overflow:hidden;text-overflow:ellipsis}.qs-w{flex:none;padding:0 5px;border-radius:6px;background:#eaf0fa;color:#2f5f9b;font-size:10.5px;font-weight:700;line-height:16px}.qs-w.qs-hj{background:#eef2f7;color:#66758a;font-weight:600}.qs-cap{display:flex;align-items:center;gap:4px;font-size:11px;color:#8794a7;margin-bottom:-2px}.qs-bar-label{align-self:stretch}.qs-lvl1 .qs-bar-label,.qs-cap.qs-lvl1{margin-left:4px;padding-left:12px;border-left:2px solid #e3e8f0}.qs-lvl2 .qs-bar-label,.qs-cap.qs-lvl2{margin-left:4px;padding-left:26px;border-left:2px solid #e3e8f0;background:linear-gradient(#e3e8f0,#e3e8f0) 14px 0/2px 100% no-repeat}.qs-lvl1 .qs-bar-track,.qs-lvl2 .qs-bar-track{height:8px}.qs-bar-track{height:12px;border-radius:6px;background:#eef2f7;overflow:hidden;display:block}'
+  +'.qs-bar-label{display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}.qs-bar-name{min-width:0;overflow:hidden;text-overflow:ellipsis}.qs-w{flex:none;padding:0 5px;border-radius:6px;background:#eaf0fa;color:#2f5f9b;font-size:10.5px;font-weight:700;line-height:16px}.qs-seq{display:flex;flex-wrap:wrap;gap:4px;padding-top:2px;padding-bottom:2px}.qs-seq.qs-lvl1,.qs-seq.qs-lvl2{border-left:0;margin-left:0;padding-left:0}.qs-seq.qs-lvl1{padding-left:18px}.qs-seq.qs-lvl2{padding-left:32px}.qs-sq{display:flex;flex-direction:column;align-items:center;gap:1px}.qs-sq i:not(#_){font-style:normal;min-width:28px;height:24px;padding:0 4px;box-sizing:border-box;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:750;color:#243247;border:0;box-shadow:none;margin:0}.qs-sq i:where(:not([class])),.qs-sq i.qs-abs:not(#_){background:#f1f3f7;color:#9aa6b6}.qs-sq small{font-size:9.5px;color:#8794a7}.qs-w.qs-hj{background:#eef2f7;color:#66758a;font-weight:600}.qs-cap{display:flex;align-items:center;gap:4px;font-size:11px;color:#8794a7;margin-bottom:-2px}.qs-bar-label{align-self:stretch}.qs-lvl1 .qs-bar-label,.qs-cap.qs-lvl1{margin-left:4px;padding-left:12px;border-left:2px solid #e3e8f0}.qs-lvl2 .qs-bar-label,.qs-cap.qs-lvl2{margin-left:4px;padding-left:26px;border-left:2px solid #e3e8f0;background:linear-gradient(#e3e8f0,#e3e8f0) 14px 0/2px 100% no-repeat}.qs-lvl1 .qs-bar-track,.qs-lvl2 .qs-bar-track{height:8px}.qs-bar-track{height:12px;border-radius:6px;background:#eef2f7;overflow:hidden;display:block}'
   +':where(.qs-bar-fill){background:#b9c3d1}'+'.qs-bar-fill:not(#_){display:block;height:100%;min-width:0;padding:0;margin:0;border:0;border-radius:6px;box-shadow:none;font-size:0}.qs-bar b{text-align:right;color:#243247;font-size:13px}'
   +'.qs-chip{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 4px 0 9px;border:1px solid #e3e8f0;border-radius:999px;background:#f7f9fc;font-size:12.5px;color:#66758a}'
   +'.qs-chip small{font-size:12px}.qs-chip i{font-style:normal;min-width:22px;padding:2px 7px;border-radius:999px;text-align:center;font-weight:700;color:#243247;background:#fff}'
