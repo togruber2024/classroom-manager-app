@@ -1043,3 +1043,13 @@ body[data-module=sitzplan]:not(#_){padding-left:8px;padding-right:8px}body[data-
 .classroom-quick.is-sheet .classroom-quick-absence:not(#_){margin-top:4px;padding-top:6px;font-size:14px}
 .classroom-quick.is-sheet .cq-nav:not(#_){position:sticky;bottom:0;margin:6px -12px 0;padding:6px 12px 8px;background:#fff}.classroom-quick.is-sheet .cq-nav button{min-height:38px}
 }
+/* 7.68 iPhone-Sitzplan kompakt: kein Hinweistext, Zoom nur mit −/+, Raumtitel klein in einer Zeile mit dem Moduswechsel */
+@media (max-width:540px) and (orientation:portrait),(max-height:500px) and (pointer:coarse) and (orientation:landscape){
+body[data-module=sitzplan] #gridInstructions{display:none!important}
+body[data-module=sitzplan] .classroom-plan-zoom>input[type=range],body[data-module=sitzplan] .classroom-plan-zoom>output{display:none!important}
+body[data-module=sitzplan] .room-header:not(#_){display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+body[data-module=sitzplan] .room-header h2:not(#_){margin:0!important;min-width:0;font-size:17px!important;line-height:1.3!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body[data-module=sitzplan] .room-header .classroom-mode-toggle:not(#_){flex:none;margin:0;font-size:14px}
+@media (max-width:540px){body[data-module=sitzplan] .classroom-plan-zoom:not(#_){gap:6px}body[data-module=sitzplan] .classroom-plan-zoom>button:not(#_),body[data-module=sitzplan] .classroom-plan-zoom .zoom-more-toggle:not(#_){min-width:40px;min-height:38px;height:38px;padding:0 10px}body[data-module=sitzplan] .classroom-plan-zoom .plan-assess-switch:not(#_){min-height:38px!important;padding:0 12px 0 10px!important;gap:6px!important;font-size:14px!important}}
+@media (max-width:540px){body[data-module=sitzplan] .classroom-plan-zoom .zoom-more-toggle:not(#_){font-size:0!important;padding:0 12px!important}body[data-module=sitzplan] .classroom-plan-zoom .zoom-more-toggle>span{display:none}body[data-module=sitzplan] .classroom-plan-zoom .zoom-more-toggle::before{content:"⋯";font-size:20px;line-height:1}}
+}

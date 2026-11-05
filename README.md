@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 05.11.2026 · Version 7.67
+Stand: 05.11.2026 · Version 7.68
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -306,6 +306,7 @@ eingepasst, wenn er zu hoch ist. Am Mac zählt nur die Breite (nach unten wird g
 Manuell 10–150 %. Bei Drehung des iPads wird neu angepasst. Menüs und Buttons werden nicht gezoomt.
 Auf dem aufgeklappten iPhone Duo im Querformat bleibt die Seitenleiste sichtbar.
 Auf dem iPhone öffnet ein Tisch das Bewertungsfenster als Blatt (hochkant unten, quer rechts). Es bleibt nach einer Bewertung offen; „Weiter ›“ und „‹ Zurück“ gehen Tisch für Tisch durch die Reihen („Reihe 1 · 3 von 24“), der aktuelle Tisch ist blau umrandet. Im Querformat steht die Leiste Unterricht · Noten · Backup · Mehr am linken Rand.
+Auf dem iPhone zeigt der Sitzplan keine Spaltenbuchstaben und Reihennummern und keinen Hinweistext; der Zoom hat nur − und +, „Einpassen“ und „100 %“ stehen unter ⋯. So nutzen die Tische die ganze Breite.
 
 SITZREGELN, RÄUME, HISTORIE UND ABWESENHEIT
 Verteilung: einzeln, Zufallspaare, gleichgeschlechtliche oder feste Paare; Reihenfolge und Richtung
@@ -940,3 +941,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.66: Version auf dem iPhone sichtbar: unten im Blatt „Mehr“ und in der Hilfe; iPhone quer ohne abgeschnittenen App-Namen
 
 7.67: iPhone: Bewertungsfenster als Blatt mit Zurück/Weiter, bleibt nach der Bewertung offen, aktueller Tisch blau umrandet; quer Leiste links
+
+7.68: iPhone-Sitzplan kompakter: ohne Koordinaten und Hinweistext, Zoom nur mit −/+, Raumtitel und Moduswechsel in einer Zeile

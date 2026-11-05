@@ -2455,6 +2455,8 @@ document.addEventListener('keydown',event=>{
 (()=>{
  const grid=document.getElementById('roomGrid');if(!grid)return;
  const mobileDevice=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Mac/i.test(navigator.platform)&&navigator.maxTouchPoints>1);
+ // iPhone: ohne Spaltenbuchstaben und Reihennummern – mehr Platz für die Tische.
+ const PH=matchMedia('(max-width:540px) and (orientation:portrait), (max-height:500px) and (pointer:coarse) and (orientation:landscape)'),hw=()=>PH.matches?0:35,hh=()=>PH.matches?0:45;
  let scale=1,fit=false,auto=true,rotated=false;// auto: Desktop und iPad quer 100 %, iPad/iPhone hochkant einpassen, falls 100 % zu groß
  const portrait=()=>mobileDevice&&matchMedia('(orientation: portrait)').matches;const min=.1,max=1.5;
  const controls=document.createElement('div');controls.className='classroom-plan-zoom';controls.setAttribute('role','group');controls.setAttribute('aria-label','Sitzplan vergrößern oder verkleinern');
@@ -2487,15 +2489,15 @@ document.addEventListener('keydown',event=>{
   const cells=[...board.querySelectorAll('.cell')],used=cells.filter(cell=>!!gridData[Number(cell.dataset.row)]?.[Number(cell.dataset.col)]),crop=!document.getElementById('classroomEditRoom')?.checked&&used.length>0;
   const minRow=crop?Math.min(...used.map(c=>Number(c.dataset.row))):0,maxRow=crop?Math.max(...used.map(c=>Number(c.dataset.row))):ROWS-1,minCol=crop?Math.min(...used.map(c=>Number(c.dataset.col))):0,maxCol=crop?Math.max(...used.map(c=>Number(c.dataset.col))):COLS-1,rowCount=maxRow-minRow+1,colCount=maxCol-minCol+1;
   for(const cell of cells){const row=Number(cell.dataset.row),col=Number(cell.dataset.col);cell.style.display=row<minRow||row>maxRow||col<minCol||col>maxCol?'none':'';cell.style.gridRow=String((rotated?maxRow-row:row-minRow)+2);cell.style.gridColumn=String((rotated?maxCol-col:col-minCol)+2)}
-  const headers=[...board.querySelectorAll('.grid-header')];headers.forEach((header,index)=>{if(index<COLS){header.style.display=index<minCol||index>maxCol?'none':'';header.style.gridRow='1';header.style.gridColumn=String((rotated?maxCol-index:index-minCol)+2)}else{const row=index-COLS;header.style.display=row<minRow||row>maxRow?'none':'';header.style.gridColumn='1';header.style.gridRow=String((rotated?maxRow-row:row-minRow)+2)}});
-  const corner=board.querySelector('.grid-corner');if(corner){corner.style.gridRow='1';corner.style.gridColumn='1'}
+  const headers=[...board.querySelectorAll('.grid-header')];headers.forEach((header,index)=>{if(index<COLS){header.style.display=index<minCol||index>maxCol?'none':'';header.style.gridRow='1';header.style.gridColumn=String((rotated?maxCol-index:index-minCol)+2)}else{const row=index-COLS;header.style.display=row<minRow||row>maxRow?'none':'';header.style.gridColumn='1';header.style.gridRow=String((rotated?maxRow-row:row-minRow)+2)}if(PH.matches)header.style.display='none'});
+  const corner=board.querySelector('.grid-corner');if(corner){corner.style.gridRow='1';corner.style.gridColumn='1';corner.style.display=PH.matches?'none':''}
   const rotate=grid.querySelector('#classroomRotateButton');if(rotate){rotate.setAttribute('aria-pressed',String(rotated));rotate.textContent='Perspektive';rotate.title=rotated?'Schülerperspektive aktiv – zur Lehrerperspektive wechseln':'Lehrerperspektive aktiv – zur Schülerperspektive wechseln'}
   const occupied=[...board.querySelectorAll('.cell')].filter(cell=>!!gridData[Number(cell.dataset.row)]?.[Number(cell.dataset.col)]);
   if(occupied.length){
    const cols=occupied.map(cell=>parseInt(cell.style.gridColumn,10)),rows=occupied.map(cell=>parseInt(cell.style.gridRow,10)),left=Math.min(...cols),top=Math.min(...rows),width=(Math.max(...cols)-left)*80+75,height=(Math.max(...rows)-top)*50+45,printScale=Math.min((184*96/25.4)/width,(215*96/25.4)/height);
-   board.style.setProperty('--print-seat-left',-(40+(left-2)*80)+'px');board.style.setProperty('--print-seat-top',-((top-1)*50)+'px');board.style.setProperty('--print-seat-scale',printScale);viewport.style.setProperty('--print-seat-height',height*printScale+'px');
+   board.style.setProperty('--print-seat-left',-(hw()+5+(left-2)*80)+'px');board.style.setProperty('--print-seat-top',-(hh()+5+(top-2)*50)+'px');board.style.setProperty('--print-seat-scale',printScale);viewport.style.setProperty('--print-seat-height',height*printScale+'px');
   }
-  const d={width:35+colCount*80,height:(rowCount+1)*50-5};board.style.width=d.width+'px';board.style.height=d.height+'px';board.style.gridTemplateColumns=`35px repeat(${colCount},75px)`;board.style.gridTemplateRows=`repeat(${rowCount+1},45px)`;if(auto){/* 100 %, außer der Plan passt nicht vollständig auf den Bildschirm – dann einpassen (Breite und Höhe). */const fitW=scroll.clientWidth/d.width,top=scroll.getBoundingClientRect().top+window.scrollY,availH=window.innerHeight-top-70,fitH=mobileDevice&&availH>160?availH/d.height:1;/* Höhe nur auf iPad/iPhone berücksichtigen – am Mac zählt nur die Breite. */scale=Math.max(min,Math.min(1,fitW,Math.max(.55,fitH)))}else if(fit)scale=Math.max(min,Math.min(max,scroll.clientWidth/d.width));
+  const d={width:hw()+colCount*80,height:hh()+rowCount*50};board.style.width=d.width+'px';board.style.height=d.height+'px';board.style.gridTemplateColumns=`${hw()}px repeat(${colCount},75px)`;board.style.gridTemplateRows=`${hh()}px repeat(${rowCount},45px)`;if(auto){/* 100 %, außer der Plan passt nicht vollständig auf den Bildschirm – dann einpassen (Breite und Höhe). */const fitW=scroll.clientWidth/d.width,top=scroll.getBoundingClientRect().top+window.scrollY,availH=window.innerHeight-top-70,fitH=mobileDevice&&availH>160?availH/d.height:1;/* Höhe nur auf iPad/iPhone berücksichtigen – am Mac zählt nur die Breite. */scale=Math.max(min,Math.min(1,fitW,Math.max(.55,fitH)))}else if(fit)scale=Math.max(min,Math.min(max,scroll.clientWidth/d.width));
   board.style.transform=`scale(${scale})`;viewport.style.width=d.width*scale+'px';viewport.style.height=d.height*scale+'px';
   // Gruppenlegende endet bündig mit dem rechten Rand des Sitzplans.
   const legend=grid.querySelector(':scope > .main-group-legend');if(legend){const w=Math.round(d.width*scale);for(const [k,v] of [['width',w+'px'],['max-width','100%'],['justify-self','start'],['align-self','flex-start'],['justify-content','flex-end'],['box-sizing','border-box'],['margin-left','0'],['margin-right','0'],['padding-right','0']])legend.style.setProperty(k,v,'important')}
@@ -2518,7 +2520,7 @@ document.addEventListener('keydown',event=>{
  document.getElementById('classroomEditRoom')?.addEventListener('change',update);
  new ResizeObserver(()=>update()).observe(grid);document.addEventListener('fullscreenchange',update);
  // Beim Drehen des iPads wieder automatisch (quer 100 %, hochkant ggf. eingepasst).
- matchMedia('(orientation: portrait)').addEventListener('change',()=>{auto=true;fit=false;update()});
+ matchMedia('(orientation: portrait)').addEventListener('change',()=>{auto=true;fit=false;update()});PH.addEventListener?.('change',()=>update());
 })();
 ;
 
