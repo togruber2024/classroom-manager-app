@@ -4156,9 +4156,31 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   }
   for(const it of items)box.append(barRow(it,null,0));
  }
+ /* Übernommene Klassen ohne Schraffur-Farbe („classroom-unstriped“ ohne --unstriped-color) würden leer erscheinen –
+    die Klasse entfernen, die Schraffur-Einstellung setzt sie mit der richtigen Farbe neu. */
+ function fixUnstriped(root){for(const e of root.querySelectorAll('.classroom-unstriped'))if(!e.style.getPropertyValue('--unstriped-color'))e.classList.remove('classroom-unstriped')}
+ // Variante B: fehlende Hausaufgaben/Material des ganzen Halbjahres als rote Kästchen mit Datum (1. Quartal heller), ab 3× rot
+ const normName=n=>String(n||'').trim().toLocaleLowerCase('de-DE');
+ let missCache=null;
+ function missingSource(){
+  if(typeof subjectExamGroups!=='function'||typeof homeworkPageData!=='function')return null;
+  const sel=Number((classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId)?.sharedQuarterSelection?.[currentHalfYearId])||0;
+  const key=currentSubject+'|'+currentClassId+'|'+currentHalfYearId+'|'+sel;if(missCache?.key===key&&Date.now()-missCache.at<1500)return missCache.fn;
+  const t=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  const groups=subjectExamGroups(currentSubject).filter(g=>g.type==='homework'&&g.halfYearId===currentHalfYearId);
+  const collect=mat=>{const gs=groups.filter(g=>!!g.material===mat);if(!gs.length)return null;const map=new Map();
+   for(const g of gs)(g.pages||[]).forEach((page,q)=>{if(!page||q>sel)return;const d=homeworkPageData(currentSubject,page);for(const st of d.students||[]){const k=normName(st.name);for(const a of d.assignments||[]){if(a.date&&a.date>t)continue;if(st.statuses?.[a.id]==='missing'){if(!map.has(k))map.set(k,[]);map.get(k).push({date:a.date||'',q})}}}});
+   for(const l of map.values())l.sort((a,b)=>a.date<b.date?-1:1);return map};
+  const ha=collect(false),mat=collect(true);
+  const fn=name=>({ha:ha?ha.get(normName(name))||[]:null,mat:mat?mat.get(normName(name))||[]:null});
+  missCache={key,at:Date.now(),fn};return fn}
+ function missingRow(label,list){const box=document.createElement('div');box.className='qs-miss'+(list.length>=3?' is-alert':'');
+  const h=document.createElement('div');h.className='qs-miss-h';const l=document.createElement('span');l.textContent=label+' fehlend im Halbjahr';const n=document.createElement('b');n.textContent=String(list.length);h.append(l,n);box.append(h);
+  if(list.length){const r=document.createElement('div');r.className='qs-seq qs-miss-seq';for(const m of list){const c=document.createElement('span');c.className='qs-sq'+(m.q===0?' is-q1':'');const i=document.createElement('i');i.textContent='✗';const d=document.createElement('small');d.textContent=m.date?m.date.slice(8,10)+'.'+m.date.slice(5,7)+'.':'—';c.title=(m.q+1)+'. Quartal';c.append(i,d);r.append(c)}box.append(r)}
+  return box}
  function editProxy(orig,label,after){
-  const l=document.createElement('label');l.className='qs-edit';const s=document.createElement('span');s.textContent=label;const inp=document.createElement('input');inp.type='text';inp.value=orig.value;inp.placeholder=orig.placeholder||'—';inp.className=orig.className;inp.setAttribute('aria-label',orig.getAttribute('aria-label')||label);inp.autocomplete='off';
-  inp.onchange=()=>{orig.value=inp.value;orig.dispatchEvent(new Event('input',{bubbles:true}));orig.dispatchEvent(new Event('change',{bubbles:true}));inp.value=orig.value;inp.className=orig.className;after?.();schedule()};
+  const l=document.createElement('label');l.className='qs-edit';const s=document.createElement('span');s.textContent=label;const inp=document.createElement('input');inp.type='text';inp.value=orig.value;inp.placeholder=orig.placeholder||'—';inp.className=orig.className;inp.style.setProperty('--unstriped-color',orig.style.getPropertyValue('--unstriped-color'));inp.setAttribute('aria-label',orig.getAttribute('aria-label')||label);inp.autocomplete='off';
+  inp.onchange=()=>{orig.value=inp.value;orig.dispatchEvent(new Event('input',{bubbles:true}));orig.dispatchEvent(new Event('change',{bubbles:true}));inp.value=orig.value;inp.className=orig.className;inp.style.setProperty('--unstriped-color',orig.style.getPropertyValue('--unstriped-color'));after?.();schedule()};
   l.append(s,inp);return l}
  // Karte antippen → Blatt mit allen Einträgen dieser Person (‹ / › bzw. Wischen = nächste Person)
  const sheet=document.createElement('div');sheet.className='qs-detail';sheet.hidden=true;
@@ -4197,7 +4219,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   if(prev.items.length||prev.rows.length){const sec=document.createElement('div');sec.className='qd-sec qd-prev';const h=document.createElement('h4');h.textContent='1. Quartal';sec.append(h);
    if(prev.items.length){const list=document.createElement('div');list.className='qd-items';for(const [d,v] of prev.items){const it=document.createElement('span');it.className='qd-item';it.append(chip(v));const sm=document.createElement('small');sm.textContent=d;it.append(sm);list.append(it)}sec.append(list)}
    for(const [label,v] of prev.rows){const r=document.createElement('div');r.className='qd-row';const l=document.createElement('span');l.textContent=label;r.append(l,chip(v));sec.append(r)}body.append(sec)}
-  if(edits.childElementCount)body.append(edits);
+  if(edits.childElementCount)body.append(edits);fixUnstriped(body);
  }
  let planned=false;
  function schedule(){if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;run()})}
@@ -4234,9 +4256,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   let bar=panel.querySelector(':scope .qs-phone-bar');
   if(!bar){bar=document.createElement('div');bar.className='qs-phone-bar';bar.innerHTML='<div class="qs-seg" role="group" aria-label="Darstellung"><button type="button" data-qs="cards">Karten</button><button type="button" data-qs="table">Tabelle</button></div>';
    bar.onclick=e=>{const b=e.target.closest('[data-qs]');if(!b)return;try{localStorage.setItem(KEY,b.dataset.qs)}catch{}run()};}
-  if(bar.nextElementSibling!==wrap&&wrap.parentElement)wrap.before(bar);
   let box=panel.querySelector(':scope .qs-cards');if(!box){box=document.createElement('div');box.className='qs-cards'}
-  if(bar.nextElementSibling!==box)bar.after(box);
+  /* Reihenfolge Leiste · Karten · Tabelle nur bei Bedarf herstellen (sonst endlose Umsortierung) */
+  if(wrap.parentElement&&box.nextElementSibling!==wrap)wrap.before(box);if(bar.nextElementSibling!==box)box.before(bar);
   const on=PH.matches&&mode()==='cards';panel.classList.toggle('qs-cards-on',on);
   for(const b of bar.querySelectorAll('[data-qs]'))b.setAttribute('aria-pressed',String(b.dataset.qs===mode()));
   if(!on){box.replaceChildren();box.dataset.sig='';return}
@@ -4245,7 +4267,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   if(box.dataset.sig===sig&&box.childElementCount)return;box.dataset.sig=sig;
   const frag=document.createDocumentFragment();
   for(const row of table.tBodies[0].rows){
-   const cells=[...row.cells],name=cells[0]?.textContent.trim();if(!name)continue;
+   const cells=[...row.cells],name=cells[0]?.textContent.trim();if(!name)continue;const missingInfo=missingSource();
    const card=document.createElement('article');card.className='qs-card';
    const top=document.createElement('div');top.className='qs-top';const nm=document.createElement('b');nm.className='qs-name';nm.textContent=name;
    const big=document.createElement('span');big.className='qs-big';top.append(nm,big);card.append(top);
@@ -4263,12 +4285,12 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
     if(src?.dataset.parentMailPage){chip.classList.add('qs-mail');chip.title='Eltern-Mail vorbereiten';chip.onclick=()=>src.click()}
     chip.append(k,v);
     // Variante A: Notenwerte als Balken (je länger, desto besser); Zählwerte (fehlend) bleiben kleine Marken
-    if(!/fehl/i.test(heads[i]))items.push({head:heads[i],th:headCells[i],num:gradeNumber(text),text:text||'—',cls:src?.className||'',click:chip.classList.contains('qs-mail')?chip.onclick:null});else chips.append(chip);
+    if(!/fehl/i.test(heads[i]))items.push({head:heads[i],th:headCells[i],num:gradeNumber(text),text:text||'—',cls:src?.className||'',click:chip.classList.contains('qs-mail')?chip.onclick:null});else if(!(missingInfo&&/^(HA|MA|Material)\b/i.test(heads[i])))chips.append(chip);
    });
    if(!bigText){const cands=cells.filter(c=>!c.classList.contains('previous-quarter-history-cell')&&c.classList.contains('quarter-summary-average')&&!/fehl/i.test(heads[cells.indexOf(c)])&&/\d/.test(c.textContent)),pick=re=>cands.find(c=>re.test(heads[cells.indexOf(c)])),avg=pick(/^Halbjahresnote/)||pick(/^Sonstige Mitarbeit/)||cands.at(-1);if(avg){bigText=avg.textContent.trim();bigCls=(avg.querySelector('span')?.className||'')+' qs-soft'}}
    big.textContent=bigText||'—';big.className='qs-big '+(bigCls||'qs-empty');
    tree(bars,items,panel,mmList);
-   if(bars.childElementCount)card.append(bars);if(chips.childElementCount)card.append(chips);
+   if(bars.childElementCount)card.append(bars);if(missingInfo){const mi=missingInfo(name);for(const [label,list] of [['Hausaufgaben',mi.ha],['Material',mi.mat]]){if(list===null)continue;card.append(missingRow(label,list))}}if(chips.childElementCount)card.append(chips);
    // 1. Quartal je Karte aufklappbar (nur wenn das 1. Quartal mitgeladen ist)
    if(prevSum.length||prevMm.length||prevQn){const sec=document.createElement('div');sec.className='qs-q1';const h=document.createElement('div');h.className='qs-q1h';h.textContent='1. Quartal'+(prevQn?' · Quartalsnote '+prevQn:'');sec.append(h);const b2=document.createElement('div');b2.className='qs-bars';const other=prevSum.find(x=>/^Sonstige/.test(x.head)),mmA=prevSum.find(x=>/^MM · Mittelwert/.test(x.head)),te=prevSum.find(x=>/^Tests · Mittelwert/.test(x.head));
     if(other)b2.append(barRow(other,null,0));if(mmA)b2.append(barRow(mmA,null,other?1:0));if(prevMm.length){const r=document.createElement('div');r.className='qs-seq'+(other?' qs-lvl1':'');for(const m of prevMm){const c=document.createElement('span');c.className='qs-sq';const ii=document.createElement('i');ii.textContent=m.text;ii.className=(/^a$/i.test(m.text)||!m.cls)?'qs-abs':m.cls;const d=document.createElement('small');d.textContent=m.date;c.append(ii,d);r.append(c)}b2.append(r)}if(te)b2.append(barRow(te,null,other?1:0));
@@ -4277,7 +4299,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
     const ft=document.createElement('div');ft.className='qs-ft';ft.append(t);if(edits.childElementCount)ft.append(edits);card.append(ft)}
    else if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card)openDetail(panel,name)};frag.append(card);
   }
-  box.replaceChildren(frag);
+  box.replaceChildren(frag);fixUnstriped(box);
   if(detail?.panel===panel&&!sheet.hidden&&!sheet.contains(document.activeElement))renderDetail();
  }
  new MutationObserver(list=>{if(list.some(m=>!m.target.closest?.('.qs-cards,.qs-phone-bar,.qs-detail,.qs-wt')))schedule()}).observe(document.body,{subtree:true,childList:true,characterData:true});
@@ -4307,7 +4329,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   +'.qs-big.qs-empty{color:#9aa6b6;font-weight:600}.qs-big.qs-soft{opacity:.75}'
   +'.qs-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}'
   +'.qs-bars{display:grid;gap:6px;margin-top:10px}.qs-bar{display:grid;grid-template-columns:132px minmax(0,1fr) 40px;align-items:center;gap:8px;font-size:12.5px;color:#66758a}.qs-bar.qs-mail{cursor:pointer}'
-  +'.qs-bar-label{display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}.qs-bar-name{min-width:0;overflow:hidden;text-overflow:ellipsis}.qs-w{flex:none;padding:0 5px;border-radius:6px;background:#eaf0fa;color:#2f5f9b;font-size:10.5px;font-weight:700;line-height:16px}.qs-seq{display:flex;flex-wrap:wrap;gap:4px;padding-top:2px;padding-bottom:2px}.qs-seq.qs-lvl1,.qs-seq.qs-lvl2{border-left:0;margin-left:0;padding-left:0}.qs-seq.qs-lvl1{padding-left:18px}.qs-seq.qs-lvl2{padding-left:32px}.qs-sq{display:flex;flex-direction:column;align-items:center;gap:1px}.qs-sq i:not(#_){font-style:normal;min-width:28px;height:24px;padding:0 4px;box-sizing:border-box;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:750;color:#243247;border:0;box-shadow:none;margin:0}.qs-sq i:where(:not([class])),.qs-sq i.qs-abs:not(#_){background:#f1f3f7;color:#9aa6b6}.qs-sq small{font-size:9.5px;color:#8794a7}.qs-q1{margin-top:8px;padding:8px;border-radius:10px;background:#f7f9fc}.qs-q1[hidden]{display:none}.qs-q1h{font-size:12px;font-weight:650;color:#66758a}.qs-q1 .qs-bars{margin-top:4px}.qs-ft{display:flex;align-items:flex-end;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid #eef2f7}.qs-ft .qs-edits{flex:1;margin:0;padding:0;border:0}.qs-q1t{flex:none;min-height:30px;padding:0 10px;border:1px solid #cbd6e5;border-radius:999px;background:#fff;color:#66758a;font:inherit;font-size:12.5px;white-space:nowrap;cursor:pointer}.qs-q1t[aria-expanded=true]{background:#eaf0fa;border-color:#8fb0dc;color:#2f5f9b;font-weight:700}.qs-w.qs-hj{background:#eef2f7;color:#66758a;font-weight:600}.qs-cap{display:flex;align-items:center;gap:4px;font-size:11px;color:#8794a7;margin-bottom:-2px}.qs-bar-label{align-self:stretch}.qs-lvl1 .qs-bar-label,.qs-cap.qs-lvl1{margin-left:4px;padding-left:12px;border-left:2px solid #e3e8f0}.qs-lvl2 .qs-bar-label,.qs-cap.qs-lvl2{margin-left:4px;padding-left:26px;border-left:2px solid #e3e8f0;background:linear-gradient(#e3e8f0,#e3e8f0) 14px 0/2px 100% no-repeat}.qs-lvl1 .qs-bar-track,.qs-lvl2 .qs-bar-track{height:8px}.qs-bar-track{height:12px;border-radius:6px;background:#eef2f7;overflow:hidden;display:block}'
+  +'.qs-bar-label{display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}.qs-bar-name{min-width:0;overflow:hidden;text-overflow:ellipsis}.qs-w{flex:none;padding:0 5px;border-radius:6px;background:#eaf0fa;color:#2f5f9b;font-size:10.5px;font-weight:700;line-height:16px}.qs-seq{display:flex;flex-wrap:wrap;gap:4px;padding-top:2px;padding-bottom:2px}.qs-seq.qs-lvl1,.qs-seq.qs-lvl2{border-left:0;margin-left:0;padding-left:0}.qs-seq.qs-lvl1{padding-left:18px}.qs-seq.qs-lvl2{padding-left:32px}.qs-sq{display:flex;flex-direction:column;align-items:center;gap:1px}.qs-sq i:not(#_){font-style:normal;min-width:28px;height:24px;padding:0 4px;box-sizing:border-box;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:750;color:#243247;border:0;box-shadow:none;margin:0}.qs-sq i:where(:not([class])),.qs-sq i.qs-abs:not(#_){background:#f1f3f7;color:#9aa6b6}.qs-sq small{font-size:9.5px;color:#8794a7}.qs-q1{margin-top:8px;padding:8px;border-radius:10px;background:#f7f9fc}.qs-q1[hidden]{display:none}.qs-q1h{font-size:12px;font-weight:650;color:#66758a}.qs-q1 .qs-bars{margin-top:4px}.qs-ft{display:flex;align-items:flex-end;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid #eef2f7}.qs-ft .qs-edits{flex:1;margin:0;padding:0;border:0}.qs-q1t{flex:none;min-height:30px;padding:0 10px;border:1px solid #cbd6e5;border-radius:999px;background:#fff;color:#66758a;font:inherit;font-size:12.5px;white-space:nowrap;cursor:pointer}.qs-q1t[aria-expanded=true]{background:#eaf0fa;border-color:#8fb0dc;color:#2f5f9b;font-weight:700}.qs-miss{margin-top:8px}.qs-miss-h{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#66758a}.qs-miss-h b{color:#243247;font-size:13px}.qs-miss.is-alert .qs-miss-h b{color:#b42318}.qs-miss-seq{margin-top:4px}.qs-miss-seq .qs-sq i:not(#_){background:#fdf0ef;color:#b42318;border:1px solid #e9a4a0;font-size:11px}.qs-miss-seq .qs-sq.is-q1 i:not(#_){background:#f7f9fc;border-color:#f0c7c3}.qs-w.qs-hj{background:#eef2f7;color:#66758a;font-weight:600}.qs-cap{display:flex;align-items:center;gap:4px;font-size:11px;color:#8794a7;margin-bottom:-2px}.qs-bar-label{align-self:stretch}.qs-lvl1 .qs-bar-label,.qs-cap.qs-lvl1{margin-left:4px;padding-left:12px;border-left:2px solid #e3e8f0}.qs-lvl2 .qs-bar-label,.qs-cap.qs-lvl2{margin-left:4px;padding-left:26px;border-left:2px solid #e3e8f0;background:linear-gradient(#e3e8f0,#e3e8f0) 14px 0/2px 100% no-repeat}.qs-lvl1 .qs-bar-track,.qs-lvl2 .qs-bar-track{height:8px}.qs-bar-track{height:12px;border-radius:6px;background:#eef2f7;overflow:hidden;display:block}'
   +':where(.qs-bar-fill){background:#b9c3d1}'+'.qs-bar-fill:not(#_){display:block;height:100%;min-width:0;padding:0;margin:0;border:0;border-radius:6px;box-shadow:none;font-size:0}.qs-bar b{text-align:right;color:#243247;font-size:13px}'
   +'.qs-chip{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 4px 0 9px;border:1px solid #e3e8f0;border-radius:999px;background:#f7f9fc;font-size:12.5px;color:#66758a}'
   +'.qs-chip small{font-size:12px}.qs-chip i{font-style:normal;min-width:22px;padding:2px 7px;border-radius:999px;text-align:center;font-weight:700;color:#243247;background:#fff}'
@@ -4406,6 +4428,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const sk=()=>'classroom-lite-half:'+currentSubject+':'+currentClassId;
  const ss={get:k=>{try{return sessionStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{sessionStorage.setItem(k,v)}catch{}}};
  let busy=false,tries=0,planned=false;
+ /* Jede Umschaltung höchstens einmal je Fach/Klasse/Halbjahr – verhindert endloses Hin-und-her-Schalten. */
+ const done=new Set(),once=step=>{const k=step+'|'+currentSubject+'|'+currentClassId+'|'+currentHalfYearId;if(done.has(k))return false;done.add(k);return true};
  const years=()=>subjectExamGroups(currentSubject).filter(g=>g.type==='halfYear');
  const holder=()=>(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId);
  function wantedHalf(){const ys=years();if(!ys.length)return null;const chosen=ss.get(sk());if(chosen&&ys.some(y=>y.id===chosen))return chosen;
@@ -4418,20 +4442,20 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   busy=true;let acted=false;try{
    const nf=document.getElementById('navigationFrame');if(!nf)return;
    // 1. Halbjahr
-   const half=wantedHalf();if(half&&half!==currentHalfYearId){const b=nf.querySelector(`.half-year-picker .page-tab[data-half-year-id="${CSS.escape(half)}"]`);if(b&&tries++<6){b.click();acted=true;return}}
+   const half=wantedHalf();if(half&&half!==currentHalfYearId){const b=nf.querySelector(`.half-year-picker .page-tab[data-half-year-id="${CSS.escape(half)}"]`);if(b&&once('half:'+half)){b.click();acted=true;return}}
    // 2. Quartal nach Datum
    const q=wantedQuarter(),qTabs=[...nf.querySelectorAll('.shared-quarter-picker .page-tab')],sel=Number(holder()?.sharedQuarterSelection?.[currentHalfYearId])||0;
-   if(qTabs[q]&&sel!==q&&tries++<6){qTabs[q].click();acted=true;return}
+   if(qTabs[q]&&sel!==q&&once('q:'+q)){qTabs[q].click();acted=true;return}
    // 3. Quartalsübersicht öffnen (ggf. für dieses Quartal freischalten)
    const sum=subjectExamGroups(currentSubject).find(g=>g.type==='quarterSummary'&&g.halfYearId===currentHalfYearId);
    showEmpty(!sum);if(!sum)return;
    if(Array.isArray(sum.enabledQuarters)&&!sum.enabledQuarters.includes(sel)){sum.enabledQuarters.push(sel);if(typeof persistExamGroups==='function')persistExamGroups(currentSubject)}
-   if(!sum.pages?.includes(activePage)&&tries++<6){setPage(sum.pages[0]);acted=true;return}
+   if(!sum.pages?.includes(activePage)&&once('page:'+activePage)){setPage(sum.pages[0]);acted=true;return}
    // 4. Im 2. Quartal das 1. Quartal mitladen (in den Karten einzeln aufklappbar)
    const panel=document.querySelector(`[data-custom-panel="${CSS.escape(activePage)}"]`);
-   const prev=[...(panel?.querySelectorAll('.previous-quarter-toggle input')||[])][0];if(prev&&sel>0&&!prev.checked&&tries++<6){prev.click();acted=true;return}
-   tries=0;if(panel)topBar(panel,sel);
-  }finally{busy=false;if(acted)setTimeout(ensure,350)}
+   const prev=[...(panel?.querySelectorAll('.previous-quarter-toggle input')||[])][0];if(prev&&sel>0&&!prev.checked&&once('prev')){prev.click();acted=true;return}
+   if(panel)topBar(panel,sel);
+  }finally{busy=false;if(acted&&tries++<12)setTimeout(ensure,350);if(!acted)tries=0}
  }
  function schedule(){if(planned)return;planned=true;setTimeout(()=>{planned=false;ensure()},30)}
  // Kopfzeile über den Karten: Halbjahr · Sortierung · Stand
@@ -4439,7 +4463,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   let bar=panel.querySelector(':scope>.pl-bar');
   if(!bar){bar=document.createElement('div');bar.className='pl-bar';bar.innerHTML='<div class="pl-row"><span class="pl-seg pl-half"></span><span class="pl-seg pl-sort"><button type="button" data-sort="name">A–Z</button><button type="button" data-sort="grade">Note</button></span></div><div class="pl-stand"></div>';
    bar.addEventListener('click',e=>{const h=e.target.closest('[data-half]'),s=e.target.closest('[data-sort]');
-    if(h){ss.set(sk(),h.dataset.half);tries=0;schedule()}
+    if(h){ss.set(sk(),h.dataset.half);done.clear();schedule()}
     if(s){ss.set('classroom-lite-sort',s.dataset.sort);sortCards(panel)}});
    panel.prepend(bar)}
   const hs=bar.querySelector('.pl-half'),ys=years(),sig=ys.map(y=>y.id+y.label).join('|')+currentHalfYearId;
