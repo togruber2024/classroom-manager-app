@@ -1515,6 +1515,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['iPhone: neue Bedienung','Auf dem iPhone (hochkant) oben nur noch Symbol, Auswahl und Rückgängig; die Auswahl öffnet sich als Blatt von unten. Unten die Leiste Unterricht · Noten · Backup · Mehr.','iPhone hochkant','7.64'],
    ['Backup sofort wiederherstellen','Der Knopf ⬆ neben „Backup“ lädt das neueste Backup (am Mac aus dem festen Ordner, sonst per Dateiauswahl) – mit Rückfrage. Jede Wiederherstellung lässt sich rückgängig machen.','oben rechts → ⬆ neben „Backup“','7.55'],
    ['Hinweis auf neue Versionen','Gibt es eine neuere Version, erscheint oben „Neue Version … verfügbar“ – „Jetzt aktualisieren“ lädt sie sofort, die Daten bleiben erhalten.','oben unter der Kopfzeile','7.52'],
    ['„Fehlend“ zählt übers Halbjahr','Auf den Hausaufgaben- und Materialseiten des 2. (4.) Quartals zählt die Spalte „Fehlend“ die fehlenden Einträge aus dem 1. (3.) Quartal mit – auch für die Eltern-Mail.','Noten-Manager → Hausaufgaben','7.48'],
@@ -1523,8 +1524,7 @@ window.addEventListener('message',event=>{
    ['Wer braucht noch mündliche Noten?','Tische von Schüler:innen mit weniger als 3 mündlichen Noten im Halbjahr werden getönt und mit „0/3“, „1/3“ oder „2/3“ markiert – sobald jemand 3 hat und die letzte Bewertung 2 Stunden her ist.','Unterrichts-Manager → Sitzplan','7.41'],
    ['Hausaufgaben-Rahmen wird dicker','Ab der dritten fehlenden Hausaufgabe im Halbjahr wird der rote Rahmen am Tisch mit jeder weiteren etwas dicker.','Unterrichts-Manager → Sitzplan','7.41'],
    ['Kurze Titel in der Übersicht','Lange Themen von Klassenarbeiten werden in der Übersicht gekürzt (z. B. „L15“); der volle Titel erscheint beim Darüberfahren.','Klassenarbeiten-Übersicht','7.41'],
-   ['Schnell-Backup','Der kleine Knopf mit Download-Symbol neben „Backup“ speichert sofort ein Backup – ein grüner Haken bestätigt es.','oben rechts → neben „Backup“','7.40'],
-   ['„＋ Test“ und „＋ Klassenarbeit“','Neue Tests und Arbeiten legst du mit dem gestrichelten Kasten im Kopf der rechten Spalte an.','Tests- bzw. Klassenarbeiten-Übersicht','7.40']]},
+   ['Schnell-Backup','Der kleine Knopf mit Download-Symbol neben „Backup“ speichert sofort ein Backup – ein grüner Haken bestätigt es.','oben rechts → neben „Backup“','7.40']]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
    ['Zwei Bereiche','Oben wechselst du zwischen Unterrichts-Manager (Sitzplan, Mitarbeit und Hausaufgaben im Unterricht) und Noten-Manager (Bewertungen, Tests, Klausuren, Zeugnisnoten). Beide nutzen dieselben Klassen und Schülerlisten.'],
@@ -1779,6 +1779,97 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
  new MutationObserver(update).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
  // theme.js ersetzt das Symbol beim Start durch einen Button – danach erneut anwenden.
  new MutationObserver(update).observe(document.querySelector('.app-header')||document.body,{childList:true,subtree:true});
+})();
+;
+
+/* ==== phone.js ==== */
+/* iPhone-Ansicht (hochkant, bis 540 px): schmale Kopfzeile (Symbol · Auswahl „Fach · Klasse · …“ · Rückgängig),
+   Auswahlmenü als Blatt von unten, Leiste unten (Unterricht · Noten · Backup · Mehr). iPad und Mac bleiben unverändert.
+   Die bestehenden Elemente werden nur umgehängt bzw. per CSS anders angeordnet; alle Funktionen bleiben dieselben. */
+(()=>{
+ if(window!==parent)return;
+ const PHONE=matchMedia('(max-width:540px) and (orientation:portrait)');
+ const icon={
+  sitzplan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="14" y="4" width="7" height="6" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg>',
+  noten:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M2 20h20"/></svg>',
+  backup:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+  mehr:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>'};
+ // Leiste unten
+ const bar=document.createElement('nav');bar.className='phone-tabbar';bar.setAttribute('aria-label','Bereiche');
+ bar.innerHTML='<button type="button" data-ph="sitzplan">'+icon.sitzplan+'<span>Unterricht</span></button><button type="button" data-ph="noten">'+icon.noten+'<span>Noten</span></button><button type="button" data-ph="backup">'+icon.backup+'<span>Backup</span><i class="ph-dot" hidden></i></button><button type="button" data-ph="mehr">'+icon.mehr+'<span>Mehr</span></button>';
+ document.body.append(bar);
+ // „Mehr“-Blatt
+ const sheet=document.createElement('div');sheet.className='phone-sheet';sheet.hidden=true;
+ sheet.innerHTML='<div class="ph-back"></div><div class="ph-panel" role="dialog" aria-label="Mehr"><div class="ph-grab"></div><b class="ph-title">Mehr</b>'
+  +'<button type="button" data-act="help"><span>?</span>Hilfe</button>'
+  +'<button type="button" data-act="privacy"><span>👁</span>Datenschutzmodus</button>'
+  +'<button type="button" data-act="quick">'+icon.backup+'Backup sofort speichern</button>'
+  +'<button type="button" data-act="restore"><span class="ph-up">'+icon.backup+'</span>Neuestes Backup wiederherstellen …</button>'
+  +'<button type="button" data-act="theme"><span>🎨</span>Farbgestaltung</button>'
+  +'<b class="ph-title ph-sub">Schuljahr</b><button type="button" data-act="sy-timetable"><span>🕘</span>Stundenplan …</button><button type="button" data-act="sy-archive"><span>🗄</span>Archiv eines früheren Schuljahres …</button><button type="button" data-act="sy-close" class="ph-danger"><span>⏏</span>Schuljahr abschließen …</button></div>';
+ document.body.append(sheet);
+ const closeSheet=()=>{sheet.hidden=true};
+ sheet.querySelector('.ph-back').onclick=closeSheet;
+ sheet.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;closeSheet();const a=b.dataset.act;
+  if(a==='help')window.classroomOpenHelp?.();else if(a==='privacy')window.classroomPrivacy?.toggle();
+  else if(a==='quick')document.getElementById('classroomQuickBackup')?.click();else if(a==='restore')document.getElementById('classroomQuickRestore')?.click();
+  else if(a==='theme')document.querySelector('.app-header .brand-mark')?.click();
+  else if(a.startsWith('sy-'))document.querySelector('.sy-menu [data-sy="'+a.slice(3)+'"]')?.click()});
+ bar.addEventListener('click',e=>{const b=e.target.closest('[data-ph]');if(!b)return;const t=b.dataset.ph;
+  if(t==='sitzplan'||t==='noten')document.getElementById('tab-'+t)?.click();
+  else if(t==='backup')document.getElementById('classroomBackupButton')?.click();
+  else if(t==='mehr')sheet.hidden=!sheet.hidden});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+ function sync(){for(const t of ['sitzplan','noten']){const on=document.getElementById('tab-'+t)?.getAttribute('aria-selected')==='true';bar.querySelector('[data-ph="'+t+'"]').classList.toggle('on',on)}
+  bar.querySelector('.ph-dot').hidden=!document.getElementById('classroomBackupButton')?.classList.contains('backup-due');
+  const priv=document.documentElement.classList.contains('classroom-privacy');sheet.querySelector('[data-act=privacy]').lastChild.textContent=priv?'Datenschutzmodus beenden':'Datenschutzmodus'}
+ new MutationObserver(sync).observe(document.body,{subtree:true,attributes:true,attributeFilter:['aria-selected','class']});
+ // Auswahl in die Kopfzeile holen (nur iPhone), sonst an ihren Platz über den Managern zurück
+ let home=null;
+ function place(){const nav=document.querySelector('.compact-navigation'),header=document.querySelector('.app-header'),brand=header?.querySelector('.brand');if(!nav||!brand)return;
+  if(PHONE.matches){if(!home){home=document.createComment('nav');nav.before(home)}if(nav.parentElement!==header)brand.after(nav)}
+  else if(home&&nav.parentElement===header){home.before(nav)}
+  document.documentElement.classList.toggle('is-phone',PHONE.matches);sync()}
+ PHONE.addEventListener?.('change',place);
+ const tryPlace=()=>{place();if(!document.querySelector('.compact-navigation'))setTimeout(tryPlace,300)};tryPlace();
+ const st=document.createElement('style');st.textContent=
+  '.phone-tabbar,.phone-sheet{display:none}'
+  +'@media (max-width:540px) and (orientation:portrait){'
+  +'body{padding-bottom:calc(62px + env(safe-area-inset-bottom))}'
+  +'.app-header:not(#_){position:relative;z-index:9450;display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:8px!important;padding:8px 12px!important}'
+  +'.app-header .brand{flex:none!important;gap:0!important}.app-header .brand>div{display:none!important}.app-header .brand-mark{width:32px!important;height:32px!important}'
+  +'.app-header>.module-tabs{display:none!important}'
+  +'.app-header .classroom-global-actions:not(#_){display:flex!important;width:auto!important;flex:none!important;gap:0!important;margin:0!important}'
+  +'.app-header .classroom-global-actions>*:not(#classroomUndoButton){display:none!important}'
+  +'.app-header #classroomUndoButton:not(#_){width:40px!important;min-width:40px!important;min-height:38px!important;height:38px!important;padding:0!important;font-size:0!important}'
+  +'.app-header #classroomUndoButton::before{content:"↶";font-size:19px;line-height:1}'
+  +'.app-header>.compact-navigation:not(#_){flex:1 1 auto;min-width:0;margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;position:static}'
+  +'.app-header>.compact-navigation .compact-navigation-bar{min-height:38px!important;gap:0!important;padding:0 10px!important;border-radius:12px;background:#e7edf6;overflow:hidden!important;flex-direction:row!important}'
+  +'.app-header>.compact-navigation .compact-navigation-arrow{order:2;flex:none;margin-left:4px;padding:0!important;color:#2f5f9b}'
+  +'.app-header>.compact-navigation .compact-navigation-trail:not(#_){display:block!important;flex:1 1 auto!important;min-width:0;padding:0!important;background:transparent!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px;line-height:38px}'
+  +'.app-header>.compact-navigation .compact-navigation-chip:not(#_){display:inline!important;padding:0!important;background:none!important;box-shadow:none!important;border:0!important;font:inherit!important;font-weight:650!important;color:#243247!important}'
+  +'.app-header>.compact-navigation .compact-navigation-chip+.compact-navigation-separator+.compact-navigation-chip~.compact-navigation-chip{font-weight:500!important;color:#66758a!important}'
+  +'.app-header>.compact-navigation .compact-navigation-separator:not(#_){display:inline!important;width:auto!important;height:auto!important;margin:0!important;background:none!important;border:0!important;transform:none!important}'
+  +'.app-header>.compact-navigation .compact-navigation-separator::before{content:" · ";color:#8794a7}.app-header>.compact-navigation .compact-navigation-separator::after{display:none!important}'
+  +'.app-header>.compact-navigation .compact-navigation-flyout:not(#_){position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;max-height:78dvh;overflow:auto;z-index:9500;margin:0!important;padding:26px 16px calc(20px + env(safe-area-inset-bottom))!important;border-radius:20px 20px 0 0!important;background:#fff!important;box-shadow:0 -12px 34px #1c2b4633!important;transform:translateY(16px)}'
+  +'.app-header>.compact-navigation.is-open .compact-navigation-flyout{transform:translateY(0)!important}'
+  +'.app-header>.compact-navigation .compact-navigation-flyout::before{content:"";position:absolute;top:9px;left:50%;width:40px;height:5px;margin-left:-20px;border-radius:3px;background:#cbd6e5}'
+  +'.app-header>.compact-navigation .compact-navigation-row:not(#_){gap:8px;margin:0 0 12px}'
+  +'.compact-navigation-backdrop:not([hidden]){position:fixed!important;inset:0!important;z-index:9400!important;background:#1c2b4645!important}'
+  +'.phone-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:9000;justify-content:space-around;padding:6px 6px env(safe-area-inset-bottom);background:#fffffff2;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid #e3e8f0}'
+  +'.phone-tabbar button{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:52px;padding:4px 0;border:0;background:none;color:#8794a7;font:inherit;font-size:10.5px;font-weight:600;cursor:pointer}'
+  +'.phone-tabbar button svg{width:24px;height:24px}.phone-tabbar button.on{color:#2f5f9b;font-weight:750}'
+  +'.phone-tabbar .ph-dot{position:absolute;top:3px;left:calc(50% + 6px);width:9px;height:9px;border-radius:50%;background:#e39a3b;border:2px solid #fff}'
+  +'.phone-sheet:not([hidden]){display:block;position:fixed;inset:0;z-index:9600}.phone-sheet .ph-back{position:absolute;inset:0;background:#1c2b4645}'
+  +'.phone-sheet .ph-panel{position:absolute;left:0;right:0;bottom:0;padding:10px 16px calc(18px + env(safe-area-inset-bottom));background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -12px 34px #1c2b4633}'
+  +'.app-header>.compact-navigation .school-year{display:none!important}.phone-sheet .ph-sub{margin-top:14px;font-size:13px;color:#66758a;text-transform:uppercase;letter-spacing:.04em}.phone-sheet .ph-danger{color:#b42318}.phone-sheet .ph-panel{max-height:85dvh;overflow:auto}'
+  +'.phone-sheet .ph-grab{width:40px;height:5px;border-radius:3px;background:#cbd6e5;margin:0 auto 10px}.phone-sheet .ph-title{display:block;font-size:16px;margin:0 2px 6px}'
+  +'.phone-sheet button{display:flex;align-items:center;gap:12px;width:100%;min-height:50px;padding:0 4px;border:0;border-bottom:1px solid #eef2f7;background:none;color:#243247;font:inherit;font-size:15.5px;text-align:left;cursor:pointer}.phone-sheet button:last-child{border-bottom:0}'
+  +'.phone-sheet button>span,.phone-sheet button>svg{display:inline-flex;justify-content:center;width:26px;color:#2f5f9b;font-weight:700}.phone-sheet button svg{width:22px;height:22px}.phone-sheet .ph-up svg{transform:rotate(180deg)}'
+  +'.classroom-update-banner,.classroom-restore-banner,.classroom-storage-warning{margin:8px 10px 0!important}'
+  +'.classroom-beamer-active .phone-tabbar{display:none!important}'
+  +'}';
+ document.head.append(st);
 })();
 ;
 
