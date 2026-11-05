@@ -3217,6 +3217,8 @@ classroomHooks.add('renderTasksPage','test-details: Testseiten',{intercept(subje
  document.addEventListener('click',e=>{const b=e.target.closest?.('.hatch-seg [data-hatch]');if(!b)return;e.stopPropagation();const v=b.dataset.hatch;if(v==='off')setHatching(false);else{setHatching(true);try{localStorage.setItem(K,v)}catch{}}window.classroomHatchSync()},true);
  document.addEventListener('change',e=>{if(e.target.closest?.('[data-hatching-toggle]'))setTimeout(()=>window.classroomHatchSync(),0)});
  window.addEventListener('storage',e=>{if(e.key==='classroom-manager-hatching-v1')window.classroomHatchSync()});window.addEventListener('storage',e=>{if(e.key===K)window.classroomHatchSync()});window.classroomHatchSync()})();
+/* 7.63: Kopfzeile Klassenarbeit/Klausur/Test bei mittlerer Breite (z. B. iPad quer): Übersichts-Knopf wieder exakt mittig */
+(()=>{const st=document.createElement('style');st.textContent='@media (min-width:901px) and (max-width:1180px){body .section-title.exam-head.exam-head:not(#_):not(#__),body .section-title.test-detail-head.test-detail-head:not(#_):not(#__){grid-template-columns:minmax(0,1fr) auto minmax(max-content,1fr)!important}body .section-title.exam-head>.exam-head-actions,body .test-detail-head>.oral-display-actions:not(#_):not(#__){justify-self:end}}';document.head.append(st)})();
 ;
 
 /* ==== noten/exam-terminology.js ==== */
