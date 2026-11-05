@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 05.11.2026 · Version 7.83
+Stand: 05.11.2026 · Version 7.84
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -977,3 +977,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.82: iPhone: Noten-Manager als schlanke Lese-Version – nur Fach und Klasse wählen, Karten der Quartalsübersicht nach Datum, 1. Quartal je Karte aufklappbar, Sortierung nach Name oder Note
 
 7.83: iPhone-Karten: fehlende Hausaufgaben (und Material) des ganzen Halbjahres als rote Kästchen mit Datum, ab 3× rot; Balken bei ausgeschalteter Schraffur wieder gefüllt; Karten-Ansicht ohne Dauer-Neuaufbau (schont den Akku)
+
+7.84: iPhone-Kopfzeile: Backup speichern ⬇ | wiederherstellen ⬆ als runde Doppel-Pille, runder Rückgängig-Knopf, schmalere Auswahl; Version als Marke hinter „Hilfe“ im Blatt „Mehr“

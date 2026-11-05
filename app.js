@@ -1801,7 +1801,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
  // „Mehr“-Blatt
  const sheet=document.createElement('div');sheet.className='phone-sheet';sheet.hidden=true;
  sheet.innerHTML='<div class="ph-back"></div><div class="ph-panel" role="dialog" aria-label="Mehr"><div class="ph-grab"></div><b class="ph-title">Mehr</b>'
-  +'<button type="button" data-act="help"><span>?</span>Hilfe</button>'
+  +'<button type="button" data-act="help"><span>?</span>Hilfe<em class="ph-vbadge"></em></button>'
   +'<button type="button" data-act="privacy"><span>👁</span>Datenschutzmodus</button>'
   +'<button type="button" data-act="quick">'+icon.backup+'Backup sofort speichern</button>'
   +'<button type="button" data-act="restore"><span class="ph-up">'+icon.backup+'</span>Neuestes Backup wiederherstellen …</button>'
@@ -1809,7 +1809,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   +'<b class="ph-title ph-sub">Schuljahr</b><button type="button" data-act="sy-timetable"><span>🕘</span>Stundenplan …</button><button type="button" data-act="sy-archive"><span>🗄</span>Archiv eines früheren Schuljahres …</button><button type="button" data-act="sy-close" class="ph-danger"><span>⏏</span>Schuljahr abschließen …</button><p class="ph-version"></p></div>';
  document.body.append(sheet);
  const closeSheet=()=>{sheet.hidden=true};
- const ver=()=>{const v=document.querySelector('[data-app-version]')?.textContent?.trim();sheet.querySelector('.ph-version').textContent=v?'Classroom-Manager · Version '+v:''};ver();
+ const ver=()=>{const v=document.querySelector('[data-app-version]')?.textContent?.trim();sheet.querySelector('.ph-version').textContent=v?'Classroom-Manager · Version '+v:'';sheet.querySelector('.ph-vbadge').textContent=v?'Version '+v:''};ver();
  sheet.querySelector('.ph-back').onclick=closeSheet;
  sheet.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;closeSheet();const a=b.dataset.act;
   if(a==='help')window.classroomOpenHelp?.();else if(a==='privacy')window.classroomPrivacy?.toggle();
@@ -1851,12 +1851,23 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   +'.app-header .brand{flex:none!important;gap:0!important}.app-header .brand>div{display:none!important}.app-header .brand-mark{width:32px!important;height:32px!important}'
   +'.app-header>.module-tabs{display:none!important}'
   +'.app-header .classroom-global-actions:not(#_){display:flex!important;width:auto!important;flex:none!important;gap:0!important;margin:0!important}'
-  +'.app-header .classroom-global-actions>*:not(#classroomUndoButton){display:none!important}'
+  +'.app-header .classroom-global-actions>*:not(#classroomUndoButton):not(.cb-split){display:none!important}'
+  /* Backup speichern ⬇ | wiederherstellen ⬆ als runde Doppel-Pille, daneben rundes Rückgängig */
+  +'.app-header .classroom-global-actions:not(#_){gap:6px!important;align-items:center}'
+  +'.app-header .cb-split:not(#_){order:1;display:inline-flex!important;height:38px;border:1px solid #cbd6e5!important;border-radius:19px!important;overflow:hidden;background:#fff;box-shadow:none!important;margin:0!important;padding:0!important}'
+  +'.app-header .cb-split #classroomBackupButton{display:none!important}'
+  +'.app-header .cb-split .cb-quick:not(#_){position:relative;width:38px!important;min-width:38px!important;height:36px!important;min-height:36px!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;background:#fff!important;color:#2f5f9b!important;display:inline-flex;align-items:center;justify-content:center;box-shadow:none!important}'
+  +'.app-header .cb-split .cb-quick+.cb-quick:not(#_){border-left:1px solid #e3e8f0!important}.app-header .cb-split .cb-quick svg{width:19px!important;height:19px!important}'
+  +'.app-header .cb-split:has(#classroomBackupButton.backup-due) #classroomQuickBackup::after{content:"";position:absolute;top:3px;right:4px;width:8px;height:8px;border-radius:50%;background:#e39a3b;border:2px solid #fff}'
+  +'.app-header #classroomUndoButton:not(#_){order:2;box-sizing:border-box!important;width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;border-radius:50%!important;border:1px solid #e9cfa5!important;background:#fffaf2!important;color:#b9771a!important}'
+  +'.app-header #classroomUndoButton:not(#_)::before{content:""!important;display:block;width:20px;height:20px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27black%27 stroke-width=%272.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M9 14 4 9l5-5%27/%3E%3Cpath d=%27M4 9h10.5a5.5 5.5 0 0 1 0 11H11%27/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27black%27 stroke-width=%272.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M9 14 4 9l5-5%27/%3E%3Cpath d=%27M4 9h10.5a5.5 5.5 0 0 1 0 11H11%27/%3E%3C/svg%3E") center/contain no-repeat}'
+  +'.app-header #classroomUndoButton:disabled:not(#_){opacity:.45}'
+  +'.phone-sheet .ph-vbadge{margin-left:8px;padding:1px 8px;border-radius:99px;background:#eaf0fa;color:#2f5f9b;font-size:11.5px;font-weight:700;font-style:normal}'
   +'.app-header #classroomUndoButton:not(#_){width:40px!important;min-width:40px!important;min-height:38px!important;height:38px!important;padding:0!important;font-size:0!important}'
   +'.app-header #classroomUndoButton::before{content:"↶";font-size:19px;line-height:1}'
   +'.app-header>.compact-navigation:not(#_){flex:1 1 auto;min-width:0;margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;position:static}'
   +'.app-header>.compact-navigation .compact-navigation-bar{min-height:38px!important;gap:0!important;padding:0 10px!important;border-radius:12px;background:#e7edf6;overflow:hidden!important;flex-direction:row!important}'
-  +'.app-header>.compact-navigation .compact-navigation-arrow{order:2;flex:none;margin-left:4px;padding:0!important;color:#2f5f9b}'
+  +'.app-header>.compact-navigation .compact-navigation-arrow{order:2;flex:none;margin-left:4px;padding:0!important;color:#2f5f9b}.app-header>.compact-navigation .compact-navigation-arrow:not(#_){width:28px!important;min-width:28px!important;height:28px!important;min-height:28px!important;border-radius:8px!important}.app-header>.compact-navigation .compact-navigation-arrow:not(#_)::after{width:8px!important;height:8px!important;left:9px!important;top:7px!important}.app-header>.compact-navigation.is-open .compact-navigation-arrow:not(#_)::after{top:11px!important}.app-header>.compact-navigation .compact-navigation-bar:not(#_){padding:0 5px 0 10px!important}'
   +'.app-header>.compact-navigation .compact-navigation-trail:not(#_){display:block!important;flex:1 1 auto!important;min-width:0;padding:0!important;background:transparent!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px;line-height:38px}'
   +'.app-header>.compact-navigation .compact-navigation-chip:not(#_){display:inline!important;padding:0!important;background:none!important;box-shadow:none!important;border:0!important;font:inherit!important;font-weight:650!important;color:#243247!important}'
   +'.app-header>.compact-navigation .compact-navigation-chip+.compact-navigation-separator+.compact-navigation-chip~.compact-navigation-chip{font-weight:500!important;color:#66758a!important}'
