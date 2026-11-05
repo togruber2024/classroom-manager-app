@@ -993,3 +993,17 @@ body[data-module] label.notenspiegel-mode-toggle[style*="display: none"]:not(#_)
 #notenspiegelDialog label.notenspiegel-mode-toggle:not(#_):has(input:focus-visible){outline:none}
 /* 7.61: iPad (Touch, ab 651 px): Knöpfe rechts in der Kopfzeile enger zusammen (halber Abstand) */
 @media (hover:none) and (pointer:coarse) and (min-width:651px){.app-header .classroom-global-actions:not(#_){gap:4px!important}}
+/* 7.62: iPad hochkant – App-Name ausgeblendet (nur Symbol), Umschalter mittig zwischen Symbol und Knöpfen */
+@media (min-width:651px) and (max-width:1000px) and (orientation:portrait){
+ .app-header .brand h1{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap}
+ .app-header .brand{flex:0 0 auto!important;gap:0!important}
+ .app-header>.module-tabs{margin-inline:auto!important}
+}
+@media (min-width:651px) and (max-width:760px) and (orientation:portrait){
+ .app-header:not(#_){gap:8px!important;padding-inline:12px!important}
+ .app-header .module-tabs{gap:2px!important;padding:3px!important}
+ .app-header .module-tabs button{padding:7px 8px!important}
+ .app-header .classroom-global-actions>button:not(.cb-split *){padding-inline:9px!important}
+ .app-header .cb-split>#classroomBackupButton{padding-inline:10px!important}
+ .app-header .cb-split>.cb-quick{width:36px!important}
+}

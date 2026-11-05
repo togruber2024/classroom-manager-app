@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 05.11.2026 · Version 7.61
+Stand: 05.11.2026 · Version 7.62
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -927,3 +927,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.60: Notenspiegel: neues Symbol für „Als Noten“ (waagrechte Balken: viele dünne → wenige breite)
 
 7.61: iPad: Knöpfe rechts in der Kopfzeile enger zusammen
+
+7.62: iPad hochkant: App-Name ausgeblendet (nur Symbol), Umschalter Unterrichts-/Noten-Manager mittig zwischen Symbol und Knöpfen
