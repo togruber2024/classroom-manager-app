@@ -991,3 +991,5 @@ body[data-module] label.notenspiegel-mode-toggle:has(input:checked){--pill-icon:
 body[data-module] label.notenspiegel-mode-toggle:not(#_){margin:0 0 16px auto!important;width:max-content}
 body[data-module] label.notenspiegel-mode-toggle[style*="display: none"]:not(#_):not(#__){display:none!important}
 #notenspiegelDialog label.notenspiegel-mode-toggle:not(#_):has(input:focus-visible){outline:none}
+/* 7.61: iPad (Touch, ab 651 px): Knöpfe rechts in der Kopfzeile enger zusammen (halber Abstand) */
+@media (hover:none) and (pointer:coarse) and (min-width:651px){.app-header .classroom-global-actions:not(#_){gap:4px!important}}
