@@ -4198,7 +4198,33 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  let planned=false;
  function schedule(){if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;run()})}
  function run(){for(const panel of document.querySelectorAll('[data-quarter-summary]'))build(panel)}
+ // iPhone: Gewichtungen als Schieberegler mit Schnellwahl (Verhältnisse wie 2:1 exakt); schreibt in die vorhandenen Felder.
+ const RATIOS={pair:[[1,1],[2,1],[3,1],[4,1]],final:[[1,1],[2,1],[1,2]]};
+ const pctText=v=>{for(const [a,b] of [[1,1],[2,1],[1,2],[3,1],[4,1]])if(Math.abs(v-100*a/(a+b))<.01&&(a!==1||b!==1))return a+':'+b;return String(Math.round(v*10)/10).replace('.',',')+' %'};
+ const pctNum=v=>String(Math.round(v*10)/10).replace('.',',')+' %';
+ function weightsUi(panel){
+  const ctl=panel.querySelector('.quarter-summary-weight-controls');if(!ctl)return;
+  let ui=panel.querySelector(':scope .qs-wt');
+  const defs=[['[data-other-weight=participation]','Sonstige Mitarbeit','Mündlich','Tests','pair'],['[data-semester-mix=participation]','Sonstige Mitarbeit','Mündlich','Tests','pair'],['[data-final-mix=other]','Halbjahresnote','Sonstige','Klassenarbeiten','final']].filter(d=>panel.querySelector(d[0]));
+  if(!ui){ui=document.createElement('div');ui.className='qs-wt';
+   for(const [sel,title,left,right,kind] of defs){const g=document.createElement('div');g.className='qs-wt-g';g.dataset.sel=sel;
+    g.innerHTML='<b class="qs-wt-t"></b><div class="qs-wt-ends"><span><span class="qs-wt-l"></span> <b class="qs-wt-lv"></b></span><span><b class="qs-wt-rv"></b> <span class="qs-wt-r"></span></span></div><input type="range" min="0" max="100" step="5" class="qs-wt-range"><div class="qs-wt-chips"></div><small class="qs-wt-lock" hidden>Fachspezifisch festgelegt (Zahnrad bei „Fächer umbenennen“)</small>';
+    g.querySelector('.qs-wt-t').textContent=title;g.querySelector('.qs-wt-l').textContent=left;g.querySelector('.qs-wt-r').textContent=right;
+    for(const [a,b] of RATIOS[kind]){const c=document.createElement('button');c.type='button';c.dataset.v=String(100*a/(a+b));c.textContent=a+':'+b;g.querySelector('.qs-wt-chips').append(c)}
+    const range=g.querySelector('.qs-wt-range');
+    const show=v=>{g.querySelector('.qs-wt-lv').textContent=pctNum(v);g.querySelector('.qs-wt-rv').textContent=pctNum(100-v);range.style.setProperty('--p',v+'%');const r=pctText(v);for(const c of g.querySelectorAll('.qs-wt-chips button'))c.setAttribute('aria-pressed',String(Math.abs(Number(c.dataset.v)-v)<.01));g.querySelector('.qs-wt-t').dataset.ratio=r.includes(':')?r:''};
+    const commit=v=>{const orig=panel.querySelector(sel);if(!orig||orig.disabled)return;orig.value=String(v);orig.dispatchEvent(new Event('input',{bubbles:true}));orig.dispatchEvent(new Event('change',{bubbles:true}))};
+    range.oninput=()=>show(Number(range.value));range.onchange=()=>commit(Number(range.value));
+    g.querySelector('.qs-wt-chips').onclick=e=>{const c=e.target.closest('button');if(!c||c.disabled)return;const v=Number(c.dataset.v);show(v);commit(v)};
+    g._show=show;ui.append(g)}
+   ctl.before(ui)}
+  if(ui.nextElementSibling!==ctl&&ctl.parentElement)ctl.before(ui);
+  for(const g of ui.querySelectorAll('.qs-wt-g')){const orig=panel.querySelector(g.dataset.sel);if(!orig)continue;const v=Number(orig.value);const range=g.querySelector('.qs-wt-range');
+   if(document.activeElement!==range){range.value=String(Math.round(v/5)*5);g._show(Number.isFinite(v)?v:50)}
+   const locked=!!orig.disabled;range.disabled=locked;for(const c of g.querySelectorAll('.qs-wt-chips button'))c.disabled=locked;g.querySelector('.qs-wt-lock').hidden=!locked;g.classList.toggle('is-locked',locked)}
+ }
  function build(panel){
+  if(PH.matches)weightsUi(panel);
   const table=panel.querySelector('table');if(!table||!table.tHead?.rows[0]||!table.tBodies[0])return;
   const wrap=table.closest('.table-wrap')||table.parentElement;
   let bar=panel.querySelector(':scope .qs-phone-bar');
@@ -4241,11 +4267,19 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   box.replaceChildren(frag);
   if(detail?.panel===panel&&!sheet.hidden&&!sheet.contains(document.activeElement))renderDetail();
  }
- new MutationObserver(list=>{if(list.some(m=>!m.target.closest?.('.qs-cards,.qs-phone-bar,.qs-detail')))schedule()}).observe(document.body,{subtree:true,childList:true,characterData:true});
+ new MutationObserver(list=>{if(list.some(m=>!m.target.closest?.('.qs-cards,.qs-phone-bar,.qs-detail,.qs-wt')))schedule()}).observe(document.body,{subtree:true,childList:true,characterData:true});
  PH.addEventListener?.('change',()=>{closeDetail();schedule()});schedule();
  const st=document.createElement('style');st.textContent=
-  '.qs-phone-bar,.qs-cards{display:none}'
+  '.qs-phone-bar,.qs-cards,.qs-wt{display:none}'
   +'@media (max-width:540px) and (orientation:portrait){'
+  +'[data-quarter-summary] .quarter-summary-weight-controls label,[data-quarter-summary] .quarter-summary-weight-controls strong{display:none!important}[data-quarter-summary] .quarter-summary-weight-controls{margin:0!important;padding:0!important;border:0!important;background:none!important;min-height:0!important}'
+  +'.qs-wt{display:grid;gap:16px;margin:6px 0 14px}.qs-wt-g{display:grid;gap:6px}.qs-wt-t{font-size:15px}.qs-wt-t[data-ratio]:not([data-ratio=""])::after{content:"  " attr(data-ratio);color:#2f5f9b;font-weight:700}'
+  +'.qs-wt-ends{display:flex;justify-content:space-between;font-size:13.5px;color:#66758a}.qs-wt-ends b{color:#243247;font-size:15px}'
+  +'.qs-wt-range{-webkit-appearance:none;appearance:none;width:100%;height:28px;margin:2px 0;background:transparent}'
+  +'.qs-wt-range::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:linear-gradient(90deg,#2f5f9b var(--p,50%),#dfe6f0 var(--p,50%))}'
+  +'.qs-wt-range::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;margin-top:-10px;border-radius:50%;background:#fff;border:1px solid #cbd6e5;box-shadow:0 1px 5px #1c2b4655}'
+  +'.qs-wt-chips{display:flex;gap:6px;flex-wrap:wrap}.qs-wt-chips button{min-height:34px;padding:0 14px;border:1px solid #cbd6e5;border-radius:999px;background:#fff;color:#66758a;font:inherit;font-size:14px;cursor:pointer}.qs-wt-chips button[aria-pressed=true]{background:#eaf0fa;border-color:#8fb0dc;color:#2f5f9b;font-weight:700}'
+  +'.qs-wt-g.is-locked{opacity:.6}.qs-wt-lock{color:#8794a7;font-size:12px}'
   +'.qs-phone-bar{display:flex;justify-content:flex-end;margin:4px 0 10px}'
   +'.qs-seg{display:inline-flex;padding:3px;gap:2px;border-radius:12px;background:#e7edf6}'
   +'.qs-seg button{min-height:34px;padding:0 14px;border:0;border-radius:9px;background:transparent;color:#66758a;font:inherit;font-size:14px;font-weight:650;cursor:pointer}'
