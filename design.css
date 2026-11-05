@@ -1015,3 +1015,5 @@ body[data-module] label.notenspiegel-mode-toggle[style*="display: none"]:not(#_)
  body[data-module=noten] .panel>.section-title .oral-display-actions>button:not(#_),body[data-module=noten] .panel>.section-title .oral-display-actions>.page-print-button:not(#_){width:auto!important;min-height:38px!important;height:38px;padding:0 14px!important;border-radius:999px!important}
  body[data-module=noten] .panel>.section-title .oral-display-actions label.toggle:not(.previous-quarter-toggle):not(.compact-view-toggle):not(#_){width:auto!important}
 }
+/* 7.66: iPhone quer – App-Name ausblenden (wurde abgeschnitten); Version steht unter Hilfe bzw. „Mehr“ */
+@media (max-height:500px) and (pointer:coarse) and (max-width:1000px){.app-header .brand>div{display:none!important}.app-header .brand{gap:0!important}}

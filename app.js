@@ -1589,7 +1589,7 @@ window.addEventListener('message',event=>{
    ['Farbgestaltung & Hüpfen','Klick aufs App-Symbol öffnet die Farbgestaltungen – ein Doppelklick lässt es hüpfen.','App-Symbol oben links']]}
  ];
  const dialog=document.createElement('dialog');dialog.className='classroom-help';dialog.setAttribute('aria-label','Hilfe');
- dialog.innerHTML='<div class="help-head"><h2>Hilfe</h2><input type="search" class="help-search" placeholder="Suchen …" aria-label="Hilfe durchsuchen" autocomplete="off"><button type="button" class="help-close">Schließen</button></div><div class="help-body"><nav class="help-nav" aria-label="Kapitel"></nav><div class="help-content" tabindex="-1"></div></div>';
+ dialog.innerHTML='<div class="help-head"><h2>Hilfe <small class="help-version"></small></h2><input type="search" class="help-search" placeholder="Suchen …" aria-label="Hilfe durchsuchen" autocomplete="off"><button type="button" class="help-close">Schließen</button></div><div class="help-body"><nav class="help-nav" aria-label="Kapitel"></nav><div class="help-content" tabindex="-1"></div></div>';
  document.body.append(dialog);
  {const st=document.createElement('style');st.textContent='.help-cards-sub{margin:-4px 0 14px;color:#66758a;font-size:.9rem}.help-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}.help-card{border:1px solid #e3e8f0;border-radius:12px;padding:12px 14px;background:#fbfcfe}.help-card h4{margin:0 0 4px}.help-card p{margin:0;font-size:.9rem;line-height:1.45}.help-where{display:inline-block;margin-top:8px;font-size:.78rem;color:#2f5f9b;background:#eaf1fb;border-radius:6px;padding:2px 8px}.help-new{font-size:.7rem;font-weight:700;color:#7a5216;background:#fff3e2;border:1px solid #efcf9c;border-radius:6px;padding:0 6px;vertical-align:2px}';document.head.append(st)}
  const nav=dialog.querySelector('.help-nav'),content=dialog.querySelector('.help-content'),search=dialog.querySelector('.help-search');
@@ -1609,7 +1609,7 @@ window.addEventListener('message',event=>{
  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
  // Esc: zuerst die Suche leeren, beim zweiten Mal schließen.
  dialog.addEventListener('keydown',e=>{if(e.key!=='Escape')return;e.preventDefault();if(search.value){search.value='';renderChapter(active)}else dialog.close()});
- function openHelp(){const view=document.querySelector('[data-view][aria-selected="true"]')?.dataset.view;search.value='';renderChapter(view==='noten'?'noten':view==='sitzplan'?'sitzplan':'start');dialog.showModal();content.focus()}
+ function openHelp(){{const v=document.querySelector('[data-app-version]')?.textContent?.trim();const hv=dialog.querySelector('.help-version');if(hv)hv.textContent=v?'Version '+v:''}const view=document.querySelector('[data-view][aria-selected="true"]')?.dataset.view;search.value='';renderChapter(view==='noten'?'noten':view==='sitzplan'?'sitzplan':'start');dialog.showModal();content.focus()}
  window.classroomOpenHelp=openHelp;
  const button=document.createElement('button');button.type='button';button.className='classroom-help-button';button.textContent='?';button.title='Hilfe';button.setAttribute('aria-label','Hilfe öffnen');button.onclick=openHelp;
  function place(){const actions=document.querySelector('.classroom-global-actions');if(actions&&actions.firstElementChild!==button)actions.prepend(button);square()}
@@ -1623,7 +1623,7 @@ window.addEventListener('message',event=>{
   +'.classroom-help{width:min(860px,calc(100vw - 24px));height:min(640px,calc(100dvh - 32px));padding:0;border:1px solid #dce3ef;border-radius:18px;color:#243247;background:#fff;box-shadow:0 18px 60px #1c2b4630;overflow:hidden}'
   +'.classroom-help[open]{display:flex;flex-direction:column}.classroom-help::backdrop{background:#1c2b4638}'
   +'.help-head{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid #e6ebf3}'
-  +'.help-head h2{margin:0;font-size:1.25rem;flex:none}'
+  +'.help-head h2{margin:0;font-size:1.25rem;flex:none}.help-head .help-version{font-size:.75rem;font-weight:500;color:#8a97aa;margin-left:6px}'
   +'.help-search{flex:1;min-width:0;height:36px;box-sizing:border-box;padding:0 12px;border:1px solid #cbd6e5;border-radius:9px;font:inherit;font-size:.95rem;color:#243247;background:#fff}'
   +'.help-close{flex:none;margin-left:auto;height:36px;padding:0 14px;border:1px solid #cbd6e5;border-radius:9px;background:#fff;color:var(--primary,#2f5f9b);font:inherit;font-size:.9rem;font-weight:600;cursor:pointer}'
   +'.help-body{display:flex;flex:1;min-height:0}'
@@ -1806,9 +1806,10 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   +'<button type="button" data-act="quick">'+icon.backup+'Backup sofort speichern</button>'
   +'<button type="button" data-act="restore"><span class="ph-up">'+icon.backup+'</span>Neuestes Backup wiederherstellen …</button>'
   +'<button type="button" data-act="theme"><span>🎨</span>Farbgestaltung</button>'
-  +'<b class="ph-title ph-sub">Schuljahr</b><button type="button" data-act="sy-timetable"><span>🕘</span>Stundenplan …</button><button type="button" data-act="sy-archive"><span>🗄</span>Archiv eines früheren Schuljahres …</button><button type="button" data-act="sy-close" class="ph-danger"><span>⏏</span>Schuljahr abschließen …</button></div>';
+  +'<b class="ph-title ph-sub">Schuljahr</b><button type="button" data-act="sy-timetable"><span>🕘</span>Stundenplan …</button><button type="button" data-act="sy-archive"><span>🗄</span>Archiv eines früheren Schuljahres …</button><button type="button" data-act="sy-close" class="ph-danger"><span>⏏</span>Schuljahr abschließen …</button><p class="ph-version"></p></div>';
  document.body.append(sheet);
  const closeSheet=()=>{sheet.hidden=true};
+ const ver=()=>{const v=document.querySelector('[data-app-version]')?.textContent?.trim();sheet.querySelector('.ph-version').textContent=v?'Classroom-Manager · Version '+v:''};ver();
  sheet.querySelector('.ph-back').onclick=closeSheet;
  sheet.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;closeSheet();const a=b.dataset.act;
   if(a==='help')window.classroomOpenHelp?.();else if(a==='privacy')window.classroomPrivacy?.toggle();
@@ -1818,7 +1819,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
  bar.addEventListener('click',e=>{const b=e.target.closest('[data-ph]');if(!b)return;const t=b.dataset.ph;
   if(t==='sitzplan'||t==='noten')document.getElementById('tab-'+t)?.click();
   else if(t==='backup')document.getElementById('classroomBackupButton')?.click();
-  else if(t==='mehr')sheet.hidden=!sheet.hidden});
+  else if(t==='mehr'){ver();sheet.hidden=!sheet.hidden}});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
  function sync(){for(const t of ['sitzplan','noten']){const on=document.getElementById('tab-'+t)?.getAttribute('aria-selected')==='true';bar.querySelector('[data-ph="'+t+'"]').classList.toggle('on',on)}
   bar.querySelector('.ph-dot').hidden=!document.getElementById('classroomBackupButton')?.classList.contains('backup-due');
@@ -1837,7 +1838,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   /* Mit viewport-fit=cover: Inhalt nicht unter Home-Balken oder Kamera-Aussparung (iPhone/iPad als App) */
   +'body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}'
   +'@media (max-width:540px) and (orientation:portrait){'
-  +'body:not(#_){padding-bottom:calc(66px + max(env(safe-area-inset-bottom),10px))}'
+  +'body:not(#_){padding-bottom:calc(64px + max(env(safe-area-inset-bottom),10px))}'
   +'.app-header:not(#_){position:relative;z-index:9450;display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:8px!important;padding:8px 12px!important}'
   +'.app-header .brand{flex:none!important;gap:0!important}.app-header .brand>div{display:none!important}.app-header .brand-mark{width:32px!important;height:32px!important}'
   +'.app-header>.module-tabs{display:none!important}'
@@ -1859,12 +1860,12 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   +'.app-header>.compact-navigation .compact-navigation-row:not(#_){gap:8px;margin:0 0 12px}'
   +'.compact-navigation-backdrop:not([hidden]){position:fixed!important;inset:0!important;z-index:9400!important;background:#1c2b4645!important}'
   +'.phone-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:9000;justify-content:space-around;padding:6px calc(18px + env(safe-area-inset-right)) max(env(safe-area-inset-bottom),10px) calc(18px + env(safe-area-inset-left));background:#fffffff2;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid #e3e8f0}'
-  +'.phone-tabbar button{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:56px;padding:6px 0 4px;border:0;background:none;color:#8794a7;font:inherit;font-size:10.5px;font-weight:600;cursor:pointer}'
+  +'.phone-tabbar button{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:54px;padding:5px 0 4px;border:0;background:none;color:#8794a7;font:inherit;font-size:10.5px;font-weight:600;cursor:pointer}'
   +'.phone-tabbar button svg{width:24px;height:24px}.phone-tabbar button.on{color:#2f5f9b;font-weight:750}'
   +'.phone-tabbar .ph-dot{position:absolute;top:3px;left:calc(50% + 6px);width:9px;height:9px;border-radius:50%;background:#e39a3b;border:2px solid #fff}'
   +'.phone-sheet:not([hidden]){display:block;position:fixed;inset:0;z-index:9600}.phone-sheet .ph-back{position:absolute;inset:0;background:#1c2b4645}'
   +'.phone-sheet .ph-panel{position:absolute;left:0;right:0;bottom:0;padding:10px 16px calc(18px + env(safe-area-inset-bottom));background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -12px 34px #1c2b4633}'
-  +'.app-header>.compact-navigation .school-year{display:none!important}.phone-sheet .ph-sub{margin-top:14px;font-size:13px;color:#66758a;text-transform:uppercase;letter-spacing:.04em}.phone-sheet .ph-danger{color:#b42318}.phone-sheet .ph-panel{max-height:85dvh;overflow:auto}'
+  +'.phone-sheet .ph-version{margin:14px 0 0;text-align:center;font-size:12.5px;color:#8794a7}.app-header>.compact-navigation .school-year{display:none!important}.phone-sheet .ph-sub{margin-top:14px;font-size:13px;color:#66758a;text-transform:uppercase;letter-spacing:.04em}.phone-sheet .ph-danger{color:#b42318}.phone-sheet .ph-panel{max-height:85dvh;overflow:auto}'
   +'.phone-sheet .ph-grab{width:40px;height:5px;border-radius:3px;background:#cbd6e5;margin:0 auto 10px}.phone-sheet .ph-title{display:block;font-size:16px;margin:0 2px 6px}'
   +'.phone-sheet button{display:flex;align-items:center;gap:12px;width:100%;min-height:50px;padding:0 4px;border:0;border-bottom:1px solid #eef2f7;background:none;color:#243247;font:inherit;font-size:15.5px;text-align:left;cursor:pointer}.phone-sheet button:last-child{border-bottom:0}'
   +'.phone-sheet button>span,.phone-sheet button>svg{display:inline-flex;justify-content:center;width:26px;color:#2f5f9b;font-weight:700}.phone-sheet button svg{width:22px;height:22px}.phone-sheet .ph-up svg{transform:rotate(180deg)}'
