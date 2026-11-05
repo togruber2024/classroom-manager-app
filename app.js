@@ -1472,6 +1472,18 @@ window.addEventListener('message',event=>{
   let applied='';try{applied=localStorage.getItem(APPLIED)||''}catch{}
   if(!force&&applied===lesson.key)return;
   try{localStorage.setItem(APPLIED,lesson.key)}catch{}
+  return applyLesson(lesson,'Stundenplan');
+ }
+ // Zuletzt unterrichtete Lerngruppe (heute bis jetzt, sonst die letzten Schultage)
+ function lastLesson(){const t=plan(),n=new Date();for(let back=0;back<14;back++){const d=new Date(n);d.setDate(n.getDate()-back);const day=d.getDay();if(day<1||day>5)continue;const lim=back?24*60:n.getHours()*60+n.getMinutes();let best=null;for(const [i,s] of t.slots.entries()){const a=mins(s.start);if(a===null||a>lim)continue;const e=t.days[day]?.[i];if(e?.ref)best={...e}}if(best)return best}return null}
+ // „Aktuell“ (iPhone-Leiste): laufende Stunde, sonst die zuletzt unterrichtete Lerngruppe
+ window.classroomGoCurrent=async function(){
+  const now=lessonNow();if(now){try{localStorage.setItem(APPLIED,now.key)}catch{}return applyLesson(now,'Jetzt')}
+  const last=lastLesson();if(last)return applyLesson(last,'Zuletzt');
+  if(typeof selectView==='function')selectView('sitzplan');
+  toast('Kein Stundenplan auf diesem Gerät – am Mac eintragen und per Backup übertragen.');
+ };
+ async function applyLesson(lesson,prefix){
   const [subject,classId]=lesson.ref.split('::');
   let before={};try{before=classroomNotes.contentWindow.classroomCurrentSelection()||{}}catch{}
   try{
@@ -1480,7 +1492,7 @@ window.addEventListener('message',event=>{
    await classroomEnsureSeats();await selectRoom(lesson.room);
    const label=classOptions().find(o=>o.ref===lesson.ref)?.label||'';
    const changed=before.subject!==subject||before.classId!==classId;
-   toast(`Stundenplan: ${label}${lesson.room?' · '+(/^raum\b/i.test(lesson.room)?lesson.room:'Raum '+lesson.room):''}`,changed&&before.classId?async()=>{try{await classroomCall(classroomNotes,'classroom:select-class',before)}catch{}}:null);
+   toast(`${prefix}: ${label}${lesson.room?' · '+(/^raum\b/i.test(lesson.room)?lesson.room:'Raum '+lesson.room):''}`,changed&&before.classId?async()=>{try{await classroomCall(classroomNotes,'classroom:select-class',before)}catch{}}:null);
   }catch(error){console.warn('Stundenplan: Auswahl nicht möglich',error)}
  }
  window.classroomApplyTimetable=apply;
@@ -1502,6 +1514,7 @@ window.addEventListener('message',event=>{
   +'.tt-dialog td.tt-learned select,.tt-dialog td.tt-learned input{background:#eef4ff;border-color:#9fbbe6;color:#24477a}.tt-key{display:inline-block;padding:0 7px;border-radius:6px;background:#eef4ff;border:1px solid #9fbbe6;color:#24477a;font-size:.78rem}'
   +'.tt-foot{display:flex;gap:10px;align-items:center;margin-top:14px}.tt-foot span{flex:1}.tt-foot button{min-height:38px;padding:7px 16px;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:var(--primary,#2f5f9b);font:inherit;font-weight:600;cursor:pointer}.tt-foot .tt-primary{background:var(--primary,#2f5f9b);border-color:var(--primary,#2f5f9b);color:#fff}'
   +'.tt-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:2000;display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;border-radius:12px;background:#24334b;color:#fff;box-shadow:0 10px 30px #1c2b4640;font:14px/1.3 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}'
+  +'@media (max-width:540px) and (orientation:portrait){.tt-toast{top:calc(env(safe-area-inset-top) + 64px);bottom:auto;left:12px;right:12px;transform:none}.tt-toast span{flex:1}}'
   +'.tt-toast button{border:1px solid #ffffff55;border-radius:8px;background:none;color:#fff;padding:4px 10px;font:inherit;cursor:pointer}.tt-toast .tt-toast-x{border:0;font-size:18px;padding:0 4px}';
  document.head.append(style);
 })();
@@ -1515,6 +1528,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['iPhone: „Aktuell“ und neue Leiste','Unten auf dem iPhone: Unterricht · Noten · Aktuell · Hilfe. „Aktuell“ öffnet laut Stundenplan die Lerngruppe der laufenden Stunde, in Freistunden die zuletzt unterrichtete. Oben: nur die Lerngruppe, Datenschutz, Backup ⬇|⬆ und Rückgängig.','iPhone → Leiste unten','7.85'],
    ['iPhone: Noten zum Nachschauen','Auf dem iPhone (hochkant) zeigt der Noten-Manager nur noch die Karten der Klasse: Fach und Klasse wählen, Halbjahr und Quartal ergeben sich aus dem Datum. Jede Karte lässt das 1. Quartal aufklappen; eintragen lassen sich nur Selbsteinschätzung und Quartalsnote. Alles andere im Bereich „Unterricht“ bzw. am Mac/iPad.','iPhone → Noten','7.82'],
    ['iPhone: Mündlich mit dem bunten Fenster','Auf den Seiten der mündlichen Mitarbeit öffnet ein Tipp in ein Notenfeld auf dem iPhone das bunte Bewertungsfenster als Blatt (ohne Tastatur): zehn Zeichen, Abwesend, Löschen; „Weiter ›“ springt zur nächsten Person im selben Termin.','iPhone → Noten → Mündliche Mitarbeit → Feld antippen','7.71'],
    ['iPhone: alle Einträge einer Person','Ein Tipp auf eine Karte der Quartals- oder Halbjahresübersicht öffnet ein Blatt mit allen mündlichen Noten (mit Datum), fehlenden Hausaufgaben, Sonstiger Mitarbeit und Klassenarbeit. Selbsteinschätzung und Quartalsnote sind dort eintragbar; ‹ › oder Wischen wechselt zur nächsten Person.','iPhone → Noten → Quartalsnote → Karte antippen','7.70'],
@@ -1523,8 +1537,7 @@ window.addEventListener('message',event=>{
    ['iPhone: Bewerten Tisch für Tisch','Auf dem iPhone öffnet sich das Bewertungsfenster als Blatt (hochkant unten, quer rechts). Es bleibt nach einer Bewertung offen; „Weiter ›“ springt zum nächsten Tisch, der aktuelle Tisch ist blau umrandet. Quer sitzt die Leiste am linken Rand.','iPhone → Unterricht → Tisch antippen','7.67'],
    ['iPhone: neue Bedienung','Auf dem iPhone (hochkant) oben nur noch Symbol, Auswahl und Rückgängig; die Auswahl öffnet sich als Blatt von unten. Unten die Leiste Unterricht · Noten · Backup · Mehr.','iPhone hochkant','7.64'],
    ['Backup sofort wiederherstellen','Der Knopf ⬆ neben „Backup“ lädt das neueste Backup (am Mac aus dem festen Ordner, sonst per Dateiauswahl) – mit Rückfrage. Jede Wiederherstellung lässt sich rückgängig machen.','oben rechts → ⬆ neben „Backup“','7.55'],
-   ['Hinweis auf neue Versionen','Gibt es eine neuere Version, erscheint oben „Neue Version … verfügbar“ – „Jetzt aktualisieren“ lädt sie sofort, die Daten bleiben erhalten.','oben unter der Kopfzeile','7.52'],
-   ['„Fehlend“ zählt übers Halbjahr','Auf den Hausaufgaben- und Materialseiten des 2. (4.) Quartals zählt die Spalte „Fehlend“ die fehlenden Einträge aus dem 1. (3.) Quartal mit – auch für die Eltern-Mail.','Noten-Manager → Hausaufgaben','7.48']]},
+   ['Hinweis auf neue Versionen','Gibt es eine neuere Version, erscheint oben „Neue Version … verfügbar“ – „Jetzt aktualisieren“ lädt sie sofort, die Daten bleiben erhalten.','oben unter der Kopfzeile','7.52']]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
    ['Zwei Bereiche','Oben wechselst du zwischen Unterrichts-Manager (Sitzplan, Mitarbeit und Hausaufgaben im Unterricht) und Noten-Manager (Bewertungen, Tests, Klausuren, Zeugnisnoten). Beide nutzen dieselben Klassen und Schülerlisten.'],
@@ -1793,10 +1806,12 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   sitzplan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="14" y="4" width="7" height="6" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg>',
   noten:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M2 20h20"/></svg>',
   backup:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+  now:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/></svg>',
   mehr:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>'};
  // Leiste unten
  const bar=document.createElement('nav');bar.className='phone-tabbar';bar.setAttribute('aria-label','Bereiche');
- bar.innerHTML='<button type="button" data-ph="sitzplan">'+icon.sitzplan+'<span>Unterricht</span></button><button type="button" data-ph="noten">'+icon.noten+'<span>Noten</span></button><button type="button" data-ph="backup">'+icon.backup+'<span>Backup</span><i class="ph-dot" hidden></i></button><button type="button" data-ph="mehr">'+icon.mehr+'<span>Mehr</span></button>';
+ bar.innerHTML='<button type="button" data-ph="sitzplan">'+icon.sitzplan+'<span>Unterricht</span></button><button type="button" data-ph="noten">'+icon.noten+'<span>Noten</span></button><button type="button" data-ph="aktuell">'+icon.now+'<span>Aktuell</span></button><button type="button" data-ph="hilfe">'+icon.help+'<span>Hilfe</span></button>';
  document.body.append(bar);
  // „Mehr“-Blatt
  const sheet=document.createElement('div');sheet.className='phone-sheet';sheet.hidden=true;
@@ -1818,11 +1833,12 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   else if(a.startsWith('sy-'))document.querySelector('.sy-menu [data-sy="'+a.slice(3)+'"]')?.click()});
  bar.addEventListener('click',e=>{const b=e.target.closest('[data-ph]');if(!b)return;const t=b.dataset.ph;
   if(t==='sitzplan'||t==='noten')document.getElementById('tab-'+t)?.click();
+  else if(t==='aktuell')window.classroomGoCurrent?.();
+  else if(t==='hilfe')window.classroomOpenHelp?.();
   else if(t==='backup')document.getElementById('classroomBackupButton')?.click();
   else if(t==='mehr'){ver();sheet.hidden=!sheet.hidden}});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
  function sync(){for(const t of ['sitzplan','noten']){const on=document.getElementById('tab-'+t)?.getAttribute('aria-selected')==='true';bar.querySelector('[data-ph="'+t+'"]').classList.toggle('on',on);if(t==='noten')document.documentElement.classList.toggle('ph-noten',on)}
-  bar.querySelector('.ph-dot').hidden=!document.getElementById('classroomBackupButton')?.classList.contains('backup-due');
   const priv=document.documentElement.classList.contains('classroom-privacy');sheet.querySelector('[data-act=privacy]').lastChild.textContent=priv?'Datenschutzmodus beenden':'Datenschutzmodus'}
  new MutationObserver(sync).observe(document.body,{subtree:true,attributes:true,attributeFilter:['aria-selected','class']});
  // Auswahl in die Kopfzeile holen (nur iPhone), sonst an ihren Platz über den Managern zurück
@@ -1851,7 +1867,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   +'.app-header .brand{flex:none!important;gap:0!important}.app-header .brand>div{display:none!important}.app-header .brand-mark{width:32px!important;height:32px!important}'
   +'.app-header>.module-tabs{display:none!important}'
   +'.app-header .classroom-global-actions:not(#_){display:flex!important;width:auto!important;flex:none!important;gap:0!important;margin:0!important}'
-  +'.app-header .classroom-global-actions>*:not(#classroomUndoButton):not(.cb-split){display:none!important}'
+  +'.app-header .classroom-global-actions>*:not(#classroomUndoButton):not(.cb-split):not(.classroom-privacy-button){display:none!important}'
   /* Backup speichern ⬇ | wiederherstellen ⬆ als runde Doppel-Pille, daneben rundes Rückgängig */
   +'.app-header .classroom-global-actions:not(#_){gap:6px!important;align-items:center}'
   +'.app-header .cb-split:not(#_){order:1;display:inline-flex!important;height:38px;border:1px solid #cbd6e5!important;border-radius:19px!important;overflow:hidden;background:#fff;box-shadow:none!important;margin:0!important;padding:0!important}'
@@ -1862,6 +1878,10 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   +'.app-header #classroomUndoButton:not(#_){order:2;box-sizing:border-box!important;width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;border-radius:50%!important;border:1px solid #e9cfa5!important;background:#fffaf2!important;color:#b9771a!important}'
   +'.app-header #classroomUndoButton:not(#_)::before{content:""!important;display:block;width:20px;height:20px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27black%27 stroke-width=%272.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M9 14 4 9l5-5%27/%3E%3Cpath d=%27M4 9h10.5a5.5 5.5 0 0 1 0 11H11%27/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27black%27 stroke-width=%272.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M9 14 4 9l5-5%27/%3E%3Cpath d=%27M4 9h10.5a5.5 5.5 0 0 1 0 11H11%27/%3E%3C/svg%3E") center/contain no-repeat}'
   +'.app-header #classroomUndoButton:disabled:not(#_){opacity:.45}'
+  +'.app-header .classroom-privacy-button:not(#_){order:0;box-sizing:border-box!important;display:inline-flex!important;align-items:center;justify-content:center;width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;padding:0!important;margin:0!important;border:1px solid #cbd6e5!important;border-radius:50%!important;background:#fff!important;color:#2f5f9b!important;font-size:0!important}.app-header .classroom-privacy-button svg{width:19px!important;height:19px!important}'
+  +'.app-header .cb-split:not(#_){height:36px!important}.app-header .cb-split .cb-quick:not(#_){width:35px!important;min-width:35px!important;height:34px!important;min-height:34px!important}.app-header #classroomUndoButton:not(#_){width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important}.app-header .classroom-global-actions:not(#_){gap:5px!important}.app-header:not(#_){gap:6px!important;padding-left:10px!important;padding-right:10px!important}'
+  /* Auswahl zeigt nur die Lerngruppe (ohne Fach) */
+  +'.app-header>.compact-navigation .compact-navigation-trail>.compact-navigation-chip:first-child:not(#_),.app-header>.compact-navigation .compact-navigation-trail>.compact-navigation-chip:first-child+.compact-navigation-separator:not(#_),.app-header>.compact-navigation .compact-navigation-trail .compact-navigation-chip+.compact-navigation-separator+.compact-navigation-chip~*:not(#_){display:none!important}'
   +'.phone-sheet .ph-vbadge{margin-left:8px;padding:1px 8px;border-radius:99px;background:#eaf0fa;color:#2f5f9b;font-size:11.5px;font-weight:700;font-style:normal}'
   +'.app-header #classroomUndoButton:not(#_){width:40px!important;min-width:40px!important;min-height:38px!important;height:38px!important;padding:0!important;font-size:0!important}'
   +'.app-header #classroomUndoButton::before{content:"↶";font-size:19px;line-height:1}'
