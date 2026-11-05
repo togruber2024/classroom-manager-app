@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 05.11.2026 · Version 7.56
+Stand: 05.11.2026 · Version 7.57
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -917,3 +917,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.55: Backup sofort wiederherstellen (⬆ neben „Backup“); jede Wiederherstellung lässt sich rückgängig machen; Rückfrage nennt das Datum des Backups
 
 7.56: Kopfzeile: Umschalter Unterrichts-/Noten-Manager exakt mittig (am Mac)
+
+7.57: „1. Quartal“ und „Kompaktansicht“ als beschriftete Knöpfe (an = hellblau), überall einheitlich, Kompaktansicht direkt rechts neben 1. Quartal
