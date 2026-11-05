@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 05.11.2026 · Version 7.78
+Stand: 05.11.2026 · Version 7.79
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -966,3 +966,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.77: iPhone-Karten: alle Balken beginnen auf gleicher Höhe; Stufen nur links eingerückt, Unterpunkte mit dünnerem Balken
 
 7.78: iPhone: Gewichtungen als Schieberegler mit Schnellwahl (1:1, 2:1, 3:1, 4:1 bzw. 1:1, 2:1, 1:2 – exakt gerechnet)
+
+7.79: iPhone: Auswahl-Blatt und „Mehr“ lassen sich nach unten wegwischen
