@@ -4114,7 +4114,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    Umschalter „Karten | Tabelle“ (gemerkt). Die Karten werden aus der fertigen Tabelle gebaut; Selbsteinschätzung und
    Quartals-/Halbjahresnote sind in der Karte eintragbar und werden in die Tabelle übernommen (gleiches Speichern). */
 (()=>{
- const PH=matchMedia('(max-width:540px) and (orientation:portrait)'),KEY='classroom-phone-cards-v1';
+ const PH=matchMedia('(max-width:540px) and (orientation:portrait),(max-height:500px) and (orientation:landscape) and (pointer:coarse)'),KEY='classroom-phone-cards-v1';
  const mode=()=>{if(document.documentElement.classList.contains('ph-lite'))return 'cards';try{return localStorage.getItem(KEY)||'cards'}catch{return 'cards'}};
  const q1Open=new Set();
  const EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',EYE_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg>';
@@ -4307,7 +4307,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  PH.addEventListener?.('change',()=>{closeDetail();schedule()});schedule();
  const st=document.createElement('style');st.textContent=
   '.qs-phone-bar,.qs-cards,.qs-wt{display:none}'
-  +'@media (max-width:540px) and (orientation:portrait){'
+  +'@media (max-width:540px) and (orientation:portrait),(max-height:500px) and (orientation:landscape) and (pointer:coarse){'
   +'[data-quarter-summary] .quarter-summary-weight-controls label,[data-quarter-summary] .quarter-summary-weight-controls strong{display:none!important}[data-quarter-summary] .quarter-summary-weight-controls{margin:0!important;padding:0!important;border:0!important;background:none!important;min-height:0!important}'
   +'.qs-wt{display:grid;gap:16px;margin:6px 0 14px}.qs-wt-g{display:grid;gap:6px}.qs-wt-t{font-size:15px}.qs-wt-t[data-ratio]:not([data-ratio=""])::after{content:"  " attr(data-ratio);color:#2f5f9b;font-weight:700}'
   +'.qs-wt-ends{display:flex;justify-content:space-between;font-size:13.5px;color:#66758a}.qs-wt-ends b{color:#243247;font-size:15px}'
@@ -4424,7 +4424,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
 (()=>{
  const PH=matchMedia('(max-width:540px) and (orientation:portrait) and (pointer:coarse)');
  /* Nur auf einem echten iPhone: ein ausgeblendeter Rahmen (0 px) am Mac darf nie als „Handy“ gelten. */
- const isPhone=()=>PH.matches&&innerWidth>=280&&innerHeight>=400;
+ const PL=matchMedia('(max-height:500px) and (orientation:landscape) and (pointer:coarse)');
+ const isPhone=()=>(PH.matches&&innerWidth>=280&&innerHeight>=400)||(PL.matches&&innerWidth>=400&&innerHeight>=150);
  const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
  const sk=()=>'classroom-lite-half:'+currentSubject+':'+currentClassId;
  const ss={get:k=>{try{return sessionStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{sessionStorage.setItem(k,v)}catch{}}};
@@ -4487,9 +4488,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    empty.querySelector('button').onclick=()=>{const add=[...document.querySelectorAll('button.add-subject-button')].find(b=>b.textContent.includes('Quartalsnoten'));add?.click();tries=0;schedule()};document.body.append(empty)}}
  classroomHooks.add('refreshExamNavigation','phone-lite: Quartalsübersicht',{after(){schedule()}});
  new MutationObserver(list=>{if(!isPhone())return;if(list.some(m=>m.target.closest?.('.qs-cards')))for(const p of document.querySelectorAll('[data-quarter-summary]'))sortCards(p)}).observe(document.body,{subtree:true,childList:true});
- PH.addEventListener?.('change',()=>{tries=0;ensure()});addEventListener('resize',()=>{if(isPhone()!==document.documentElement.classList.contains('ph-lite')){tries=0;ensure()}});setTimeout(ensure,400);window.classroomPhoneLite={ensure,wantedHalf,wantedQuarter};
+ PH.addEventListener?.('change',()=>{tries=0;ensure()});PL.addEventListener?.('change',()=>{tries=0;ensure()});addEventListener('resize',()=>{if(isPhone()!==document.documentElement.classList.contains('ph-lite')){tries=0;ensure()}});setTimeout(ensure,400);window.classroomPhoneLite={ensure,wantedHalf,wantedQuarter};
  const st=document.createElement('style');st.textContent='.pl-bar,.pl-empty{display:none}'
-  +'@media (max-width:540px) and (orientation:portrait){'
+  +'@media (max-width:540px) and (orientation:portrait),(max-height:500px) and (orientation:landscape) and (pointer:coarse){'
   +'html.ph-lite .pl-bar{display:block;margin:0 0 10px}.pl-row{display:flex;justify-content:space-between;align-items:center;gap:8px}'
   +'.pl-seg{display:inline-flex;padding:3px;gap:2px;border-radius:11px;background:#e7edf6}.pl-seg[hidden]{display:none}.pl-seg button{min-height:32px;padding:0 11px;border:0;border-radius:8px;background:transparent;color:#66758a;font:inherit;font-size:13px;font-weight:650;cursor:pointer}.pl-seg button[aria-pressed=true]{background:#fff;color:#2f5f9b;box-shadow:0 1px 3px #233d6018}'
   +'.pl-sort{margin-left:auto}.pl-stand{font-size:11.5px;color:#8794a7;margin-top:6px}'
