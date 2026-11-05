@@ -3341,6 +3341,53 @@ document.addEventListener('keydown',event=>{
 })();
 ;
 
+/* ==== sitzplan/phone-lite.js ==== */
+/* iPhone hochkant: Unterricht nur zum Bewerten. Sitzplan ohne Knöpfe darüber/darunter, immer im Bewertungsmodus,
+   Bewertungen sichtbar, Seitenleiste nicht einblendbar. Oben eine schmale Zeile: Datum („Heute ▾“, zum Nachtragen) und
+   „Perspektive“; das Pult antippen dreht den Plan ebenfalls. Mac, iPad und iPhone quer bleiben unverändert. */
+(()=>{
+ const PH=matchMedia('(max-width:540px) and (orientation:portrait) and (pointer:coarse)');
+ const isPhone=()=>PH.matches&&innerWidth>=280&&innerHeight>=300;
+ const grid=document.getElementById('roomGrid');if(!grid||typeof classroomDate==='undefined')return;
+ const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+ const dateLabel=v=>{const t=new Date(),today=iso(t),y=new Date(t);y.setDate(t.getDate()-1);if(v===today)return 'Heute';if(v===iso(y))return 'Gestern';const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v||'');if(!m)return 'Datum';const d=new Date(+m[1],+m[2]-1,+m[3]);return ['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()]+', '+m[3]+'.'+m[2]+'.'};
+ const bar=document.createElement('div');bar.className='pl-seatbar';
+ bar.innerHTML='<label class="pl-date"><span class="pl-date-text">Heute</span><span class="pl-chev">▾</span><input type="date" aria-label="Datum der Unterrichtsstunde"></label><button type="button" class="pl-rotate" aria-pressed="false"><span aria-hidden="true">⇅</span> Perspektive</button>';
+ const dateInput=bar.querySelector('input'),dateText=bar.querySelector('.pl-date-text'),rotateBtn=bar.querySelector('.pl-rotate');
+ const syncDate=()=>{dateInput.value=classroomDate.value;dateText.textContent=dateLabel(classroomDate.value);bar.querySelector('.pl-date').classList.toggle('is-past',classroomDate.value!==iso(new Date()))};
+ dateInput.addEventListener('change',()=>{if(!dateInput.value)return;classroomDate.value=dateInput.value;classroomDate.dispatchEvent(new Event('input',{bubbles:true}));classroomDate.dispatchEvent(new Event('change',{bubbles:true}));syncDate()});
+ classroomDate.addEventListener('change',syncDate);
+ const rotate=()=>{const b=document.getElementById('classroomRotateButton');if(!b)return;b.click();setTimeout(syncRotate,0)};
+ const syncRotate=()=>rotateBtn.setAttribute('aria-pressed',document.getElementById('classroomRotateButton')?.getAttribute('aria-pressed')||'false');
+ rotateBtn.onclick=rotate;
+ // Pult antippen = Perspektive wechseln (nur im Bewertungsmodus auf dem iPhone)
+ document.addEventListener('click',e=>{if(!document.documentElement.classList.contains('ph-lite'))return;const c=e.target.closest?.('.room-grid .cell.pult');if(!c||document.getElementById('classroomEditRoom')?.checked)return;e.preventDefault();e.stopPropagation();rotate()},true);
+ function ensure(){
+  const on=isPhone();document.documentElement.classList.toggle('ph-lite',on);if(!on)return;
+  if(bar.nextElementSibling!==grid)grid.before(bar);
+  const edit=document.getElementById('classroomEditRoom');if(edit?.checked)edit.click();
+  const assess=document.querySelector('.plan-assess-switch input');if(assess&&!assess.checked)assess.click();
+  const sidebar=document.querySelector('.container');if(sidebar&&!sidebar.classList.contains('sidebar-collapsed')){const t=document.querySelector('.classroom-sidebar-toggle');if(t&&t.getAttribute('aria-expanded')==='true')t.click()}
+  syncDate();syncRotate();
+ }
+ PH.addEventListener?.('change',ensure);addEventListener('resize',()=>{if(isPhone()!==document.documentElement.classList.contains('ph-lite'))ensure()});
+ if(typeof classroomHooks!=='undefined')classroomHooks.add('initGrid','phone-lite: Bewertungsansicht',{after(){setTimeout(ensure,0)}});
+ setTimeout(ensure,300);setTimeout(ensure,1500);
+ const st=document.createElement('style');st.textContent='.pl-seatbar{display:none}'
+  +'@media (max-width:540px) and (orientation:portrait) and (pointer:coarse){'
+  +'html.ph-lite .room-header,html.ph-lite #gridInstructions,html.ph-lite .classroom-plan-zoom,html.ph-lite .classroom-plan-actions,html.ph-lite .classroom-sidebar-toggle,html.ph-lite .classroom-mode-toggle,html.ph-lite .student-search,html.ph-lite .grid-save-button{display:none!important}'
+  +'html.ph-lite .pl-seatbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px}'
+  +'.pl-date{position:relative;display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border:1px solid #cbd6e5;border-radius:18px;background:#fff;color:#243247;font-size:14.5px;font-weight:650}'
+  +'.pl-date.is-past{background:#fff7e8;border-color:#e9cfa5;color:#8a5a12}.pl-chev{font-size:11px;color:#8794a7}'
+  +'.pl-date input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;font-size:16px}'
+  +'.pl-rotate{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid #cbd6e5;border-radius:18px;background:#fff;color:#2f5f9b;font:inherit;font-size:14px;font-weight:650;cursor:pointer}'
+  +'.pl-rotate[aria-pressed=true]{background:#eaf0fa;border-color:#8fb0dc}.pl-rotate span{font-size:15px}'
+  +'html.ph-lite .room-grid .cell.pult{cursor:pointer}'
+  +'}';
+ document.head.append(st);
+})();
+;
+
 /* ==== no-contacts.js ==== */
 /* Safari/iOS soll bei Schülernamen keine Einträge aus den eigenen Kontakten vorschlagen (Datenschutz, z. B. am Beamer).
    Namensfelder erhalten autocomplete="off" und ein name-Attribut, das Safari nicht als Kontaktfeld erkennt. */

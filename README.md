@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 05.11.2026 · Version 7.86
+Stand: 05.11.2026 · Version 7.87
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -312,6 +312,7 @@ Ein Tipp auf eine Karte öffnet ein Blatt mit allen Einträgen dieser Person im 
 Auf den Seiten der mündlichen Mitarbeit öffnet ein Tipp in ein Notenfeld auf dem iPhone (hochkant) das bunte Bewertungsfenster als Blatt von unten, ohne Tastatur: zehn Bewertungszeichen, „Abwesend“ und „Löschen“. „Weiter ›“ und „‹ Zurück“ gehen im selben Termin zur nächsten bzw. vorigen Person; erneutes Antippen des gewählten Zeichens entfernt es wieder.
 Auf dem iPhone (hochkant) ist der Noten-Manager eine schlanke Lese-Version: Im Auswahl-Blatt stehen nur Fach und Klasse; Halbjahr und Quartal ergeben sich aus dem Datum (bei mehreren Halbjahren umschaltbar). Gezeigt wird die Quartalsübersicht als Karten, sortierbar nach Name oder Note; jede Karte kann das 1. Quartal aufklappen. Eintragen lassen sich dort nur Selbsteinschätzung und Quartalsnote – mündliche Noten, Hausaufgaben und Material im Bereich „Unterricht“, alles Weitere am Mac oder iPad.
 Auf dem iPhone (hochkant) gibt es unten nur noch Unterricht · Noten · Aktuell · Hilfe. „Aktuell“ wählt laut Stundenplan Fach, Klasse und Raum der laufenden Stunde (ab 10 Minuten vorher) und öffnet den Unterricht; in Freistunden die zuletzt unterrichtete Lerngruppe. Oben stehen das App-Symbol (Farbgestaltung), nur die Lerngruppe, Datenschutzmodus, Backup speichern/wiederherstellen und Rückgängig. Stundenplan, Archiv, Schuljahr abschließen und das Backup-Fenster bleiben dem Mac/iPad vorbehalten; die Version steht in der Hilfe.
+Im Unterricht zeigt das iPhone (hochkant) nur den Sitzplan im Bewertungsmodus; Knöpfe über und unter dem Plan sowie die Seitenleiste sind ausgeblendet. Oben stehen das Datum („Heute ▾“ – antippen zum Nachtragen für einen anderen Tag, dann orange hinterlegt) und „Perspektive“; ein Tipp aufs Pult dreht den Plan ebenfalls.
 
 SITZREGELN, RÄUME, HISTORIE UND ABWESENHEIT
 Verteilung: einzeln, Zufallspaare, gleichgeschlechtliche oder feste Paare; Reihenfolge und Richtung
@@ -984,3 +985,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.85: iPhone: Leiste unten Unterricht · Noten · Aktuell · Hilfe; „Aktuell“ öffnet die Lerngruppe laut Stundenplan (sonst die zuletzt unterrichtete); oben nur Lerngruppe, Datenschutz, Backup und Rückgängig
 
 7.86: iPhone-Kopfzeile: Rückgängig-Pfeil mittig, alle runden Knöpfe gleich groß, Kopfzeile passt wieder in die Breite
+
+7.87: iPhone-Unterricht: nur Sitzplan im Bewertungsmodus, oben Datum („Heute ▾“) und Perspektive; Pult antippen dreht den Plan; Seitenleiste und übrige Knöpfe ausgeblendet
