@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f8fc">
+<link rel="icon" type="image/svg+xml" href="../icon.svg?v=754">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png?v=754">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png?v=754">
+<title>Classroom-Manager · Noten</title>
+<style>
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="button"]):not([type="submit"]),select { box-sizing:border-box; height:32px; padding-top:3px; padding-bottom:3px }
+  :root { color-scheme:light; --ink:#243247; --muted:#66758a; --line:#dce3ef; --paper:#fff; --bg:#f6f8fc; --green:#2f5f9b; --pale:#eaf0fa }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif }
+  main { max-width:1040px; padding:42px 22px 60px; margin:auto }
+  header { margin-bottom:24px }
+  .header-main { display:flex; align-items:flex-end; justify-content:space-between; gap:20px }
+  .header-copy { min-width:0 }
+  .header-actions { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex:0 0 auto; margin-bottom:6px }
+  .eyebrow { color:var(--green); text-transform:uppercase; letter-spacing:.13em; font-size:.74rem; font-weight:750 }
+  h1 { margin:8px 0 7px; font-size:clamp(2rem,5vw,3rem); letter-spacing:-.045em; line-height:1.05 }
+  header p { margin:0; color:var(--muted); max-width:680px }
+  .subject-tabs,.page-tabs { display:flex; align-items:center; gap:7px; padding:2px 5px; width:max-content; max-width:100%; min-height:36px; background:#e7edf6; border-radius:14px }
+  .subject-tabs { overflow-x:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain }
+  .subject-picker,.class-picker,.exam-picker { display:flex; align-items:center; gap:9px; margin-bottom:3px; min-width:0 }
+  .exam-picker { width:100%; max-width:100%; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; touch-action:pan-x pan-y; cursor:grab }
+  .exam-picker:active { cursor:grabbing }
+  .exam-picker.is-panning { cursor:grabbing; user-select:none; -webkit-user-select:none }
+  .exam-picker > * { flex:0 0 auto }
+  .exam-picker > .page-tabs { max-width:none; overflow:visible }
+  .class-picker { justify-content:flex-start }
+  .half-year-picker { display:flex; align-items:center; gap:9px; margin-bottom:3px; min-width:0 }
+  .navigation-frame.has-period-navigation { padding:8px 12px 10px; margin:0 0 10px; border:1px solid #d8e1ee; border-radius:14px }
+  .navigation-frame.has-period-navigation .toolbar { margin:0 }
+  #halfYearTabs { width:max-content; flex:0 1 auto; min-width:0 }
+  .subject-tabs { margin-bottom:0 }
+  .page-tabs { margin:0 }
+  #customTabs .page-tab { cursor:grab; touch-action:pan-x pan-y; user-select:none; -webkit-user-select:none }
+  #customTabs .page-tab.is-dragging { opacity:.55; cursor:grabbing }
+  #subjectTabs .subject-tab { cursor:grab; touch-action:pan-x pan-y; user-select:none; -webkit-user-select:none }
+  #subjectTabs .subject-tab.is-dragging { opacity:.55; cursor:grabbing }
+  #classTabs .subject-tab,#examTabs .page-tab,#performanceTabs .page-tab,#homeworkTabs .page-tab,#examPageTabs .page-tab,#normalTabs .page-tab,#latinTabs .page-tab { cursor:grab; touch-action:pan-x pan-y; user-select:none; -webkit-user-select:none }
+  #classTabs .subject-tab.is-dragging,#examTabs .page-tab.is-dragging,#performanceTabs .page-tab.is-dragging,#homeworkTabs .page-tab.is-dragging,#examPageTabs .page-tab.is-dragging,#normalTabs .page-tab.is-dragging,#latinTabs .page-tab.is-dragging { opacity:.55; cursor:grabbing }
+  .subject-tab,.page-tab { display:inline-flex; align-items:center; justify-content:center; height:32px; min-height:32px; border:0; border-radius:10px; padding:2px 15px; color:var(--muted); background:transparent; font:inherit; font-weight:650; line-height:1.25; cursor:pointer; white-space:nowrap }
+  .subject-tab[aria-selected="true"],.page-tab[aria-selected="true"] { background:var(--paper); color:var(--ink); box-shadow:0 1px 4px #1c2b4618 }
+  .add-subject-button { display:inline-flex; align-items:center; justify-content:center; height:32px; min-height:32px; border:1px dashed #aab8cc; border-radius:11px; padding:2px 15px; background:transparent; color:var(--green); font:inherit; font-weight:650; line-height:1.25; white-space:nowrap }
+  .add-subject-button:hover { background:var(--pale); border-style:solid }
+  .toolbar { display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; gap:4px; margin:4px 0 18px }
+  .toolbar.is-empty { justify-content:flex-end }
+  .page-nav-group { display:flex; flex-wrap:wrap; align-items:center; gap:9px; min-width:0; max-width:100%; width:100% }
+  #examTabs,#performanceTabs,#testTabs,#semesterTabs,#homeworkTabs,#examPageTabs { width:max-content; flex:0 1 auto }
+  #examTabs,#performanceTabs,#testTabs,#semesterTabs,#homeworkTabs { gap:7px; padding:0; min-height:36px; align-items:center; background:transparent }
+  #examTabs,#performanceTabs,#testTabs,#semesterTabs,#homeworkTabs { padding:2px 5px; border-radius:14px; background:#e7edf6 }
+  #examTabs .page-tab,#performanceTabs .page-tab,#testTabs .page-tab,#semesterTabs .page-tab,#homeworkTabs .page-tab { background:transparent }
+  #examTabs .page-tab[aria-selected="true"],#performanceTabs .page-tab[aria-selected="true"],#testTabs .page-tab[aria-selected="true"],#semesterTabs .page-tab[aria-selected="true"],#homeworkTabs .page-tab[aria-selected="true"] { background:var(--paper) }
+  #examPageTabs { flex-basis:auto }
+  .rename-row-button { display:inline-grid; place-items:center; flex:none; width:32px; height:32px; padding:0; border:1px solid var(--line); border-radius:11px; color:var(--muted); background:#fff; font-size:1.15rem; line-height:1; cursor:pointer; transform:scaleX(-1) }
+  .rename-row-button:hover,.rename-row-button:focus-visible { color:var(--green); border-color:#a9bedb; background:var(--pale); outline:none }
+  .rename-row-dialog { width:min(520px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); overflow:auto; padding:24px; border:1px solid var(--line); border-radius:18px; color:var(--ink); box-shadow:0 18px 60px #1c2b4630 }
+  .rename-row-dialog::backdrop { background:#1c2b4666; backdrop-filter:blur(2px) }
+  .rename-row-dialog h2 { margin:0 0 6px; font-size:1.25rem }
+  .rename-row-dialog p { margin:0 0 14px; color:var(--muted) }
+  .rename-row-fields { display:grid; gap:10px; margin:0 0 16px }
+  .rename-row-field { display:grid; grid-template-columns:38px minmax(0,1fr); align-items:center; gap:10px; margin:0; color:var(--muted); font-size:.9rem }
+  .rename-row-field span.hide { display:none }
+  .rename-row-field input { grid-column:2; grid-row:1 }
+  .rename-row-remove { display:grid; place-items:center; width:38px; height:38px; padding:0; border:1px solid #e4a19c; border-radius:9px; color:#b42318; background:#fff; font:inherit; font-size:1.2rem; font-weight:650; cursor:pointer }
+  .rename-row-remove:hover { border-color:#d8847c; color:#a33b32; background:#fff7f6 }
+  .rename-row-field input { width:100%; min-width:0; padding:9px 11px; border:1px solid #cbd6e5; border-radius:9px; color:var(--ink); font:inherit }
+  @media(max-width:420px) { .rename-row-field { grid-template-columns:38px minmax(0,1fr); gap:6px 9px } .rename-row-field input { grid-column:2; grid-row:1 } .rename-row-remove { grid-row:1 } }
+  button { font:inherit; cursor:pointer }
+  .export-button { border:1px solid var(--line); border-radius:10px; padding:8px 12px; background:#fff; color:var(--ink); font-weight:600; white-space:nowrap }
+  .export-button:hover { background:#f7f9fc }
+  .settings-button { border:1px solid var(--line); border-radius:10px; padding:8px 12px; background:#fff; color:var(--ink); font-weight:600; white-space:nowrap }
+  .settings-button:hover { background:#f7f9fc }
+  .panel { background:var(--paper); border:1px solid var(--line); border-radius:20px; padding:clamp(20px,4vw,32px); box-shadow:0 8px 30px #20355308 }
+  .empty-custom-panel { min-height:clamp(280px,55vh,520px) }
+  .hide { display:none!important }
+  .entry { display:grid; grid-template-columns:minmax(200px,340px) minmax(200px,340px) max-content; align-items:end; gap:16px }
+  label { display:block; font-weight:700; margin-bottom:8px }
+  .field-label-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px }
+  .field-label-row label { margin:0 }
+  .field { position:relative; min-width:0; max-width:340px }
+  .input-wrap { display:flex; align-items:center; border:1px solid #cbd6e5; border-radius:12px; overflow:hidden; background:#fff }
+  input[type="number"] { width:100%; min-width:0; border:0; outline:0; padding:13px 14px; color:var(--ink); font:inherit; font-size:1.15rem; font-weight:650; background:transparent }
+  input:focus { box-shadow:inset 0 0 0 2px var(--green) }
+  .unit { padding:0 14px; color:var(--muted); white-space:nowrap }
+  .approval-field { position:relative }
+  .approval-field .input-wrap { background:#fff; border-color:#cbd6e5 }
+  .field-hint { position:absolute; top:calc(100% + 7px); left:0; z-index:10; width:min(330px,calc(100vw - 48px)); padding:10px 12px; border:1px solid #d2d9e5; border-radius:9px; background:#edf1f7; color:#4d5c71; box-shadow:0 4px 12px #1c2b4618; font-size:.82rem; line-height:1.4; opacity:0; visibility:hidden; transform:translateY(-3px); transition:opacity .15s ease,transform .15s ease,visibility .15s ease; pointer-events:none }
+  .approval-field:hover .field-hint,.approval-field:focus-within .field-hint { opacity:1; visibility:visible; transform:translateY(0) }
+  .options-stack { display:flex; flex-direction:column; align-self:start; margin-top:0; transform:translateY(32px); gap:0 }
+  .options-stack .toggle + .toggle { margin-top:-3px }
+  .toggle { display:flex; align-items:center; gap:9px; color:var(--muted); font-size:.9rem; line-height:1.2; font-weight:600; cursor:pointer; white-space:nowrap }
+  .toggle input { appearance:none; position:relative; flex:0 0 42px; width:42px; height:25px; padding:0; margin:0; border:0; border-radius:999px; background:#c8d2e0; cursor:pointer; transition:background .18s ease }
+  .toggle input::before { content:""; position:absolute; width:19px; height:19px; top:3px; left:3px; border-radius:50%; background:white; box-shadow:0 1px 3px #1c2b4635; transition:transform .18s ease }
+  .toggle input:checked { background:var(--green) }
+  .toggle input:checked::before { transform:translateX(17px) }
+  .toggle input:focus-visible { outline:3px solid #2f5f9b55; outline-offset:3px }
+  .section-title { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:28px 0 12px }
+  .section-title h2 { margin:0; font-size:1.1rem; letter-spacing:-.015em }
+  .manual-actions { display:flex; align-items:center; gap:8px }
+  .manual-toggle { display:inline-flex; align-items:center; gap:6px; margin:0; color:var(--muted); font-size:.86rem; font-weight:600; cursor:pointer; white-space:nowrap }
+  .manual-toggle input { width:16px; height:16px; margin:0; accent-color:var(--green) }
+  .manual-reset { padding:0 2px; border:0; background:transparent; color:var(--green); font-size:.95rem; line-height:1; cursor:pointer }
+  .manual-reset:hover { text-decoration:underline }
+  .manual-percent { width:5.3em; padding:3px 5px; border:1px solid #cbd6e5; border-radius:7px; color:var(--ink); background:#fff; font:inherit; font-size:.9em; text-align:right }
+  .manual-percent:focus { outline:2px solid var(--green); outline-offset:1px }
+  .manual-percent-label { display:inline-flex; align-items:center; gap:4px; margin:0; font-weight:400; white-space:nowrap }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0 }
+  .table-wrap { width:100%; overflow-x:auto; border:1px solid var(--line); border-radius:13px }
+  table { width:100%; table-layout:fixed; border-collapse:collapse; text-align:center; font-variant-numeric:tabular-nums }
+  select:has(> option:checked[value=""]) { color:var(--muted); font-weight:500 }
+  th,td { padding:11px 14px; border-bottom:1px solid var(--line); text-align:center }
+  th { color:var(--muted); font-size:.78rem; letter-spacing:.04em; text-transform:uppercase; background:#f7f9fc }
+  tr:last-child td { border-bottom:0 }
+  td:first-child { font-weight:750 }
+  .grade { display:inline-flex; width:10em; max-width:100%; justify-content:center; border-radius:8px; padding:3px 8px; font-weight:750 }
+  .g1 { background:#00b050; color:#102b1b } .g2 { background:#92d050; color:#26371a }
+  .g3 { background:#fff200; color:#3d3812 } .g4 { background:#ffc000; color:#493712 }
+  .g5 { background:#f04438; color:#fff } .g6 { background:#c00000; color:#fff }
+  .grade-four-fail { background:repeating-linear-gradient(135deg,#f04438 0 3px,#ffc000 3px 8px); color:#493712 }
+  .rule,.decision { margin:18px 0 0; padding:16px 18px; border-radius:0 12px 12px 0; border-left:3px solid var(--green); background:#f3f6fb; color:#43546e; font-size:.9rem }
+  .rule p,.decision p { margin:0 }
+  .rule cite { display:block; margin-top:8px; color:var(--muted); font-size:.82rem; font-style:normal }
+  .decision { border:0; border-radius:14px; background:var(--pale); color:#244c80; font-size:.88rem }
+  .decision p+p { margin-top:8px }
+  .export-dialog { width:min(440px,calc(100vw - 32px)); padding:24px; border:1px solid var(--line); border-radius:18px; color:var(--ink); box-shadow:0 18px 60px #1c2b4630 }
+  .settings-dialog { width:min(560px,calc(100vw - 32px)); max-height:calc(100vh - 32px); max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px); overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; padding:clamp(22px,3vw,34px); border:1px solid var(--line); border-radius:18px; color:var(--ink); box-shadow:0 18px 60px #1c2b4630 }
+  .new-subject-dialog { width:min(440px,calc(100vw - 32px)); padding:24px; border:1px solid var(--line); border-radius:18px; color:var(--ink); box-shadow:0 18px 60px #1c2b4630 }
+  .paste-names-dialog { width:min(520px,calc(100vw - 32px)); padding:24px; border:1px solid var(--line); border-radius:18px; color:var(--ink); box-shadow:0 18px 60px #1c2b4630 }
+  .export-dialog::backdrop { background:#1c2b4666; backdrop-filter:blur(2px) }
+  .settings-dialog::backdrop { background:#1c2b4666; backdrop-filter:blur(2px) }
+  .new-subject-dialog::backdrop { background:#1c2b4666; backdrop-filter:blur(2px) }
+  .paste-names-dialog::backdrop { background:#1c2b4666; backdrop-filter:blur(2px) }
+  .paste-names-dialog h2 { margin:0 0 5px; font-size:1.25rem }
+  .paste-names-dialog p { margin:0 0 14px; color:var(--muted) }
+  .paste-names-dialog textarea { display:block; width:100%; min-height:190px; margin:0 0 18px; padding:11px 12px; border:1px solid #cbd6e5; border-radius:10px; color:var(--ink); font:inherit; resize:vertical }
+  .export-dialog h2 { margin:0 0 5px; font-size:1.25rem }
+  .export-dialog p { margin:0 0 16px; color:var(--muted) }
+  .export-options { display:grid; gap:9px; margin-bottom:18px }
+  .export-group-heading { margin:8px 0 0; color:var(--muted); font-size:.82rem; font-weight:750; text-transform:uppercase; letter-spacing:.04em }
+  .export-option { display:flex; align-items:center; gap:10px; margin:0; padding:10px 12px; border:1px solid var(--line); border-radius:10px; font-weight:600; cursor:pointer }
+  .export-option input { width:18px; height:18px; margin:0; accent-color:var(--green) }
+  .export-style { margin:0 0 18px; padding:12px; border:1px solid var(--line); border-radius:10px }
+  .export-style legend { padding:0 5px; color:var(--muted); font-size:.85rem; font-weight:650 }
+  .dialog-actions { display:flex; justify-content:flex-end; gap:9px }
+  .dialog-actions button { border:1px solid var(--line); border-radius:9px; padding:8px 12px; background:#fff; color:var(--ink); font-weight:600 }
+  .dialog-actions .primary { border-color:var(--green); background:var(--green); color:#fff }
+  .settings-dialog .dialog-actions { position:sticky; bottom:-2px; z-index:2; flex-wrap:wrap; padding:12px 0 2px; background:var(--paper) }
+  .settings-grid { display:grid; gap:10px; margin:18px 0 }
+  .hidden-example-settings { margin:4px 0 20px; padding-top:14px; border-top:1px solid var(--line) }
+  .hidden-example-settings h3 { margin:0 0 8px; font-size:1rem }
+  .hidden-example-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 0; color:var(--muted) }
+  .hidden-example-row + .hidden-example-row { border-top:1px solid var(--line) }
+  .hidden-example-row button { flex:none; border:1px solid var(--line); border-radius:8px; padding:5px 10px; background:#fff; color:var(--green); font:inherit; font-size:.85rem; font-weight:650; cursor:pointer }
+  .settings-subject-row { display:grid; grid-template-columns:minmax(190px,.75fr) minmax(0,2fr); align-items:center; gap:22px; padding:12px 0; border-bottom:1px solid var(--line) }
+  .settings-subject-name { border:0; padding:0; background:transparent; color:var(--ink); font:inherit; font-weight:700; text-align:left; cursor:pointer }
+  .settings-subject-name:hover,.settings-page-name:hover { text-decoration:underline; text-underline-offset:3px }
+  .settings-page-name { display:block; margin:0 0 4px; border:0; padding:0; background:transparent; color:var(--muted); font:inherit; font-size:.78rem; font-weight:650; text-align:left; cursor:pointer }
+  .settings-subject-heading { display:grid; grid-template-columns:38px 150px; align-items:center; justify-content:start; gap:18px }
+  .settings-subject-heading strong.settings-subject-name { cursor:default }
+  .remove-subject-button { flex:none; display:grid; place-items:center; width:38px; height:38px; padding:0; border:1px solid #e4aaa8; border-radius:9px; background:#fff; color:#c8373d; cursor:pointer }
+  .remove-subject-button svg { display:block; width:21px; height:21px }
+  .remove-subject-button:hover { border-color:#c8373d; background:#fff4f3 }
+  .remove-subject-button:focus-visible { outline:3px solid #c8373d55; outline-offset:2px }
+  .settings-subject-content { min-width:0 }
+  .settings-field { min-width:0 }
+  .settings-add-field { display:flex; align-items:flex-end }
+  .settings-field label { display:block; margin:0 0 4px; color:var(--muted); font-size:.78rem; font-weight:650 }
+  .settings-field-control { display:flex; align-items:center; gap:5px }
+  .settings-field-control .input-wrap { flex:1; min-width:0 }
+  .settings-empty-placeholder { display:block; flex:1; height:38px; border:1px solid var(--line); border-radius:9px; background:#f0f3f9 }
+  .settings-field-control input { width:100%; min-width:0; padding:7px 6px; font-size:.95rem }
+  .settings-field-control .unit { padding:0 8px }
+  .settings-remove-page,.settings-add-page { flex:none; display:grid; place-items:center; width:38px; height:38px; border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--muted); font:inherit; font-size:1.2rem; font-weight:600; cursor:pointer }
+  .settings-remove-page:hover { border-color:#d8a6a1; color:#a33b32 }
+  .settings-add-page { border-style:dashed; color:var(--green); font-size:1.45rem }
+  .settings-add-page span { display:block; transform:translateY(-2px) }
+  .quick-add { flex:none }
+  .settings-add-page:hover { border-style:solid; background:var(--pale) }
+  .settings-add-page:disabled { opacity:.45; cursor:default }
+  .add-page-dialog { width:min(440px,calc(100vw - 32px)); padding:24px; border:1px solid var(--line); border-radius:18px; color:var(--ink); box-shadow:0 18px 60px #1c2b4630 }
+  .add-page-dialog::backdrop { background:#1c2b4666; backdrop-filter:blur(2px) }
+  .add-page-dialog h2 { margin:0 0 5px; font-size:1.25rem }
+  .add-page-dialog p { margin:0 0 16px; color:var(--muted) }
+  .performance-scale-hint { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 10px; margin:0 0 18px!important; padding:12px; border:1px solid var(--line); border-radius:10px; background:#f7f9fc; text-align:left }
+  .performance-scale-item { display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:0; padding:6px 9px; border-radius:7px; background:#fff; color:var(--muted); font-size:.92rem }
+  .performance-scale-item strong { color:var(--ink); font-size:1rem }
+  @media(max-width:520px) { .performance-scale-hint { grid-template-columns:1fr } }
+  .add-page-dialog input[type="text"] { width:100%; margin:4px 0 18px; padding:10px 12px; border:1px solid #cbd6e5; border-radius:10px; color:var(--ink); background:#fff; font:inherit }
+  .add-page-dialog input[type="text"]::placeholder { color:#a2acbb }
+  .settings-subject-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px }
+  .settings-subject-row.latin .settings-subject-options { grid-template-columns:repeat(3,minmax(0,1fr)) }
+  .settings-item { display:grid; gap:4px; margin:0; color:var(--muted); font-size:.78rem; font-weight:650 }
+  .settings-field-label { display:block; margin:0 0 4px; color:var(--muted); font-size:.78rem; font-weight:650 }
+  .settings-item .input-wrap { min-width:0 }
+  .settings-item input { width:100%; min-width:0; padding:7px 6px; font-size:.95rem }
+  .settings-item .unit { padding:0 8px }
+  .settings-note { font-size:.85rem }
+  .settings-data-tools { margin:0 }
+  .settings-backup-note { margin:0 0 12px; color:var(--muted); font-size:.88rem }
+  .settings-data-tools h3 { margin:0 0 5px; font-size:1rem }
+  .settings-data-tools p { margin:0 0 12px; color:var(--muted); font-size:.88rem }
+  .settings-data-actions { display:flex; flex-wrap:wrap; gap:9px; padding-top:14px }
+  .settings-data-actions button { border:1px solid var(--line); border-radius:9px; padding:8px 12px; background:#fff; color:var(--ink); font:inherit; font-weight:600; cursor:pointer }
+  .settings-data-actions button:hover { background:var(--pale) }
+  .settings-data-actions .settings-reset-button { border-color:#d8a6a1; color:#a33b32 }
+  .settings-data-actions .settings-reset-button:hover { background:#fff5f4 }
+  .settings-reset-warning { margin:8px 0 0; color:#a33b32; font-size:.82rem }
+  .settings-import-status { min-height:1.2em; margin-top:8px!important; color:#b42318!important }
+  .new-subject-dialog input[type="text"] { width:100%; margin:4px 0 18px; padding:11px 12px; border:1px solid #cbd6e5; border-radius:10px; color:var(--ink); font:inherit }
+  .new-subject-options { display:grid; gap:6px; margin:0 0 14px; padding:10px 12px; border:1px solid var(--line); border-radius:10px }
+  .new-subject-options legend { padding:0 5px; color:var(--muted); font-size:.85rem; font-weight:650 }
+  .new-subject-options label { display:flex; align-items:center; gap:8px; margin:0; font-weight:550; cursor:pointer }
+  .new-subject-options input { appearance:none; display:grid; place-content:center; flex:0 0 18px; width:18px; height:18px; margin:0; border:2px solid #aab7c9; border-radius:5px; background:#fff; cursor:pointer }
+  .new-subject-options input::before { content:""; width:9px; height:5px; border:solid #fff; border-width:0 0 2px 2px; transform:rotate(-45deg) scale(0); transition:transform .12s ease }
+  .new-subject-options input:checked { border-color:var(--green); background:var(--green) }
+  .new-subject-options input:checked::before { transform:rotate(-45deg) scale(1) }
+  .new-subject-options input:focus-visible { outline:3px solid #2f5f9b55; outline-offset:2px }
+  .new-subject-options input:disabled { cursor:not-allowed; opacity:.45 }
+  .option-groups { display:grid; grid-template-columns:1fr; gap:20px; align-items:stretch }
+  .option-groups .new-subject-options { margin-bottom:0 }
+  #addPageBasisGroup,#addPageSystemGroup { grid-column:1; grid-row:auto }
+  .option-groups-title { display:none }
+  .option-groups-title span { font-size:.8rem; font-weight:500 }
+  .optional-options { margin-top:20px!important; padding-top:14px }
+  .optional-options legend { color:var(--ink) }
+  .optional-options legend span { margin-left:5px; color:var(--muted); font-weight:500 }
+  .new-subject-options.is-disabled { opacity:.45 }
+  .new-subject-options label:has(input:disabled) { cursor:not-allowed }
+  .new-subject-options.needs-choice { border-color:#d66a61; background:#fff8f7 }
+  .new-subject-options.needs-choice legend { color:#b42318 }
+  .new-subject-options.needs-choice input:not(:checked) { border-color:#d66a61; background:#fff1ef }
+  @media(max-width:560px) { .option-groups { gap:12px } }
+  .settings-add-subject { padding-top:4px }
+  .custom-entry { display:grid; grid-template-columns:minmax(200px,340px) minmax(200px,340px); gap:12px 16px; margin-bottom:22px; align-items:end }
+  .custom-entry .options-stack { grid-column:1/-1; flex-direction:row; align-self:center; transform:none; gap:20px }
+  .custom-entry .options-stack .toggle + .toggle { margin-top:0 }
+  .custom-heading-controls { display:flex; align-items:center; justify-content:flex-end; gap:16px; flex-wrap:wrap }
+  .custom-heading-controls .options-stack { display:flex; flex-direction:row; align-items:center; gap:16px; transform:none }
+  .custom-heading-controls .options-stack .toggle + .toggle { margin-top:0 }
+  .custom-options { transform:translateY(32px) }
+  .custom-manual-percent { width:5.3em; padding:3px 5px; border:1px solid #cbd6e5; border-radius:7px; color:var(--ink); background:#fff; font:inherit; font-size:.9em; text-align:right }
+  .custom-manual-percent:focus { outline:2px solid var(--green); outline-offset:1px }
+  .custom-table-title { margin:0 0 12px; font-size:1.1rem }
+  .task-config { display:grid; gap:12px; margin-bottom:22px }
+  .task-config-row { display:flex; align-items:stretch; gap:9px; min-width:0 }
+  .task-config-row.test-task-config-row { width:100%; max-width:100%; overflow:hidden }
+  .task-config-row.test-task-config-row .task-config-grid { flex:0 1 auto; width:fit-content; max-width:calc(100% - 47px); min-width:0; overflow-x:auto }
+  .task-config-grid { display:flex; flex:1 1 auto; align-items:stretch; gap:5px; min-width:0; padding:2px 5px; overflow-x:auto; background:#e7edf6; border-radius:14px }
+  .task-config-card { display:grid; grid-template-columns:minmax(72px,1fr) minmax(70px,110px) 28px; flex:1 1 0; min-width:205px; align-items:center; gap:6px; padding:2px 8px; border-radius:10px; background:var(--paper) }
+  .task-config-card.performance-task-config { grid-template-columns:minmax(110px,1fr) minmax(70px,110px) 28px; min-width:250px }
+  .task-config-card.test-task-config { grid-template-columns:110px 145px 98px 28px; flex:0 0 415px; width:415px; min-width:415px }
+  .task-config-card.test-task-config .task-weight-control input { width:68px; flex:0 0 68px }
+  .task-config-name { color:var(--muted); font-size:.88rem; font-weight:700; white-space:nowrap }
+  .task-date-input,.task-name-input { width:100%; min-width:0; height:32px; padding:4px 6px; border:1px solid #cbd6e5; border-radius:8px; color:var(--ink); background:#fff; font:inherit; font-size:.85rem; line-height:1.2 }
+  .task-weight-control { display:flex; align-items:center; gap:5px; margin:0; color:var(--muted); font-size:.85rem; font-weight:650 }
+  .task-weight-control input { display:block; width:100%; min-width:0; height:32px; padding:4px 8px; border:1px solid #cbd6e5; border-radius:8px; color:var(--ink); background:#fff; font:inherit; text-align:right }
+  .task-config-card .task-remove,.task-add-button,.student-add-button { display:grid; place-items:center; min-height:32px; border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--muted); font:inherit; font-weight:650 }
+  .task-config-card .task-remove { height:32px; min-height:32px; padding:0; align-self:center }
+  .task-config-card .task-remove:hover { color:#a33b32; border-color:#d8a6a1 }
+  .task-add-button,.student-add-button { display:inline-flex; gap:7px; padding:7px 12px; border-style:dashed; color:var(--green) }
+  .task-add-button:hover,.student-add-button:hover { border-style:solid; background:var(--pale) }
+  .homework-config { margin:0 0 16px }
+  .homework-task-config { grid-template-columns:minmax(100px,1fr) minmax(100px,145px) 28px; flex:1 0 340px; min-width:300px }
+  .homework-task-config .task-name-input,.homework-task-config .task-date-input { width:100%; min-width:0 }
+  .homework-table input,.homework-table select { width:100%; min-width:0; padding:7px 9px; border:1px solid var(--line); border-radius:9px; color:var(--ink); background:#fff; font:inherit }
+  .homework-table { min-width:640px }
+  .homework-table td:first-child { min-width:210px }
+  .homework-table td:not(:first-child),.homework-table th:not(:first-child) { text-align:center }
+  .homework-table .homework-missing-count { font-weight:700 }
+  .homework-table .homework-missing-count.is-warning { color:#a3231d; background:#fff0ee }
+  .homework-table select.homework-missing { border-color:#e9aaa5; background:#fff0ee; color:#9f2d27; font-weight:650 }
+  .homework-table select.homework-warning { border-color:#a3231d; background:#b42318; color:#fff; font-weight:750; box-shadow:0 0 0 2px #f4c7c3 }
+  .task-config-row > .task-add-button { flex:0 0 38px; width:38px; min-height:38px; align-self:center; justify-content:center; padding:0; border:1px dashed #aab8cc; border-radius:11px; background:transparent; color:var(--green); font-size:1.3em }
+  .task-weight-summary { color:var(--muted); font-size:.9rem }
+  .task-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+  .homework-actions { justify-content:flex-end; margin:0 0 12px }
+  .task-results-heading { align-items:center }
+  .task-results-heading .task-tendency-toggle { font-size:1rem; line-height:1.5 }
+  .task-results-heading .task-tendency-label { position:relative; top:4px }
+  .task-results-heading .task-tendency-toggle input { position:relative; top:4px }
+  .clear-students-button { display:inline-flex; align-items:center; min-height:38px; padding:7px 12px; border:1px solid #d8a6a1; border-radius:9px; background:#fff; color:#a33b32; font:inherit; font-weight:650 }
+  .clear-students-button:hover { background:#fff5f4 }
+  .notenspiegel-button { display:inline-flex; align-items:center; min-height:38px; padding:7px 12px; border:1px solid #abc1df; border-radius:9px; background:#fff; color:var(--green); font:inherit; font-weight:650 }
+  .notenspiegel-button:hover { background:var(--pale) }
+  .notenspiegel-dialog { width:min(820px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); overflow:auto; padding:clamp(20px,3vw,30px); border:1px solid var(--line); border-radius:18px; color:var(--ink); box-shadow:0 18px 60px #1c2b4630 }
+  .notenspiegel-dialog::backdrop { background:#1c2b4666; backdrop-filter:blur(2px) }
+  .notenspiegel-dialog h2 { margin:0 0 4px; font-size:1.45rem }
+  .notenspiegel-dialog p { margin:0 0 16px; color:var(--muted) }
+  .notenspiegel-table { width:100%; min-width:620px; table-layout:fixed; border:1px solid var(--line); border-radius:12px; overflow:hidden }
+  .notenspiegel-table th:first-child { width:180px }
+  .notenspiegel-table th,.notenspiegel-table td { padding:8px 10px; border-bottom:1px solid var(--line) }
+  .notenspiegel-table thead th { background:#f3f6fb; color:var(--muted); font-size:.82rem }
+  .notenspiegel-table tbody th { text-align:left; white-space:nowrap }
+  .notenspiegel-table tfoot th,.notenspiegel-table tfoot td { border-top:2px solid var(--line); background:#f7f9fc; font-weight:750 }
+  .notenspiegel-boundary-editor { margin:16px 0 16px; padding:14px 16px; border:1px solid var(--line); border-radius:12px; background:#f7f9fc }
+  .notenspiegel-boundary-editor h3 { margin:0 0 3px; font-size:1rem }
+  .notenspiegel-boundary-editor p { margin:0 0 10px; color:var(--muted); font-size:.9rem }
+  .notenspiegel-boundary-controls { display:flex; align-items:center; gap:12px; margin:0 0 10px }
+  .notenspiegel-boundary-source { display:flex; align-items:center; gap:10px; margin:0; font-weight:650 }
+  .notenspiegel-boundary-source select { min-width:0; max-width:100%; padding:6px 9px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); font:inherit }
+  .notenspiegel-boundary-reset { flex:0 0 auto; padding:7px 11px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--green); font:inherit; font-weight:650; cursor:pointer }
+  .notenspiegel-boundary-reset:hover { background:var(--pale) }
+  .notenspiegel-boundary-list { position:relative; margin:62px 12px 0; padding:0 0 8px }
+  .notenspiegel-boundary-footer { display:flex; justify-content:flex-end; margin-top:0 }
+  .notenspiegel-boundary-axis { position:relative; height:24px; touch-action:none; user-select:none }
+  .notenspiegel-boundary-track { position:absolute; inset:5px 0; display:flex; overflow:hidden; border:1px solid #d7e0ed; border-radius:99px; background:#edf1f7; box-shadow:inset 0 1px 2px #00000010 }
+  .notenspiegel-boundary-segment { height:100%; flex:0 0 auto }
+  .notenspiegel-boundary-segment.g1,.notenspiegel-boundary-point.g1 { background:#00b050 }
+  .notenspiegel-boundary-segment.g2,.notenspiegel-boundary-point.g2 { background:#92d050 }
+  .notenspiegel-boundary-segment.g3,.notenspiegel-boundary-point.g3 { background:#fff200 }
+  .notenspiegel-boundary-segment.g4,.notenspiegel-boundary-point.g4 { background:#ffc000 }
+  .notenspiegel-boundary-segment.g5,.notenspiegel-boundary-point.g5 { background:#f04438 }
+  .notenspiegel-boundary-segment.g6,.notenspiegel-boundary-point.g6 { background:#c00000 }
+  .notenspiegel-boundary-handle { position:absolute; z-index:2; top:50%; width:22px; height:34px; padding:0; border:2px solid #fff; border-radius:12px; background:#fff; box-shadow:0 1px 5px #20355333; transform:translate(-50%,-50%); touch-action:none; cursor:ew-resize }
+  .notenspiegel-boundary-handle.is-anchor { transition:left 160ms cubic-bezier(.2,.75,.3,1) }
+  .notenspiegel-boundary-handle:focus-visible { outline:3px solid #83aaff; outline-offset:2px }
+  .notenspiegel-boundary-handle[aria-disabled="true"] { cursor:not-allowed; opacity:.75 }
+  .notenspiegel-boundary-point { position:absolute; top:-30px; left:50%; padding:2px 6px; border-radius:6px; color:#253349; font-size:.78rem; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; transform:translateX(-50%) }
+  .notenspiegel-boundary-label { position:absolute; top:calc(100% + 4px); left:50%; color:var(--ink); font-size:.68rem; font-weight:700; white-space:nowrap; transform:translateX(-50%) }
+  .notenspiegel-boundary-caption { display:flex; justify-content:space-between; margin-top:8px; color:var(--muted); font-size:.75rem; font-variant-numeric:tabular-nums }
+  .notenspiegel-boundary-legend { display:flex; flex-wrap:wrap; gap:5px 12px; margin-top:6px; color:var(--muted); font-size:.74rem }
+  .notenspiegel-boundary-legend span { display:inline-flex; align-items:center; gap:4px }
+  .notenspiegel-boundary-swatch { width:10px; height:10px; border-radius:3px }
+  .notenspiegel-cell { min-width:105px }
+  .notenspiegel-count { display:flex; justify-content:space-between; gap:8px; font-size:.84rem; font-weight:700; font-variant-numeric:tabular-nums }
+  .notenspiegel-bar { height:7px; margin-top:4px; overflow:hidden; border-radius:99px; background:#edf1f7 }
+  .notenspiegel-bar span { display:block; height:100%; border-radius:inherit }
+  .notenspiegel-g1 { background:#00b050 } .notenspiegel-g2 { background:#92d050 } .notenspiegel-g3 { background:#fff200 }
+  .notenspiegel-g4 { background:#ffc000 } .notenspiegel-g5 { background:#f04438 } .notenspiegel-g6 { background:#c00000 }
+  .notenspiegel-chip { display:inline-flex; min-width:4.5em; justify-content:center; padding:2px 7px; border-radius:7px; font-size:.86em }
+  .notenspiegel-chip.notenspiegel-g1 { color:#102b1b } .notenspiegel-chip.notenspiegel-g2 { color:#26371a }
+  .notenspiegel-chip.notenspiegel-g3 { color:#3d3812 } .notenspiegel-chip.notenspiegel-g4 { color:#493712 }
+  .notenspiegel-chip.notenspiegel-g5,.notenspiegel-chip.notenspiegel-g6 { color:#fff }
+  .notenspiegel-empty { color:#aab4c5 }
+  @media print { body > main { max-width:none; margin:0; padding:0 } main > * { display:none!important } main > #notenspiegelDialog { position:static!important; inset:auto!important; display:block!important; width:100%!important; max-width:none; max-height:none; overflow:visible; margin:0; padding:0; border:0; box-shadow:none } #notenspiegelDialog,#notenspiegelDialog * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important } #notenspiegelDialog::backdrop { display:none } #notenspiegelDialog .dialog-actions { display:none } #notenspiegelDialog .table-wrap { overflow:visible; border:0 } .notenspiegel-table { min-width:0 } }
+  .task-table { min-width:720px }
+  .semester-weight-heading { margin:16px 0 0; color:var(--muted); font-size:1rem }
+  .semester-weight-controls { display:flex; flex-wrap:wrap; align-items:end; gap:12px; margin:4px 0 16px }
+  .semester-weight-control { display:grid; gap:4px; color:var(--muted); font-weight:650 }
+  .semester-weight-control span { display:flex; align-items:center; gap:6px }
+  .semester-weight-control .input-wrap { width:118px; flex:none; border-radius:8px }
+  .semester-weight-control .input-wrap input { width:76px; flex:1; padding:7px 8px; border:0; border-radius:0; color:var(--ink); background:transparent; font:inherit; text-align:right }
+  .semester-weight-control .input-wrap .unit { padding:0 8px }
+  .semester-status { margin:10px 0 16px; color:var(--muted) }
+  .semester-table-tools { display:flex; justify-content:flex-end; margin:0 0 8px }
+  .semester-table-tools .toggle { margin:0 }
+  .semester-table { min-width:680px }
+  .semester-table th:first-child { text-align:left }
+  .semester-table td span:not(.semester-missing) { display:inline-flex; min-width:8em; justify-content:center; padding:3px 8px; border-radius:8px; font-weight:750 }
+  .semester-missing { color:#aab4c5 }
+  .task-table.participation-task-table { width:max-content; min-width:100%; table-layout:auto }
+  .task-table.participation-task-table th:first-child,.task-table.participation-task-table td:first-child { width:220px; min-width:220px }
+  .task-table.participation-task-table th:not(:first-child):not(:last-child),.task-table.participation-task-table td:not(:first-child):not(:last-child) { min-width:132px }
+  .task-table.participation-task-table th:last-child,.task-table.participation-task-table td:last-child { min-width:155px }
+  .task-table.participation-task-table select { box-sizing:border-box; display:block; width:155px; max-width:100%; min-width:82px; margin-inline:auto; text-align:center; text-align-last:center }
+  .task-table.participation-task-table select option { text-align:center }
+  .participation-grade-menu { position:fixed; z-index:10000; display:grid; gap:4px; width:180px; max-height:min(440px,calc(100dvh - 24px)); overflow:auto; padding:8px; border:1px solid var(--line); border-radius:16px; background:var(--paper); box-shadow:0 12px 32px #1c2b4635 }
+  .participation-grade-menu.hide { display:none }
+  .participation-grade-option { position:relative; display:flex; justify-content:center; align-items:center; min-height:42px; padding:6px 12px; border:0; border-radius:10px; color:var(--ink); background:transparent; font:inherit; font-weight:650; text-align:center; cursor:pointer }
+  .participation-grade-option:hover,.participation-grade-option:focus-visible { background:var(--pale); outline:none }
+  .participation-grade-option[aria-selected="true"] { color:#fff; background:var(--green) }
+  .participation-grade-option[aria-selected="true"]::before { position:absolute; left:14px; content:"✓" }
+  .task-table.participation-task-table .task-end-grade { box-sizing:border-box; display:inline-flex; align-items:center; width:155px; min-width:82px; height:30px; justify-content:center; padding:0 8px }
+  .task-table input[type="text"] { width:100%; min-width:110px; padding:7px 8px; border:1px solid #cbd6e5; border-radius:8px; color:var(--ink); background:#fff; font:inherit; font-weight:400 }
+  .task-table input.task-raw-score { box-sizing:border-box; display:block; width:155px; max-width:100%; min-width:82px; margin-inline:auto; padding:7px 8px; border:1px solid #cbd6e5; border-radius:8px; color:var(--ink); background:#fff; font:inherit; font-weight:700; text-align:center }
+  .task-table input.task-grade-input { box-sizing:border-box; display:block; width:155px; max-width:100%; min-width:82px; margin-inline:auto; padding:7px 8px; border:1px solid #cbd6e5; border-radius:8px; color:var(--ink); background:#fff; font:inherit; font-weight:700; text-align:center }
+  .task-table input.task-raw-score.g1 { background:#00b050; color:#102b1b }
+  .task-table input.task-raw-score.g2 { background:#92d050; color:#26371a }
+  .task-table input.task-raw-score.g3 { background:#fff200; color:#3d3812 }
+  .task-table input.task-raw-score.g4 { background:#ffc000; color:#493712 }
+  .task-table input.task-raw-score.g5 { background:#f04438; color:#fff }
+  .task-table input.task-raw-score.g6 { background:#c00000; color:#fff }
+  .task-table input.task-grade-input.g1 { background:#00b050; color:#102b1b }
+  .task-table input.task-grade-input.g2 { background:#92d050; color:#26371a }
+  .task-table input.task-grade-input.g3 { background:#fff200; color:#3d3812 }
+  .task-table input.task-grade-input.g4 { background:#ffc000; color:#493712 }
+  .task-table input.task-grade-input.g4.grade-four-fail { background:repeating-linear-gradient(135deg,#f04438 0 3px,#ffc000 3px 8px); color:#493712 }
+  .task-table input.task-grade-input.g5 { background:#f04438; color:#fff }
+  .task-table input.task-grade-input.g6 { background:#c00000; color:#fff }
+  .task-table input.task-raw-score.g4.grade-four-fail { background:repeating-linear-gradient(135deg,#f04438 0 3px,#ffc000 3px 8px); color:#493712 }
+  .task-table.test-task-table select { display:block; width:100%; max-width:180px; min-width:82px; margin-inline:auto }
+  .task-table select { width:100%; min-width:82px; padding:7px 8px; border:1px solid #cbd6e5; border-radius:8px; font:inherit; font-weight:700; text-align:center }
+  .task-table select.g1 { background:#00b050; color:#102b1b } .task-table select.g2 { background:#92d050; color:#26371a }
+  .task-table select.g3 { background:#fff200; color:#3d3812 } .task-table select.g4 { background:#ffc000; color:#493712 }
+  .task-table select.g5 { background:#f04438; color:#fff } .task-table select.g6 { background:#c00000; color:#fff }
+  .task-paste-status:empty { display:none }
+  .task-paste-status { margin:8px 0; color:var(--muted); font-size:.9rem }
+  .task-score-note { margin:0 0 14px; color:var(--muted); font-size:.9rem }
+  .task-table select.g4.grade-four-fail { background:repeating-linear-gradient(135deg,#f04438 0 3px,#ffc000 3px 8px); color:#493712 }
+  .task-table option.g1 { background:#00b050; color:#102b1b } .task-table option.g2 { background:#92d050; color:#26371a }
+  .task-table option.g3 { background:#fff200; color:#3d3812 } .task-table option.g4 { background:#ffc000; color:#493712 }
+  .task-table option.g5 { background:#f04438; color:#fff } .task-table option.g6 { background:#c00000; color:#fff }
+  .task-table td:first-child { text-align:left }
+  .task-table tfoot th,.task-table tfoot td { padding:10px 12px; border-top:2px solid var(--line); background:#f7f9fc; font-weight:750 }
+  .task-student-cell { display:flex; align-items:center; gap:6px }
+  .task-student-cell input { flex:1; width:100%; min-width:110px; font-weight:400 }
+  .student-remove-button { flex:none; width:30px; height:32px; border:1px solid var(--line); border-radius:7px; background:#fff; color:var(--muted); font:inherit }
+  .student-remove-button:hover { color:#a33b32; border-color:#d8a6a1 }
+  .task-weight-mode { display:flex; align-items:center; gap:8px; margin-bottom:12px; font-size:.9rem }
+  .task-weight-mode select { width:auto }
+  .task-weight-control small { white-space:nowrap; color:var(--muted) }
+  .task-partial-grade-cell { min-width:90px; text-align:center }
+  .task-partial-grade { display:inline-flex; min-width:3em; justify-content:center; border-radius:8px; padding:3px 8px; font-weight:750 }
+  .task-end-grade { display:inline-flex; min-width:4.5em; justify-content:center; border-radius:8px; padding:3px 8px; font-weight:750 }
+  .form-error { min-height:1.3em; margin:-10px 0 10px; color:#b42318; font-size:.84rem }
+  @media(max-width:760px) { .entry { grid-template-columns:repeat(2,minmax(0,1fr)) } .custom-entry { grid-template-columns:repeat(2,minmax(0,1fr)) } .options-stack { grid-column:1/-1; flex-direction:row; transform:none } .options-stack .toggle + .toggle { margin-top:0 } }
+  @media(max-width:540px) { main { padding:28px 14px 42px } .page-nav-group { flex:1 1 100%; min-width:0; flex-wrap:nowrap } .custom-entry { grid-template-columns:1fr } .custom-entry .options-stack { grid-column:1; flex-wrap:wrap; gap:8px 14px } .subject-picker { align-items:center; flex-wrap:nowrap } .subject-tabs,.page-tabs { width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; touch-action:pan-x pan-y; scroll-snap-type:x proximity } .subject-tabs { flex:1 1 0; width:0; min-width:0 } #examTabs,#performanceTabs,#testTabs,#semesterTabs,#homeworkTabs { flex:1 1 0; width:0; min-width:0 } #normalTabs,#latinTabs,#customTabs,#examPageTabs { flex:1 1 0; width:0; min-width:0 } .subject-tab,.page-tab { flex:0 0 auto; padding:4px 10px; font-size:.9rem; scroll-snap-align:start } .add-subject-button { margin-left:0; flex:none; padding-top:4px; padding-bottom:4px } .rename-row-button { width:36px; height:36px } .toolbar { flex-wrap:wrap } .entry { grid-template-columns:1fr } .options-stack { grid-column:auto } .task-results-heading { display:block; } .task-results-heading h2 { margin-bottom:10px } .task-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:stretch; width:100%; gap:8px } .task-actions > .task-tendency-toggle,.task-actions > .task-participation-display { grid-column:1/-1; justify-self:start; margin:0 0 2px } .task-actions > button { width:100%; min-width:0; justify-content:center; padding:7px 6px; white-space:normal; text-align:center } .homework-actions { display:flex; justify-content:flex-end; } .homework-actions > button { width:auto; flex:0 0 auto; } .homework-task-config { flex-basis:300px; min-width:280px; } th,td { padding:9px 7px; font-size:.9rem } .grade { width:9em } .settings-subject-row { grid-template-columns:1fr; gap:7px } .settings-subject-options { gap:7px } .settings-subject-row.latin .settings-subject-options { grid-template-columns:repeat(3,minmax(0,1fr)) } .settings-subject-row.latin .settings-page-name { min-height:2.5em; line-height:1.25 } .settings-item { font-size:.72rem } .settings-item input { padding:6px 3px; font-size:.88rem } }
+  @media(max-width:540px) { .header-main { flex-wrap:wrap; align-items:flex-start; gap:8px } .header-actions { width:100%; margin:0 0 8px; justify-content:flex-end } }
+  @media(max-width:540px){.notenspiegel-boundary-editor{padding:12px}.notenspiegel-boundary-controls{align-items:flex-start;flex-direction:column;gap:8px}.notenspiegel-boundary-source{align-items:flex-start;flex-direction:column;gap:4px}.notenspiegel-boundary-list{margin-right:8px;margin-left:8px}.notenspiegel-boundary-handle{width:24px}}
+</style>
+<link rel="stylesheet" href="../design.css?v=754">
+</head>
+<body data-module="noten">
+<main>
+  <header>
+    <div class="header-main"><div class="header-copy">
+      <div class="eyebrow" id="eyebrow">Noten-Manager · Erdkunde</div>
+      <h1>Noten-Manager</h1>
+    </div><div class="header-actions"><button class="settings-button" id="settingsButton" type="button">Backup</button><button class="export-button" id="exportButton" type="button">Drucken</button></div></div>
+    <p id="intro">Noten berechnen · Klausuren, Tests und Mitarbeit verwalten · Halbjahre auswerten.</p>
+  </header>
+  <div class="navigation-frame" id="navigationFrame"><div class="subject-picker"><button class="rename-row-button" id="editSubjectsQuick" type="button" title="Fächer umbenennen" aria-label="Fächer umbenennen">✎</button><nav class="subject-tabs" id="subjectTabs" role="tablist" aria-label="Fach auswählen">
+    <button class="subject-tab" id="subject-erdkunde" role="tab" aria-selected="true" type="button">Erdkunde</button>
+    <button class="subject-tab" id="subject-geschichte" role="tab" aria-selected="false" type="button">Geschichte</button>
+    <button class="subject-tab" id="subject-latein" role="tab" aria-selected="false" type="button">Latein</button>
+  </nav><button class="add-subject-button quick-add" id="addSubjectQuick" type="button" title="Fach hinzufügen" aria-label="Fach hinzufügen">＋ Fach</button></div>
+  <div class="class-picker"><button class="rename-row-button hide" id="editClassesQuick" type="button" title="Klassen umbenennen" aria-label="Klassen umbenennen">✎</button><nav class="subject-tabs" id="classTabs" role="tablist" aria-label="Klasse auswählen"></nav><button class="add-subject-button quick-add" id="addClassQuick" type="button" title="Klasse hinzufügen" aria-label="Klasse hinzufügen">＋ Klasse</button></div>
+  <div class="half-year-picker hide" id="halfYearPicker"><button class="rename-row-button hide" id="editHalfYearsQuick" type="button" title="Halbjahre umbenennen" aria-label="Halbjahre umbenennen">✎</button><nav class="page-tabs" id="halfYearTabs" role="tablist" aria-label="Halbjahr auswählen"></nav><button class="add-subject-button quick-add" id="addHalfYearQuick" type="button">＋ Halbjahr</button></div>
+  <div class="exam-picker" id="examPicker"><button class="rename-row-button hide" id="editExamsQuick" type="button" title="Bereiche umbenennen" aria-label="Bereiche umbenennen">✎</button><nav class="page-tabs hide" id="performanceTabs" role="tablist" aria-label="Mündliche Mitarbeit auswählen"></nav><nav class="page-tabs hide" id="homeworkTabs" role="tablist" aria-label="Hausaufgaben auswählen"></nav><nav class="page-tabs hide" id="testTabs" role="tablist" aria-label="Tests auswählen"></nav><nav class="page-tabs hide" id="examTabs" role="tablist" aria-label="Klausur auswählen"></nav><nav class="page-tabs hide" id="semesterTabs" role="tablist" aria-label="Halbjahresnote auswählen"></nav><button class="add-subject-button quick-add" id="addPerformanceQuick" type="button" title="Mündliche Mitarbeit hinzufügen" aria-label="Mündliche Mitarbeit hinzufügen">＋ Mündliche Mitarbeit</button><button class="add-subject-button quick-add" id="addHomeworkQuick" type="button" title="Hausaufgabenübersicht hinzufügen" aria-label="Hausaufgabenübersicht hinzufügen">＋ Hausaufgaben</button><button class="add-subject-button quick-add" id="addTestsQuick" type="button" title="Tests hinzufügen" aria-label="Tests hinzufügen">＋ Tests</button><button class="add-subject-button quick-add" id="addExamQuick" type="button" title="Klausur hinzufügen" aria-label="Klausur hinzufügen">＋ Klausur</button><button class="add-subject-button quick-add" id="addSemesterQuick" type="button" title="Halbjahresnote hinzufügen" aria-label="Halbjahresnote hinzufügen">＋ Halbjahresnoten</button></div>
+  <div class="toolbar" id="toolbar">
+    <div class="page-nav-group" id="pageNavGroup"><button class="rename-row-button" id="editPagesQuick" type="button" title="Berechnungsseiten umbenennen" aria-label="Berechnungsseiten umbenennen">✎</button><nav class="page-tabs" id="normalTabs" role="tablist" aria-label="Berechnungsart">
+      <button class="page-tab" id="tab-points" role="tab" aria-selected="true" aria-controls="points-panel" type="button">Noten (Sek. I)</button>
+      <button class="page-tab" id="tab-new-format" role="tab" aria-selected="false" aria-controls="new-format-panel" type="button">Notenpunkte (Sek. II)</button>
+    </nav>
+    <nav class="page-tabs hide" id="latinTabs" role="tablist" aria-label="Lateinischer Notenbereich">
+      <button class="page-tab" id="tab-words" role="tab" aria-selected="true" aria-controls="words-panel" type="button">Übersetzung</button>
+      <button class="page-tab" id="tab-latin-points" role="tab" aria-selected="false" aria-controls="latin-points-panel" type="button">Weitere Aufgaben</button>
+      <button class="page-tab" id="tab-latin-format" role="tab" aria-selected="false" aria-controls="latin-format-panel" type="button">Neues Klausurformat</button>
+    </nav>
+    <nav class="page-tabs hide" id="customTabs" role="tablist" aria-label="Berechnungsart des Fachs"></nav>
+    <nav class="page-tabs hide" id="examPageTabs" role="tablist" aria-label="Bereich der Klausur"></nav>
+    <button class="add-subject-button quick-add hide" id="addPageQuick" type="button" title="Berechnungsseite ergänzen" aria-label="Details ergänzen">＋ Details</button></div>
+  </div>
+  </div>
+  <section class="panel empty-custom-panel hide" id="emptyClassPanel" aria-label="Noch keine Klausur angelegt"></section>
+  <div id="normalPanels">
+    <section class="panel" id="points-panel" role="tabpanel" aria-labelledby="tab-points">
+      <div class="entry">
+        <div class="field"><label for="pointCount">Rohpunkte</label><div class="input-wrap"><input id="pointCount" type="number" min="1" step="1" value="45" inputmode="numeric"><span class="unit">Rohpunkte</span></div></div>
+        <div class="field approval-field"><div class="field-label-row"><label for="pointsPassLimit">Grenze für ausreichend</label></div><div class="input-wrap"><input id="pointsPassLimit" type="number" min="0.5" max="100" step="0.5" value="50" inputmode="decimal" aria-describedby="pointsPassLimitHint"><span class="unit">%</span></div><span class="field-hint" id="pointsPassLimitHint" role="tooltip">Eine Änderung dieses Werts kann vom Beschluss der jeweiligen Fachkonferenz abweichen.</span></div>
+        <div class="options-stack"><label class="toggle"><input id="halfPoints" type="checkbox"> Halbe Punkte</label><label class="toggle"><input id="tendenciesPoints" type="checkbox"> Tendenzen</label></div>
+      </div>
+      <div class="section-title"><h2>Notengrenzen</h2><div class="manual-actions"><label class="manual-toggle"><input id="manualPoints" type="checkbox"> Manuell</label><button class="manual-reset" type="button" data-manual-reset="points" title="Automatische Werte wiederherstellen" aria-label="Automatische Werte wiederherstellen" hidden>↺</button></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Rohpunkte</th><th>Note</th><th>Anteil der Rohpunkte</th></tr></thead><tbody id="pointRows"></tbody></table></div>
+      <blockquote class="rule"><p>Der konkrete Notenschlüssel richtet sich nach der Beschlusslage der jeweiligen Fachkonferenz.</p></blockquote>
+    </section>
+    <section class="panel hide" id="new-format-panel" role="tabpanel" aria-labelledby="tab-new-format">
+      <div class="entry">
+        <div class="field"><label for="newFormatPointCount">Rohpunkte</label><div class="input-wrap"><input id="newFormatPointCount" type="number" min="1" step="1" value="45" inputmode="numeric"><span class="unit">Rohpunkte</span></div></div>
+        <div class="field approval-field"><div class="field-label-row"><label for="newFormatPassLimit">Grenze für 5 Punkte</label></div><div class="input-wrap"><input id="newFormatPassLimit" type="number" min="0.5" max="100" step="0.5" value="45" inputmode="decimal" aria-describedby="newFormatPassLimitHint"><span class="unit">%</span></div><span class="field-hint" id="newFormatPassLimitHint" role="tooltip">Eine Änderung dieses Werts kann vom Beschluss der KMK bzw. der VO-GO/AVO-GOBAK abweichen.</span></div>
+        <div class="options-stack"><label class="toggle"><input id="halfNewFormat" type="checkbox"> Halbe Punkte</label><label class="toggle"><input id="showGradeBands" type="checkbox"> Notenbereiche</label></div>
+      </div>
+      <div class="section-title"><h2>Notenpunkte</h2><div class="manual-actions"><label class="manual-toggle"><input id="manualNewFormat" type="checkbox"> Manuell</label><button class="manual-reset" type="button" data-manual-reset="new-format" title="Automatische Werte wiederherstellen" aria-label="Automatische Werte wiederherstellen" hidden>↺</button></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Rohpunkte</th><th>Notenpunkte</th><th>Anteil der Rohpunkte</th></tr></thead><tbody id="newFormatPointRows"></tbody></table></div>
+      <div class="decision"><p>Ständige Konferenz der Kultusminister der Länder in der Bundesrepublik Deutschland (KMK): <em>Vereinbarung zur Gestaltung der gymnasialen Oberstufe und der Abiturprüfung</em> (i.d. jeweils gültigen Fassung) i. V. m. den bundeseinheitlichen <em>Bildungsstandards für die Allgemeine Hochschulreife</em>.</p><p>In Niedersachsen rechtlich bindend umgesetzt durch das Niedersächsische Kultusministerium über die <em>Verordnung über die gymnasiale Oberstufe (VO-GO)</em> sowie die <em>Verordnung über die Abschlüsse in der gymnasialen Oberstufe (AVO-GOBAK)</em> in Verbindung mit den länderspezifischen Bestimmungen zur Bewertung von Prüfungsleistungen.</p></div>
+    </section>
+  </div>
+  <div id="latinPanels" class="hide">
+    <section class="panel" id="words-panel" role="tabpanel" aria-labelledby="tab-words">
+      <div class="entry">
+        <div class="field"><label for="wordCount">Wörter im lateinischen Text</label><div class="input-wrap"><input id="wordCount" type="number" min="1" step="1" value="65" inputmode="numeric"><span class="unit">Wörter</span></div></div>
+        <div class="field approval-field"><div class="field-label-row"><label for="errorLimit">Grenze für ausreichend</label></div><div class="input-wrap"><input id="errorLimit" type="number" min="0.5" max="100" step="0.5" value="15" inputmode="decimal" aria-describedby="errorLimitHint"><span class="unit">%</span></div><span class="field-hint" id="errorLimitHint" role="tooltip">Eine Änderung dieses Werts kann von den Vorgaben des Kerncurriculums im Fach Latein abweichen.</span></div>
+        <div class="options-stack"><label class="toggle"><input id="halfErrors" type="checkbox" checked> Halbe Fehler</label><label class="toggle"><input id="tendenciesWords" type="checkbox"> Tendenzen</label></div>
+      </div>
+      <div class="section-title"><h2>Notengrenzen</h2><div class="manual-actions"><label class="manual-toggle"><input id="manualWords" type="checkbox"> Manuell</label><button class="manual-reset" type="button" data-manual-reset="words" title="Automatische Werte wiederherstellen" aria-label="Automatische Werte wiederherstellen" hidden>↺</button></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Fehler</th><th>Note</th><th>Anteil der Wörter</th></tr></thead><tbody id="wordRows"></tbody></table></div>
+      <blockquote class="rule"><p>Der konkrete Notenschlüssel richtet sich nach der Beschlusslage der jeweiligen Fachkonferenz.</p></blockquote>
+    </section>
+    <section class="panel hide" id="latin-points-panel" role="tabpanel" aria-labelledby="tab-latin-points">
+      <div class="entry">
+        <div class="field"><label for="latinPointCount">Rohpunkte</label><div class="input-wrap"><input id="latinPointCount" type="number" min="1" step="1" value="45" inputmode="numeric"><span class="unit">Rohpunkte</span></div></div>
+        <div class="field approval-field"><div class="field-label-row"><label for="latinPointsPassLimit">Grenze für ausreichend</label></div><div class="input-wrap"><input id="latinPointsPassLimit" type="number" min="0.5" max="100" step="0.5" value="40" inputmode="decimal" aria-describedby="latinPointsPassLimitHint"><span class="unit">%</span></div><span class="field-hint" id="latinPointsPassLimitHint" role="tooltip">Eine Änderung dieses Werts kann vom Beschluss der Fachkonferenz Latein abweichen.</span></div>
+        <div class="options-stack"><label class="toggle"><input id="halfLatinPoints" type="checkbox" checked> Halbe Punkte</label><label class="toggle"><input id="tendenciesLatinPoints" type="checkbox"> Tendenzen</label></div>
+      </div>
+      <div class="section-title"><h2>Notengrenzen</h2><div class="manual-actions"><label class="manual-toggle"><input id="manualLatinPoints" type="checkbox"> Manuell</label><button class="manual-reset" type="button" data-manual-reset="latin-points" title="Automatische Werte wiederherstellen" aria-label="Automatische Werte wiederherstellen" hidden>↺</button></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Rohpunkte</th><th>Note</th><th>Anteil der Rohpunkte</th></tr></thead><tbody id="latinPointRows"></tbody></table></div>
+      <blockquote class="rule"><p>Der konkrete Notenschlüssel richtet sich nach der Beschlusslage der jeweiligen Fachkonferenz.</p></blockquote>
+    </section>
+    <section class="panel hide" id="latin-format-panel" role="tabpanel" aria-labelledby="tab-latin-format">
+      <div class="entry">
+        <div class="field"><label for="latinNewFormatPointCount">Rohpunkte</label><div class="input-wrap"><input id="latinNewFormatPointCount" type="number" min="1" step="1" value="45" inputmode="numeric"><span class="unit">Rohpunkte</span></div></div>
+        <div class="field approval-field"><div class="field-label-row"><label for="latinNewFormatPassLimit">Grenze für ausreichend</label></div><div class="input-wrap"><input id="latinNewFormatPassLimit" type="number" min="0.5" max="100" step="0.5" value="50" inputmode="decimal" aria-describedby="latinNewFormatPassLimitHint"><span class="unit">%</span></div><span class="field-hint" id="latinNewFormatPassLimitHint" role="tooltip">Eine Änderung dieses Werts kann vom Beschluss der Fachkonferenz Latein abweichen.</span></div>
+        <div class="options-stack"><label class="toggle"><input id="halfLatinFormat" type="checkbox"> Halbe Punkte</label><label class="toggle"><input id="tendenciesLatinFormat" type="checkbox"> Tendenzen</label></div>
+      </div>
+      <div class="section-title"><h2>Notengrenzen</h2><div class="manual-actions"><label class="manual-toggle"><input id="manualLatinFormat" type="checkbox"> Manuell</label><button class="manual-reset" type="button" data-manual-reset="latin-format" title="Automatische Werte wiederherstellen" aria-label="Automatische Werte wiederherstellen" hidden>↺</button></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Rohpunkte</th><th>Note</th><th>Anteil der Rohpunkte</th></tr></thead><tbody id="latinNewFormatRows"></tbody></table></div>
+      <div class="decision">Der Notenschlüssel richtet sich nach der Beschlusslage der Fachkonferenz Latein.</div>
+    </section>
+  </div>
+  <div id="customPanels" class="hide"></div>
+  <dialog class="export-dialog" id="exportDialog" aria-labelledby="exportTitle">
+    <form method="dialog">
+      <h2 id="exportTitle">Seiten für den Export auswählen</h2>
+      <p>Wähle eine oder mehrere Seiten für den Export.</p>
+      <div class="export-options" id="normalExportOptions">
+        <label class="export-option"><input id="exportNormalPoints" type="checkbox"><span>Noten (Sek. I)</span></label>
+        <label class="export-option"><input id="exportNormalNewFormat" type="checkbox"><span>Notenpunkte (Sek. II)</span></label>
+      </div>
+      <div class="export-options hide" id="customExportOptions"></div>
+      <fieldset class="export-style hide" id="taskExportOptions"><legend>Ergebnisse exportieren</legend>
+        <label class="export-option hide" id="exportTaskBoundariesOption"><input type="radio" name="taskExportMode" id="exportTaskBoundaries" value="boundaries"><span>Notengrenzen</span></label>
+        <label class="export-option"><input type="radio" name="taskExportMode" id="exportTaskRaw" value="raw" checked><span>Rohpunkte / Fehler</span></label>
+        <label class="export-option"><input type="radio" name="taskExportMode" id="exportTaskGrades" value="grades"><span>Noten</span></label>
+        <label class="export-option hide" id="exportTaskTendenciesOption"><input type="checkbox" id="exportTaskTendencies" checked><span>Mit Tendenzen</span></label>
+      </fieldset>
+      <div class="export-options hide" id="latinExportOptions">
+        <label class="export-option"><input id="exportWords" type="checkbox"><span>Übersetzung</span></label>
+        <label class="export-option"><input id="exportLatinPoints" type="checkbox"><span>Weitere Aufgaben</span></label>
+        <label class="export-option"><input id="exportLatinFormat" type="checkbox"><span>Neues Klausurformat</span></label>
+      </div>
+      <fieldset class="export-style"><legend>Dateiformat</legend><label class="export-option"><input type="radio" name="exportFormat" id="exportPdf" value="pdf" checked><span>PDF</span></label><label class="export-option"><input type="radio" name="exportFormat" id="exportDocx" value="docx"><span>DOCX</span></label><label class="export-option"><input type="radio" name="exportFormat" id="exportExcel" value="xlsx"><span>XLSX</span></label></fieldset><p id="exportPdfHint" class="hide">Die App-Ansicht wird im Druckdialog geöffnet. Wähle dort „Als PDF sichern“.</p><fieldset class="export-style" id="exportDocxStyle"><legend>Darstellung</legend>
+        <label class="export-option"><input name="exportStyle" id="exportMinimal" type="radio" value="minimal"><span>Minimalistisch</span></label>
+        <label class="export-option"><input name="exportStyle" id="exportBlackWhite" type="radio" value="black-white"><span>Schwarz/weiß</span></label>
+        <label class="export-option"><input name="exportStyle" id="exportColored" type="radio" value="colored" checked><span>Farbig</span></label>
+      </fieldset>
+      <div class="dialog-actions"><button id="cancelExport" type="button">Abbrechen</button><button id="confirmExport" class="primary" type="button">Auswahl exportieren</button></div>
+    </form>
+  </dialog>
+  <dialog class="settings-dialog" id="settingsDialog" aria-labelledby="settingsTitle" tabindex="-1">
+    <form method="dialog" id="settingsForm">
+      <h2 id="settingsTitle">Backup</h2>
+      <section class="settings-data-tools" aria-label="Backup-Aktionen">
+        <p class="settings-backup-note">Gesichert werden Fächer, Klassen, Klausuren und Seiten sowie Eingaben, Ergebnisse und Einstellungen.</p>
+        <div class="settings-data-actions"><button id="exportSettings" type="button">Exportieren</button><button id="importSettings" type="button">Importieren</button><button id="resetApp" class="settings-reset-button" type="button">Zurücksetzen</button><input id="settingsImportFile" type="file" accept=".json,application/json" hidden></div>
+        <p class="settings-import-status" id="settingsImportStatus" role="status" aria-live="polite"></p>
+      </section>
+      <div class="dialog-actions"><button id="cancelSettings" type="button">Schließen</button></div>
+    </form>
+  </dialog>
+  <dialog class="rename-row-dialog" id="renameRowDialog" aria-labelledby="renameRowTitle">
+    <form method="dialog" id="renameRowForm">
+      <h2 id="renameRowTitle">Namen bearbeiten</h2>
+      <p id="renameRowDescription">Ändere die Namen direkt in der Liste.</p>
+      <div class="rename-row-fields" id="renameRowFields"></div>
+      <div class="form-error" id="renameRowError" aria-live="polite"></div>
+      <div class="dialog-actions"><button id="cancelRenameRow" type="button">Abbrechen</button><button id="saveRenameRow" class="primary" type="button">Speichern</button></div>
+    </form>
+  </dialog>
+  <dialog class="add-page-dialog" id="addExamDialog" aria-labelledby="addExamTitle">
+    <form method="dialog" id="addExamForm">
+      <h2 id="addExamTitle">Klausur erstellen</h2>
+      <p>Lege neue, unabhängige Bereiche für diese Klausur an.</p>
+      <label for="addExamName">Name</label><input id="addExamName" type="text" maxlength="40" autocomplete="off">
+      <fieldset class="new-subject-options hide" id="addExamUpperMode"><legend>Bewertung</legend><label><input type="radio" name="upperExamMode" value="raw" checked> Rohpunkte</label><label><input type="radio" name="upperExamMode" value="direct"> Teilnoten</label></fieldset>
+      <fieldset class="new-subject-options" id="addExamFormat"><legend>Format</legend>
+        <label><input id="addExamPoints" type="checkbox"> Rohpunkte</label>
+        <label><input id="addExamText" type="checkbox"> Fehler</label>
+      </fieldset>
+      <fieldset class="new-subject-options" id="addExamTaskSystemGroup"><legend>Notensystem</legend>
+        <div id="addExamTaskSystems"><label><input id="addExamGrades" name="addExamSystem" type="checkbox" value="grades"> Noten</label><label><input id="addExamGradePoints" name="addExamSystem" type="checkbox" value="gradePoints"> Notenpunkte</label></div>
+      </fieldset>
+      <fieldset class="new-subject-options" id="addExamResults"><legend>Ergebnisse</legend>
+        <label><input id="addExamTasks" type="checkbox"> Ergebnisse</label>
+      </fieldset>
+      <div class="form-error" id="addExamError" aria-live="polite"></div>
+      <div class="dialog-actions"><button id="cancelAddExam" type="button">Abbrechen</button><button id="confirmAddExam" class="primary" type="button">Klausur erstellen</button></div>
+    </form>
+  </dialog>
+  <dialog class="add-page-dialog" id="addPerformanceDialog" aria-labelledby="addPerformanceTitle">
+    <form method="dialog" id="addPerformanceForm">
+      <h2 id="addPerformanceTitle">Mündliche Mitarbeit hinzufügen</h2>
+      <p>Lege einen Quartalsbereich für die sonstige Mitarbeit an. Pro Beobachtungsdatum kannst du eine Bewertung eintragen.</p>
+      <label for="addPerformanceName">Name</label><input id="addPerformanceName" type="text" maxlength="40" autocomplete="off">
+      <div class="performance-scale-hint" aria-label="Zuordnung der Mitarbeitssymbole zu Noten">
+        <div class="performance-scale-item"><strong>++</strong><span>Note 1</span></div><div class="performance-scale-item"><strong>++/+</strong><span>Note 1–2</span></div>
+        <div class="performance-scale-item"><strong>+</strong><span>Note 2</span></div><div class="performance-scale-item"><strong>+/o</strong><span>Note 2–3</span></div>
+        <div class="performance-scale-item"><strong>o</strong><span>Note 3</span></div><div class="performance-scale-item"><strong>o/−</strong><span>Note 3–4</span></div>
+        <div class="performance-scale-item"><strong>−</strong><span>Note 4</span></div><div class="performance-scale-item"><strong>−/−−</strong><span>Note 4–5</span></div>
+        <div class="performance-scale-item"><strong>−−</strong><span>Note 5</span></div><div class="performance-scale-item"><strong>−−/−−−</strong><span>Note 5–6</span></div>
+        <div class="performance-scale-item"><strong>−−−</strong><span>Note 6</span></div>
+      </div>
+      <div class="form-error" id="addPerformanceError" aria-live="polite"></div>
+      <div class="dialog-actions"><button id="cancelAddPerformance" type="button">Abbrechen</button><button id="confirmAddPerformance" class="primary" type="button">Hinzufügen</button></div>
+    </form>
+  </dialog>
+  <dialog class="add-page-dialog" id="addPageDialog" aria-labelledby="addPageTitle">
+    <form method="dialog">
+      <h2 id="addPageTitle">Details hinzufügen</h2>
+      <p id="addPageDescription">Wähle eine Notenberechnung oder eine Klausur mit gewichteten Aufgaben und das jeweilige Notensystem.</p>
+      <label for="addPageName">Name</label>
+      <input id="addPageName" type="text" maxlength="40" autocomplete="off" placeholder="Noten (Sek. I)">
+      <div class="option-groups">
+        <fieldset id="addPageBasisGroup" class="new-subject-options">
+          <legend>Format</legend>
+          <label><input id="addPagePoints" type="checkbox"> Punkte</label>
+          <label><input id="addPageText" type="checkbox"> Fehler</label>
+        </fieldset>
+        <fieldset id="addPageSystemGroup" class="new-subject-options">
+          <legend>Notensystem</legend>
+          <label><input id="addPageGrades" name="addPageSystem" type="checkbox"> Noten</label>
+          <label><input id="addPageGradePoints" name="addPageSystem" type="checkbox"> Notenpunkte</label>
+        </fieldset>
+        <fieldset id="addPageResultsGroup" class="new-subject-options">
+          <legend>Ergebnisse</legend>
+          <label><input id="addPageTasks" type="checkbox"> Ergebnisse</label>
+        </fieldset>
+      </div>
+      <div class="form-error" id="addPageError" aria-live="polite"></div>
+      <div class="dialog-actions"><button id="cancelAddPage" type="button">Abbrechen</button><button id="confirmAddPage" class="primary" type="button">Hinzufügen</button></div>
+    </form>
+  </dialog>
+  <dialog class="new-subject-dialog" id="newSubjectDialog" aria-labelledby="newSubjectTitle">
+    <form method="dialog" id="newSubjectForm">
+      <h2 id="newSubjectTitle">Fach hinzufügen</h2>
+      <p>Lege zuerst das Fach an. Berechnungsseiten kannst du anschließend einzeln ergänzen.</p>
+      <label for="newSubjectName">Name des Fachs</label>
+      <input id="newSubjectName" type="text" maxlength="40" autocomplete="off" placeholder="Zum Beispiel Biologie">
+      <div class="form-error" id="newSubjectError" aria-live="polite"></div>
+      <div class="dialog-actions"><button id="cancelNewSubject" type="button">Abbrechen</button><button id="saveNewSubject" class="primary" type="button">Fach hinzufügen</button></div>
+    </form>
+  </dialog>
+  <dialog class="paste-names-dialog" id="pasteNamesDialog" aria-labelledby="pasteNamesTitle">
+    <form method="dialog" id="pasteNamesForm">
+      <h2 id="pasteNamesTitle">Schüler:innen einfügen</h2>
+      <p>Füge die Namensliste aus der Zwischenablage ein – am besten ein Name pro Zeile im Format <strong>Nachname, Vorname</strong>. Vorhandene Schüler:innen bleiben erhalten.</p>
+      <label for="pasteNamesFile">Datei importieren (CSV, TXT oder JSON)</label><input id="pasteNamesFile" type="file" accept=".csv,.txt,.json,text/csv,text/plain,application/json"><p class="muted">Alternativ eine Liste aus Excel einfügen. Die erkannten Namen kannst du unten vor dem Hinzufügen bearbeiten.</p>
+      <label class="sr-only" for="pasteNamesInput">Namensliste</label>
+      <textarea id="pasteNamesInput" placeholder="Schneider, Lena&#10;Fischer, Jonas&#10;Weber, Mia&#10;Hoffmann, Paul&#10;Bauer, Emma&#10;Schulz, Ben&#10;Wagner, Clara&#10;Becker, Felix"></textarea>
+      <div class="form-error" id="pasteNamesError" aria-live="polite"></div>
+      <div class="dialog-actions"><button id="cancelPasteNames" type="button">Abbrechen</button><button id="confirmPasteNames" class="primary" type="button">Namen hinzufügen</button></div>
+    </form>
+  </dialog>
+  <dialog class="notenspiegel-dialog" id="notenspiegelDialog" aria-labelledby="notenspiegelTitle">
+    <form method="dialog">
+      <h2 id="notenspiegelTitle">Notenspiegel</h2>
+      <p id="notenspiegelDescription"></p>
+      <div class="table-wrap"><table class="notenspiegel-table" id="notenspiegelTable"></table></div>
+      <section class="notenspiegel-boundary-editor" id="notenspiegelBoundaryEditor" hidden>
+        <h3>Notengrenzen verschieben</h3>
+        <p id="notenspiegelBoundaryHelp">Die Grenze für ausreichend bleibt fest. Verschiebe eine obere Grenze; die anderen bewegen sich mit gleichbleibenden Abständen mit. Die Notenverteilung aktualisiert sich sofort.</p>
+        <div class="notenspiegel-boundary-controls">
+          <label class="notenspiegel-boundary-source" for="notenspiegelBoundarySource">Berechnungsseite
+            <select id="notenspiegelBoundarySource"></select>
+          </label>
+        </div>
+        <div class="notenspiegel-boundary-list" id="notenspiegelBoundaryList"></div>
+        <div class="notenspiegel-boundary-footer"><button class="notenspiegel-boundary-reset" id="resetNotenspiegelBoundaries" type="button">Reset</button></div>
+      </section>
+      <div class="dialog-actions" style="margin-top:16px"><button id="printNotenspiegel" type="button">Drucken</button><button type="submit">Schließen</button></div>
+    </form>
+  </dialog>
+</main>
+<script src="noten.js?v=754"></script>
+</body>
+</html>

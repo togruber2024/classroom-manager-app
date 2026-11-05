@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Sitzplan 1.15">
+    <meta name="app-version" content="1.15">
+    <meta name="theme-color" content="#f6f8fc">
+    <link rel="icon" type="image/svg+xml" href="../icon.svg?v=754">
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png?v=754">
+    <title>Classroom-Manager · Sitzplan</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #1e293b;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 10px 20px 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #0f172a;
+            margin: 0 0 2px;
+        }
+        .subtitle {
+            max-width: 1400px;
+            box-sizing: border-box;
+            text-align: right;
+            font-style: italic;
+            color: #64748b;
+            font-size: 0.75rem;
+            margin: 0 auto 12px;
+            padding-right: 2px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 950px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .panel h2 {
+            font-size: 1.1rem;
+            margin-top: 18px;
+            border-top: 2px solid var(--border-color);
+            padding-top: 8px;
+            padding-bottom: 0;
+            color: #334155;
+        }
+        .panel h2:first-child {
+            margin-top: 0;
+        }
+        .layout-disclosure {
+            margin-top: 18px;
+        }
+        .layout-disclosure > summary {
+            border-top: 2px solid var(--border-color);
+            padding-top: 8px;
+            color: #334155;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            list-style-position: inside;
+        }
+        .layout-disclosure > summary:focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 3px;
+            border-radius: 3px;
+        }
+        .class-selector-box {
+            background: #f1f5f9;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .class-selector-box select, .class-selector-box input {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 0.9rem;
+            background: white;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            cursor: pointer;
+        }
+        .checkbox-label input {
+            margin-right: 8px;
+            transform: scale(1.1);
+        }
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+            margin-top: 5px;
+        }
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+        .btn-secondary {
+            background-color: #64748b;
+        }
+        .class-action-button {
+            box-sizing: border-box;
+            display: flex;
+            flex: 1 1 0;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            margin-top: 5px;
+        }
+        .class-delete-button {
+            background-color: var(--danger);
+        }
+        .list-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .list-action-button {
+            box-sizing: border-box;
+            flex: 1 1 0;
+            min-width: 0;
+            width: 100%;
+            margin: 0;
+            padding: 6px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+        }
+        .list-clear-button {
+            background-color: var(--danger);
+        }
+        .btn-secondary:hover {
+            background-color: #475569;
+        }
+        .btn-delete {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: background 0.2s;
+        }
+        .btn-delete:hover {
+            background-color: var(--danger-hover);
+        }
+        .grid-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            overflow-x: auto;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .room-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .random-student-action .btn {
+            width: auto;
+            margin: 0;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+        .room-header h2 {
+            margin: 0;
+        }
+        .random-student-status {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        .grid-action-buttons {
+            grid-column: 2 / span 4;
+            grid-row: 11;
+            display: flex;
+            flex-direction: row;
+            gap: 6px;
+            align-items: center;
+        }
+        .grid-action-buttons .btn {
+            flex: 1 1 0;
+            min-width: 0;
+            box-sizing: border-box;
+            height: 40px;
+            margin: 0;
+            padding: 6px 4px;
+            font-size: 0.82rem;
+        }
+        .grid-primary-buttons {
+            grid-column: 8 / span 4;
+            grid-row: 11;
+            display: flex;
+            flex-direction: row;
+            gap: 6px;
+            align-items: center;
+        }
+        .grid-primary-buttons .btn {
+            flex: 1 1 0;
+            min-width: 0;
+            box-sizing: border-box;
+            height: 40px;
+            margin: 0;
+            padding: 6px 4px;
+            font-size: 0.82rem;
+        }
+        .grid-save-button {
+            grid-column: 6 / span 2;
+            grid-row: 11;
+            align-self: center;
+            width: 100%;
+            box-sizing: border-box;
+            height: 40px;
+            margin: 0;
+            padding: 5px 3px;
+            font-size: 0.82rem;
+        }
+        .btn-grid-reset {
+            background-color: var(--danger);
+        }
+        .btn-grid-reset:hover {
+            background-color: var(--danger-hover);
+        }
+        .btn-grid-undo:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .room-grid {
+            display: grid;
+            grid-template-columns: 35px repeat(10, 75px);
+            grid-template-rows: repeat(11, 45px) auto 45px;
+            gap: 5px;
+            margin-top: 15px;
+        }
+        .student-search {
+            display: grid;
+            grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+            gap: 4px;
+            max-width: 900px;
+            margin: 10px 0 4px;
+            font-size: 0.85rem;
+        }
+        .student-search[hidden] { display: none; }
+        .student-search label,
+        .student-search-status {
+            grid-column: 1 / -1;
+        }
+        .student-search .random-student-action {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+        @media (max-width: 650px) {
+            .student-search { grid-template-columns: 1fr; }
+            .student-search .random-student-action { grid-column: 1; }
+        }
+        .student-search label {
+            font-weight: 600;
+            color: #334155;
+        }
+        .student-search input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font: inherit;
+        }
+        .student-search-status {
+            min-height: 1em;
+            color: #64748b;
+            font-size: 0.75rem;
+        }
+        .placement-status:not([hidden]) {
+            margin: 12px 0 4px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .placement-status.success {
+            color: #166534;
+            background: #dcfce7;
+        }
+        .placement-status.warning {
+            color: #9a3412;
+            background: #ffedd5;
+        }
+        .cell.search-match {
+            position: relative;
+            z-index: 1;
+            outline: 4px solid #f59e0b;
+            outline-offset: 1px;
+        }
+        .room-grid.search-active .cell:not(.search-match) {
+            opacity: 0.25;
+        }
+        .grid-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+        .cell {
+            position: relative;
+            background: transparent;
+            border: 0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 2px;
+            cursor: pointer;
+            user-select: none;
+            touch-action: none;
+            overflow: hidden;
+            transition: all 0.1s;
+        }
+        .main-group-legend {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px 14px;
+            grid-column: 2 / -1;
+            grid-row: 10;
+            align-self: end;
+            min-height: 22px;
+            margin: 0 0 2px;
+            color: #475569;
+            font-size: 0.8rem;
+        }
+        .main-group-legend[hidden] { display: none; }
+        .main-group-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        .main-group-legend-swatch {
+            width: 12px;
+            height: 12px;
+            border: 2px solid;
+            border-radius: 3px;
+            box-sizing: border-box;
+        }
+        .cell:not(.tisch):not(.pult):not(.besetzt) {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 75 45'%3E%3Crect x='1' y='1' width='73' height='43' rx='6' fill='%23f1f5f9' stroke='%23cbd5e1' stroke-width='2' stroke-dasharray='6 5'/%3E%3C/svg%3E");
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+        }
+        .cell.tisch {
+            background: #e0f2fe;
+            border: 2px solid #38bdf8;
+            color: #0369a1;
+        }
+        .cell.pult {
+            background: #fee2e2;
+            border: 2px solid #f87171;
+            color: #991b1b;
+            font-weight: bold;
+        }
+        .cell.besetzt {
+            background: #dcfce7;
+            border: 2px solid #4ade80;
+            color: #166534;
+        }
+        .cell.gruppenfarbe {
+            background: var(--group-fill);
+            border: 2px solid var(--group-stroke);
+            color: var(--group-text);
+        }
+        .cell.random-selected {
+            background: #fecaca;
+            border: 3px solid #ef4444;
+            color: #991b1b;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+            opacity: 1 !important;
+            z-index: 2;
+        }
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        .tab-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+        table.data-table th, table.data-table td {
+            border: 1px solid var(--border-color);
+            padding: 4px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        table.data-table th {
+            background: #f1f5f9;
+        }
+        table.data-table .student-centered-cell {
+            text-align: center;
+        }
+        table.data-table input.student-centered-input {
+            text-align: center;
+        }
+        table.data-table input {
+            width: 100%;
+            padding: 3px;
+            font-size: 0.8rem;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+        }
+        table.data-table input.student-absence-checkbox {
+            display: block;
+            width: 18px;
+            margin: 0 auto;
+            padding: 0;
+        }
+        .import-box {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+        }
+        .import-box textarea {
+            width: 100%;
+            height: 60px;
+            font-size: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        .student-import-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0;
+        }
+        .student-import-actions input[type="file"] { display: none; }
+        .student-import-actions .btn {
+            flex: 1 1 0;
+            min-width: 0;
+            width: 100%;
+            margin: 0;
+            padding: 7px 10px;
+            font-size: 0.8rem;
+        }
+        .backup-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .backup-actions .btn {
+            flex: 1 1 0;
+            min-width: 0;
+            margin-top: 5px;
+            padding: 7px 8px;
+            font-size: 0.8rem;
+        }
+        .info-text {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            line-height: 1.2;
+        }
+        .layout-presets {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 12px;
+            margin: 8px 0;
+        }
+        .layout-view[hidden] { display: none; }
+        .layout-view-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 8px 0 14px;
+        }
+        .layout-view-header h3 { margin: 0; color: #334155; }
+        .layout-view-header .btn { width: auto; margin: 0; }
+        .layout-view .layout-preset { min-height: 170px; padding: 14px 10px; font-size: 0.95rem; }
+        .layout-view .layout-preset svg { max-width: 230px; height: auto; }
+        .layout-view .layout-preset-count { font-size: 0.78rem; }
+        .layout-group-legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 3px 7px;
+            color: #64748b;
+            font-size: 0.58rem;
+            font-weight: 500;
+        }
+        .layout-group-legend-item { display: inline-flex; align-items: center; gap: 3px; }
+        .layout-group-swatch { width: 7px; height: 7px; border: 1px solid; border-radius: 2px; }
+        .layout-view .layout-apply-button { max-width: 420px; }
+        .layout-grid-action { height: 44px; margin: 0; font-size: 0.78rem; }
+        .layout-grid-break { grid-column: 1 / -1; height: 0; }
+        #roomGrid[hidden] { display: none; }
+        .layout-saved-card {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+        .layout-saved-card .layout-preset {
+            width: 100%;
+            flex: 1 1 auto;
+        }
+        .layout-saved-delete {
+            margin: 0;
+            padding: 4px 6px;
+            font-size: 0.7rem;
+            background: var(--danger);
+        }
+        .layout-section-heading {
+            grid-column: 1 / -1;
+            margin: 4px 0 0;
+            color: #64748b;
+            font-size: 0.78rem;
+        }
+        .layout-manager {
+            margin: 8px 0;
+            font-size: 0.8rem;
+        }
+        .layout-manager > summary {
+            color: #334155;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .layout-manager-list {
+            display: grid;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .layout-manager-item {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) repeat(5, auto);
+            align-items: center;
+            gap: 5px;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+        .layout-manager-name {
+            min-width: 0;
+            overflow-wrap: anywhere;
+            font-weight: 600;
+        }
+        .layout-manager-item .btn {
+            width: auto;
+            margin: 0;
+            padding: 5px 7px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+        }
+        .layout-manager-item .layout-manager-delete {
+            background: var(--danger);
+        }
+        .layout-preset {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            min-width: 0;
+            padding: 8px 5px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--text-main);
+            font: inherit;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .layout-preset:hover, .layout-preset[aria-pressed="true"] {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+        .layout-preset:focus-visible {
+            outline: 3px solid #93c5fd;
+            outline-offset: 2px;
+        }
+        .layout-preset svg {
+            display: block;
+            width: 100%;
+            max-width: 132px;
+            height: auto;
+        }
+        .layout-preset-count {
+            color: #64748b;
+            font-size: 0.65rem;
+            font-weight: 400;
+            line-height: 1.1;
+        }
+        .layout-apply-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        @page {
+            size: A4 portrait;
+            margin: 12mm;
+        }
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            .panel, .tabs, .row-actions, .student-search, .placement-status, .random-student-action, .grid-action-buttons, .grid-primary-buttons, .grid-save-button, h1, .subtitle, .class-selector-box { display: none; }
+            .container { display: block; width: 100%; margin: 0; }
+            .grid-container {
+                width: 100%;
+                box-sizing: border-box;
+                border: none;
+                box-shadow: none;
+                padding: 0;
+                overflow: visible;
+                break-inside: avoid;
+            }
+            .room-grid {
+                width: 100%;
+                box-sizing: border-box;
+                grid-template-columns: repeat(10, minmax(0, 1fr));
+                grid-template-rows: repeat(11, 38px) auto 0;
+                gap: 4px;
+            }
+            .room-grid .grid-header, .room-grid .grid-corner { display: none; }
+            .room-grid .cell { box-sizing: border-box; min-width: 0; font-size: 8pt; padding: 1px; }
+        }
+    </style>
+<link rel="stylesheet" href="../design.css?v=754">
+</head>
+<body data-module="sitzplan">
+    <h1>Sitzplan-Generator 1.15</h1>
+    <div class="subtitle">von Torsten Gruber (2026)</div>
+    <div class="container">
+        <!-- LINKE SPALTE: STEUERUNG & LISTEN -->
+        <div class="panel">
+            <!-- KLASSEN-AUSWAHL -->
+            <div class="class-selector-box">
+                <label for="klassenSelect" style="font-size: 0.85rem; font-weight: bold; color: #334155;">Aktuelle Klasse:</label>
+                <select id="klassenSelect" title="Wähle die Klasse aus, deren Sitzplan und Schülerlisten du bearbeiten möchtest." onchange="klasseWechseln(this.value)">
+                    <!-- Wird dynamisch gefüllt -->
+                </select>
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <button class="btn btn-secondary class-action-button" title="Erstellt eine neue Klasse mit einem leeren Sitzplan und leeren Listen." onclick="neueKlasseHinzufuegen()">Neue Klasse</button>
+                    <button class="btn class-action-button class-delete-button" title="Löscht die aktuelle Klasse samt Sitzplan und Schülerlisten." onclick="klasseLoeschen()">Klasse löschen</button>
+                </div>
+            </div>
+                <div class="layout-category-actions" hidden>
+                    <button class="btn btn-secondary" id="layoutToggleButton" title="Wähle eine Vorlage rechts neben dem Sitzplan." type="button" aria-expanded="false" onclick="schalteTischanordnungenUm('layouts')">Tischanordnung …</button>
+                </div>
+            <div class="tabs">
+                <button class="tab-btn active" title="Belegung, Verteilung nach Geschlecht und Sitzrichtung einstellen." onclick="switchTab('config', this)">Verteilung</button>
+                <button class="tab-btn" title="Zwei Personen als festes Sitzpaar auswählen. Dieselben Personen dürfen nicht zugleich als Tabu-Paar eingetragen sein." onclick="switchTab('paare', this)">Paare</button>
+                <button class="tab-btn" title="Schüler eintragen, die nicht nebeneinandersitzen sollen." onclick="switchTab('tabu', this)">Tabu</button>
+                <button class="tab-btn" title="Einzelne Schüler eintragen, importieren und feste Plätze zuweisen." onclick="switchTab('einzel', this)">Anker</button>
+            </div>
+            <!-- TAB 1: OPTIONEN -->
+            <div id="tab-config" class="tab-content active">
+                <section class="seat-option-group" aria-labelledby="seatOccupancyTitle"><h2 id="seatOccupancyTitle">Sitzverteilung</h2>
+                <label class="checkbox-label" title="Jede Person erhält einen eigenen Tisch."><input type="radio" name="belegung" value="einzeln" checked onchange="renderTischanordnungen()"> Einzeln</label>
+                <label class="checkbox-label" title="Die eingetragenen Schüler werden zufällig zu Paaren zusammengestellt."><input type="radio" name="belegung" value="zufallsPaare" onchange="renderTischanordnungen()"> Zufallspaare</label>
+                <label class="checkbox-label" title="Bildet zufällige Paare mit gleichem eingetragenem Geschlecht. Ankerplätze bleiben fest; Personen ohne passenden Partner werden einzeln platziert. Bei „Abwechselnd mm/ww“ wechseln die Paare: mm–ww–mm–ww."><input type="radio" name="belegung" value="gleichgeschlechtlichePaare" onchange="renderTischanordnungen()"> Gleichgeschlechtliche Paare</label>
+                <label class="checkbox-label" title="Die Paare aus dem Reiter „Paare“ werden verwendet."><input type="radio" name="belegung" value="festePaare" onchange="renderTischanordnungen()"> Feste Paare</label>
+                </section><section class="seat-option-group" aria-labelledby="seatGenderTitle"><h2 id="seatGenderTitle">Reihenfolge</h2>
+                <label class="checkbox-label" title="Bei bekannten m/w-Angaben wechseln sich horizontal benachbarte Sitzplätze ab. Fehlende Angaben schränken die Verteilung nicht ein."><input type="radio" name="geschlecht" value="wechsel" checked> <span data-seat-alternation-label>Abwechselnd m/w</span></label>
+                <label class="checkbox-label" title="Ordnet Personen beziehungsweise Paare ohne vorgegebenen Geschlechterwechsel an."><input type="radio" name="geschlecht" value="shuffle"> Zufällig</label>
+                </section><section class="seat-option-group" aria-labelledby="seatDirectionTitle"><h2 id="seatDirectionTitle">Richtung</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                    <label class="checkbox-label" title="Bestimmt, an welchem Ende der Reihen die Platzierung beginnt."><input type="checkbox" id="dirDown" onclick="checkDir('vert', 'dirDown')"> von oben</label>
+                    <label class="checkbox-label" title="Bestimmt, an welchem Ende der Reihen die Platzierung beginnt."><input type="checkbox" id="dirUp" checked onclick="checkDir('vert', 'dirUp')"> von unten</label>
+                    <label class="checkbox-label" title="Bestimmt, von welcher Seite aus die Plätze der Reihe nach gefüllt werden."><input type="checkbox" id="dirRight" onclick="checkDir('horiz', 'dirRight')"> von links</label>
+                    <label class="checkbox-label" title="Bestimmt, von welcher Seite aus die Plätze der Reihe nach gefüllt werden."><input type="checkbox" id="dirLeft" checked onclick="checkDir('horiz', 'dirLeft')"> von rechts</label>
+                </div>
+                </section>
+            </div>
+            <!-- TAB 2: EINZEL-LISTE -->
+            <div id="tab-einzel" class="tab-content">
+                <section class="seat-option-group seat-list-group">
+                <h2>Ankerplatz</h2>
+                <div class="info-text">
+                    <b>Anker-Hinweis:</b> Trage hier z. B. <b>A1</b> oder <b>C3</b> ein, um dem Schüler einen festen Platz zuzuweisen.
+                </div>
+                <div style="max-height: 160px; overflow: auto; margin-top: 8px;">
+                    <table class="data-table" id="tableEinzel">
+                        <tr><th style="width:25px;"></th><th>Name</th><th>Anker</th></tr>
+                    </table>
+                </div>
+                </section>
+                <div class="list-actions">
+                    <button class="btn list-action-button" title="Fügt eine Ankerzeile hinzu: Person aus der Klasse auswählen und einen festen Platz wie A3 eintragen." onclick="addZeileEinzel()">Neue Zeile</button>
+                    <button class="btn list-action-button list-clear-button" title="Entfernt nur die festen Platzzuweisungen im aktuellen Raum. Namen, Bewertungen und Sitzordnung bleiben erhalten." onclick="ankerLoeschen()">Alle löschen</button>
+                </div>
+            </div>
+            <!-- TAB 3: PAARE-LISTE -->
+            <div id="tab-paare" class="tab-content">
+                <section class="seat-option-group seat-list-group">
+                <h2>Feste Paare</h2>
+                <div class="info-text"><b>Paare-Hinweis:</b> Trage zwei Namen ein, die zusammensitzen sollen.</div>
+                <div style="max-height: 160px; overflow: auto; margin-top: 8px;">
+                    <table class="data-table" id="tablePaare">
+                        <tr><th style="width:25px;"></th><th>Schüler 1</th><th>Schüler 2</th></tr>
+                    </table>
+                </div>
+                </section>
+                <div class="list-actions">
+                    <button class="btn list-action-button" title="Fügt ein leeres Paar zur Liste hinzu." onclick="addZeilePaare()">Neue Zeile</button>
+                    <button class="btn list-action-button list-clear-button" title="Löscht nach Bestätigung alle festen Paare." onclick="alleLoeschen('paare')">Alle löschen</button>
+                </div>
+            </div>
+            <!-- TAB 4: TABU-LISTE -->
+            <div id="tab-tabu" class="tab-content">
+                <section class="seat-option-group seat-list-group">
+                <h2 title="Hier kannst du Paare notieren, die nicht nebeneinandersitzen sollen. Die automatische Verteilung verhindert, dass diese Personen horizontal direkt nebeneinandersitzen. Widersprüche werden gemeldet.">Tabu-Paare</h2>
+                <div class="info-text"><b>Tabu-Hinweis:</b> Trage zwei Namen ein, die nicht nebeneinandersitzen sollen.</div>
+                <div style="max-height: 220px; overflow-y: auto;">
+                    <table class="data-table" id="tableTabu">
+                        <tr><th style="width:25px;"></th><th>Schüler 1</th><th>Schüler 2</th></tr>
+                    </table>
+                </div>
+                </section>
+                <div class="list-actions">
+                    <button class="btn list-action-button" title="Fügt ein leeres Tabu-Paar hinzu." onclick="addZeileTabu()">Neue Zeile</button>
+                    <button class="btn list-action-button list-clear-button" title="Löscht nach Bestätigung alle notierten Tabu-Paare." onclick="alleLoeschen('tabu')">Alle löschen</button>
+                </div>
+            </div>
+            </div>
+        <!-- RECHTE SEITE: KLASSENRAUM RASTER -->
+        <div class="grid-container">
+            <div class="room-header">
+                <h2 id="titelKlasse">Klassenraum</h2>
+            </div>
+            <div class="info-text" id="gridInstructions" style="margin-bottom: 10px;">Klicken oder ziehen: Tische setzen oder entfernen. Rechtsklick (am iPad: lange drücken): Pult setzen oder entfernen.</div>
+            <section class="layout-view" id="layoutView" hidden aria-labelledby="layoutViewTitle">
+                <div class="layout-view-header">
+                    <h3 id="layoutViewTitle">Tischanordnung auswählen</h3>
+                </div>
+                <div class="info-text">Die Vorschau berücksichtigt Belegung und Schülerzahl.</div>
+                <div class="layout-presets" id="layoutPresets"></div>
+                <details class="layout-manager">
+                    <summary>Vorlagen verwalten</summary>
+                    <div class="info-text">Hier werden nur eigene Tischanordnungen importiert oder exportiert.</div>
+                    <input type="file" id="importLayoutsFile" accept=".json,application/json" hidden onchange="importiereEigeneTischanordnungen(event)">
+                    <div class="layout-manager-list" id="layoutManagerList"></div>
+                </details>
+                <button class="btn layout-apply-button" id="applyLayoutButton" title="Ersetzt die aktuelle Tischanordnung durch das ausgewählte Muster." onclick="wendeTischanordnungAn()" disabled>Anwenden</button>
+            </section>
+            <div class="room-grid" id="roomGrid"></div>
+            <div class="placement-status" id="placementStatus" role="status" aria-live="polite" hidden></div>
+            <div class="student-search">
+                <button class="btn btn-secondary" id="studentSearchToggle" type="button" aria-expanded="false" aria-controls="studentSearchInput" onclick="classroomToggleStudentSearch()">Schüler finden</button>
+                <input type="search" id="studentSearchInput" hidden aria-label="Schüler finden" placeholder="Name eingeben …" oninput="sucheSchuelerImSitzplan(this.value)" onkeydown="if(event.key==='Enter') springeZumSuchtreffer()">
+                <div class="random-student-action">
+                    <button class="btn btn-secondary" id="randomStudentButton" type="button" onclick="waehleZufaelligenSchueler()" disabled>Zufallsauswahl</button>
+                    <span class="random-student-status" id="randomStudentStatus" role="status" aria-live="polite"></span>
+                </div>
+                <div class="student-search-status" id="studentSearchStatus" role="status" aria-live="polite"></div>
+            </div>
+        </div>
+    </div>
+<script src="sitzplan.js?v=754"></script>
+</body>
+</html>
