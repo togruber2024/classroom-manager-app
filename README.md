@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 05.11.2026 · Version 7.58
+Stand: 05.11.2026 · Version 7.59
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -921,3 +921,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.57: „1. Quartal“ und „Kompaktansicht“ als beschriftete Knöpfe (an = hellblau), überall einheitlich, Kompaktansicht direkt rechts neben 1. Quartal
 
 7.58: Leere Eingabefelder: Platzhalter („Punkte“, „Fehler“) heller; Kompaktansicht-Symbol zeigt waagrecht zusammenrückende Spalten
+
+7.59: „Bewertungen“ im Sitzplan (Auge) und „Als Noten“ im Notenspiegel als beschriftete Knöpfe wie 1. Quartal/Kompaktansicht
