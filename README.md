@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.65
+Stand: 06.11.2026 · Version 8.66
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1142,3 +1142,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.63: iPhone quer – oberste Tischreihe bündig mit dem Datumsknopf, Sitzplan weiter oben
 8.64: iPhone – Sitzplan links und rechts bündig mit den Knöpfen
 8.65: Keine Meldung „Stunde: …“ mehr beim automatischen Wechsel zur aktuellen Stunde
+8.66: iPhone quer – Sitzplan und Eingabe als zwei gleich hohe Karten, Knöpfe in Pillenform

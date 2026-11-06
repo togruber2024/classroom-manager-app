@@ -3550,6 +3550,18 @@ document.addEventListener('keydown',event=>{
 (()=>{const st=document.createElement('style');st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){html.ph-lite .grid-container:has(>.pl-seatbar)>#roomGrid:not(#_):not(#__){margin-top:-5px!important}}';document.head.append(st)})();
 /* 8.64: iPhone – Tische bündig mit den Knöpfen; „2/3“-Plaketten am Rand dürfen überstehen. */
 (()=>{const st=document.createElement('style');st.textContent='html.ph-lite #roomGrid .classroom-plan-scroll:not(#_){overflow:visible!important}';document.head.append(st)})();
+/* 8.66: iPhone quer – Sitzplan und Eingabe als zwei gleich hohe Karten, Knöpfe in Pillenform wie „H“/„P“ (Vorschlag B). */
+(()=>{const st=document.createElement('style');const Q='html.ph-lite body .classroom-quick.is-sheet',K=':not(#_):not(#__)';
+st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){'
+ +'html.ph-lite body:has(.classroom-quick.is-sheet)'+K+'{padding-right:338px!important}'+'html.ph-lite body:has(.classroom-quick.is-sheet) .grid-container'+K+'{height:calc(100vh - 14px)!important;box-sizing:border-box!important}'
+ +Q+K+'{top:0!important;bottom:auto!important;height:calc(100vh - 14px)!important;right:8px!important;width:322px!important;border:1px solid #dce3ef!important;border-radius:18px!important;box-shadow:none!important;box-sizing:border-box!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;padding:12px!important;overflow:auto!important}'
+ +Q+' .cq-nav'+K+'{padding:0!important;margin:0!important;position:static!important;background:none!important;border:0!important;width:100%!important;box-sizing:border-box!important;display:flex!important;gap:8px!important}'
+ +Q+' .cq-nav>button'+K+'{flex:1 1 0!important;margin:0!important;width:auto!important;min-width:0!important}'
+ +Q+' .classroom-rating-choice'+K+'{height:44px!important;border-radius:10px!important}'
+ +Q+' :is(#classroomQuickHomeworkButton,#classroomQuickMaterialButton,.cq-nav button)'+K+'{height:36px!important;border-radius:18px!important;font-size:14px!important;font-weight:500!important;box-shadow:none!important}'
+ +Q+' :is(#classroomQuickHomeworkButton,#classroomQuickMaterialButton):not([aria-pressed=true])'+K+','+Q+' .cq-nav button:not(.cq-next)'+K+'{background:#fff!important;border:1px solid #dce3ef!important;color:#2f5f9b!important}'
+ +Q+' #classroomQuickName'+K+'{font-size:16px!important}'
+ +'}';document.head.append(st)})();
 ;
 
 /* ==== no-contacts.js ==== */
