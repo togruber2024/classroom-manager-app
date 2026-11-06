@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.17
+Stand: 06.11.2026 · Version 8.18
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -329,8 +329,8 @@ Karte: oben die Quartalsnote (bis zur Eingabe heller der errechnete Wert), mit e
   Gesamtnote, z. B. 40 % und 10 %, jeweils mit allen Einzelnoten als farbige Kästchen mit Datum und dem Ø rechts),
   fehlende Hausaufgaben und Material (rote Kästchen, rechts die Summe; zugeklappt nur das aktuelle Quartal, mit
   „1. Quartal“ das ganze Halbjahr), ganz unten die Klassenarbeit mit Anteil. Noten des 1. Quartals stehen vor denen
-  des 2. Quartals, getrennt durch einen gestrichelten Strich. Unten: „1. Quartal“ (nur diese Karte),
-  Selbsteinschätzung und Quartalsnote zum Eintragen.
+  des 2. Quartals, getrennt durch einen gestrichelten Strich. Selbsteinschätzung und Quartalsnote werden im
+  Detailblatt eingetragen (Karte antippen).
 Hinweise über den Karten, z. B. „5 · 3× oder öfter HA fehlend“ (im Halbjahr) oder „Noch keine mündliche Note im
   Quartal“: antippen zeigt nur diese Personen, nochmal antippen wieder alle.
 Detailblatt: Ein Tipp auf eine Karte zeigt alle Einträge der Person; ‹ › oder seitlich wischen = nächste Person,
@@ -1082,3 +1082,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.16: iPhone-Karten: Σ vor den Summen bei Hausaufgaben und Material fehlend (wie Ø beim Durchschnitt)
 
 8.17: Notizen: Hinweis „📝 Notizen in dieser Klasse“ mit Liste (Bearbeiten/Erledigt) im Noten-Manager und auf dem iPhone; im Sitzplan orangener Punkt am Tisch und Notiztext im Bewertungsfenster
+
+8.18: iPhone-Karten: untere Zeile (1. Quartal, Selbsteinschätzung, Quartalsnote) entfernt – eingetragen wird im Detailblatt, das 1. Quartal blendet der Schalter oben ein

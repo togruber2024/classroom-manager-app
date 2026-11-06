@@ -4517,6 +4517,7 @@ return}
   ".qd-card .qd-hj{margin-bottom:10px;justify-content:flex-end}",
   ".qs-card .qs-edit{position:relative}.qs-card .qs-edit .qs-qtag{position:absolute;right:6px;bottom:10px;pointer-events:none}",
   ".qs-top>.qs-name{flex:0 1 auto!important}.qs-qtag-name{margin-right:auto;align-self:center;font-size:11px;line-height:18px;padding:0 6px}.qd-title .qs-qtag-name{display:inline-block;vertical-align:3px;margin:0}",
+  "html.ph-lite .qs-card>.qs-ft,html.ph-lite .qs-card>.qs-edits{display:none!important}",
   ".qd-edits{border-top:0}",
   ".qd-prev{background:#f7f9fc;margin:6px -16px 0;padding:10px 16px}",
   ".qd-prev h4{color:#66758a}",
