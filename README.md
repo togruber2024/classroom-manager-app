@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.04
+Stand: 06.11.2026 · Version 8.05
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -305,14 +305,44 @@ Der Plan wird mit 100 % gezeigt und nur verkleinert, wenn er zu breit ist; auf i
 eingepasst, wenn er zu hoch ist. Am Mac zählt nur die Breite (nach unten wird gescrollt).
 Manuell 10–150 %. Bei Drehung des iPads wird neu angepasst. Menüs und Buttons werden nicht gezoomt.
 Auf dem aufgeklappten iPhone Duo im Querformat bleibt die Seitenleiste sichtbar.
-Auf dem iPhone öffnet ein Tisch das Bewertungsfenster als Blatt (hochkant unten, quer rechts). Es bleibt nach einer Bewertung offen; „Weiter ›“ und „‹ Zurück“ gehen Tisch für Tisch durch die Reihen („Reihe 1 · 3 von 24“), der aktuelle Tisch ist blau umrandet. Im Querformat steht die Leiste Unterricht · Noten · Backup · Mehr am linken Rand.
-Auf dem iPhone zeigt der Sitzplan keine Spaltenbuchstaben und Reihennummern und keinen Hinweistext; der Zoom hat nur − und +, „Einpassen“ und „100 %“ stehen unter ⋯. So nutzen die Tische die ganze Breite.
-Auf dem iPhone (hochkant) zeigt die Quartals- und Halbjahresübersicht im Noten-Manager eine Karte pro Person statt der breiten Tabelle: Note groß, darunter die Mittelwerte (MM Ø, HA fehlt, Sonstige Mitarbeit, Klassenarbeit). Selbsteinschätzung und Quartals-/Halbjahresnote sind direkt in der Karte eintragbar. Mit „Karten | Tabelle“ lässt sich umschalten; die Wahl wird gemerkt.
-Ein Tipp auf eine Karte öffnet ein Blatt mit allen Einträgen dieser Person im Quartal (mündliche Noten mit Datum, fehlende Hausaufgaben, Sonstige Mitarbeit, Klassenarbeit) sowie Selbsteinschätzung und Quartalsnote zum Eintragen. Mit ‹ › oder durch seitliches Wischen geht es zur nächsten Person.
-Auf den Seiten der mündlichen Mitarbeit öffnet ein Tipp in ein Notenfeld auf dem iPhone (hochkant) das bunte Bewertungsfenster als Blatt von unten, ohne Tastatur: zehn Bewertungszeichen, „Abwesend“ und „Löschen“. „Weiter ›“ und „‹ Zurück“ gehen im selben Termin zur nächsten bzw. vorigen Person; erneutes Antippen des gewählten Zeichens entfernt es wieder.
-Auf dem iPhone (hochkant) ist der Noten-Manager eine schlanke Lese-Version: Im Auswahl-Blatt stehen nur Fach und Klasse; Halbjahr und Quartal ergeben sich aus dem Datum (bei mehreren Halbjahren umschaltbar). Gezeigt wird die Quartalsübersicht als Karten, sortierbar nach Name oder Note; jede Karte kann das 1. Quartal aufklappen. Eintragen lassen sich dort nur Selbsteinschätzung und Quartalsnote – mündliche Noten, Hausaufgaben und Material im Bereich „Unterricht“, alles Weitere am Mac oder iPad.
-Auf dem iPhone (hochkant) gibt es unten nur noch Unterricht · Noten · Aktuell · Hilfe. „Aktuell“ wählt laut Stundenplan Fach, Klasse und Raum der laufenden Stunde (ab 10 Minuten vorher) und öffnet den Unterricht; in Freistunden die zuletzt unterrichtete Lerngruppe. Oben stehen das App-Symbol (Farbgestaltung), nur die Lerngruppe, Datenschutzmodus, Backup speichern/wiederherstellen und Rückgängig. Stundenplan, Archiv, Schuljahr abschließen und das Backup-Fenster bleiben dem Mac/iPad vorbehalten; die Version steht in der Hilfe.
-Im Unterricht zeigt das iPhone (hochkant) nur den Sitzplan im Bewertungsmodus; Knöpfe über und unter dem Plan sowie die Seitenleiste sind ausgeblendet. Oben stehen das Datum („Heute ▾“ – antippen zum Nachtragen für einen anderen Tag, dann orange hinterlegt) und „Perspektive“; ein Tipp aufs Pult dreht den Plan ebenfalls.
+
+IPHONE
+Das iPhone ist eine schlanke Version für den Unterricht: bewerten, nachschauen, die laufende Stunde finden.
+Eingetragen werden mündliche Noten, Hausaufgaben und Material im Unterricht; im Noten-Manager nur
+Selbsteinschätzung, Quartalsnote und Notizen. Tests, Klassenarbeiten, neue Seiten und Schülerlisten am Mac oder iPad.
+Hochkant und quer verhalten sich gleich (quer steht die Leiste links). iPad und Mac bleiben unverändert.
+Kopfzeile: App-Symbol (Farbgestaltung), Lerngruppe (antippen = Auswahl-Blatt mit Fach und Klasse; quer mit Fach),
+  Datenschutzmodus 👁, Backup speichern ⬇ | neuestes Backup wiederherstellen ⬆, Rückgängig.
+Leiste: Unterricht · Noten · Aktuell · Hilfe (Versionsnummer in der Hilfe).
+Unterricht: nur der Sitzplan im Bewertungsmodus, ohne Knöpfe und Seitenleiste. Oben das Datum („Heute ▾“ –
+  antippen zum Nachtragen, ein anderer Tag erscheint orange) und „⇅ Perspektive“; ein Tipp aufs Pult dreht ebenfalls.
+  Ein Tisch öffnet das Bewertungsfenster als Blatt; „Weiter ›“ / „‹ Zurück“ gehen Tisch für Tisch durch die Reihen.
+  Passt der Plan nicht aufs Display, werden leere Reihen und Spalten zu schmalen Gängen.
+Noten: Halbjahr und Quartal ergeben sich aus dem Datum (bei mehreren Halbjahren oben umschaltbar). Gezeigt wird die
+  Quartalsübersicht als eine Karte pro Person, alphabetisch. Oben: „1. Quartal“ (blendet das 1. Quartal bei allen
+  Karten ein/aus) und Aus / Schraffiert / Rahmen (Darstellung der Tendenzen). Fehlt die Quartalsübersicht, bietet
+  ein Hinweis „Quartalsübersicht anlegen“, „Andere Klasse wählen“ oder ✕ (schließen).
+Karte: oben die Quartalsnote (bis zur Eingabe heller der errechnete Wert), mit eingeblendetem 1. Quartal links davon
+  dessen Quartalsnote. Darunter Sonstige Mitarbeit mit Anteil, eingerückt Mündliche Mitarbeit und Tests (Anteil an der
+  Gesamtnote, z. B. 40 % und 10 %, jeweils mit allen Einzelnoten als farbige Kästchen mit Datum und dem Ø rechts),
+  fehlende Hausaufgaben und Material (rote Kästchen, rechts die Summe; zugeklappt nur das aktuelle Quartal, mit
+  „1. Quartal“ das ganze Halbjahr), ganz unten die Klassenarbeit mit Anteil. Noten des 1. Quartals stehen vor denen
+  des 2. Quartals, getrennt durch einen gestrichelten Strich. Unten: „1. Quartal“ (nur diese Karte),
+  Selbsteinschätzung und Quartalsnote zum Eintragen.
+Hinweise über den Karten, z. B. „5 · 3× oder öfter HA fehlend“ (im Halbjahr) oder „Noch keine mündliche Note im
+  Quartal“: antippen zeigt nur diese Personen, nochmal antippen wieder alle.
+Detailblatt: Ein Tipp auf eine Karte zeigt alle Einträge der Person; ‹ › oder seitlich wischen = nächste Person,
+  nach unten wischen = schließen. Oben eine Notiz (z. B. „Elterngespräch“); sie steht gelb in der Karte unter dem
+  Namen und am Mac in der Quartalsübersicht (Symbol neben dem Namen, orange = Notiz vorhanden, Klick = bearbeiten).
+  Notizen gelten je Fach und Klasse und sind in Backup und Rückgängig enthalten.
+Aktuell: Läuft laut Stundenplan gerade eine Stunde (ab 10 Minuten vorher), öffnet „Aktuell“ direkt deren Sitzplan mit
+  Raum und heutigem Datum. Sonst erscheint ein Blatt mit „Zuletzt unterrichtet“ (öffnet die Lerngruppe mit dem Datum
+  dieser Stunde zum Nachtragen) und den Stunden von heute und dem nächsten Schultag. Der Stundenplan wird am Mac
+  eingetragen und kommt per Backup aufs iPhone; beim Wiederherstellen zeigt die Abfrage, ob er im Backup enthalten ist.
+Datenschutzmodus: auch in den Karten, im Detailblatt und im Stundenplan-Blatt (Namen unscharf, Noten mit
+  Zufallsfarben); der Hinweis steht über der unteren Leiste.
+Mac und iPhone aktuell halten: am Gerät mit dem neuesten Stand ⬇ (Backup in den festen Ordner, z. B. iCloud Drive),
+  am anderen Gerät ⬆ und das neueste Backup wählen. Ein älteres Backup ersetzt neuere Einträge.
 
 SITZREGELN, RÄUME, HISTORIE UND ABWESENHEIT
 Verteilung: einzeln, Zufallspaare, gleichgeschlechtliche oder feste Paare; Reihenfolge und Richtung
@@ -1021,3 +1051,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.03: Code aufgeräumt: Stilregeln der iPhone-Karten zusammengefasst (eine Regel je Zeile, überschriebene Angaben entfernt) – keine sichtbare Änderung
 
 8.04: iPhone-Karten: Schalter „1. Quartal“ oben blendet das 1. Quartal bei allen Karten ein/aus (einzelne Karten weiter umschaltbar)
+
+8.05: Hilfe, Kurzanleitung und README: eigenes Kapitel „Auf dem iPhone“ mit allen aktuellen Funktionen; veraltete iPhone-Absätze ersetzt
