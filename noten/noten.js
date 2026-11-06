@@ -4217,7 +4217,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function missingRow(label,list,sel,split){
   const cur=split?list.filter(m=>m.q===sel):list,prev=split?list.filter(m=>m.q<sel):[];
   const fmt=m=>({text:'✗',cls:'qs-x',date:m.date?m.date.slice(8,10)+'.'+m.date.slice(5,7)+'.':'—',q:m.q});
-  const val=document.createElement('span');val.className='qs-val qs-cnt';
+  const val=document.createElement('span');val.className='qs-val qs-cnt';/* 8.16: Σ vor der Summe, wie Ø vor dem Durchschnitt */const sg=document.createElement('small');sg.textContent='Σ';val.append(sg);
   const n=(v,cls)=>{const b=document.createElement('b');b.className='qs-miss-n '+cls+(v?' has-miss':'')+(v>=3?' is-alert':'');b.textContent=String(v);return b};
   val.append(n(cur.length,'qs-cnt-q'));if(split)val.append(n(cur.length+prev.length,'qs-cnt-h'));
   const w=sect(label+' fehlend',null,null,cur.map(fmt),0,{val,prev:prev.map(fmt)});w.classList.add('qs-miss');if(split)w.classList.add('qs-split');
