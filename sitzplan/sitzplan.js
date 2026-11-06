@@ -3546,6 +3546,8 @@ document.addEventListener('keydown',event=>{
 
 /* 8.59: iPhone quer – reicht die Breite nicht, werden die Knöpfe klein (▾ H/G bzw. ⇅ P), damit der Sitzplan größer wird (gesteuert von plan-zoom.js). */
 (()=>{const st=document.createElement('style');const X='html.ph-lite .grid-container>.pl-seatbar.pl-compact>:is(.pl-date,.pl-rotate):not(#_):not(#__):not(#___)';st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){'+X+'{width:52px!important;min-width:52px!important;padding:0!important;gap:0!important;justify-content:center!important;font-size:0!important}'+X+'>.pl-date-text{display:none!important}'+X+'>.pl-chev{font-size:11px!important;color:inherit!important;margin-left:5px!important}'+X+'>span[aria-hidden]{font-size:15px!important;margin-right:5px!important}'+X+':is(.pl-date)::before,'+X+':is(.pl-rotate)::after{content:attr(data-short);font-size:15px;font-weight:600;line-height:1}}';document.head.append(st)})();
+/* 8.63: iPhone quer – oberste Tischreihe auf Höhe des Datumsknopfs (weniger Rand oben). */
+(()=>{const st=document.createElement('style');st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){html.ph-lite .grid-container:has(>.pl-seatbar)>#roomGrid:not(#_):not(#__){margin-top:-5px!important}}';document.head.append(st)})();
 ;
 
 /* ==== no-contacts.js ==== */

@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.62
+Stand: 06.11.2026 · Version 8.63
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1139,3 +1139,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.60: iPhone quer – kompakte Knöpfe behalten ihr Symbol (H/G ▾, ⇅ P)
 8.61: iPhone quer – kompakte Knöpfe mit gleichem Abstand zwischen Buchstabe und Symbol
 8.62: Neues Quartal wird automatisch in allen Lerngruppen (gleiches Halbjahr) angelegt
+8.63: iPhone quer – oberste Tischreihe bündig mit dem Datumsknopf, Sitzplan weiter oben
