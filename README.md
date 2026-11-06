@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.28
+Stand: 06.11.2026 · Version 8.29
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1105,3 +1105,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.27: Hilfe: Erfinder-Hinweis nur noch unter „Gut zu wissen“ → „Über den Classroom-Manager“
 
 8.28: iPhone-Unterricht: Plätze lassen sich nicht mehr verschieben/tauschen und freie Tische nicht zuweisen – nur noch bewerten
+8.29: iPad/iPhone: Kein Hineinzoomen mehr per Zwei-Finger-Geste oder Doppeltippen (Kopfleiste, Seiten); Scrollen bleibt

@@ -1,4 +1,9 @@
 /* ==== ui-dialogs.js ==== */
+/* 8.29: Kein Hineinzoomen per Zwei-Finger-Geste oder Doppeltippen (iPad/iPhone) – die App ist für den Bildschirm fertig gelayoutet.
+   Scrollen bleibt erlaubt; der Sitzplan-Zoom läuft weiter über seine Tasten. */
+(()=>{const stop=e=>{if(e.cancelable)e.preventDefault()};for(const t of ['gesturestart','gesturechange','gestureend'])document.addEventListener(t,stop,{passive:false});
+ document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)stop(e)},{passive:false});
+ const s=document.createElement('style');s.textContent='html,body{touch-action:pan-x pan-y}';document.head.append(s)})();
 /* Speicher-Schutz für Anzeige-Einstellungen: Ist der Browserspeicher voll, merken sich Schalter wie Fortschritt, Schraffur/Rahmen,
    „1. Quartal“ oder Notengrenzen-Aufklappen ihren Zustand im Arbeitsspeicher, statt still zu scheitern. Noten und andere Daten sind
    ausdrücklich NICHT betroffen – dort bleibt die Fehlermeldung bestehen, damit nichts unbemerkt verloren geht. */
