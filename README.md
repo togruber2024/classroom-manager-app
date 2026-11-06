@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.42
+Stand: 06.11.2026 · Version 8.43
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1119,3 +1119,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.40: Tests-Übersicht: Schraffur-Schalter wieder in der Kopfzeile zwischen „Kompaktansicht“ und „Drucken“; Testmittel-Kopf wieder in normaler Größe, mittig
 8.41: Alle Auswahlschalter (z. B. „2,3 | 2− | 2“, „Zeichen | Noten“, „% | x:y“, Schraffur) in Pillenform – auf Mac, iPad und iPhone
 8.42: iPhone: Fachkürzel-Chip neben der Klasse (Ek, Ge, En, Ma, De, La, Fr …); Hilfe startet beim ersten Öffnen in „Erste Schritte“, danach auf dem iPhone in „Auf dem iPhone“, am Mac passend zur Ansicht
+8.43: iPhone: Auswahl-Blatt für Fach und Klasse zeigt auch im Unterricht keine Zahnräder und kein „+ Fach“/„+ Klasse“ mehr
