@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.07
+Stand: 06.11.2026 · Version 8.08
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1057,3 +1057,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.06: iPhone: Detailblatt im selben Aufbau wie die Karte (Abschnitte, Werte rechts, 1. Quartal immer eingeblendet, größer), bei Tests der Name unter dem Datum
 
 8.07: iPhone-Detailblatt: Zeile „Halbjahresnote“ über den Quartalsnoten (eingetragen in voller Farbe, sonst heller der errechnete Wert)
+
+8.08: iPhone: Selbsteinschätzung und Quartalsnote mit kompakter Marke „Q1“/„Q2“; „Quartalsnote“ wird erst mit zwei eingetragenen Noten zu „Quartalsnoten“; Gewichtung Sonstige Mitarbeit/Klassenarbeit immer angezeigt, wenn hinterlegt
