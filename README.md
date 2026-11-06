@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.47
+Stand: 06.11.2026 · Version 8.48
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1124,3 +1124,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.45: Schraffur-Schalter auf allen Seiten mit Noten immer an derselben Stelle (zwischen „Kompaktansicht“ und „Drucken“); ohne Tendenzen oder 4 ausgegraut; Hausaufgaben/Material ohne
 8.46: Sitzplan (Bewertungsmodus): Felder ohne Tisch unsichtbar, freie Tische blass (iPhone unsichtbar), leere Reihen/Spalten als Gänge (hochkant ½, quer ⅓); iPhone/iPad: belegte Reihen größer (Obergrenze), Mac nur verdichtet; Sitzplanmodus, Beamer, Druck unverändert
 8.47: Fehlerbehebung: Nach dem Ausschalten der Tendenzen in den Notengrenzen zeigte die Ergebnisspalte noch alte Tendenz-Noten (mit Rahmen/Schraffur), bis man den Darstellungs-Schalter antippte – jetzt wird sie sofort neu gezeichnet
+8.48: iPhone: Sitzplan springt im Querformat nicht mehr zwischen groß und klein; quer stehen „Heute“ und „Perspektive“ untereinander rechts neben dem Plan; Pult ausgeblendet (mehr Platz für die Klasse)
