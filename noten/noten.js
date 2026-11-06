@@ -3170,11 +3170,13 @@ classroomHooks.add('renderTasksPage','test-details: Testseiten',{intercept(subje
   btn.onclick=()=>{const on=box.hidden;try{localStorage.setItem(PROG_KEY,on?'1':'0')}catch{}show(on)};
   panel.addEventListener('change',e=>{if(e.target.closest('input.task-raw-score,input.task-grade-input,select'))setTimeout(update,0)});
   show(progOn())}
- function fineValue(d,st){const scores=taskGradeOptions(true).map(o=>o.value);
+ function fineValue(d,st){try{const basis=(d.tasks||[]).filter(t=>t.basisPage);if(basis.length&&basis.every(t=>!taskBasisConfig(currentSubject,t.basisPage).tendencies))return null}catch{}const scores=taskGradeOptions(true).map(o=>o.value);
   const fine=task=>{if(!task.basisPage){const g=st.grades?.[task.id];return g===''||g==null||!Number.isFinite(Number(g))?null:Number(g)}const raw=st.rawScores?.[task.id];if(raw===''||raw==null||!Number.isFinite(Number(raw)))return null;const b=taskBasisConfig(currentSubject,task.basisPage);if(b.tendencies){const g=Number(st.grades?.[task.id]);return Number.isFinite(g)?g:null}const fr=Number(raw)/Math.max(1,Number(task.maximum)||b.total),err=b.base==='text',e=taskBasisThresholdEntries(currentSubject,task.basisPage,true);for(let i=0;i<e.length;i++)if(err?fr<=e[i].ratio:fr>=e[i].ratio)return scores[i];return scores.at(-1)};
   let sum=0,w=0;for(const t of d.tasks||[]){const g=fine(t);if(g===null)return null;sum+=g*Number(t.weight)/100;w+=Number(t.weight)}return w?sum*100/w:null}
  function fineChips(panel){const key=panel?.dataset.customPanel;let d;try{d=taskPageData(currentSubject,key)}catch{return}if(!d||taskGradeSystem(currentSubject,key)!=='grades')return;
   const mode=d.meanDisplay||(d.meanTendencies||d.resultTendencies?'tendency':'decimal');if(mode!=='tendency'&&mode!=='decimal')return;
+  /* 8.50: Sind in den Notengrenzen aller Aufgaben die Tendenzen ausgeschaltet, gibt es nur ganze Noten – keine Feinwerte aus den Rohpunkten. */
+  try{const basis=(d.tasks||[]).filter(t=>t.basisPage);if(basis.length&&basis.every(t=>!taskBasisConfig(currentSubject,t.basisPage).tendencies))return}catch{}
   const rows=panel.querySelectorAll('.task-table tbody tr');
   (d.students||[]).forEach((st,i)=>{const chip=rows[i]?.querySelector('.task-end-grade');if(!chip)return;let v;try{v=fineValue(d,st)}catch{return}if(v===null)return;chip.textContent=formatTaskMean(v,'grades',d);chip.className='task-end-grade '+taskMeanClass(v,'grades',d)})}
  document.addEventListener('change',e=>{const p=e.target.closest?.('.exam-combined-results');if(p&&e.target.matches('input.task-raw-score,input.task-grade-input'))setTimeout(()=>fineChips(p),0)});
