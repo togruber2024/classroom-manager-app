@@ -2844,9 +2844,13 @@ document.addEventListener('keydown',event=>{
 (()=>{
  const key='classroom-manager-hatching-v1';let enabled=localStorage.getItem(key)!=='off',queued=false;
  const style=document.createElement('style');style.textContent='[data-hatching-toggle][hidden]{display:none!important}html.hatching-off .classroom-unstriped:not(.grade-four-fail){background-image:none!important;background-color:var(--unstriped-color)!important}';document.head.append(style);
+ const SEL='td span,td input,td select,td button,.cell,.classroom-rating-choice,.qs-big,.qs-edit input,.qs-sq i,.qs-val i,.qs-q1chip i,.qs-chip i,.qd-val';
+ /* auch von den iPhone-Karten direkt aufrufbar (8.15) */
+ function unstripe(root){for(const el of root.querySelectorAll(SEL)){const fill=getComputedStyle(el).backgroundImage;if(!fill.includes('gradient')||el.classList.contains('grade-four-fail'))continue;/* 4 Notenpunkte bleiben immer schraffiert. */el.classList.remove('classroom-unstriped');const base=getComputedStyle(el).backgroundColor,color=base&&!/rgba\(0, 0, 0, 0\)|transparent/.test(base)?base:fill.match(/rgba?\([^)]+\)|#[\da-f]{3,8}/i)?.[0];/* Ohne Schraffur gilt die Grundfarbe der Note (z. B. 2+ grün-gelb wie 2). */if(color){if(el.style.getPropertyValue('--unstriped-color')!==color)el.style.setProperty('--unstriped-color',color);if(!el.classList.contains('classroom-unstriped'))el.classList.add('classroom-unstriped')}}}
+ window.classroomUnstripe=root=>{if(!enabled)unstripe(root||document)};
  function apply(){
-  observer.disconnect();
-  if(!enabled)for(const el of document.querySelectorAll('td span,td input,td select,td button,.cell,.classroom-rating-choice,.qs-big,.qs-edit input,.qs-sq i,.qs-val i,.qs-q1chip i,.qs-chip i,.qd-val')){const fill=getComputedStyle(el).backgroundImage;if(!fill.includes('gradient')||el.classList.contains('grade-four-fail'))continue;/* 4 Notenpunkte bleiben immer schraffiert. */el.classList.remove('classroom-unstriped');const base=getComputedStyle(el).backgroundColor,color=base&&!/rgba\(0, 0, 0, 0\)|transparent/.test(base)?base:fill.match(/rgba?\([^)]+\)|#[\da-f]{3,8}/i)?.[0];/* Ohne Schraffur gilt die Grundfarbe der Note (z. B. 2+ grün-gelb wie 2). */if(color){if(el.style.getPropertyValue('--unstriped-color')!==color)el.style.setProperty('--unstriped-color',color);if(!el.classList.contains('classroom-unstriped'))el.classList.add('classroom-unstriped')}}
+  observer.disconnect();try{
+  if(!enabled)unstripe(document);
   document.documentElement.classList.toggle('hatching-off',!enabled);
   // Schraffuren-Schalter: neben „Kompaktansicht“, auf Übersichtsseiten ohne Kompaktansicht vor „Drucken“.
   const anchors=[...document.querySelectorAll('.compact-view-toggle')];
@@ -2864,7 +2868,7 @@ document.addEventListener('keydown',event=>{
    if(!any)for(const el of scope.querySelectorAll('td span,td input,td select,td button,.cell,.classroom-rating-choice')){if(getComputedStyle(el).backgroundImage.includes('gradient')){any=true;break}}
    if(label.hidden===any)label.hidden=!any}
   try{window.classroomHatchSegPlace?.()}catch(e){console.error(e)}
-  observer.observe(document.body,{childList:true,subtree:true});
+  }catch(e){console.error(e)}finally{observer.observe(document.body,{childList:true,subtree:true})}
  }
  const observer=new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;apply()})});
  window.addEventListener('storage',e=>{if(e.key===key){enabled=e.newValue!=='off';apply()}});apply();
