@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.27
+Stand: 06.11.2026 · Version 8.28
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -318,6 +318,7 @@ Unterricht: nur der Sitzplan im Bewertungsmodus, ohne Knöpfe und Seitenleiste. 
   antippen zum Nachtragen, ein anderer Tag erscheint orange) und „⇅ Perspektive“; ein Tipp aufs Pult dreht ebenfalls.
   Ein Tisch öffnet das Bewertungsfenster als Blatt; „Weiter ›“ / „‹ Zurück“ gehen Tisch für Tisch durch die Reihen.
   Passt der Plan nicht aufs Display, werden leere Reihen und Spalten zu schmalen Gängen.
+  Plätze tauschen, freie Tische zuweisen und Tische bearbeiten geht nur am Mac oder iPad.
 Noten: Halbjahr und Quartal ergeben sich aus dem Datum (bei mehreren Halbjahren oben umschaltbar). Gezeigt wird die
   Quartalsübersicht als eine Karte pro Person, alphabetisch. Oben: „1. Quartal“ (blendet das 1. Quartal bei allen
   Karten ein/aus) und Aus / Schraffiert / Rahmen (Darstellung der Tendenzen),
@@ -1102,3 +1103,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.26: Hilfe: „Erfunden von Torsten Gruber“ – im Kopf des Hilfefensters und als Eintrag „Über den Classroom-Manager“
 
 8.27: Hilfe: Erfinder-Hinweis nur noch unter „Gut zu wissen“ → „Über den Classroom-Manager“
+
+8.28: iPhone-Unterricht: Plätze lassen sich nicht mehr verschieben/tauschen und freie Tische nicht zuweisen – nur noch bewerten

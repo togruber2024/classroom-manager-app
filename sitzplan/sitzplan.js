@@ -2366,12 +2366,13 @@ document.addEventListener('pointerdown',event=>{
  const cell=event.target.closest('.room-grid .cell');if(!cell||document.getElementById('classroomEditRoom')?.checked||event.button!==0||event.isPrimary===false)return;
  // In lesson mode an empty field must not start the table painting tool.
  event.preventDefault();event.stopImmediatePropagation();
- const r=Number(cell.dataset.row),c=Number(cell.dataset.col),name=gridData[r]?.[c];if(name==='X'){classroomSeatAssignmentMode=false;classroomAssignEmptySeat(r,c);const button=document.querySelector('[data-assign-student]');if(button){button.textContent='Schüler zuweisen';button.setAttribute('aria-pressed','false')}return}if(!name||name==='PULT')return;
+ const r=Number(cell.dataset.row),c=Number(cell.dataset.col),name=gridData[r]?.[c];/* 8.28: iPhone – Sitzplan nur zum Bewerten: freie Tische nicht zuweisen */if(name==='X'&&document.documentElement.classList.contains('ph-lite'))return;if(name==='X'){classroomSeatAssignmentMode=false;classroomAssignEmptySeat(r,c);const button=document.querySelector('[data-assign-student]');if(button){button.textContent='Schüler zuweisen';button.setAttribute('aria-pressed','false')}return}if(!name||name==='PULT')return;
  classroomClearSeatDrag();classroomSeatDrag={id:event.pointerId,source:cell,r,c,name,className:aktuelleKlasse,startX:event.clientX,startY:event.clientY,moved:false,target:null,ghost:null};
  try{cell.setPointerCapture(event.pointerId)}catch{}
 },true);
 document.addEventListener('pointermove',event=>{
  const state=classroomSeatDrag;if(!state||event.pointerId!==state.id)return;
+ /* 8.28: iPhone – keine Plätze tauschen/verschieben */if(document.documentElement.classList.contains('ph-lite')){if(Math.hypot(event.clientX-state.startX,event.clientY-state.startY)>=8)state.lite=true;return}
  if(!state.moved&&Math.hypot(event.clientX-state.startX,event.clientY-state.startY)<8)return;
  event.preventDefault();event.stopImmediatePropagation();
  if(!state.moved){state.moved=true;state.source.classList.add('classroom-drag-source');document.body.classList.add('classroom-dragging');const ghost=document.createElement('div');ghost.className='classroom-drag-ghost';ghost.textContent=sitzplatzKurzname(state.name);ghost.setAttribute('aria-hidden','true');const rect=state.source.getBoundingClientRect();ghost.style.width=rect.width+'px';ghost.style.height=rect.height+'px';document.body.append(ghost);state.ghost=ghost;}
@@ -2384,6 +2385,7 @@ document.addEventListener('pointerup',event=>{
  event.preventDefault();event.stopImmediatePropagation();
  const target=classroomDragCell(event),valid=classroomSeatDropValid(target,state);classroomClearSeatDrag();
  if(state.className!==aktuelleKlasse||gridData[state.r]?.[state.c]!==state.name)return;
+ if(state.lite)return;
  if(!state.moved){if(target===state.source){if(zufallsAuswahl?.r===state.r&&zufallsAuswahl?.c===state.c){zufallsAuswahl=null;const status=document.getElementById('randomStudentStatus');if(status)status.textContent='';if(typeof quickClose==='function')quickClose();initGrid()}else classroomOpenStudent(state.name,{x:event.clientX,y:event.clientY})}return}
  if(!valid){if(target&&target!==state.source)setzeBelegungsstatus('Bitte einen vorhandenen Sitzplatz als Ziel wählen. Freie Plätze kannst du unter „Sitzplanmodus“ ergänzen.',false);return}
  const r=Number(target.dataset.row),c=Number(target.dataset.col),other=gridData[r][c];
