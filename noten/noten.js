@@ -4565,11 +4565,15 @@ return}
    Die gespeicherte Auswahl bleibt erhalten und gilt wieder, sobald es Zwischenwerte gibt. Nur Anzeige, ändert keine Daten. */
 (()=>{
  const TIP='Erst möglich, wenn es Zwischenwerte gibt';
+ const redrawn={};
  function guard(){if(typeof taskPageData!=='function'||typeof formatTaskMean!=='function')return;
   for(const pn of document.querySelectorAll('[data-custom-panel]')){const segs=[...pn.querySelectorAll('.mean-seg:not(.ov-mean-seg)')].filter(x=>x.querySelector(':scope>[data-mean-display],:scope>[data-result-rounded]'));if(!segs.length)continue;const key=pn.dataset.customPanel;let data,system;
    try{data=taskPageData(currentSubject,key);system=taskGradeSystem(currentSubject,key)}catch{continue}if(!data?.students)continue;
    let vals=[];try{vals=data.students.map(st=>taskStudentResult(data,st,system==='participation')).filter(v=>v!==null&&v!==undefined&&Number.isFinite(Number(v)))}catch{continue}
    const f=d=>v=>{try{return String(formatTaskMean(v,system,{...data,...d}))}catch{return ''}};
+   /* 8.47: Ergebnisspalte veraltet (z. B. nach dem Ausschalten der Tendenzen in den Notengrenzen)? Dann die Seite neu zeichnen. */
+   try{const rows=[...pn.querySelectorAll('.task-table tbody tr')];let stale=false;data.students.forEach((st,i)=>{if(stale)return;const chip=rows[i]?.querySelector('.task-end-grade');if(!chip)return;const r=taskStudentResult(data,st,system==='participation');const want=r===null?'—':String(formatTaskMean(r,system,data));if(chip.textContent.trim()!==want.trim())stale=true});
+    if(stale){const sig=currentSubject+'|'+JSON.stringify(vals)+'|'+(data.meanDisplay||'')+'|'+!!data.resultRounded;if(redrawn[key]!==sig&&typeof renderTasksPage==='function'){redrawn[key]=sig;setTimeout(()=>{try{renderTasksPage(currentSubject,key)}catch(e){console.error(e)}},0)}}}catch{}
    for(const seg of segs){const upper=!!seg.querySelector('[data-result-rounded]');const a=upper?f({resultRounded:false}):f({meanDisplay:'decimal'}),b=upper?f({resultRounded:true}):f({meanDisplay:'rounded'});
     const lock=vals.length>0&&vals.every(v=>a(v)===b(v));
     for(const btn of seg.querySelectorAll(':scope>[data-mean-display],:scope>[data-result-rounded]')){const isRound=upper?btn.dataset.resultRounded==='1':btn.dataset.meanDisplay==='rounded';
