@@ -2947,12 +2947,17 @@ document.addEventListener('keydown',event=>{
    const wanted=['.previous-quarter-toggle','.task-participation-display','.task-tendency-toggle'].map(s=>title.querySelector(s)).filter(Boolean);
    /* Umschalter-Segmente (seg-toggle) sitzen direkt bei ihrem Schalter und zählen hier nicht mit – sonst schieben sich die Skripte gegenseitig endlos hin und her. */let ok=true,node=hatch;for(let i=wanted.length-1;i>=0;i--){node=node.previousElementSibling;while(node&&node.matches('.seg-toggle,.hatch-seg'))node=node.previousElementSibling;if(node!==wanted[i]){ok=false;break}}
    if(!ok)for(const el of wanted)hatch.before(el)}
-  // Schalter nur zeigen, wenn auf der Seite etwas schraffiert ist (z. B. nicht bei Tests mit Bewertungszeichen).
+  // Schalter auf Seiten mit Noten immer zeigen; ohne Schraffur-Werte ausgegraut (8.45).
   for(const label of document.querySelectorAll('[data-hatching-toggle]')){const scope=label.closest('[data-custom-panel]')||label.closest('section,.panel,.card')||label.parentElement?.parentElement;if(!scope)continue;
    let any=!!scope.querySelector('.classroom-unstriped,.grade-four-fail,[class*=participation-between-]');
    if(!any)for(const el of scope.querySelectorAll('td span,td input,td select,td button,.cell,.classroom-rating-choice')){if(getComputedStyle(el).backgroundImage.includes('gradient')){any=true;break}}
-   if(label.hidden===any)label.hidden=!any}
+   /* 8.45: Auf Seiten mit Noten bleibt der Schalter immer sichtbar (einheitliche Kopfzeile); ohne Schraffur-Werte ist er nur ausgegraut.
+      Seiten ohne Noten (Hausaufgaben, Material) zeigen ihn nicht. */
+   let hw=!!scope.querySelector('[data-homework-status]');try{const k=scope.dataset?.customPanel;if(k&&typeof customPagesFor==='function'&&typeof currentSubject!=='undefined'&&customPagesFor(currentSubject).some(pg=>pg.key===k&&pg.system==='homework'))hw=true}catch{}const gradePage=!hw;const hide=!gradePage;if(label.hidden!==hide)label.hidden=hide;
+   const none=gradePage&&!any;if((label.dataset.hatchNone==='1')!==none){if(none)label.dataset.hatchNone='1';else delete label.dataset.hatchNone}}
   try{window.classroomHatchSegPlace?.()}catch(e){console.error(e)}
+  for(const label of document.querySelectorAll('[data-hatching-toggle]')){const seg=label.previousElementSibling;if(!seg?.classList.contains('hatch-seg'))continue;const none=label.dataset.hatchNone==='1';
+   for(const b of seg.querySelectorAll('[data-hatch]')){if(b.disabled!==none){b.disabled=none;if(none){b.dataset.tipOrig=b.title;b.title='Erst möglich, wenn es Tendenzen oder eine 4 gibt'}else if(b.dataset.tipOrig!==undefined){b.title=b.dataset.tipOrig;delete b.dataset.tipOrig}}}}
   }catch(e){console.error(e)}finally{observer.observe(document.body,{childList:true,subtree:true})}
  }
  const observer=new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;apply()})});
