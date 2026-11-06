@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.21
+Stand: 06.11.2026 · Version 8.22
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1090,3 +1090,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.20: iPhone-Karten: Hinweise kürzer („3× HA fehlend“, „Ohne mündliche Note“; bei mehreren „3× HA“, „ohne MM“), damit sie neben „1. Quartal“ in die erste Zeile passen
 
 8.21: Datenschutzmodus: bei jedem Einschalten neue, zufällig gemischte Farben (vorher blieben sie im Sitzplan durch die Farbgestaltung eingefroren und wiederholten sich)
+
+8.22: iPhone: App-Name, Version und Untertitel oben im Hilfefenster

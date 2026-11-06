@@ -1692,7 +1692,7 @@ window.addEventListener('message',event=>{
  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
  // Esc: zuerst die Suche leeren, beim zweiten Mal schließen.
  dialog.addEventListener('keydown',e=>{if(e.key!=='Escape')return;e.preventDefault();if(search.value){search.value='';renderChapter(active)}else dialog.close()});
- function openHelp(){{const v=document.querySelector('[data-app-version]')?.textContent?.trim();const hv=dialog.querySelector('.help-version');if(hv)hv.textContent=v?'Version '+v:''}const view=document.querySelector('[data-view][aria-selected="true"]')?.dataset.view;search.value='';renderChapter(view==='noten'?'noten':view==='sitzplan'?'sitzplan':'start');dialog.showModal();content.focus()}
+ function openHelp(){{const v=document.querySelector('[data-app-version]')?.textContent?.trim();const hv=dialog.querySelector('.help-version');if(hv)hv.textContent=v?'Version '+v:''}{/* 8.22: iPhone – App-Name, Version und Untertitel oben im Hilfefenster (die Kopfzeile zeigt sie dort nicht) */const head=dialog.querySelector('.help-head');let br=head?.querySelector('.help-brand');if(head&&!br){br=document.createElement('div');br.className='help-brand';const img=document.querySelector('.app-header .brand-mark img');br.innerHTML=(img?'<img alt="" src="'+img.getAttribute('src')+'">':'')+'<div><b>Classroom-Manager <span data-app-version-copy data-app-version-help></span></b><small></small></div>';head.prepend(br)}if(br){const v=(document.querySelector('.app-header [data-app-version]')||document.querySelector('[data-app-version]'))?.textContent?.trim().replace(',','.')||'';br.querySelector('b span').textContent=v;br.querySelector('small').textContent=document.querySelector('.app-header .brand p')?.textContent||'Die lokale Unterrichts- & Notenverwaltung'}}const view=document.querySelector('[data-view][aria-selected="true"]')?.dataset.view;search.value='';renderChapter(view==='noten'?'noten':view==='sitzplan'?'sitzplan':'start');dialog.showModal();content.focus()}
  window.classroomOpenHelp=openHelp;
  const button=document.createElement('button');button.type='button';button.className='classroom-help-button';button.textContent='?';button.title='Hilfe';button.setAttribute('aria-label','Hilfe öffnen');button.onclick=openHelp;
  function place(){const actions=document.querySelector('.classroom-global-actions');if(actions&&actions.firstElementChild!==button)actions.prepend(button);square()}
@@ -1723,6 +1723,8 @@ window.addEventListener('message',event=>{
   +'@media screen and (max-width:540px) and (orientation:portrait){.app-header .classroom-global-actions>.classroom-help-button{width:100%}}';
  document.head.append(style);
 })();
+/* 8.22: App-Name im Hilfefenster nur auf dem iPhone */
+(()=>{const st=document.createElement('style');st.textContent=".help-brand{display:none}@media (max-width:540px) and (orientation:portrait),(max-height:500px) and (orientation:landscape) and (pointer:coarse){.help-brand{display:flex;align-items:center;gap:10px;width:100%;margin:0 0 2px}.help-brand img{width:36px;height:36px;border-radius:9px;flex:none}.help-brand b{display:block;font-size:17px;color:#1e293b}.help-brand b span{font-weight:500;color:#8794a7;font-size:14px}.help-brand small{display:block;font-size:12.5px;color:#66758a}.help-head .help-version{display:none}}";document.head.append(st)})();
 ;
 
 /* ==== global-undo.js ==== */
@@ -2040,7 +2042,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
 /* ==== decimal-display.js ==== */
 // Localize plain displayed decimal values without changing stored numbers or inputs.
 (()=>{
- function scan(root){if(!root||root.nodeType!==1)return;const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(node.parentElement.closest('script,style,textarea,input,[contenteditable=true],[data-app-version]'))continue;const value=node.textContent;if(/^\s*[+−-]?\d+\.\d+\s*(?:%|Punkte)?\s*$/.test(value))node.textContent=value.replace(/(\d)\.(\d)/,'$1,$2')}}
+ function scan(root){if(!root||root.nodeType!==1)return;const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(node.parentElement.closest('script,style,textarea,input,[contenteditable=true],[data-app-version],[data-app-version-copy]'))continue;const value=node.textContent;if(/^\s*[+−-]?\d+\.\d+\s*(?:%|Punkte)?\s*$/.test(value))node.textContent=value.replace(/(\d)\.(\d)/,'$1,$2')}}
  const observer=new MutationObserver(records=>{observer.disconnect();for(const r of records){if(r.type==='characterData')scan(r.target.parentElement);else for(const node of r.addedNodes)scan(node.nodeType===1?node:node.parentElement)}watch()});function watch(){observer.observe(document.body,{childList:true,subtree:true,characterData:true})}scan(document.body);watch();
 })();
 ;
