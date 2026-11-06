@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.13
+Stand: 06.11.2026 · Version 8.14
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1071,3 +1071,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.12: iPhone-Karten: oben links Dezimal/Tendenz/Gerundet, rechts Schraffur-Schalter; darunter „1. Quartal“ links und die HA-Hinweise rechts
 
 8.13: iPhone-Karten: Schalter getauscht (links Schraffur, rechts Dezimal/Tendenz/Gerundet); bei Tests nur das Datum; Klassenarbeit mit Datum unter der Note
+
+8.14: iPhone-Karten: oben „1. Quartal“ (runde Pille) und HA-Hinweise, darunter die beiden Dreifachschalter
