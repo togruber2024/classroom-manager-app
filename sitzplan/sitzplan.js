@@ -2605,11 +2605,11 @@ document.addEventListener('keydown',event=>{
    const vis=cells.filter(c=>c.style.display!=='none'),R=new Map(),C=new Map();
    for(const c of vis){const r=parseInt(c.style.gridRow,10),k=parseInt(c.style.gridColumn,10),full=!!gridData[Number(c.dataset.row)]?.[Number(c.dataset.col)];if(!R.has(r))R.set(r,false);if(!C.has(k))C.set(k,false);if(full){R.set(r,true);C.set(k,true)}}
    const rowsN=R.size,colsN=C.size,eR=[...R.values()].filter(v=>!v).length,eC=[...C.values()].filter(v=>!v).length;
-   const top=scroll.getBoundingClientRect().top+window.scrollY,availH=Math.max(120,window.innerHeight-top-14);let availW=Math.max(100,scroll.clientWidth-14);/* 8.57: Platz für die „2/3“-Plaketten am rechten Rand */
-   const W=(colW)=>hw()+[...C.values()].reduce((a,v)=>a+(v?75:colW)+5,0),H=(rowH,emptyH)=>hh()+[...R.values()].reduce((a,v)=>a+(v?rowH:emptyH)+5,0);
+   const top=scroll.getBoundingClientRect().top+window.scrollY,availH=Math.max(120,window.innerHeight-top-14);let availW=Math.max(100,scroll.clientWidth);/* 8.64: bündig mit den Knöpfen – Plaketten dürfen überstehen (overflow sichtbar) */
+   const W=(colW)=>hw()+[...C.values()].reduce((a,v)=>a+(v?75:colW)+5,0)-(hw()?0:5),H=(rowH,emptyH)=>hh()+[...R.values()].reduce((a,v)=>a+(v?rowH:emptyH)+5,0);
    /* 8.59: iPhone quer – begrenzt die Breite den Plan, werden Datum/Perspektive zu kleinen Knöpfen (Symbol + H/G bzw. P). Entscheidung aus der Gesamtbreite (Plan + Knöpfe) – kein Hin- und Herspringen. */
    const bar=grid.previousElementSibling?.classList.contains('pl-seatbar')?grid.previousElementSibling:null,landscape=PLQ.matches;
-   if(bar&&landscape&&bar.offsetParent){const cur=bar.getBoundingClientRect().width,compact=bar.classList.contains('pl-compact');if(!compact&&cur>40)fullBarW=cur;const base=scroll.clientWidth-14+cur,wFull=base-(fullBarW||150),wComp=base-52;
+   if(bar&&landscape&&bar.offsetParent){const cur=bar.getBoundingClientRect().width,compact=bar.classList.contains('pl-compact');if(!compact&&cur>40)fullBarW=cur;const base=scroll.clientWidth+cur,wFull=base-(fullBarW||150),wComp=base-52;
     const hFit=Math.min(1,availH/H(45,eR?10:45)),want=wFull/W(75)<hFit-.01;if(want!==compact)bar.classList.toggle('pl-compact',want);availW=Math.max(100,want?wComp:wFull)}
    else if(bar?.classList.contains('pl-compact'))bar.classList.remove('pl-compact');
    const plain=Math.min(1,availW/W(75));
@@ -2630,7 +2630,7 @@ document.addEventListener('keydown',event=>{
      d.height=hh()+[...cur.values()].reduce((a,h)=>a+h+5,0);board.style.height=d.height+'px'}}
   }else{const b=grid.previousElementSibling;if(b?.classList.contains('pl-compact'))b.classList.remove('pl-compact')}
   if(liteScale!==null){scale=liteScale}else if(auto){/* 100 %, außer der Plan passt nicht vollständig auf den Bildschirm – dann einpassen (Breite und Höhe). */const fitW=scroll.clientWidth/d.width,top=scroll.getBoundingClientRect().top+window.scrollY,availH=window.innerHeight-top-70,fitH=mobileDevice&&availH>160?availH/d.height:1;/* Höhe nur auf iPad/iPhone berücksichtigen – am Mac zählt nur die Breite. */scale=Math.max(min,Math.min(1,fitW,Math.max(.55,fitH)))}else if(fit)scale=Math.max(min,Math.min(max,scroll.clientWidth/d.width));
-  board.style.transform=`scale(${scale})`;viewport.style.width=d.width*scale+'px';viewport.style.height=d.height*scale+'px';
+  board.style.transform=liteScale!==null&&!hw()?`scale(${scale}) translateX(-5px)`:`scale(${scale})`;/* 8.64: iPhone – linke Tischkante bündig (leere Kopfspalte hat 5 px Abstand) */viewport.style.width=d.width*scale+'px';viewport.style.height=d.height*scale+'px';
   // Gruppenlegende endet bündig mit dem rechten Rand des Sitzplans.
   const legend=grid.querySelector(':scope > .main-group-legend');if(legend){const w=Math.round(d.width*scale);for(const [k,v] of [['width',w+'px'],['max-width','100%'],['justify-self','start'],['align-self','flex-start'],['justify-content','flex-end'],['box-sizing','border-box'],['margin-left','0'],['margin-right','0'],['padding-right','0']])legend.style.setProperty(k,v,'important')}
   slider.value=String(Math.round(scale*100));output.textContent=Math.round(scale*100)+' %';controls.querySelector('[data-zoom-minus]').disabled=scale<=min;controls.querySelector('[data-zoom-plus]').disabled=scale>=max;controls.querySelector('[data-zoom-fit]').setAttribute('aria-pressed',String(fit));
@@ -3548,6 +3548,8 @@ document.addEventListener('keydown',event=>{
 (()=>{const st=document.createElement('style');const X='html.ph-lite .grid-container>.pl-seatbar.pl-compact>:is(.pl-date,.pl-rotate):not(#_):not(#__):not(#___)';st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){'+X+'{width:52px!important;min-width:52px!important;padding:0!important;gap:0!important;justify-content:center!important;font-size:0!important}'+X+'>.pl-date-text{display:none!important}'+X+'>.pl-chev{font-size:11px!important;color:inherit!important;margin-left:5px!important}'+X+'>span[aria-hidden]{font-size:15px!important;margin-right:5px!important}'+X+':is(.pl-date)::before,'+X+':is(.pl-rotate)::after{content:attr(data-short);font-size:15px;font-weight:600;line-height:1}}';document.head.append(st)})();
 /* 8.63: iPhone quer – oberste Tischreihe auf Höhe des Datumsknopfs (weniger Rand oben). */
 (()=>{const st=document.createElement('style');st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){html.ph-lite .grid-container:has(>.pl-seatbar)>#roomGrid:not(#_):not(#__){margin-top:-5px!important}}';document.head.append(st)})();
+/* 8.64: iPhone – Tische bündig mit den Knöpfen; „2/3“-Plaketten am Rand dürfen überstehen. */
+(()=>{const st=document.createElement('style');st.textContent='html.ph-lite #roomGrid .classroom-plan-scroll:not(#_){overflow:visible!important}';document.head.append(st)})();
 ;
 
 /* ==== no-contacts.js ==== */
