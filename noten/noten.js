@@ -4146,7 +4146,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function weight(panel,sel){const i=panel.querySelector(sel);const v=i?Number(i.value):NaN;return i&&i.value!==''&&Number.isFinite(v)?v:null}
  /* Datum je Klassenarbeit/Klausur (Name der Gruppe → frühestes Aufgaben-Datum), für das Kästchen */
  function examDateMap(){const out={};try{for(const g of subjectExamGroups(currentSubject))if(g.halfYearId===currentHalfYearId&&!['performance','homework','tests','halfYear','semester','schoolYear','quarterSummary'].includes(g.type)){const ds=(g.pages||[]).flatMap(k=>(customPageValues(currentSubject,k)?.tasks||[]).map(t=>t.date)).filter(d=>/^\d{4}-\d\d-\d\d$/.test(d||'')).sort();const d=g.date&&/^\d{4}-\d\d-\d\d$/.test(g.date)?g.date:ds[0];if(d)out[g.label]=d.slice(8,10)+'.'+d.slice(5,7)+'.'}}catch{}return out}
- function tiles(list,kind){const r=document.createElement('div');r.className='qs-seq'+(kind?' qs-seq-'+kind:'');for(const m of list){const c=document.createElement('span');c.className='qs-sq'+(kind?' qs-'+kind:'')+(m.prev?' qs-prev':'');const i=document.createElement('i');i.textContent=m.text;i.className=(/^a$/i.test(m.text)||!m.cls)?'qs-abs':m.cls;const d=document.createElement('small');d.textContent=m.date||'';c.append(i,d);r.append(c)}return r}
+ /* Namen der Tests je Datum (für das Detailblatt) */
+ function testNames(){const out={};try{for(const g of subjectExamGroups(currentSubject))if(g.type==='tests'&&g.halfYearId===currentHalfYearId)for(const k of g.pages||[])for(const t of customPageValues(currentSubject,k)?.tasks||[]){if(!/^\d{4}-\d\d-\d\d$/.test(t.date||'')||!t.name)continue;const d=t.date.slice(8,10)+'.'+t.date.slice(5,7)+'.';out[d]=out[d]?out[d]+' / '+t.name:t.name}}catch{}return out}
+ function tiles(list,kind){const r=document.createElement('div');r.className='qs-seq'+(kind?' qs-seq-'+kind:'');for(const m of list){const c=document.createElement('span');c.className='qs-sq'+(kind?' qs-'+kind:'')+(m.prev?' qs-prev':'');const i=document.createElement('i');i.textContent=m.text;i.className=(/^a$/i.test(m.text)||!m.cls)?'qs-abs':m.cls;const d=document.createElement('small');d.textContent=m.date||'';c.append(i,d);if(m.name){const nm=document.createElement('small');nm.className='qs-nm';nm.textContent=m.name;c.title=m.name;c.append(nm)}r.append(c)}return r}
  /* Variante A (7.91): ein Abschnitt je Bereich – Überschrift mit Anteil und Ø rechts, darunter alle Einzelnoten als Kästchen mit Datum (keine schmalen Balken) */
  function sect(label,pct,it,list,lvl,o={}){if(o.pct!=null)pct=o.pct;const w=document.createElement('div');w.className='qs-sect'+(lvl?' qs-lvl'+lvl:'');const h=document.createElement('div');h.className='qs-sh';if(it?.click){h.classList.add('qs-mail');h.onclick=it.click}
   const l=document.createElement('span');l.className='qs-sh-l';const t=document.createElement('span');t.textContent=label;l.append(t);if(pct!=null){const c=document.createElement('span');c.className='qs-w';c.textContent=fmtPct(pct)+' %';l.append(c)}if(o.tag){const c=document.createElement('span');c.className='qs-w qs-hj';c.textContent=o.tag;l.append(c)}
@@ -4177,7 +4179,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    if(exams.length===1)box.append(sect(ka(exams[0]),we,exams[0],kaTile(exams[0]),0,{kind:'ka'}));else if(exams.length){box.append(caption('Klausuren',we,0));for(const e of exams)box.append(sect(ka(e),null,e,kaTile(e),1,{kind:'ka'}))}
   }else{
    const fw=exams.length===1?finalWeights():null;/* 7.99: Anteile von Mündlich/Tests auf die Gesamtnote umrechnen (z. B. 80 % von 50 % = 40 %) */if(fw&&other){if(wm!=null)wm=wm*fw.other/100;if(wt!=null)wt=wt*fw.other/100}if(other)box.append(barRow(other,fw?fw.other:null,0));/* Bestandteile der Sonstigen Mitarbeit leicht eingerückt mit senkrechtem Strich */const sub=document.createElement('div');sub.className='qs-sub';if(mm||prev.mm?.length)sub.append(sect('Mündliche Mitarbeit',wm,mm,mmList,0,{avg:1,prev:prev.mm}));if(tests||prev.tests?.length)sub.append(sect('Tests',wt,tests,testList,0,{avg:1,kind:'t',prev:prev.tests}));if(sub.childElementCount){if(!other)sub.className='qs-sub-flat';box.append(sub)}
-   /* Klassenarbeit ganz unten in der Karte (nach HA/Material) */for(const e of exams)tail.push(sect(ka(e),null,e,[{text:e.text,cls:e.cls,date:examDates[e.head]||''}].filter(x=>x.text&&x.text!=='—'),0,{kind:'ka',pct:fw?fw.exams:null}))
+   /* Klassenarbeit ganz unten in der Karte (nach HA/Material) */for(const e of exams)tail.push(sect(ka(e),null,e,[{text:e.text,cls:e.cls,date:examDates[e.head]||'',name:ka(e)!==e.head?e.head:''}].filter(x=>x.text&&x.text!=='—'),0,{kind:'ka',pct:fw?fw.exams:null}))
   }
   for(const it of items)box.append(barRow(it,null,0));
  }
@@ -4229,7 +4231,6 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   pnl.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,ddy=e.changedTouches[0].clientY-y0;x0=null;pnl.style.transition='transform .18s ease';
    if(down&&ddy>90&&ddy>Math.abs(dx)){pnl.style.transform='translateY(100%)';setTimeout(()=>{closeDetail();pnl.style.transition='none';pnl.style.transform=''},180);return}
    pnl.style.transform='';if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(ddy)*1.5)step(dx<0?1:-1)},{passive:true})}
- const groupName=p=>({MM:'Mündliche Mitarbeit',HA:'Hausaufgaben',Material:'Material'}[p]||p);
  function openDetail(panel,name){detail={panel,name};renderDetail();sheet.hidden=false;sheet.querySelector('.qd-body').scrollTop=0}
  function renderDetail(){
   if(!detail)return;const table=detail.panel.querySelector('table');if(!table||!detail.panel.isConnected){closeDetail();return}
@@ -4237,26 +4238,17 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const heads=[...table.tHead.rows[0].cells].map(c=>c.textContent.replace(/\s+/g,' ').trim()),cells=[...rows[i].cells];
   sheet.querySelector('.qd-title b').textContent=detail.name;sheet.querySelector('.qd-title small').textContent=(i+1)+' von '+rows.length;
   sheet.querySelector('[data-d="-1"]').disabled=i===0;sheet.querySelector('[data-d="1"]').disabled=i===rows.length-1;
-  const groups=new Map(),overview=[],prev={items:[],rows:[]},edits=document.createElement('div');edits.className='qs-edits qd-edits';
-  const val=cell=>{const src=cell.querySelector('span');return {text:(src||cell).textContent.trim(),cls:src?.className||'',src}};
-  cells.forEach((cell,k)=>{if(!k)return;
-   if(cell.classList.contains('previous-quarter-history-cell')){if(cell.querySelector('input'))return;const h=heads[k].replace(/^Q1 · /,''),v=val(cell);if(!v.text||v.text==='—')return;const mm=/^(.+?) · (\d\d\.\d\d\.\d{4})$/.exec(h);if(mm)prev.items.push([mm[1]+' '+mm[2].slice(0,6),v]);else prev.rows.push([h.replace(/ · Mittelwert$/,' Ø').replace(/ · Fehlend$/,' – fehlend'),v]);return}
-   const head=heads[k],m=/^(.+?) · (.+)$/.exec(head);
-   if(cell.classList.contains('quarter-summary-edit-cell')){const orig=cell.querySelector('input');if(orig)edits.append(editProxy(orig,head.replace(/ · Q\d$/,''),()=>setTimeout(renderDetail,0)));return}
-   const v=val(cell);
-   if(cell.classList.contains('quarter-summary-average')){if(m&&/Mittelwert/i.test(m[2])){const g=groups.get(m[1])||{items:[]};g.avg=v;groups.set(m[1],g)}else overview.push([head.replace(/ · Fehlend$/,' – fehlend'),v]);return}
-   const key=m?m[1]:head,g=groups.get(key)||{items:[]};if(v.text&&v.text!=='—')g.items.push([m?m[2]:'',v]);else g.empty=(g.empty||0)+1;groups.set(key,g)});
+  /* 8.06: Detailblatt im selben Aufbau wie die Karte (Abschnitte, Werte rechts, 1. Quartal immer eingeblendet), nur größer;
+     dazu Notiz oben und bei Tests/Klassenarbeit der Name unter dem Datum. Selbsteinschätzung und Quartalsnote unten zum Eintragen. */
+  const edits=document.createElement('div');edits.className='qs-edits qd-edits';
+  cells.forEach((cell,k)=>{if(!k||!cell.classList.contains('quarter-summary-edit-cell')||cell.classList.contains('previous-quarter-history-cell'))return;const orig=cell.querySelector('input');if(orig)edits.append(editProxy(orig,heads[k].replace(/ · Q\d$/,''),()=>setTimeout(renderDetail,0)))});
   const body=sheet.querySelector('.qd-body');body.replaceChildren();
-  /* 8.01: Notiz zur Person (wird mit dem Backup übertragen und erscheint am Mac in der Quartalsübersicht) */
   if(window.classroomStudentNotes){const nb=document.createElement('label');nb.className='qd-note';const ns=document.createElement('span');ns.textContent='Notiz';const ta=document.createElement('textarea');ta.rows=2;ta.maxLength=500;ta.placeholder='z. B. Elterngespräch, Nachschreibtermin …';ta.value=classroomStudentNotes.get(detail.name);const who=detail.name;ta.onchange=()=>{classroomStudentNotes.set(who,ta.value);schedule()};nb.append(ns,ta);body.append(nb)}
-  const chip=(v,alert)=>{const e=document.createElement('i');e.className='qd-val '+(v.cls||'');e.textContent=v.text||'—';if(alert)e.classList.add('qd-alert');if(v.src?.dataset.parentMailPage){e.classList.add('qs-mail');e.title='Eltern-Mail vorbereiten';e.onclick=()=>v.src.click()}return e};
-  for(const [key,g] of groups){if(!g.items.length&&!g.avg)continue;const sec=document.createElement('div');sec.className='qd-sec';const h=document.createElement('h4');h.textContent=groupName(key);if(g.avg){const a=document.createElement('span');a.className='qd-avg';a.append('Ø ',chip(g.avg));h.append(a)}sec.append(h);
-   const list=document.createElement('div');list.className='qd-items';for(const [date,v] of g.items){const it=document.createElement('span');it.className='qd-item';it.append(chip(v));const d=document.createElement('small');d.textContent=date.replace(/^(\d\d\.\d\d\.)\d{4}$/,'$1');it.append(d);list.append(it)}
-   if(!g.items.length){const e=document.createElement('small');e.className='qd-none';e.textContent='Keine Einträge';list.append(e)}sec.append(list);body.append(sec)}
-  if(overview.length){const sec=document.createElement('div');sec.className='qd-sec qd-over';for(const [label,v] of overview){const r=document.createElement('div');r.className='qd-row';const l=document.createElement('span');l.textContent=label;r.append(l,chip(v,/fehlend/.test(label)&&Number(v.text.replace(',','.'))>=3));sec.append(r)}body.append(sec)}
-  if(prev.items.length||prev.rows.length){const sec=document.createElement('div');sec.className='qd-sec qd-prev';const h=document.createElement('h4');h.textContent='1. Quartal';sec.append(h);
-   if(prev.items.length){const list=document.createElement('div');list.className='qd-items';for(const [d,v] of prev.items){const it=document.createElement('span');it.className='qd-item';it.append(chip(v));const sm=document.createElement('small');sm.textContent=d;it.append(sm);list.append(it)}sec.append(list)}
-   for(const [label,v] of prev.rows){const r=document.createElement('div');r.className='qd-row';const l=document.createElement('span');l.textContent=label;r.append(l,chip(v));sec.append(r)}body.append(sec)}
+  const card=[...detail.panel.querySelectorAll('.qs-cards>.qs-card')].find(c=>c.querySelector('.qs-name')?.textContent.trim()===detail.name);
+  if(card){const wrap=document.createElement('div');wrap.className='qs-card q1-open qd-card';
+   const top=card.querySelector('.qs-top')?.cloneNode(true);if(top){top.querySelector('.qs-name')?.remove();const lab=document.createElement('span');lab.className='qd-qn';lab.textContent='Quartalsnote';top.prepend(lab);wrap.append(top)}
+   for(const part of card.querySelectorAll(':scope>.qs-bars,:scope>.qs-chips'))wrap.append(part.cloneNode(true));
+   body.append(wrap)}
   if(edits.childElementCount)body.append(edits);fixUnstriped(body);
  }
  let planned=false;
@@ -4312,13 +4304,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    const big=document.createElement('span');big.className='qs-big';top.append(nm,big);card.append(top);
    /* 8.01: Notiz unter dem Namen */const note=window.classroomStudentNotes?.get(name);if(note){const nt=document.createElement('div');nt.className='qs-note';nt.textContent=note;card.append(nt)}
    const chips=document.createElement('div');chips.className='qs-chips';const bars=document.createElement('div');bars.className='qs-bars';const items=[],mmList=[];const edits=document.createElement('div');edits.className='qs-edits';
-   let bigText='',bigCls='';const testList=[],examDates=examDateMap();
+   let bigText='',bigCls='';const testList=[],examDates=examDateMap(),tNames=testNames();
    const prevMm=[],prevTests=[];let prevQn='',prevQnCls='';
-   cells.forEach((cell,i)=>{if(i&&cell.classList.contains('previous-quarter-history-cell')){const h=heads[i].replace(/^Q1 · /,''),sp=cell.querySelector('span'),tx=(sp||cell).textContent.trim();const md=/^MM · (\d\d\.\d\d\.)\d{4}/.exec(h),td=/^Test · (\d\d\.\d\d\.)\d{4}/.exec(h);if(md||td){if(tx&&tx!=='—')(md?prevMm:prevTests).push({date:(md||td)[1],text:tx,cls:(sp?.className||'').replace(/\bprevious-quarter-value\b/g,'')})}else if(/^Quartalsnote/.test(h)){prevQn=tx&&tx!=='—'?tx:'';prevQnCls=(sp?.className||'').replace(/\bprevious-quarter-value\b/g,'')};return}
+   cells.forEach((cell,i)=>{if(i&&cell.classList.contains('previous-quarter-history-cell')){const h=heads[i].replace(/^Q1 · /,''),sp=cell.querySelector('span'),tx=(sp||cell).textContent.trim();const md=/^MM · (\d\d\.\d\d\.)\d{4}/.exec(h),td=/^Test · (\d\d\.\d\d\.)\d{4}/.exec(h);if(md||td){if(tx&&tx!=='—')(md?prevMm:prevTests).push({date:(md||td)[1],text:tx,cls:(sp?.className||'').replace(/\bprevious-quarter-value\b/g,''),name:td?tNames[td[1]]:''})}else if(/^Quartalsnote/.test(h)){prevQn=tx&&tx!=='—'?tx:'';prevQnCls=(sp?.className||'').replace(/\bprevious-quarter-value\b/g,'')};return}
     if(!i||cell.classList.contains('previous-quarter-history-cell'))return;const label=short(heads[i]);
     if(cell.classList.contains('quarter-summary-edit-cell')){const orig=cell.querySelector('input');if(!orig)return;
      edits.append(editProxy(orig,label,()=>{box.dataset.sig=''}));if(orig.value.trim()){bigText=orig.value;bigCls=orig.className}else{bigText='';bigCls=''}return}
-    if(!cell.classList.contains('quarter-summary-average')){const md=/^MM · (\d\d\.\d\d\.)\d{4}/.exec(heads[i]),td=/^Test · (\d\d\.\d\d\.)\d{4}/.exec(heads[i]);const sp=cell.querySelector('span'),tx=(sp||cell).textContent.trim();if(md||td){if(tx&&tx!=='—')(md?mmList:testList).push({date:(md||td)[1],text:tx,cls:sp?.className||''})}
+    if(!cell.classList.contains('quarter-summary-average')){const md=/^MM · (\d\d\.\d\d\.)\d{4}/.exec(heads[i]),td=/^Test · (\d\d\.\d\d\.)\d{4}/.exec(heads[i]);const sp=cell.querySelector('span'),tx=(sp||cell).textContent.trim();if(md||td){if(tx&&tx!=='—')(md?mmList:testList).push({date:(md||td)[1],text:tx,cls:sp?.className||'',name:td?tNames[td[1]]:''})}
 return}
     const src=cell.querySelector('span'),text=(src||cell).textContent.trim();
     const chip=document.createElement('span');chip.className='qs-chip';const k=document.createElement('small');k.textContent=label;const v=document.createElement('i');v.textContent=text||'—';if(src?.className)v.className=src.className;
@@ -4487,6 +4479,14 @@ return}
   ".qs-note{margin:4px 0 0;padding:5px 9px;border-radius:8px;background:#fff7e0;color:#7a5410;font-size:12.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
   ".qd-note{display:grid;gap:4px;margin:0 0 12px;font-size:12.5px;color:#66758a;font-weight:650}",
   ".qd-note textarea{box-sizing:border-box;width:100%;min-height:44px;padding:8px 10px;border:1px solid #cbd6e5;border-radius:10px;background:#fffdf6;color:#243247;font:inherit;font-size:16px;font-weight:400;resize:vertical}",
+  ".qs-nm{display:none}",
+  ".qd-card{border:0!important;box-shadow:none!important;padding:0!important;margin:0 0 6px!important;background:transparent!important}",
+  ".qd-card .qs-top{justify-content:flex-end}.qd-card .qd-qn{margin-right:auto;font-size:13px;color:#66758a;font-weight:650}",
+  ".qd-card .qs-sh{font-size:14px}.qd-card .qs-w{font-size:11.5px}",
+  ".qd-card .qs-sq i:not(#_){min-width:36px;height:30px;font-size:13.5px;border-radius:8px}.qd-card .qs-sq small{font-size:10.5px}",
+  ".qd-card .qs-row>.qs-val>:is(i,b):not(#_){height:30px;min-height:30px;min-width:44px;font-size:15px}.qd-card .qs-sh .qs-val>:is(i,b):not(#_){height:30px;min-width:44px;font-size:15px}",
+  ".qd-card .qs-nm{display:block;max-width:84px;margin-top:1px;color:#66758a;font-size:10px;line-height:1.2;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}",
+  ".qd-card .qs-seq{gap:6px}",
   ".qd-edits{border-top:0}",
   ".qd-prev{background:#f7f9fc;margin:6px -16px 0;padding:10px 16px}",
   ".qd-prev h4{color:#66758a}",
