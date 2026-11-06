@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.58
+Stand: 06.11.2026 · Version 8.59
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1135,3 +1135,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.56: iPhone quer: Tische ragen nicht mehr in die schmalen Gänge, Pult-Reihe nicht mehr abgeschnitten
 8.57: iPhone quer: Datum und „Perspektive“ untereinander rechts neben dem Plan (mehr Platz für den Sitzplan); hochkant: „2/3“-Plaketten am rechten Rand nicht mehr abgeschnitten
 8.58: iPhone: „Heute“ und „Perspektive“ gleich gestaltet (Höhe, Schrift, Farbe); ein anderer Tag bleibt orange
+8.59: iPhone quer – Sitzplan füllt die Höhe aus (Reihen bis 1,6-fach höher); Datum/Perspektive werden bei Platzmangel zu Kreisen (H/G, P)

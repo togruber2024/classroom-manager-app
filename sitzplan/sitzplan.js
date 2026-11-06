@@ -2556,7 +2556,7 @@ document.addEventListener('keydown',event=>{
  const mobileDevice=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Mac/i.test(navigator.platform)&&navigator.maxTouchPoints>1);
  // iPhone: ohne Spaltenbuchstaben und Reihennummern – mehr Platz für die Tische.
  const PH=matchMedia('(max-width:540px) and (orientation:portrait), (max-height:500px) and (pointer:coarse) and (orientation:landscape)'),hw=()=>PH.matches?0:35,hh=()=>PH.matches?0:45;
- let scale=1,fit=false,auto=true,rotated=false;// auto: Desktop und iPad quer 100 %, iPad/iPhone hochkant einpassen, falls 100 % zu groß
+ let scale=1,fit=false,auto=true,rotated=false,fullBarW=0;const PLQ=matchMedia('(max-height:500px) and (orientation:landscape) and (pointer:coarse)');// auto: Desktop und iPad quer 100 %, iPad/iPhone hochkant einpassen, falls 100 % zu groß
  const portrait=()=>mobileDevice&&matchMedia('(orientation: portrait)').matches;const min=.1,max=1.5;
  const controls=document.createElement('div');controls.className='classroom-plan-zoom';controls.setAttribute('role','group');controls.setAttribute('aria-label','Sitzplan vergrößern oder verkleinern');
  controls.innerHTML='<button type="button" data-zoom-minus aria-label="Sitzplan verkleinern">−</button><input type="range" min="10" max="150" step="5" value="100" aria-label="Zoom des Sitzplans"><output aria-live="polite">100 %</output><button type="button" data-zoom-plus aria-label="Sitzplan vergrößern">+</button><button type="button" data-zoom-fit>Einpassen</button><button type="button" data-zoom-reset>100 %</button>';
@@ -2605,8 +2605,13 @@ document.addEventListener('keydown',event=>{
    const vis=cells.filter(c=>c.style.display!=='none'),R=new Map(),C=new Map();
    for(const c of vis){const r=parseInt(c.style.gridRow,10),k=parseInt(c.style.gridColumn,10),full=!!gridData[Number(c.dataset.row)]?.[Number(c.dataset.col)];if(!R.has(r))R.set(r,false);if(!C.has(k))C.set(k,false);if(full){R.set(r,true);C.set(k,true)}}
    const rowsN=R.size,colsN=C.size,eR=[...R.values()].filter(v=>!v).length,eC=[...C.values()].filter(v=>!v).length;
-   const top=scroll.getBoundingClientRect().top+window.scrollY,availH=Math.max(120,window.innerHeight-top-14),availW=Math.max(100,scroll.clientWidth-14);/* 8.57: Platz für die „2/3“-Plaketten am rechten Rand */
+   const top=scroll.getBoundingClientRect().top+window.scrollY,availH=Math.max(120,window.innerHeight-top-14);let availW=Math.max(100,scroll.clientWidth-14);/* 8.57: Platz für die „2/3“-Plaketten am rechten Rand */
    const W=(colW)=>hw()+[...C.values()].reduce((a,v)=>a+(v?75:colW)+5,0),H=(rowH,emptyH)=>hh()+[...R.values()].reduce((a,v)=>a+(v?rowH:emptyH)+5,0);
+   /* 8.59: iPhone quer – begrenzt die Breite den Plan, werden Datum/Perspektive zu Kreisen. Entscheidung aus der Gesamtbreite (Plan + Knöpfe) – kein Hin- und Herspringen. */
+   const bar=grid.previousElementSibling?.classList.contains('pl-seatbar')?grid.previousElementSibling:null,landscape=PLQ.matches;
+   if(bar&&landscape&&bar.offsetParent){const cur=bar.getBoundingClientRect().width,compact=bar.classList.contains('pl-compact');if(!compact&&cur>40)fullBarW=cur;const base=scroll.clientWidth-14+cur,wFull=base-(fullBarW||150),wComp=base-36;
+    const hFit=Math.min(1,availH/H(45,eR?10:45)),want=wFull/W(75)<hFit-.01;if(want!==compact)bar.classList.toggle('pl-compact',want);availW=Math.max(100,want?wComp:wFull)}
+   else if(bar?.classList.contains('pl-compact'))bar.classList.remove('pl-compact');
    const plain=Math.min(1,availW/W(75));
    if(H(45,45)*plain>availH+1&&(eR||rowsN)){
     const colW=eC?14:75,sw=Math.min(1,availW/W(colW));let rowH=45;
@@ -2617,7 +2622,13 @@ document.addEventListener('keydown',event=>{
     d.width=W(colW);d.height=H(rowH,10);board.style.width=d.width+'px';board.style.height=d.height+'px';
     liteScale=Math.max(.3,Math.min(1,availW/d.width,availH/d.height));
    }else liteScale=plain;
-  }
+   /* 8.59: iPhone quer – bleibt unten Platz, werden die Tischreihen höher (höchstens 1,6-fach), bis der Plan die Höhe ausfüllt. */
+   if(landscape){const rowsE=[...R.entries()].sort((a,b)=>a[0]-b[0]),cur=new Map();const tpl=board.style.gridTemplateRows.split(' ').slice(1);const compressed=tpl.length===rowsE.length&&!/repeat/.test(board.style.gridTemplateRows);
+    rowsE.forEach(([r],i)=>cur.set(r,compressed?parseFloat(tpl[i]):45));const grow=[...cur.values()].filter(h=>h>10).reduce((a,b)=>a+b,0),room=availH/liteScale-d.height;
+    if(grow>0&&room>2){const f=Math.min(1.6,1+room/grow);for(const [r,h] of cur)if(h>10)cur.set(r,h*f);board.style.gridTemplateRows=`${hh()}px ${rowsE.map(([r])=>cur.get(r)+'px').join(' ')}`;
+     for(const c of vis){const h=cur.get(parseInt(c.style.gridRow,10));if(h){c.style.setProperty('height',h+'px','important');c.style.setProperty('min-height','0','important');c.style.setProperty('box-sizing','border-box','important')}}
+     d.height=hh()+[...cur.values()].reduce((a,h)=>a+h+5,0);board.style.height=d.height+'px'}}
+  }else{const b=grid.previousElementSibling;if(b?.classList.contains('pl-compact'))b.classList.remove('pl-compact')}
   if(liteScale!==null){scale=liteScale}else if(auto){/* 100 %, außer der Plan passt nicht vollständig auf den Bildschirm – dann einpassen (Breite und Höhe). */const fitW=scroll.clientWidth/d.width,top=scroll.getBoundingClientRect().top+window.scrollY,availH=window.innerHeight-top-70,fitH=mobileDevice&&availH>160?availH/d.height:1;/* Höhe nur auf iPad/iPhone berücksichtigen – am Mac zählt nur die Breite. */scale=Math.max(min,Math.min(1,fitW,Math.max(.55,fitH)))}else if(fit)scale=Math.max(min,Math.min(max,scroll.clientWidth/d.width));
   board.style.transform=`scale(${scale})`;viewport.style.width=d.width*scale+'px';viewport.style.height=d.height*scale+'px';
   // Gruppenlegende endet bündig mit dem rechten Rand des Sitzplans.
@@ -3494,9 +3505,9 @@ document.addEventListener('keydown',event=>{
  const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
  const dateLabel=v=>{const t=new Date(),today=iso(t),y=new Date(t);y.setDate(t.getDate()-1);if(v===today)return 'Heute';if(v===iso(y))return 'Gestern';const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v||'');if(!m)return 'Datum';const d=new Date(+m[1],+m[2]-1,+m[3]);return ['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()]+', '+m[3]+'.'+m[2]+'.'};
  const bar=document.createElement('div');bar.className='pl-seatbar';
- bar.innerHTML='<label class="pl-date"><span class="pl-date-text">Heute</span><span class="pl-chev">▾</span><input type="date" aria-label="Datum der Unterrichtsstunde"></label><button type="button" class="pl-rotate" aria-pressed="false"><span aria-hidden="true">⇅</span> Perspektive</button>';
+ bar.innerHTML='<label class="pl-date"><span class="pl-date-text">Heute</span><span class="pl-chev">▾</span><input type="date" aria-label="Datum der Unterrichtsstunde"></label><button type="button" class="pl-rotate" aria-pressed="false" data-short="P"><span aria-hidden="true">⇅</span> Perspektive</button>';
  const dateInput=bar.querySelector('input'),dateText=bar.querySelector('.pl-date-text'),rotateBtn=bar.querySelector('.pl-rotate');
- const syncDate=()=>{dateInput.value=classroomDate.value;dateText.textContent=dateLabel(classroomDate.value);bar.querySelector('.pl-date').classList.toggle('is-past',classroomDate.value!==iso(new Date()))};
+ const syncDate=()=>{dateInput.value=classroomDate.value;dateText.textContent=dateLabel(classroomDate.value);{const l=dateText.textContent;bar.querySelector('.pl-date').dataset.short=l==='Heute'?'H':l==='Gestern'?'G':(/(\d+)\./.exec(l)?.[1]||'D').replace(/^0/,'')}bar.querySelector('.pl-date').classList.toggle('is-past',classroomDate.value!==iso(new Date()))};
  dateInput.addEventListener('change',()=>{if(!dateInput.value)return;classroomDate.value=dateInput.value;classroomDate.dispatchEvent(new Event('input',{bubbles:true}));classroomDate.dispatchEvent(new Event('change',{bubbles:true}));syncDate()});
  classroomDate.addEventListener('change',syncDate);
  const rotate=()=>{const b=document.getElementById('classroomRotateButton');if(!b)return;b.click();setTimeout(syncRotate,0)};
@@ -3532,6 +3543,9 @@ document.addEventListener('keydown',event=>{
 (()=>{const st=document.createElement('style');st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){html.ph-lite .grid-container:has(>.pl-seatbar):not(#_){display:grid!important;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:start}html.ph-lite .grid-container>.pl-seatbar:not(#_):not(#__){grid-column:2;grid-row:1;display:flex!important;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px;margin:0!important;width:auto}html.ph-lite .grid-container>.pl-seatbar>*:not(#_){box-sizing:border-box!important;width:100%!important;min-width:0!important;margin:0!important;justify-content:center}html.ph-lite .grid-container>#roomGrid:not(#_){grid-column:1;grid-row:1;min-width:0}}';document.head.append(st)})();
 /* 8.58: „Heute“ und „Perspektive“ gleich gestaltet (Höhe, Schrift, Farbe, Abstand); ein anderer Tag bleibt orange */
 (()=>{const st=document.createElement('style');st.textContent='html.ph-lite .pl-seatbar>:is(.pl-date,.pl-rotate):not(#_):not(#__){box-sizing:border-box!important;height:36px!important;min-height:36px!important;padding:0 14px!important;font-size:14px!important;font-weight:500!important;color:#2f5f9b!important;border:1px solid #dce3ef!important;border-radius:18px!important;background:#fff!important;display:inline-flex!important;align-items:center;gap:6px;line-height:1}html.ph-lite .pl-seatbar>.pl-date.is-past:not(#_):not(#__){background:#fff7e8!important;border-color:#e9cfa5!important;color:#8a5a12!important}';document.head.append(st)})();
+
+/* 8.59: iPhone quer – reicht die Breite nicht, werden die Knöpfe zu Kreisen (H/G bzw. P), damit der Sitzplan größer wird (gesteuert von plan-zoom.js). */
+(()=>{const st=document.createElement('style');const X='html.ph-lite .grid-container>.pl-seatbar.pl-compact>:is(.pl-date,.pl-rotate):not(#_):not(#__):not(#___)';st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){'+X+'{width:36px!important;min-width:36px!important;padding:0!important;gap:0!important;justify-content:center!important;font-size:0!important}'+X+'>:not(input){display:none!important}'+X+'::after{content:attr(data-short);font-size:15px;font-weight:600;line-height:1}}';document.head.append(st)})();
 ;
 
 /* ==== no-contacts.js ==== */
