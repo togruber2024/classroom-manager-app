@@ -2234,7 +2234,19 @@ document.addEventListener('keydown',event=>{
    const record=customSubjects.find(s=>s.id===currentSubject);if(record){record.pages=source.pages;record.pageNames={...source.pageNames};record.pageSystems={...source.pageSystems};persistCustomSubjects()}else localStorage.setItem(builtInExtraPagesKey,JSON.stringify(builtInExtraPages));persistExamGroups(currentSubject);persistClasses();saveCurrentSubject();buildCustomSubjectPanels(currentSubject);const target=groups.find(g=>g.halfYearId===currentHalfYearId&&g.type!=='halfYear'&&classroomQuarterGroupVisible(g));setPage(target?(quarterly(target.type)?target.pages[selection()]:target.pages[0]):'empty-quarter');
   },async pending=>{if(pending.length>=total){alert('Mindestens ein Quartal muss erhalten bleiben.');return false}return !pending.length||await classroomConfirm('Die ausgewählten Quartale mit ihren Eintragungen und zugeordneten Rubriken löschen?')});
  };
- document.getElementById('addSharedQuarter').onclick=()=>{const h=holder(),index=count();h.sharedQuarterCounts??={};h.sharedQuarterCounts[currentHalfYearId]=index+1;remember(index);setPage('empty-quarter')};
+ document.getElementById('addSharedQuarter').onclick=()=>{const h=holder(),index=count();h.sharedQuarterCounts??={};h.sharedQuarterCounts[currentHalfYearId]=index+1;remember(index);const others=syncQuarterCount(index+1);setPage('empty-quarter');if(others)quarterToast(`${index+1}. Quartal auch in ${others} weiteren Lerngruppe${others===1?'':'n'} angelegt`)};
+ /* 8.62: Ein neues Quartal gilt für alle Lerngruppen – jede bekommt im gleichen Halbjahr (1./2.) mindestens so viele Quartale. Seiten entstehen erst beim Öffnen; Noten werden nie kopiert. */
+ function syncQuarterCount(total){
+  const years=subjectExamGroups(currentSubject).filter(g=>g.type==='halfYear'),pos=years.findIndex(g=>g.id===currentHalfYearId);if(pos<0)return 0;let changed=0;
+  for(const [subject,classes] of Object.entries(classesBySubject||{}))for(const c of classes||[]){
+   if(subject===currentSubject&&c.id===currentClassId)continue;
+   const year=(c.examGroups||[]).filter(g=>g.type==='halfYear')[pos];if(!year)continue;
+   const pages=(c.examGroups||[]).filter(g=>g.halfYearId===year.id&&quarterly(g.type)).map(g=>(g.pages||[]).length),have=Math.max(1,Number(c.sharedQuarterCounts?.[year.id])||0,...pages);
+   if(have>=total)continue;c.sharedQuarterCounts??={};c.sharedQuarterCounts[year.id]=total;changed++;
+  }
+  if(changed)persistClasses();return changed;
+ }
+ function quarterToast(text){const t=document.createElement('div');t.className='quarter-sync-toast';t.setAttribute('role','status');t.textContent=text;t.style.cssText='position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9999;background:#eaf3ff;color:#2f5f9b;border:1px solid #c9dbf2;border-radius:18px;padding:9px 16px;font-size:14px;font-weight:500;box-shadow:0 6px 18px #1c2b4622;max-width:calc(100vw - 32px);text-align:center;transition:opacity .3s';document.body.append(t);setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400)},3200)}
 
  // Newly created categories open in the currently selected quarter as well.
  for(const name of ['addTests','addHomeworkTracker','confirmAddPerformance']){
