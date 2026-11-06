@@ -1240,6 +1240,8 @@
 
         function beginneTischZiehen(e, r, c) {
             if (e.button !== 0 || gridData[r][c] === 'PULT') return;
+            /* 8.54: Tische setzen/entfernen nur im Sitzplanmodus und nur mit einem Finger */
+            if (!document.getElementById('classroomEditRoom')?.checked || e.isPrimary === false) return;
             if (zufallsAuswahl && zufallsAuswahl.r === r && zufallsAuswahl.c === c) {
                 e.preventDefault();
                 zufallsAuswahl = null;
@@ -2408,7 +2410,9 @@ function classroomSeatAssignmentButton(){
 }
 new MutationObserver(classroomSeatAssignmentButton).observe(document.getElementById('roomGrid'),{childList:true,subtree:true});classroomSeatAssignmentButton();
 document.addEventListener('pointerdown',event=>{
- const cell=event.target.closest('.room-grid .cell');if(!cell||document.getElementById('classroomEditRoom')?.checked||event.button!==0||event.isPrimary===false)return;
+ const cell=event.target.closest('.room-grid .cell');if(!cell||document.getElementById('classroomEditRoom')?.checked||event.button!==0)return;
+ /* 8.54: Im Bewertungsmodus darf ein zweiter Finger (Zoomen) nie das Tisch-Werkzeug auslösen – sonst würden Schüler zu freien Tischen. */
+ if(event.isPrimary===false){event.stopImmediatePropagation();return}
  // In lesson mode an empty field must not start the table painting tool.
  event.preventDefault();event.stopImmediatePropagation();
  const r=Number(cell.dataset.row),c=Number(cell.dataset.col),name=gridData[r]?.[c];/* 8.28: iPhone – Sitzplan nur zum Bewerten: freie Tische nicht zuweisen */if(name==='X'&&document.documentElement.classList.contains('ph-lite'))return;if(name==='X'){classroomSeatAssignmentMode=false;classroomAssignEmptySeat(r,c);const button=document.querySelector('[data-assign-student]');if(button){button.textContent='Schüler zuweisen';button.setAttribute('aria-pressed','false')}return}if(!name||name==='PULT')return;
