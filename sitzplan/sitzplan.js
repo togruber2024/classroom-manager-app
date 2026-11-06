@@ -194,6 +194,45 @@
 })();
 ;
 
+/* ==== sitzplan/seat-rename.js ==== */
+/* 8.30: Umbenannte Personen in allen gespeicherten Sitzplänen nachziehen (aktueller Plan, Räume, datierte Versionen, Paare/Tabu).
+   Läuft beim Laden, also auch nach dem Wiederherstellen eines Backups auf einem anderen Gerät, und vor jedem Zeichnen des Rasters.
+   Grundlage: frühere Namen in der gemeinsamen Klassenliste (formerNames). Ohne diese Angabe (ältere Umbenennungen) wird ein Name nur
+   ersetzt, wenn genau eine Person der Klasse fast gleich heißt (höchstens 2 Buchstaben anders) und noch keinen Platz in diesem Plan hat. */
+(()=>{
+ const norm=n=>String(n||'').trim().toLocaleLowerCase('de-DE'),TOK=new Set(['','X','PULT']);
+ const dist=(a,b)=>{if(Math.abs(a.length-b.length)>2)return 9;let p=Array.from({length:b.length+1},(_,i)=>i);for(let i=1;i<=a.length;i++){const q=[i];let m=i;for(let j=1;j<=b.length;j++){q[j]=Math.min(p[j]+1,q[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));if(q[j]<m)m=q[j]}if(m>2)return 9;p=q}return p[b.length]};
+ const readJ=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
+ function prep(group){const active=(group?.students||[]).filter(s=>!s.deleted&&norm(s.name));const cur=new Set(active.map(s=>norm(s.name))),gone=new Set((group?.students||[]).filter(s=>s.deleted).map(s=>norm(s.name))),map=new Map();
+  for(const p of active)for(const f of p.formerNames||[])if(!cur.has(norm(f)))map.set(norm(f),p.name);return {active,cur,gone,map}}
+ function target(v,P,present){const n=norm(v);if(typeof v!=='string'||TOK.has(v.trim().toUpperCase())||P.cur.has(n)||P.gone.has(n))return null;
+  let to=P.map.get(n);if(!to&&n.length>=6){const c=P.active.filter(p=>!(present&&present.has(norm(p.name)))&&dist(n,norm(p.name))<=2);if(c.length===1)to=c[0].name}
+  return to&&!(present&&present.has(norm(to)))?to:null}
+ function fixGrid(grid,P){if(!Array.isArray(grid)||!grid.length||!grid.every(Array.isArray))return false;const present=new Set(grid.flat().filter(v=>typeof v==='string').map(norm));let ch=false;
+  for(const row of grid)for(let i=0;i<row.length;i++){const to=target(row[i],P,present);if(to){row[i]=to;present.add(norm(to));ch=true}}return ch}
+ function fixPairs(list,P){let ch=false;if(Array.isArray(list))for(const p of list)for(const f of ['s1','s2']){const to=p&&target(p[f],P,null);if(to){p[f]=to;ch=true}}return ch}
+ function fixRoom(r,P){let ch=fixGrid(r?.grid,P);for(const x of r?.people||[]){const to=target(x?.name,P,null);if(to){if(x.id===x.name)x.id=to;x.name=to;ch=true}}
+  if(r?.anchors&&typeof r.anchors==='object')for(const k of Object.keys(r.anchors)){const to=target(k,P,null);if(to&&!(to in r.anchors)){r.anchors[to]=r.anchors[k];delete r.anchors[k];ch=true}}return ch}
+ const prefix=name=>'sitzplan_'+name.replace(/\s+/g,'_')+'_';
+ /* Gespeicherte Daten aller verknüpften Klassen */
+ function fixStorage(model){if(!model?.classes)return 0;const links=readJ('classroom-manager-linked-classes-v1',{});let n=0;
+  const rooms=readJ('sitzplan_rooms_v1',{}),dated=readJ('sitzplan_dated_layouts_v1',{});let rCh=false,dCh=false;
+  for(const group of model.classes){const sn=links[group.id]?.storageName;if(!sn)continue;const P=prep(group);if(!P.active.length)continue;const pre=prefix(sn);
+   const g=readJ(pre+'grid',null);if(fixGrid(g,P)){localStorage.setItem(pre+'grid',JSON.stringify(g));n++}
+   for(const f of ['paare','tabu']){const l=readJ(pre+f,null);if(fixPairs(l,P)){localStorage.setItem(pre+f,JSON.stringify(l));n++}}
+   for(const r of rooms[sn]?.rooms||[])if(fixRoom(r,P)){rCh=true;n++}
+   for(const [k,days] of Object.entries(dated))if(k===sn||k.startsWith(sn+'::room::'))for(const vs of Object.values(days||{}))for(const v of Array.isArray(vs)?vs:[vs])if(fixGrid(v?.grid,P)){dCh=true;n++}}
+  try{if(rCh)localStorage.setItem('sitzplan_rooms_v1',JSON.stringify(rooms));if(dCh)localStorage.setItem('sitzplan_dated_layouts_v1',JSON.stringify(dated))}catch{}return n}
+ try{fixStorage(readJ('classroom-manager-common-v2',null))}catch(e){window.classroomLogError?.('Sitzplan: Namen nachziehen ('+e.message+')','seat-rename.js')}
+ /* Laufende Sitzung: angezeigtes Raster vor dem Zeichnen prüfen (z. B. beim Öffnen einer älteren Version) */
+ window.classroomSeatRenameFix=()=>{try{const group=typeof classroomCurrentGroup==='function'&&classroomCurrentGroup();if(!group)return;const P=prep(group);
+  if(typeof gridData!=='undefined'&&fixGrid(gridData,P)){try{localStorage.setItem(prefix(aktuelleKlasse)+'grid',JSON.stringify(gridData))}catch{}}
+  if(typeof schuelerPaare!=='undefined')fixPairs(schuelerPaare,P);if(typeof tabuPaare!=='undefined')fixPairs(tabuPaare,P)}catch{}};
+ window.classroomSeatRenameStorage=()=>{try{return fixStorage(readJ('classroom-manager-common-v2',null))}catch{return 0}};
+ addEventListener('DOMContentLoaded',()=>{try{classroomHooks.add('initGrid','seat-rename: Namen nachziehen',{before(){window.classroomSeatRenameFix()}})}catch{}});
+})();
+;
+
 /* ==== sitzplan/index.html (eingebettet) ==== */
 
         const COLS = 10;
@@ -2020,6 +2059,7 @@ function classroomMigrateSeatNames(model){
    for(const field of ['paare','tabu'])localStorage.setItem(prefix+field,JSON.stringify(changePairs(classroomReadArray(prefix+field))));
   }
  }
+ window.classroomSeatRenameStorage?.();
 }
 
 
