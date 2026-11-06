@@ -4327,7 +4327,7 @@ return}
    big.textContent=bigText||'—';big.className='qs-big '+(bigCls||'qs-empty');
    const tail=[],semester=!!panel.querySelector('[data-final-mix]');tree(bars,items,panel,mmList,testList,examDates,semester?{}:{mm:prevMm,tests:prevTests},tail);
    const split=!semester&&!!missingInfo&&missingInfo.sel>0;
-   if(missingInfo){const mi=missingInfo(name);for(const [label,list] of [['Hausaufgaben',mi.ha],['Material',mi.mat]]){if(list===null)continue;bars.append(missingRow(label,list,missingInfo.sel,split))}}
+   if(missingInfo){const mi=missingInfo(name);for(const [label,list] of [['Hausaufgaben',mi.ha],['Material',mi.mat]]){if(list===null)continue;(bars.querySelector(':scope>.qs-sub')||bars).append(missingRow(label,list,missingInfo.sel,split))/* 7.98: HA/Material gehören zur Sonstigen Mitarbeit → eingerückt */}}
    for(const t of tail)bars.append(t);if(bars.childElementCount)card.append(bars);if(chips.childElementCount)card.append(chips);
    /* 7.93: „1. Quartal“ blendet die Noten des 1. Quartals blass vor denen des 2. Quartals ein (gestrichelter Trennstrich);
       die Quartalsnote des 1. Quartals erscheint blau umrandet neben der aktuellen Note. */
@@ -4545,9 +4545,13 @@ return}
   if(sorted.some((c,i)=>c!==cards[i]))box.append(...sorted)}
  // Klasse ohne Quartalsübersicht
  let empty=null;
- function showEmpty(show){if(!show){empty?.remove();empty=null;return}
-  if(!empty){empty=document.createElement('div');empty.className='pl-empty';empty.innerHTML='<b>Noch keine Quartalsübersicht</b><p>Für diese Klasse gibt es im gewählten Halbjahr noch keine Seite „Quartalsnoten“. Sie fasst mündliche Mitarbeit, Hausaufgaben, Tests und Klassenarbeiten pro Person zusammen.</p><button type="button">Quartalsübersicht anlegen</button>';
-   empty.querySelector('button').onclick=()=>{const add=[...document.querySelectorAll('button.add-subject-button')].find(b=>b.textContent.includes('Quartalsnoten'));add?.click();tries=0;schedule()};document.body.append(empty)}}
+ const dismissed=new Set(),ek=()=>currentSubject+'|'+currentClassId+'|'+currentHalfYearId;
+ function showEmpty(show){if(show&&dismissed.has(ek()))show=false;if(!show){empty?.remove();empty=null;return}
+  if(!empty){empty=document.createElement('div');empty.className='pl-empty';empty.innerHTML='<b>Noch keine Quartalsübersicht</b><p>Für diese Klasse gibt es im gewählten Halbjahr noch keine Seite „Quartalsnoten“. Sie fasst mündliche Mitarbeit, Hausaufgaben, Tests und Klassenarbeiten pro Person zusammen.</p><button type="button" class="pl-add">Quartalsübersicht anlegen</button><button type="button" class="pl-other">Andere Klasse wählen</button><button type="button" class="pl-x" aria-label="Schließen">✕</button>';
+   /* 7.98: schließen ohne anzulegen (bis zum nächsten Klassenwechsel/Neuladen) oder andere Klasse wählen */
+   empty.querySelector('.pl-x').onclick=()=>{dismissed.add(ek());showEmpty(false)};
+   empty.querySelector('.pl-other').onclick=()=>{try{parent.navigationSetOpen?.(true)}catch{}};
+   empty.querySelector('.pl-add').onclick=()=>{const add=[...document.querySelectorAll('button.add-subject-button')].find(b=>b.textContent.includes('Quartalsnoten'));add?.click();tries=0;schedule()};document.body.append(empty)}}
  classroomHooks.add('refreshExamNavigation','phone-lite: Quartalsübersicht',{after(){schedule()}});
  new MutationObserver(list=>{if(!isPhone())return;if(list.some(m=>m.target.closest?.('.qs-cards')))for(const p of document.querySelectorAll('[data-quarter-summary]'))sortCards(p)}).observe(document.body,{subtree:true,childList:true});
  PH.addEventListener?.('change',()=>{tries=0;ensure()});PL.addEventListener?.('change',()=>{tries=0;ensure()});addEventListener('resize',()=>{if(isPhone()!==document.documentElement.classList.contains('ph-lite')){tries=0;ensure()}});setTimeout(ensure,400);window.classroomPhoneLite={ensure,wantedHalf,wantedQuarter};
@@ -4558,7 +4562,7 @@ return}
   +'.pl-hatch{margin-left:auto}.pl-stand{font-size:11.5px;color:#8794a7;margin-top:6px}'
   /* Alles außer den Karten ausblenden: Titel, Schalter, Hinweistext, Gewichtung, Karten/Tabelle */
   +'html.ph-lite [data-quarter-summary]>.section-title,html.ph-lite [data-quarter-summary]>.section-title+p,html.ph-lite [data-quarter-summary] .qs-phone-bar,html.ph-lite [data-quarter-summary] .qs-wt,html.ph-lite [data-quarter-summary] .quarter-summary-weight-controls,html.ph-lite [data-quarter-summary] .semester-weight-container,html.ph-lite [data-quarter-summary]>p,html.ph-lite [data-quarter-summary] .previous-quarter-empty{display:none!important}'
-  +'html.ph-lite .pl-empty{display:block;position:fixed;inset:0;z-index:50;padding:28px 22px;background:#f6f8fc}.pl-empty b{font-size:17px}.pl-empty p{color:#66758a;font-size:14px;line-height:1.5}.pl-empty button{min-height:44px;padding:0 18px;border:0;border-radius:12px;background:#2f5f9b;color:#fff;font:inherit;font-weight:650}'
+  +'html.ph-lite .pl-empty{display:block;position:fixed;inset:0;z-index:50;padding:28px 22px;background:#f6f8fc}.pl-empty b{font-size:17px}.pl-empty p{color:#66758a;font-size:14px;line-height:1.5}.pl-empty button{min-height:44px;padding:0 18px;border:0;border-radius:12px;background:#2f5f9b;color:#fff;font:inherit;font-weight:650;margin:0 8px 8px 0}.pl-empty .pl-other{background:#fff;color:#2f5f9b;border:1px solid #cbd6e5}.pl-empty .pl-x{position:absolute;top:14px;right:12px;width:40px;min-height:40px;padding:0;margin:0;background:transparent;color:#66758a;font-size:18px}.pl-empty b{display:block;padding-right:40px}'
   +'}';
  document.head.append(st);
 })();

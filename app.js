@@ -1941,7 +1941,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
 /* 7.97: Backup-Knöpfe breiter (besser zu treffen), Klasse mittig im Feld */
 (()=>{const st=document.createElement('style');st.textContent='@media (max-width:540px) and (orientation:portrait),(max-height:500px) and (orientation:landscape) and (pointer:coarse){'
  +'.app-header .cb-split .cb-quick:not(#_){width:44px!important;min-width:44px!important}'
- +'.app-header>.compact-navigation .compact-navigation-trail:not(#_){text-align:center;padding-left:24px!important}'
+ +'.app-header>.compact-navigation .compact-navigation-trail:not(#_){text-align:center;padding-left:0!important}'
  +'}';document.head.append(st)})();
 ;
 
