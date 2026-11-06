@@ -568,6 +568,8 @@ window.classroomRestoreUndoInfo=async()=>{try{const v=await classroomUndoStore()
 async function classroomRestoreBackup(backup,{confirmText,restoredLabel}={}){
  const status=document.getElementById('classroomBackupStatus');let before;
  try{
+  /* 8.00: im Bestätigungstext zeigen, ob das Backup einen Stundenplan enthält */
+  if(confirmText){let n=0;try{const t=JSON.parse(backup?.notes?.['notenrechner-stundenplan-v1']||'null');for(const d of Object.values(t?.days||{}))for(const e of Object.values(d||{}))if(e?.ref)n++}catch{}confirmText+=n?` Stundenplan im Backup: ${n} Stunden.`:' Hinweis: Dieses Backup enthält keinen Stundenplan.'}
   if(confirmText&&!await classroomConfirm(confirmText))return false;
   before=await classroomBackupData();
   try{await classroomUndoStore({data:before,at:new Date().toISOString(),restored:restoredLabel||''})}catch(e){window.classroomLogError?.('Wiederherstellen: Sicherung für „Rückgängig“ nicht möglich ('+e.message+')','classroom-link.js')}
