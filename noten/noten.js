@@ -4666,11 +4666,11 @@ return}
  function syncHatch(bar){const m=hatchMode();for(const b of bar.querySelectorAll('[data-ph-hatch]')){b.setAttribute('aria-pressed',String(b.dataset.phHatch===m));b.setAttribute('role','radio');b.setAttribute('aria-checked',String(b.dataset.phHatch===m))}}
  function topBar(panel,sel){
   let bar=panel.querySelector(':scope>.pl-bar');
-  if(!bar){bar=document.createElement('div');bar.className='pl-bar';bar.innerHTML='<div class="pl-head"></div><div class="pl-row"><span class="pl-seg pl-half"></span><button type="button" class="pl-q1all" aria-pressed="false"></button><div class="pl-flags"></div></div><div class="pl-row pl-row2"><span class="pl-seg pl-hatch" role="radiogroup" aria-label="Tendenzen"><button type="button" data-ph-hatch="off" title="Tendenzen: Aus" aria-label="Tendenzen: Aus"><i class="hs-sw hs-off" aria-hidden="true"></i></button><button type="button" data-ph-hatch="hatch" title="Tendenzen: Schraffiert" aria-label="Tendenzen: Schraffiert"><i class="hs-sw hs-hatch" aria-hidden="true"></i></button><button type="button" data-ph-hatch="frame" title="Tendenzen: Rahmen" aria-label="Tendenzen: Rahmen"><i class="hs-sw hs-frame" aria-hidden="true"></i></button></span><span class="pl-seg pl-mean" role="radiogroup" aria-label="Durchschnitt darstellen"></span></div><div class="pl-stand"></div>';
+  if(!bar){bar=document.createElement('div');bar.className='pl-bar';bar.innerHTML='<div class="pl-head"></div><div class="pl-row"><span class="pl-seg pl-half"></span><button type="button" class="pl-q1all" aria-pressed="false"></button><button type="button" class="pl-fold" aria-pressed="false" title="Karten verkleinern" aria-label="Karten verkleinern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5l4 4 4-4"/><path d="M4 10.5h16M4 13.5h16"/><path d="M8 20.5l4-4 4 4"/></svg></button><div class="pl-flags"></div></div><div class="pl-row pl-row2"><span class="pl-seg pl-hatch" role="radiogroup" aria-label="Tendenzen"><button type="button" data-ph-hatch="off" title="Tendenzen: Aus" aria-label="Tendenzen: Aus"><i class="hs-sw hs-off" aria-hidden="true"></i></button><button type="button" data-ph-hatch="hatch" title="Tendenzen: Schraffiert" aria-label="Tendenzen: Schraffiert"><i class="hs-sw hs-hatch" aria-hidden="true"></i></button><button type="button" data-ph-hatch="frame" title="Tendenzen: Rahmen" aria-label="Tendenzen: Rahmen"><i class="hs-sw hs-frame" aria-hidden="true"></i></button></span><span class="pl-seg pl-mean" role="radiogroup" aria-label="Durchschnitt darstellen"></span></div><div class="pl-stand"></div>';
    bar.addEventListener('click',e=>{const h=e.target.closest('[data-half]'),s=e.target.closest('[data-ph-hatch]'),fl=e.target.closest('[data-flag]'),qa=e.target.closest('.pl-q1all'),mn=e.target.closest('[data-mean]'),nt=e.target.closest('[data-notes]');
     if(nt){window.classroomStudentNotes?.openList();return}
     if(mn){window.classroomCardsMean?.set(mn.dataset.mean);syncMean(bar)}
-    if(qa){window.classroomCardsQ1?.set(!window.classroomCardsQ1.get());syncQ1(bar)}
+    if(qa){window.classroomCardsQ1?.set(!window.classroomCardsQ1.get());syncQ1(bar)}if(e.target.closest('.pl-fold')){window.classroomCardsFold?.toggle()}
     if(fl){panel.dataset.plFilter=panel.dataset.plFilter===fl.dataset.flag?'':fl.dataset.flag;flags(panel);if(panel.dataset.plFilter)bar.scrollIntoView({block:'start'})}
     if(h){ss.set(sk(),h.dataset.half);done.clear();schedule()}
     if(s){setHatch(s.dataset.phHatch);setTimeout(()=>syncHatch(bar),0)}});
@@ -4721,6 +4721,32 @@ return}
   +'html.ph-lite .pl-empty{display:block;position:fixed;inset:0;z-index:50;padding:28px 22px;background:#f6f8fc}.pl-empty b{font-size:17px}.pl-empty p{color:#66758a;font-size:14px;line-height:1.5}.pl-empty button{min-height:44px;padding:0 18px;border:0;border-radius:12px;background:#2f5f9b;color:#fff;font:inherit;font-weight:650;margin:0 8px 8px 0}.pl-empty .pl-other{background:#fff;color:#2f5f9b;border:1px solid #cbd6e5}.pl-empty .pl-x{position:absolute;top:14px;right:12px;width:40px;min-height:40px;padding:0;margin:0;background:transparent;color:#66758a;font-size:18px}.pl-empty b{display:block;padding-right:40px}'
   +'}';
  document.head.append(st);
+})();
+
+/* 8.69: Karten verkleinern – runder Knopf neben „1. Quartal“. Klein: Name, Noten und eine Zeile „Mitarbeit · HA · KA“; Antippen klappt einzelne Karten auf. */
+(()=>{const KEY='classroom-cards-folded-v1';let on=false;try{on=localStorage.getItem(KEY)==='1'}catch{}const open=new Set();
+ const short={'Sonstige Mitarbeit':'Mitarbeit','Klassenarbeit':'KA','Klassenarbeiten':'KA','Klausur':'Klausur','Klausuren':'Klausur','Tests':'Tests','Test':'Tests'};
+ const nameOf=c=>c.querySelector('.qs-name')?.textContent.trim()||'';
+ const cards=()=>[...document.querySelectorAll('.qs-cards>.qs-card:not(.qd-card)')];
+ function summary(c){const bars=c.querySelector('.qs-bars');if(!bars)return '';const parts=[];
+  for(const s of bars.querySelectorAll(':scope>.qs-sect')){const l=s.querySelector('.qs-sh-l span')?.textContent.trim();if(!l)continue;const v=(s.querySelector(':scope>.qs-sh .qs-val')?.innerText||'').trim()||'—';parts.push((short[l]||l)+' '+v)}
+  for(const s of bars.querySelectorAll('.qs-sub .qs-sect')){if(!/Hausaufgaben/.test(s.querySelector('.qs-sh-l')?.textContent||''))continue;const vv=[...s.querySelectorAll('.qs-val')].find(e=>e.offsetParent||e.getClientRects().length);const n=((vv?.innerText||'').match(/\d+/g)||['0']).pop();parts.splice(parts.length?1:0,0,n==='0'?'HA ✓':'HA ✕'+n);break}
+  return parts.join(' · ')}
+ function apply(){for(const b of document.querySelectorAll('.pl-fold')){b.setAttribute('aria-pressed',String(on));b.title=on?'Karten wieder ganz zeigen':'Karten verkleinern';b.setAttribute('aria-label',b.title)}
+  for(const c of cards()){const folded=on&&!open.has(nameOf(c));let sum=c.querySelector(':scope>.qs-sum');
+   if(on){if(!sum){sum=document.createElement('div');sum.className='qs-sum';sum.innerHTML='<span class="qs-sum-t"></span><span class="qs-sum-c" aria-hidden="true">›</span>';c.append(sum)}
+    if(folded){c.classList.remove('qs-folded');const t=summary(c);c.classList.add('qs-folded');sum.querySelector('.qs-sum-t').textContent=t}}
+   c.classList.toggle('qs-folded',folded);c.classList.toggle('qs-unfolded',on&&!folded)}}
+ window.classroomCardsFold={get:()=>on,toggle(){on=!on;open.clear();try{localStorage.setItem(KEY,on?'1':'0')}catch{}apply()},apply};
+ document.addEventListener('click',e=>{if(!on)return;const c=e.target.closest('.qs-cards>.qs-card:not(.qd-card)');if(!c||e.target.closest('input,label,button,.qs-mail'))return;
+  if(c.classList.contains('qs-folded')){e.preventDefault();e.stopImmediatePropagation();open.add(nameOf(c));apply()}
+  else if(e.target.closest('.qs-top')){e.preventDefault();e.stopImmediatePropagation();open.delete(nameOf(c));apply()}},true);
+ document.addEventListener('classroom-cards-mean-lock',()=>apply());
+ new MutationObserver(()=>{if(on&&cards().some(c=>!c.classList.contains('qs-folded')&&!c.classList.contains('qs-unfolded')))apply()}).observe(document.documentElement,{childList:true,subtree:true});
+ const st=document.createElement('style');st.textContent='.pl-fold{flex:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:38px;height:38px;min-height:38px;padding:0;margin-left:8px;border:1px solid #cbd6e5;border-radius:50%;background:#fff;color:#2f5f9b;cursor:pointer}.pl-fold svg{width:20px;height:20px}.pl-fold[aria-pressed=true]{background:#e8f0fb;border-color:#9dbbe3}'
+  +'.qs-card.qs-folded .qs-bars,.qs-card.qs-folded .qs-ft,.qs-card.qs-folded>.qs-edits{display:none!important}.qs-card>.qs-sum{display:none}.qs-card.qs-folded>.qs-sum{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:14px;color:#5b6b82}.qs-sum-t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.qs-sum-c{font-size:20px;line-height:1;color:#8fa0b8}';
+ document.head.append(st);
+ const t=setInterval(()=>{if(document.querySelector('.pl-fold')){apply();clearInterval(t)}},500);setTimeout(()=>clearInterval(t),20000);
 })();
 ;
 
