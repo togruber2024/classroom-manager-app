@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.08
+Stand: 06.11.2026 · Version 8.09
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -320,7 +320,9 @@ Unterricht: nur der Sitzplan im Bewertungsmodus, ohne Knöpfe und Seitenleiste. 
   Passt der Plan nicht aufs Display, werden leere Reihen und Spalten zu schmalen Gängen.
 Noten: Halbjahr und Quartal ergeben sich aus dem Datum (bei mehreren Halbjahren oben umschaltbar). Gezeigt wird die
   Quartalsübersicht als eine Karte pro Person, alphabetisch. Oben: „1. Quartal“ (blendet das 1. Quartal bei allen
-  Karten ein/aus) und Aus / Schraffiert / Rahmen (Darstellung der Tendenzen). Fehlt die Quartalsübersicht, bietet
+  Karten ein/aus) und Aus / Schraffiert / Rahmen (Darstellung der Tendenzen),
+  darunter Dezimal / Tendenz / Gerundet (Darstellung der errechneten Werte wie Ø und Sonstige Mitarbeit; bei Notenpunkten
+  Dezimal / Ganze Punkte). Fehlt die Quartalsübersicht, bietet
   ein Hinweis „Quartalsübersicht anlegen“, „Andere Klasse wählen“ oder ✕ (schließen).
 Karte: oben die Quartalsnote (bis zur Eingabe heller der errechnete Wert), mit eingeblendetem 1. Quartal links davon
   dessen Quartalsnote. Darunter Sonstige Mitarbeit mit Anteil, eingerückt Mündliche Mitarbeit und Tests (Anteil an der
@@ -1059,3 +1061,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.07: iPhone-Detailblatt: Zeile „Halbjahresnote“ über den Quartalsnoten (eingetragen in voller Farbe, sonst heller der errechnete Wert)
 
 8.08: iPhone: Selbsteinschätzung und Quartalsnote mit kompakter Marke „Q1“/„Q2“; „Quartalsnote“ wird erst mit zwei eingetragenen Noten zu „Quartalsnoten“; Gewichtung Sonstige Mitarbeit/Klassenarbeit immer angezeigt, wenn hinterlegt
+
+8.09: iPhone-Karten: Schalter Dezimal / Tendenz / Gerundet für errechnete Werte (bei Notenpunkten Dezimal / Ganze Punkte); „Quartalsnoten“ auch neben dem vorgeschlagenen Wert
