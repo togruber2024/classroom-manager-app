@@ -2301,6 +2301,9 @@ classroomDate.addEventListener('change',()=>{classroomRefreshLesson();if(typeof 
   if(d>80){classroomQuick.style.setProperty('transition','transform .18s ease','important');classroomQuick.style.setProperty('transform','translateY(100%)','important');setTimeout(()=>{quickClose();classroomQuick.style.removeProperty('transform');classroomQuick.style.removeProperty('transition')},180)}
   else{classroomQuick.style.removeProperty('transition');classroomQuick.style.removeProperty('transform')}},{passive:true});
  classroomQuick.addEventListener('touchcancel',()=>{y0=null;dy=0;classroomQuick.style.removeProperty('transition');classroomQuick.style.removeProperty('transform')},{passive:true});}
+/* 8.23: ✕ oben rechts im Bewertungsblatt (iPhone), wie bei den anderen Blättern */
+{const x=document.createElement('button');x.type='button';x.className='cq-x';x.setAttribute('aria-label','Schließen');x.textContent='✕';x.onclick=()=>quickClose();document.querySelector('.classroom-quick-heading')?.append(x);
+ const st=document.createElement('style');st.textContent='.cq-x{display:none}@media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){.classroom-quick .cq-x{display:inline-flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;margin-left:6px;padding:0;border:0;background:none;color:#66758a;font-size:17px;cursor:pointer}}';document.head.append(st)}
 ;
 
 /* ==== sitzplan/student-notes.js ==== */
