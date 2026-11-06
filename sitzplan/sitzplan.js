@@ -3562,6 +3562,8 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
  +Q+' :is(#classroomQuickHomeworkButton,#classroomQuickMaterialButton):not([aria-pressed=true])'+K+','+Q+' .cq-nav button:not(.cq-next)'+K+'{background:#fff!important;border:1px solid #dce3ef!important;color:#2f5f9b!important}'
  +Q+' #classroomQuickName'+K+'{font-size:16px!important}'
  +'}';document.head.append(st)})();
+/* 8.67: iPhone quer – während der Eingabe sind „H“/„P“ ausgeblendet, die Tische bekommen die ganze Kartenbreite. */
+(()=>{const st=document.createElement('style');st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){html.ph-lite body:has(.classroom-quick.is-sheet) .grid-container>.pl-seatbar:not(#_):not(#__):not(#___){display:none!important}html.ph-lite body:has(.classroom-quick.is-sheet) .grid-container:has(>.pl-seatbar):not(#_):not(#__){grid-template-columns:minmax(0,1fr)!important;column-gap:0!important}}';document.head.append(st)})();
 ;
 
 /* ==== no-contacts.js ==== */
