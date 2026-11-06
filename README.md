@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.16
+Stand: 06.11.2026 · Version 8.17
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -337,6 +337,9 @@ Detailblatt: Ein Tipp auf eine Karte zeigt alle Einträge der Person; ‹ › od
   nach unten wischen = schließen. Oben eine Notiz (z. B. „Elterngespräch“); sie steht gelb in der Karte unter dem
   Namen und am Mac in der Quartalsübersicht (Symbol neben dem Namen, orange = Notiz vorhanden, Klick = bearbeiten).
   Notizen gelten je Fach und Klasse und sind in Backup und Rückgängig enthalten.
+  Erinnerung: Über den Seiten des Noten-Managers (iPhone: über den Karten) steht „📝 2 Notizen in dieser Klasse“ –
+  antippen zeigt die Liste mit „Bearbeiten“ und „✓ Erledigt“. Im Sitzplan hat der Tisch einen orangenen Punkt,
+  und der Notiztext steht oben im Bewertungsfenster (ausgeblendet in Klassenansicht und Datenschutzmodus).
 Aktuell: Läuft laut Stundenplan gerade eine Stunde (ab 10 Minuten vorher), öffnet „Aktuell“ direkt deren Sitzplan mit
   Raum und heutigem Datum. Sonst erscheint ein Blatt mit „Zuletzt unterrichtet“ (öffnet die Lerngruppe mit dem Datum
   dieser Stunde zum Nachtragen) und den Stunden von heute und dem nächsten Schultag. Der Stundenplan wird am Mac
@@ -1077,3 +1080,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.15: iPhone-Karten: Überschrift „1. Halbjahr · 2. Quartal“ oben, Hinweis „Antippen zeigt alle Einträge“ über den Karten; Schraffur „Aus“ wird in Karten und Detailblatt sofort angewendet (robuster)
 
 8.16: iPhone-Karten: Σ vor den Summen bei Hausaufgaben und Material fehlend (wie Ø beim Durchschnitt)
+
+8.17: Notizen: Hinweis „📝 Notizen in dieser Klasse“ mit Liste (Bearbeiten/Erledigt) im Noten-Manager und auf dem iPhone; im Sitzplan orangener Punkt am Tisch und Notiztext im Bewertungsfenster

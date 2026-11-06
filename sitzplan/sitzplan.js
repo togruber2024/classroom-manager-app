@@ -2293,6 +2293,31 @@ function classroomGradeTargetForDate(grades,date){
 classroomDate.addEventListener('change',()=>{classroomRefreshLesson();if(typeof classroomPaintAssessments==='function')classroomPaintAssessments()});
 ;
 
+/* ==== sitzplan/student-notes.js ==== */
+/* Notizen (aus dem Noten-Manager, notenrechner-notizen-v1) im Sitzplan zeigen:
+   orangener Punkt am Tisch der Person, Notiztext oben im Bewertungsfenster.
+   Es zählen alle Fächer/Kurse, die mit der aktuellen Lerngruppe verknüpft sind. Nur Anzeige – bearbeitet wird im Noten-Manager. */
+(()=>{
+ const KEY='notenrechner-notizen-v1';
+ const norm=n=>String(n||'').trim().toLocaleLowerCase('de-DE');
+ const txt=v=>typeof v==='string'?v:(v&&typeof v.t==='string'?v.t:'');
+ function refs(){try{const g=typeof classroomCurrentGroup==='function'&&classroomCurrentGroup(),src=typeof classroomLinkedModel!=='undefined'&&classroomLinkedModel?.sourceClasses;if(!g||!src)return [];return Object.keys(src).filter(k=>src[k]===g.id)}catch{return []}}
+ function notesFor(name){let a={};try{a=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch{}const n=norm(name),out=[];for(const r of refs()){const t=txt(a[r+'::'+n]);if(t&&!out.includes(t))out.push(t)}return out}
+ function marks(){const grid=document.getElementById('roomGrid');if(!grid||typeof gridData==='undefined')return;
+  for(const cell of grid.querySelectorAll('.cell')){const name=cell.classList.contains('besetzt')?gridData[Number(cell.dataset.row)]?.[Number(cell.dataset.col)]:null;const notes=name?notesFor(name):[];let dot=cell.querySelector(':scope>.sn-dot');
+   if(notes.length){if(!dot){dot=document.createElement('i');dot.className='sn-dot';dot.setAttribute('aria-hidden','true');cell.append(dot)}cell.dataset.note=notes.join(' · ')}else{dot?.remove();if(cell.dataset.note)delete cell.dataset.note}}}
+ function quick(){const q=document.querySelector('.classroom-quick');if(!q)return;let box=q.querySelector('.sn-quick');const notes=!q.hidden&&q.title?notesFor(q.title):[];
+  if(!notes.length){box?.remove();return}if(!box){box=document.createElement('div');box.className='sn-quick';(q.querySelector('.classroom-quick-heading')||q.firstElementChild)?.after(box)}const t='📝 '+notes.join(' · ');if(box.textContent!==t)box.textContent=t}
+ let planned=false;const schedule=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;marks();quick()})};
+ new MutationObserver(list=>{if(list.some(m=>!(m.target.classList?.contains('sn-dot')||m.target.classList?.contains('sn-quick')||[...m.addedNodes].every(n=>n.nodeType===1&&(n.classList.contains('sn-dot')||n.classList.contains('sn-quick'))&&m.addedNodes.length))))schedule()}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','title']});
+ addEventListener('storage',e=>{if(e.key===KEY)schedule()});schedule();
+ const st=document.createElement('style');st.textContent='.room-grid .cell{position:relative}.sn-dot{position:absolute;top:4px;left:4px;width:9px;height:9px;border-radius:50%;background:#e39a3b;border:1.5px solid #fff;box-shadow:0 0 0 1px #e39a3b55;pointer-events:none}'
+  +'.sn-quick{margin:2px 0 8px;padding:6px 10px;border-radius:9px;background:#fff7e0;color:#7a5410;font-size:13px;line-height:1.35}'
+  +'html.classroom-privacy .sn-dot{display:none!important}html.classroom-privacy .sn-quick{color:transparent!important;text-shadow:0 0 7px rgba(36,51,71,.75)!important}'
+  +'html.classroom-beamer .sn-dot,html.classroom-beamer .sn-quick{display:none!important}@media print{.sn-dot,.sn-quick{display:none}}';document.head.append(st);
+})();
+;
+
 /* ==== sitzplan/seat-drag.js ==== */
 // Pointer events support dragging by mouse, trackpad and touch without changing pupil records.
 let classroomSeatDrag=null;
