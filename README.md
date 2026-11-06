@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.25
+Stand: 06.11.2026 · Version 8.26
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1098,3 +1098,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.24: Hilfe: Rubrik „Neu“ auf den aktuellen Stand gebracht (zusammengefasst nach Themen)
 
 8.25: Notenpunkte: Durchschnitte werden nach der gerundeten Punktzahl eingefärbt – z. B. 3,5 Punkte wie 4 Punkte (immer schraffiert), 3,4 Punkte wie 3 Punkte
+
+8.26: Hilfe: „Erfunden von Torsten Gruber“ – im Kopf des Hilfefensters und als Eintrag „Über den Classroom-Manager“
