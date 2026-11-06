@@ -2291,6 +2291,14 @@ function classroomGradeTargetForDate(grades,date){
  return started[0]||pool.find(t=>t.quarterIndex===0)||null;
 }
 classroomDate.addEventListener('change',()=>{classroomRefreshLesson();if(typeof classroomPaintAssessments==='function')classroomPaintAssessments()});
+/* 8.19: Bewertungsblatt auf dem iPhone nach unten wegwischen (wie die anderen Blätter) */
+{let y0=null,x0=0,dy=0;
+ classroomQuick.addEventListener('touchstart',e=>{if(!qeSheet()||classroomQuick.hidden||e.target.closest('input,select,textarea'))return;y0=e.touches[0].clientY;x0=e.touches[0].clientX;dy=0;classroomQuick.style.setProperty('transition','none','important')},{passive:true});
+ classroomQuick.addEventListener('touchmove',e=>{if(y0===null)return;dy=e.touches[0].clientY-y0;const dx=e.touches[0].clientX-x0;if(dy>8&&dy>Math.abs(dx)){classroomQuick.style.setProperty('transform','translateY('+dy+'px)','important');if(e.cancelable)e.preventDefault()}else if(dy<=0)classroomQuick.style.removeProperty('transform')},{passive:false});
+ classroomQuick.addEventListener('touchend',()=>{if(y0===null)return;y0=null;const d=dy;dy=0;
+  if(d>80){classroomQuick.style.setProperty('transition','transform .18s ease','important');classroomQuick.style.setProperty('transform','translateY(100%)','important');setTimeout(()=>{quickClose();classroomQuick.style.removeProperty('transform');classroomQuick.style.removeProperty('transition')},180)}
+  else{classroomQuick.style.removeProperty('transition');classroomQuick.style.removeProperty('transform')}},{passive:true});
+ classroomQuick.addEventListener('touchcancel',()=>{y0=null;dy=0;classroomQuick.style.removeProperty('transition');classroomQuick.style.removeProperty('transform')},{passive:true});}
 ;
 
 /* ==== sitzplan/student-notes.js ==== */

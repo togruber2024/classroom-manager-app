@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.18
+Stand: 06.11.2026 · Version 8.19
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1084,3 +1084,5 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.17: Notizen: Hinweis „📝 Notizen in dieser Klasse“ mit Liste (Bearbeiten/Erledigt) im Noten-Manager und auf dem iPhone; im Sitzplan orangener Punkt am Tisch und Notiztext im Bewertungsfenster
 
 8.18: iPhone-Karten: untere Zeile (1. Quartal, Selbsteinschätzung, Quartalsnote) entfernt – eingetragen wird im Detailblatt, das 1. Quartal blendet der Schalter oben ein
+
+8.19: iPhone-Unterricht: Bewertungsfenster lässt sich nach unten wegwischen
