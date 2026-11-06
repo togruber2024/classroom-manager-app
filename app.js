@@ -1563,7 +1563,7 @@ window.addEventListener('message',event=>{
    /* der Sitzplan setzt beim Klassenwechsel das Datum ggf. selbst zurück – daher kurz danach noch einmal */setDate();setTimeout(setDate,700);setTimeout(setDate,1800);
    const label=classOptions().find(o=>o.ref===lesson.ref)?.label||'';
    const changed=before.subject!==subject||before.classId!==classId;
-   toast(`${prefix}: ${label}${lesson.room?' · '+(/^raum\b/i.test(lesson.room)?lesson.room:'Raum '+lesson.room):''}`,changed&&before.classId?async()=>{try{await classroomCall(classroomNotes,'classroom:select-class',before)}catch{}}:null,isPhone()?{label:'Stundenplan',run:openPlan}:null);
+   /* 8.65: keine Meldung mehr beim automatischen Wechsel zur Stunde (Wunsch: nervt) */void label;void changed;
   }catch(error){console.warn('Stundenplan: Auswahl nicht möglich',error)}
  }
  window.classroomApplyTimetable=apply;
