@@ -4147,7 +4147,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function examDateMap(){const out={};try{for(const g of subjectExamGroups(currentSubject))if(g.halfYearId===currentHalfYearId&&!['performance','homework','tests','halfYear','semester','schoolYear','quarterSummary'].includes(g.type)){const ds=(g.pages||[]).flatMap(k=>(customPageValues(currentSubject,k)?.tasks||[]).map(t=>t.date)).filter(d=>/^\d{4}-\d\d-\d\d$/.test(d||'')).sort();const d=g.date&&/^\d{4}-\d\d-\d\d$/.test(g.date)?g.date:ds[0];if(d)out[g.label]=d.slice(8,10)+'.'+d.slice(5,7)+'.'}}catch{}return out}
  function tiles(list,kind){const r=document.createElement('div');r.className='qs-seq'+(kind?' qs-seq-'+kind:'');for(const m of list){const c=document.createElement('span');c.className='qs-sq'+(kind?' qs-'+kind:'')+(m.prev?' qs-prev':'');const i=document.createElement('i');i.textContent=m.text;i.className=(/^a$/i.test(m.text)||!m.cls)?'qs-abs':m.cls;const d=document.createElement('small');d.textContent=m.date||'';c.append(i,d);r.append(c)}return r}
  /* Variante A (7.91): ein Abschnitt je Bereich – Überschrift mit Anteil und Ø rechts, darunter alle Einzelnoten als Kästchen mit Datum (keine schmalen Balken) */
- function sect(label,pct,it,list,lvl,o={}){const w=document.createElement('div');w.className='qs-sect'+(lvl?' qs-lvl'+lvl:'');const h=document.createElement('div');h.className='qs-sh';if(it?.click){h.classList.add('qs-mail');h.onclick=it.click}
+ function sect(label,pct,it,list,lvl,o={}){if(o.pct!=null)pct=o.pct;const w=document.createElement('div');w.className='qs-sect'+(lvl?' qs-lvl'+lvl:'');const h=document.createElement('div');h.className='qs-sh';if(it?.click){h.classList.add('qs-mail');h.onclick=it.click}
   const l=document.createElement('span');l.className='qs-sh-l';const t=document.createElement('span');t.textContent=label;l.append(t);if(pct!=null){const c=document.createElement('span');c.className='qs-w';c.textContent=fmtPct(pct)+' %';l.append(c)}if(o.tag){const c=document.createElement('span');c.className='qs-w qs-hj';c.textContent=o.tag;l.append(c)}
   const val=o.val||valBox(it,o.avg),prev=(o.prev||[]).map(m=>({...m,prev:1})),cur=list||[];
   if(!cur.length&&!prev.length){h.append(l,val);w.append(h);return w}
@@ -4156,6 +4156,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const row=document.createElement('div');row.className='qs-row';const seq=tiles([...prev,...cur],o.kind);
   if(prev.length){const sep=document.createElement('span');sep.className='qs-sep';seq.insertBefore(sep,seq.children[prev.length]||null)}
   row.append(seq,val);w.append(row);return w}
+ /* Gewichtung Sonstige Mitarbeit : Klassenarbeit aus der Halbjahresnote (Standard 50 : 50) */
+ function finalWeights(){try{const g=subjectExamGroups(currentSubject).find(g=>g.type==='semester'&&g.halfYearId===currentHalfYearId),v=g&&(g.pages||[]).map(k=>customPageValues(currentSubject,k)?.finalWeights).find(Boolean);return {other:Number(v?.other??50),exams:Number(v?.exams??50)}}catch{return null}}
  function tree(box,items,panel,mmList=[],testList=[],examDates={},prev={},tail=[]){
   const ka=re=>/^Klassenarbeit/i.test(re.head)?'Klassenarbeit':longLabel(re.head);
   const take=re=>{const k=items.findIndex(it=>re.test(it.head));return k<0?null:items.splice(k,1)[0]};
@@ -4173,8 +4175,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    const kaTile=e=>[{text:e.text,cls:e.cls,date:examDates[e.head]||''}].filter(x=>x.text&&x.text!=='—');
    if(exams.length===1)box.append(sect(ka(exams[0]),we,exams[0],kaTile(exams[0]),0,{kind:'ka'}));else if(exams.length){box.append(caption('Klausuren',we,0));for(const e of exams)box.append(sect(ka(e),null,e,kaTile(e),1,{kind:'ka'}))}
   }else{
-   if(other)box.append(barRow(other,null,0));/* Bestandteile der Sonstigen Mitarbeit leicht eingerückt mit senkrechtem Strich */const sub=document.createElement('div');sub.className='qs-sub';if(mm||prev.mm?.length)sub.append(sect('Mündliche Mitarbeit',wm,mm,mmList,0,{avg:1,prev:prev.mm}));if(tests||prev.tests?.length)sub.append(sect('Tests',wt,tests,testList,0,{avg:1,kind:'t',prev:prev.tests}));if(sub.childElementCount){if(!other)sub.className='qs-sub-flat';box.append(sub)}
-   /* Klassenarbeit ganz unten in der Karte (nach HA/Material) */for(const e of exams)tail.push(sect(ka(e),null,e,[{text:e.text,cls:e.cls,date:examDates[e.head]||''}].filter(x=>x.text&&x.text!=='—'),0,{kind:'ka'}))
+   const fw=exams.length===1?finalWeights():null;if(other)box.append(barRow(other,fw?fw.other:null,0));/* Bestandteile der Sonstigen Mitarbeit leicht eingerückt mit senkrechtem Strich */const sub=document.createElement('div');sub.className='qs-sub';if(mm||prev.mm?.length)sub.append(sect('Mündliche Mitarbeit',wm,mm,mmList,0,{avg:1,prev:prev.mm}));if(tests||prev.tests?.length)sub.append(sect('Tests',wt,tests,testList,0,{avg:1,kind:'t',prev:prev.tests}));if(sub.childElementCount){if(!other)sub.className='qs-sub-flat';box.append(sub)}
+   /* Klassenarbeit ganz unten in der Karte (nach HA/Material) */for(const e of exams)tail.push(sect(ka(e),null,e,[{text:e.text,cls:e.cls,date:examDates[e.head]||''}].filter(x=>x.text&&x.text!=='—'),0,{kind:'ka',pct:fw?fw.exams:null}))
   }
   for(const it of items)box.append(barRow(it,null,0));
  }
@@ -4405,6 +4407,7 @@ return}
   +'.qs-sub,.qs-sub-flat{display:grid;gap:8px}.qs-sub{margin-left:3px;padding-left:10px;border-left:2px solid #e3e8f0}'
   +'.qd-panel{will-change:transform}'
   +'.qs-q1chip{margin:0!important;gap:0!important}.qs-q1chip i:not(#_){min-width:46px;height:40px;padding:0 8px;border-radius:10px;font-size:20px;font-weight:750;outline:0}.qs-q1sep{align-self:stretch;margin:2px 0!important}.qs-top:has(.qs-q1chip){gap:8px}'
+  +'.qs-sq i.qs-x:not(#_){background:#e5484d;color:#fff;border:1px solid #d93c42;font-size:12px;font-weight:800}.qs-sq.qs-prev i.qs-x:not(#_){filter:none;opacity:.55}'
   +'.qd-edits{border-top:0}.qd-prev{background:#f7f9fc;margin:6px -16px 0;padding:10px 16px}.qd-prev h4{color:#66758a}'
   +'}';
  document.head.append(st);
