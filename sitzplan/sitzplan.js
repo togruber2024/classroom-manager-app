@@ -2607,9 +2607,9 @@ document.addEventListener('keydown',event=>{
    const rowsN=R.size,colsN=C.size,eR=[...R.values()].filter(v=>!v).length,eC=[...C.values()].filter(v=>!v).length;
    const top=scroll.getBoundingClientRect().top+window.scrollY,availH=Math.max(120,window.innerHeight-top-14);let availW=Math.max(100,scroll.clientWidth-14);/* 8.57: Platz für die „2/3“-Plaketten am rechten Rand */
    const W=(colW)=>hw()+[...C.values()].reduce((a,v)=>a+(v?75:colW)+5,0),H=(rowH,emptyH)=>hh()+[...R.values()].reduce((a,v)=>a+(v?rowH:emptyH)+5,0);
-   /* 8.59: iPhone quer – begrenzt die Breite den Plan, werden Datum/Perspektive zu Kreisen. Entscheidung aus der Gesamtbreite (Plan + Knöpfe) – kein Hin- und Herspringen. */
+   /* 8.59: iPhone quer – begrenzt die Breite den Plan, werden Datum/Perspektive zu kleinen Knöpfen (Symbol + H/G bzw. P). Entscheidung aus der Gesamtbreite (Plan + Knöpfe) – kein Hin- und Herspringen. */
    const bar=grid.previousElementSibling?.classList.contains('pl-seatbar')?grid.previousElementSibling:null,landscape=PLQ.matches;
-   if(bar&&landscape&&bar.offsetParent){const cur=bar.getBoundingClientRect().width,compact=bar.classList.contains('pl-compact');if(!compact&&cur>40)fullBarW=cur;const base=scroll.clientWidth-14+cur,wFull=base-(fullBarW||150),wComp=base-36;
+   if(bar&&landscape&&bar.offsetParent){const cur=bar.getBoundingClientRect().width,compact=bar.classList.contains('pl-compact');if(!compact&&cur>40)fullBarW=cur;const base=scroll.clientWidth-14+cur,wFull=base-(fullBarW||150),wComp=base-52;
     const hFit=Math.min(1,availH/H(45,eR?10:45)),want=wFull/W(75)<hFit-.01;if(want!==compact)bar.classList.toggle('pl-compact',want);availW=Math.max(100,want?wComp:wFull)}
    else if(bar?.classList.contains('pl-compact'))bar.classList.remove('pl-compact');
    const plain=Math.min(1,availW/W(75));
@@ -3544,8 +3544,8 @@ document.addEventListener('keydown',event=>{
 /* 8.58: „Heute“ und „Perspektive“ gleich gestaltet (Höhe, Schrift, Farbe, Abstand); ein anderer Tag bleibt orange */
 (()=>{const st=document.createElement('style');st.textContent='html.ph-lite .pl-seatbar>:is(.pl-date,.pl-rotate):not(#_):not(#__){box-sizing:border-box!important;height:36px!important;min-height:36px!important;padding:0 14px!important;font-size:14px!important;font-weight:500!important;color:#2f5f9b!important;border:1px solid #dce3ef!important;border-radius:18px!important;background:#fff!important;display:inline-flex!important;align-items:center;gap:6px;line-height:1}html.ph-lite .pl-seatbar>.pl-date.is-past:not(#_):not(#__){background:#fff7e8!important;border-color:#e9cfa5!important;color:#8a5a12!important}';document.head.append(st)})();
 
-/* 8.59: iPhone quer – reicht die Breite nicht, werden die Knöpfe zu Kreisen (H/G bzw. P), damit der Sitzplan größer wird (gesteuert von plan-zoom.js). */
-(()=>{const st=document.createElement('style');const X='html.ph-lite .grid-container>.pl-seatbar.pl-compact>:is(.pl-date,.pl-rotate):not(#_):not(#__):not(#___)';st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){'+X+'{width:36px!important;min-width:36px!important;padding:0!important;gap:0!important;justify-content:center!important;font-size:0!important}'+X+'>:not(input){display:none!important}'+X+'::after{content:attr(data-short);font-size:15px;font-weight:600;line-height:1}}';document.head.append(st)})();
+/* 8.59: iPhone quer – reicht die Breite nicht, werden die Knöpfe klein (▾ H/G bzw. ⇅ P), damit der Sitzplan größer wird (gesteuert von plan-zoom.js). */
+(()=>{const st=document.createElement('style');const X='html.ph-lite .grid-container>.pl-seatbar.pl-compact>:is(.pl-date,.pl-rotate):not(#_):not(#__):not(#___)';st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){'+X+'{width:52px!important;min-width:52px!important;padding:0!important;gap:3px!important;justify-content:center!important;font-size:0!important}'+X+'>.pl-date-text{display:none!important}'+X+'>.pl-chev{font-size:11px!important}'+X+'>span[aria-hidden]{font-size:15px!important}'+X+':is(.pl-date)::before,'+X+':is(.pl-rotate)::after{content:attr(data-short);font-size:15px;font-weight:600;line-height:1}}';document.head.append(st)})();
 ;
 
 /* ==== no-contacts.js ==== */
