@@ -2552,7 +2552,7 @@ document.addEventListener('keydown',event=>{
  const mobileDevice=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Mac/i.test(navigator.platform)&&navigator.maxTouchPoints>1);
  // iPhone: ohne Spaltenbuchstaben und Reihennummern – mehr Platz für die Tische.
  const PH=matchMedia('(max-width:540px) and (orientation:portrait), (max-height:500px) and (pointer:coarse) and (orientation:landscape)'),hw=()=>PH.matches?0:35,hh=()=>PH.matches?0:45;
- let scale=1,fit=false,auto=true,rotated=false,printing=false,lastLite=-1;// auto: Desktop und iPad quer 100 %, iPad/iPhone hochkant einpassen, falls 100 % zu groß
+ let scale=1,fit=false,auto=true,rotated=false,printing=false,lastLite=-1,fitScale=1;// auto: Desktop und iPad quer 100 %, iPad/iPhone hochkant einpassen, falls 100 % zu groß
  const portrait=()=>mobileDevice&&matchMedia('(orientation: portrait)').matches;const min=.1,max=1.5;
  const controls=document.createElement('div');controls.className='classroom-plan-zoom';controls.setAttribute('role','group');controls.setAttribute('aria-label','Sitzplan vergrößern oder verkleinern');
  controls.innerHTML='<button type="button" data-zoom-minus aria-label="Sitzplan verkleinern">−</button><input type="range" min="10" max="150" step="5" value="100" aria-label="Zoom des Sitzplans"><output aria-live="polite">100 %</output><button type="button" data-zoom-plus aria-label="Sitzplan vergrößern">+</button><button type="button" data-zoom-fit>Einpassen</button><button type="button" data-zoom-reset>100 %</button>';
@@ -2613,7 +2613,7 @@ document.addEventListener('keydown',event=>{
    board.style.gridTemplateRows=`${hh()}px ${rowsT.join(' ')}`;board.style.gridTemplateColumns=`${hw()}px ${colsT.join(' ')}`;
    for(const c of vis){const r=parseInt(c.style.gridRow,10),k=parseInt(c.style.gridColumn,10);c.style.setProperty('height',(R.get(r)?rowH:eh(r))+'px','important');c.classList.toggle('pult-slim',!R.get(r)&&PR.has(r));c.style.setProperty('min-height','0','important');c.style.setProperty('box-sizing','border-box','important');if(!C.get(k))c.style.setProperty('width',colE+'px','important')}
    d.width=W();d.height=H(rowH);board.style.width=d.width+'px';board.style.height=d.height+'px';
-   if(phone)liteScale=Math.max(.3,Math.min(1,availW/d.width,availH/d.height));
+   if(phone){fitScale=Math.max(.3,Math.min(1,availW/d.width,availH/d.height));if(auto||fit)liteScale=fitScale}
    else if(auto)liteScale=Math.max(min,Math.min(1,availW/d.width,touch?Math.max(.55,availH/d.height):1));
    else if(fit)liteScale=Math.max(min,Math.min(max,availW/d.width,touch?availH/d.height:max));
   }
@@ -2639,7 +2639,16 @@ document.addEventListener('keydown',event=>{
  classroomHooks.add('initGrid','plan-zoom: Zoom aufbauen',{after(){build()}});build();
  new MutationObserver(()=>update()).observe(grid,{attributes:true,attributeFilter:['hidden']});
  document.getElementById('classroomEditRoom')?.addEventListener('change',update);
- new ResizeObserver(()=>update()).observe(grid);addEventListener('beforeprint',()=>{printing=true;update()});addEventListener('afterprint',()=>{printing=false;update()});new MutationObserver(()=>update()).observe(document.documentElement,{attributes:true,attributeFilter:['class']});document.addEventListener('fullscreenchange',update);
+ new ResizeObserver(()=>update()).observe(grid);
+ /* 8.52: iPhone – mit zwei Fingern im Sitzplan zoomen (nur der Plan, nicht die ganze Seite). Zurück unter die eingepasste Größe
+    gezogen, rastet er wieder ein; Drehen des iPhones setzt ebenfalls zurück. */
+ {let p0=null;const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+  grid.addEventListener('touchstart',e=>{if(e.touches.length===2&&document.documentElement.classList.contains('ph-lite')){const sc=grid.querySelector('.classroom-plan-scroll'),rc=sc?.getBoundingClientRect(),mx=(e.touches[0].clientX+e.touches[1].clientX)/2,my=(e.touches[0].clientY+e.touches[1].clientY)/2;p0={d:dist(e.touches),s:scale,sc,cx:rc?(mx-rc.left+sc.scrollLeft)/scale:0,cy:rc?(my-rc.top+sc.scrollTop)/scale:0,mx:rc?mx-rc.left:0,my:rc?my-rc.top:0};e.preventDefault()}},{passive:false});
+  grid.addEventListener('touchmove',e=>{if(!p0||e.touches.length!==2)return;e.preventDefault();const ns=Math.max(.3,Math.min(2.5,p0.s*dist(e.touches)/Math.max(1,p0.d)));
+   const board=grid.querySelector('.classroom-zoom-board'),viewport=grid.querySelector('.classroom-plan-viewport');if(!board||!viewport)return;scale=ns;auto=false;fit=false;
+   const w=parseFloat(board.style.width)||0,h=parseFloat(board.style.height)||0;board.style.transform=`scale(${ns})`;viewport.style.width=w*ns+'px';viewport.style.height=h*ns+'px';if(p0.sc){p0.sc.scrollLeft=Math.max(0,p0.cx*ns-p0.mx);p0.sc.scrollTop=Math.max(0,p0.cy*ns-p0.my)}},{passive:false});
+  const end=e=>{if(!p0||e.touches.length>=2)return;p0=null;if(scale<=fitScale*1.04){auto=true;fit=false}update()};
+  grid.addEventListener('touchend',end);grid.addEventListener('touchcancel',end)}addEventListener('beforeprint',()=>{printing=true;update()});addEventListener('afterprint',()=>{printing=false;update()});new MutationObserver(()=>update()).observe(document.documentElement,{attributes:true,attributeFilter:['class']});document.addEventListener('fullscreenchange',update);
  // Beim Drehen des iPads wieder automatisch (quer 100 %, hochkant ggf. eingepasst).
  matchMedia('(orientation: portrait)').addEventListener('change',()=>{auto=true;fit=false;update()});PH.addEventListener?.('change',()=>update());{let was=null;new MutationObserver(()=>{const now=document.documentElement.classList.contains('ph-lite');if(now!==was){was=now;update()}}).observe(document.documentElement,{attributes:true,attributeFilter:['class']})}
  {const st=document.createElement('style');st.textContent='.plan-dense .cell:not(.tisch):not(.besetzt):not(.pult){visibility:hidden!important}'
