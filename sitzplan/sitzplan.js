@@ -2581,7 +2581,7 @@ document.addEventListener('keydown',event=>{
  function update(){
   controls.hidden=grid.hidden;if(grid.hidden)return;
   const board=grid.querySelector('.classroom-zoom-board'),viewport=grid.querySelector('.classroom-plan-viewport'),scroll=grid.querySelector('.classroom-plan-scroll');if(!board)return;
-  const cells=[...board.querySelectorAll('.cell')],used=cells.filter(cell=>{const v=gridData[Number(cell.dataset.row)]?.[Number(cell.dataset.col)];return !!v&&!(v==='PULT'&&document.documentElement.classList.contains('ph-lite')&&!document.getElementById('classroomEditRoom')?.checked)}),crop=!document.getElementById('classroomEditRoom')?.checked&&used.length>0;
+  const cells=[...board.querySelectorAll('.cell')],used=cells.filter(cell=>!!gridData[Number(cell.dataset.row)]?.[Number(cell.dataset.col)]),crop=!document.getElementById('classroomEditRoom')?.checked&&used.length>0;
   const minRow=crop?Math.min(...used.map(c=>Number(c.dataset.row))):0,maxRow=crop?Math.max(...used.map(c=>Number(c.dataset.row))):ROWS-1,minCol=crop?Math.min(...used.map(c=>Number(c.dataset.col))):0,maxCol=crop?Math.max(...used.map(c=>Number(c.dataset.col))):COLS-1,rowCount=maxRow-minRow+1,colCount=maxCol-minCol+1;
   for(const cell of cells){const row=Number(cell.dataset.row),col=Number(cell.dataset.col);cell.style.display=row<minRow||row>maxRow||col<minCol||col>maxCol?'none':'';cell.style.gridRow=String((rotated?maxRow-row:row-minRow)+2);cell.style.gridColumn=String((rotated?maxCol-col:col-minCol)+2)}
   const headers=[...board.querySelectorAll('.grid-header')];headers.forEach((header,index)=>{if(index<COLS){header.style.display=index<minCol||index>maxCol?'none':'';header.style.gridRow='1';header.style.gridColumn=String((rotated?maxCol-index:index-minCol)+2)}else{const row=index-COLS;header.style.display=row<minRow||row>maxRow?'none':'';header.style.gridColumn='1';header.style.gridRow=String((rotated?maxRow-row:row-minRow)+2)}if(PH.matches)header.style.display='none'});
@@ -2593,7 +2593,7 @@ document.addEventListener('keydown',event=>{
    board.style.setProperty('--print-seat-left',-(hw()+5+(left-2)*80)+'px');board.style.setProperty('--print-seat-top',-(hh()+5+(top-2)*50)+'px');board.style.setProperty('--print-seat-scale',printScale);viewport.style.setProperty('--print-seat-height',height*printScale+'px');
   }
   const d={width:hw()+colCount*80,height:hh()+rowCount*50};board.style.width=d.width+'px';board.style.height=d.height+'px';board.style.gridTemplateColumns=`${hw()}px repeat(${colCount},75px)`;board.style.gridTemplateRows=`${hh()}px repeat(${rowCount},45px)`;
-  for(const cell of cells){cell.style.removeProperty('height');cell.style.removeProperty('width');cell.style.removeProperty('min-height');cell.style.removeProperty('box-sizing')}
+  for(const cell of cells){cell.style.removeProperty('height');cell.style.removeProperty('width');cell.style.removeProperty('min-height');cell.style.removeProperty('box-sizing');cell.classList.remove('pult-slim')}
   /* 8.46: Bewertungsmodus – Felder ohne Tisch unsichtbar, freie Tische blass (iPhone: unsichtbar), leere Reihen/Spalten als schmale Gänge
      (hochkant ½, quer ⅓). Auf iPhone/iPad bekommen die belegten Reihen die frei werdende Höhe (größere Tische, mit Obergrenze);
      wird es zu eng (iPhone quer), werden sie etwas flacher. Am Mac wird nur verdichtet. Sitzplanmodus, Beamer und Druck: volles Raster. */
@@ -2601,17 +2601,17 @@ document.addEventListener('keydown',event=>{
   const dense=!editMode&&!beamer&&!printing&&used.length>0;board.classList.toggle('plan-dense',dense);
   if(dense&&scroll.clientWidth>0){
    const phone=PH.matches||document.documentElement.classList.contains('ph-lite'),touch=mobileDevice||phone;
-   const vis=cells.filter(c=>c.style.display!=='none'),R=new Map(),C=new Map();
-   for(const c of vis){const r=parseInt(c.style.gridRow,10),k=parseInt(c.style.gridColumn,10),v0=gridData[Number(c.dataset.row)]?.[Number(c.dataset.col)],full=!!v0&&!(phone&&v0==='PULT');if(!R.has(r))R.set(r,false);if(!C.has(k))C.set(k,false);if(full){R.set(r,true);C.set(k,true)}}
+   const vis=cells.filter(c=>c.style.display!=='none'),R=new Map(),C=new Map(),PR=new Set();
+   for(const c of vis){const r=parseInt(c.style.gridRow,10),k=parseInt(c.style.gridColumn,10),v0=gridData[Number(c.dataset.row)]?.[Number(c.dataset.col)],full=!!v0&&!(phone&&v0==='PULT');if(phone&&v0==='PULT')PR.add(r);if(!R.has(r))R.set(r,false);if(!C.has(k))C.set(k,false);if(full){R.set(r,true);C.set(k,true)}}
    const top=scroll.getBoundingClientRect().top+window.scrollY,availW=scroll.clientWidth;let availH=Math.max(120,window.innerHeight-top-(phone?(landscapeVp()?26:14):touch?24:70));
    const landscape=touch&&availW>availH*1.15,ef=landscape?1/3:1/2,emptyH=Math.max(8,Math.round(45*ef)),colE=Math.max(14,Math.round(75*ef));
    const fullRows=[...R.values()].filter(Boolean).length,eR=R.size-fullRows;
-   const W=()=>hw()+[...C.values()].reduce((a,v)=>a+(v?75:colE)+5,0),H=rowH=>hh()+[...R.values()].reduce((a,v)=>a+(v?rowH:emptyH)+5,0);
+   const pultH=Math.max(18,emptyH),eh=r=>PR.has(r)?pultH:emptyH;const W=()=>hw()+[...C.values()].reduce((a,v)=>a+(v?75:colE)+5,0),H=rowH=>hh()+[...R.entries()].reduce((a,[r,v])=>a+(v?rowH:eh(r))+5,0);
    let rowH=45;const sw=Math.min(1,availW/W());
-   if(touch&&(auto||fit||phone)){const extra=availH/sw-H(45);if(extra>0)rowH=Math.min(63,45+Math.floor(extra/Math.max(1,fullRows)));else if(phone)rowH=Math.max(34,Math.floor(((availH/sw)-hh()-eR*(emptyH+5)-fullRows*5)/Math.max(1,fullRows)))}
-   const rowsT=[...R.entries()].sort((x,y)=>x[0]-y[0]).map(([,v])=>(v?rowH:emptyH)+'px'),colsT=[...C.entries()].sort((x,y)=>x[0]-y[0]).map(([,v])=>(v?75:colE)+'px');
+   if(touch&&(auto||fit||phone)){const extra=availH/sw-H(45);if(extra>0)rowH=Math.min(63,45+Math.floor(extra/Math.max(1,fullRows)));else if(phone)rowH=Math.max(34,Math.floor(((availH/sw)-hh()-[...R.entries()].filter(([,v])=>!v).reduce((a,[r])=>a+eh(r)+5,0)-fullRows*5)/Math.max(1,fullRows)))}
+   const rowsT=[...R.entries()].sort((x,y)=>x[0]-y[0]).map(([r,v])=>(v?rowH:eh(r))+'px'),colsT=[...C.entries()].sort((x,y)=>x[0]-y[0]).map(([,v])=>(v?75:colE)+'px');
    board.style.gridTemplateRows=`${hh()}px ${rowsT.join(' ')}`;board.style.gridTemplateColumns=`${hw()}px ${colsT.join(' ')}`;
-   for(const c of vis){const r=parseInt(c.style.gridRow,10),k=parseInt(c.style.gridColumn,10);c.style.setProperty('height',(R.get(r)?rowH:emptyH)+'px','important');c.style.setProperty('min-height','0','important');c.style.setProperty('box-sizing','border-box','important');if(!C.get(k))c.style.setProperty('width',colE+'px','important')}
+   for(const c of vis){const r=parseInt(c.style.gridRow,10),k=parseInt(c.style.gridColumn,10);c.style.setProperty('height',(R.get(r)?rowH:eh(r))+'px','important');c.classList.toggle('pult-slim',!R.get(r)&&PR.has(r));c.style.setProperty('min-height','0','important');c.style.setProperty('box-sizing','border-box','important');if(!C.get(k))c.style.setProperty('width',colE+'px','important')}
    d.width=W();d.height=H(rowH);board.style.width=d.width+'px';board.style.height=d.height+'px';
    if(phone)liteScale=Math.max(.3,Math.min(1,availW/d.width,availH/d.height));
    else if(auto)liteScale=Math.max(min,Math.min(1,availW/d.width,touch?Math.max(.55,availH/d.height):1));
@@ -2644,8 +2644,8 @@ document.addEventListener('keydown',event=>{
  matchMedia('(orientation: portrait)').addEventListener('change',()=>{auto=true;fit=false;update()});PH.addEventListener?.('change',()=>update());{let was=null;new MutationObserver(()=>{const now=document.documentElement.classList.contains('ph-lite');if(now!==was){was=now;update()}}).observe(document.documentElement,{attributes:true,attributeFilter:['class']})}
  {const st=document.createElement('style');st.textContent='.plan-dense .cell:not(.tisch):not(.besetzt):not(.pult){visibility:hidden!important}'
   +'.plan-dense .cell.tisch:not(.besetzt){background:transparent!important;background-image:none!important;border:1px dashed #d5deea!important;color:transparent!important;box-shadow:none!important}'
-  +'html.ph-lite .plan-dense .cell.tisch:not(.besetzt),html.is-phone .plan-dense .cell.tisch:not(.besetzt){visibility:hidden!important}'
-  +'@media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){.plan-dense .cell.tisch:not(.besetzt),html.ph-lite .plan-dense .cell.pult{visibility:hidden!important}}';document.head.append(st)}
+  +'html.ph-lite .plan-dense .cell.tisch:not(.besetzt),html.is-phone .plan-dense .cell.tisch:not(.besetzt){visibility:hidden!important}'+'.plan-dense .cell.pult.pult-slim{font-size:9px!important;letter-spacing:.06em;padding:0!important;min-height:0!important;line-height:1!important;border-radius:6px!important;overflow:hidden}'
+  +'@media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){.plan-dense .cell.tisch:not(.besetzt)}';document.head.append(st)}
 })();
 ;
 
