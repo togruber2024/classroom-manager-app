@@ -1010,3 +1010,8 @@ body[data-module=sitzplan] .room-header .classroom-mode-toggle:not(#_){flex:none
 @media (max-width:540px){body[data-module=sitzplan] .classroom-plan-zoom:not(#_){gap:6px}body[data-module=sitzplan] .classroom-plan-zoom>button:not(#_),body[data-module=sitzplan] .classroom-plan-zoom .zoom-more-toggle:not(#_){min-width:40px;min-height:38px;height:38px;padding:0 10px}body[data-module=sitzplan] .classroom-plan-zoom .plan-assess-switch:not(#_){min-height:38px!important;padding:0 12px 0 10px!important;gap:6px!important;font-size:14px!important}}
 @media (max-width:540px){body[data-module=sitzplan] .classroom-plan-zoom .zoom-more-toggle:not(#_){font-size:0!important;padding:0 12px!important}body[data-module=sitzplan] .classroom-plan-zoom .zoom-more-toggle>span{display:none}body[data-module=sitzplan] .classroom-plan-zoom .zoom-more-toggle::before{content:"⋯";font-size:20px;line-height:1}}
 }
+
+/* 8.37: iPhone – Wischfenster ohne ✕ (Schließen per Wischen nach unten oder Tippen daneben) */
+@media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){
+ .help-head .help-close:not(#_):not(#__),.tt-x:not(#_),.sn-x:not(#_),.qd-close:not(#_),.cq-x:not(#_){display:none!important}
+}
