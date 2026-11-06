@@ -2552,7 +2552,7 @@ document.addEventListener('keydown',event=>{
  const mobileDevice=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Mac/i.test(navigator.platform)&&navigator.maxTouchPoints>1);
  // iPhone: ohne Spaltenbuchstaben und Reihennummern – mehr Platz für die Tische.
  const PH=matchMedia('(max-width:540px) and (orientation:portrait), (max-height:500px) and (pointer:coarse) and (orientation:landscape)'),hw=()=>PH.matches?0:35,hh=()=>PH.matches?0:45;
- let scale=1,fit=false,auto=true,rotated=false;// auto: Desktop und iPad quer 100 %, iPad/iPhone hochkant einpassen, falls 100 % zu groß
+ let scale=1,fit=false,auto=true,rotated=false,printing=false;// auto: Desktop und iPad quer 100 %, iPad/iPhone hochkant einpassen, falls 100 % zu groß
  const portrait=()=>mobileDevice&&matchMedia('(orientation: portrait)').matches;const min=.1,max=1.5;
  const controls=document.createElement('div');controls.className='classroom-plan-zoom';controls.setAttribute('role','group');controls.setAttribute('aria-label','Sitzplan vergrößern oder verkleinern');
  controls.innerHTML='<button type="button" data-zoom-minus aria-label="Sitzplan verkleinern">−</button><input type="range" min="10" max="150" step="5" value="100" aria-label="Zoom des Sitzplans"><output aria-live="polite">100 %</output><button type="button" data-zoom-plus aria-label="Sitzplan vergrößern">+</button><button type="button" data-zoom-fit>Einpassen</button><button type="button" data-zoom-reset>100 %</button>';
@@ -2593,26 +2593,29 @@ document.addEventListener('keydown',event=>{
    board.style.setProperty('--print-seat-left',-(hw()+5+(left-2)*80)+'px');board.style.setProperty('--print-seat-top',-(hh()+5+(top-2)*50)+'px');board.style.setProperty('--print-seat-scale',printScale);viewport.style.setProperty('--print-seat-height',height*printScale+'px');
   }
   const d={width:hw()+colCount*80,height:hh()+rowCount*50};board.style.width=d.width+'px';board.style.height=d.height+'px';board.style.gridTemplateColumns=`${hw()}px repeat(${colCount},75px)`;board.style.gridTemplateRows=`${hh()}px repeat(${rowCount},45px)`;
-  for(const cell of cells){cell.style.removeProperty('height');cell.style.removeProperty('width')}
-  /* iPhone (schlanke Bewertungsansicht): passt der Plan nicht aufs Display, werden leere Reihen/Spalten zu schmalen Gängen
-     und – nur falls nötig – die Tische etwas flacher (nie schmaler). */
-  let liteScale=null;
-  if(document.documentElement.classList.contains('ph-lite')&&scroll.clientWidth>0){
+  for(const cell of cells){cell.style.removeProperty('height');cell.style.removeProperty('width');cell.style.removeProperty('min-height');cell.style.removeProperty('box-sizing')}
+  /* 8.46: Bewertungsmodus – Felder ohne Tisch unsichtbar, freie Tische blass (iPhone: unsichtbar), leere Reihen/Spalten als schmale Gänge
+     (hochkant ½, quer ⅓). Auf iPhone/iPad bekommen die belegten Reihen die frei werdende Höhe (größere Tische, mit Obergrenze);
+     wird es zu eng (iPhone quer), werden sie etwas flacher. Am Mac wird nur verdichtet. Sitzplanmodus, Beamer und Druck: volles Raster. */
+  const landscapeVp=()=>innerWidth>innerHeight;let liteScale=null;const editMode=!!document.getElementById('classroomEditRoom')?.checked,beamer=document.documentElement.classList.contains('classroom-beamer');
+  const dense=!editMode&&!beamer&&!printing&&used.length>0;board.classList.toggle('plan-dense',dense);
+  if(dense&&scroll.clientWidth>0){
+   const phone=PH.matches||document.documentElement.classList.contains('ph-lite'),touch=mobileDevice||phone;
    const vis=cells.filter(c=>c.style.display!=='none'),R=new Map(),C=new Map();
    for(const c of vis){const r=parseInt(c.style.gridRow,10),k=parseInt(c.style.gridColumn,10),full=!!gridData[Number(c.dataset.row)]?.[Number(c.dataset.col)];if(!R.has(r))R.set(r,false);if(!C.has(k))C.set(k,false);if(full){R.set(r,true);C.set(k,true)}}
-   const rowsN=R.size,colsN=C.size,eR=[...R.values()].filter(v=>!v).length,eC=[...C.values()].filter(v=>!v).length;
-   const top=scroll.getBoundingClientRect().top+window.scrollY,availH=Math.max(120,window.innerHeight-top-14),availW=scroll.clientWidth;
-   const W=(colW)=>hw()+[...C.values()].reduce((a,v)=>a+(v?75:colW)+5,0),H=(rowH,emptyH)=>hh()+[...R.values()].reduce((a,v)=>a+(v?rowH:emptyH)+5,0);
-   const plain=Math.min(1,availW/W(75));
-   if(H(45,45)*plain>availH+1&&(eR||rowsN)){
-    const colW=eC?14:75,sw=Math.min(1,availW/W(colW));let rowH=45;
-    if(H(45,10)*sw>availH){const full=rowsN-eR;rowH=Math.max(34,Math.floor(((availH/sw)-hh()-eR*15-full*5)/Math.max(1,full)))}
-    const rowsT=[...R.entries()].sort((a,b)=>a[0]-b[0]).map(([,v])=>(v?rowH:10)+'px'),colsT=[...C.entries()].sort((a,b)=>a[0]-b[0]).map(([,v])=>(v?75:colW)+'px');
-    board.style.gridTemplateRows=`${hh()}px ${rowsT.join(' ')}`;board.style.gridTemplateColumns=`${hw()}px ${colsT.join(' ')}`;
-    for(const c of vis){const r=parseInt(c.style.gridRow,10),k=parseInt(c.style.gridColumn,10);c.style.setProperty('height',(R.get(r)?rowH:10)+'px','important');if(!C.get(k))c.style.setProperty('width',colW+'px','important')}
-    d.width=W(colW);d.height=H(rowH,10);board.style.width=d.width+'px';board.style.height=d.height+'px';
-    liteScale=Math.max(.3,Math.min(1,availW/d.width,availH/d.height));
-   }else liteScale=plain;
+   const top=scroll.getBoundingClientRect().top+window.scrollY,availW=scroll.clientWidth;let availH=Math.max(120,window.innerHeight-top-(phone?(landscapeVp()?30:14):touch?24:70));/* Rahmen um den Plan (z. B. iPhone quer) begrenzt zusätzlich */if(phone){const gc=scroll.closest('.grid-container');if(gc&&getComputedStyle(gc).overflowY!=='visible'){const lim=gc.getBoundingClientRect().bottom-scroll.getBoundingClientRect().top-parseFloat(getComputedStyle(gc).paddingBottom||0)-6;if(lim>100)availH=Math.min(availH,lim)}}
+   const landscape=touch&&availW>availH*1.15,ef=landscape?1/3:1/2,emptyH=Math.max(8,Math.round(45*ef)),colE=Math.max(14,Math.round(75*ef));
+   const fullRows=[...R.values()].filter(Boolean).length,eR=R.size-fullRows;
+   const W=()=>hw()+[...C.values()].reduce((a,v)=>a+(v?75:colE)+5,0),H=rowH=>hh()+[...R.values()].reduce((a,v)=>a+(v?rowH:emptyH)+5,0);
+   let rowH=45;const sw=Math.min(1,availW/W());
+   if(touch&&(auto||fit||phone)){const extra=availH/sw-H(45);if(extra>0)rowH=Math.min(63,45+Math.floor(extra/Math.max(1,fullRows)));else if(phone)rowH=Math.max(34,Math.floor(((availH/sw)-hh()-eR*(emptyH+5)-fullRows*5)/Math.max(1,fullRows)))}
+   const rowsT=[...R.entries()].sort((x,y)=>x[0]-y[0]).map(([,v])=>(v?rowH:emptyH)+'px'),colsT=[...C.entries()].sort((x,y)=>x[0]-y[0]).map(([,v])=>(v?75:colE)+'px');
+   board.style.gridTemplateRows=`${hh()}px ${rowsT.join(' ')}`;board.style.gridTemplateColumns=`${hw()}px ${colsT.join(' ')}`;
+   for(const c of vis){const r=parseInt(c.style.gridRow,10),k=parseInt(c.style.gridColumn,10);c.style.setProperty('height',(R.get(r)?rowH:emptyH)+'px','important');c.style.setProperty('min-height','0','important');c.style.setProperty('box-sizing','border-box','important');if(!C.get(k))c.style.setProperty('width',colE+'px','important')}
+   d.width=W();d.height=H(rowH);board.style.width=d.width+'px';board.style.height=d.height+'px';
+   if(phone)liteScale=Math.max(.3,Math.min(1,availW/d.width,availH/d.height));
+   else if(auto)liteScale=Math.max(min,Math.min(1,availW/d.width,touch?Math.max(.55,availH/d.height):1));
+   else if(fit)liteScale=Math.max(min,Math.min(max,availW/d.width,touch?availH/d.height:max));
   }
   if(liteScale!==null){scale=liteScale}else if(auto){/* 100 %, außer der Plan passt nicht vollständig auf den Bildschirm – dann einpassen (Breite und Höhe). */const fitW=scroll.clientWidth/d.width,top=scroll.getBoundingClientRect().top+window.scrollY,availH=window.innerHeight-top-70,fitH=mobileDevice&&availH>160?availH/d.height:1;/* Höhe nur auf iPad/iPhone berücksichtigen – am Mac zählt nur die Breite. */scale=Math.max(min,Math.min(1,fitW,Math.max(.55,fitH)))}else if(fit)scale=Math.max(min,Math.min(max,scroll.clientWidth/d.width));
   board.style.transform=`scale(${scale})`;viewport.style.width=d.width*scale+'px';viewport.style.height=d.height*scale+'px';
@@ -2635,9 +2638,13 @@ document.addEventListener('keydown',event=>{
  classroomHooks.add('initGrid','plan-zoom: Zoom aufbauen',{after(){build()}});build();
  new MutationObserver(()=>update()).observe(grid,{attributes:true,attributeFilter:['hidden']});
  document.getElementById('classroomEditRoom')?.addEventListener('change',update);
- new ResizeObserver(()=>update()).observe(grid);document.addEventListener('fullscreenchange',update);
+ new ResizeObserver(()=>update()).observe(grid);addEventListener('beforeprint',()=>{printing=true;update()});addEventListener('afterprint',()=>{printing=false;update()});new MutationObserver(()=>update()).observe(document.documentElement,{attributes:true,attributeFilter:['class']});document.addEventListener('fullscreenchange',update);
  // Beim Drehen des iPads wieder automatisch (quer 100 %, hochkant ggf. eingepasst).
  matchMedia('(orientation: portrait)').addEventListener('change',()=>{auto=true;fit=false;update()});PH.addEventListener?.('change',()=>update());{let was=null;new MutationObserver(()=>{const now=document.documentElement.classList.contains('ph-lite');if(now!==was){was=now;update()}}).observe(document.documentElement,{attributes:true,attributeFilter:['class']})}
+ {const st=document.createElement('style');st.textContent='.plan-dense .cell:not(.tisch):not(.besetzt):not(.pult){visibility:hidden!important}'
+  +'.plan-dense .cell.tisch:not(.besetzt){background:transparent!important;background-image:none!important;border:1px dashed #d5deea!important;color:transparent!important;box-shadow:none!important}'
+  +'html.ph-lite .plan-dense .cell.tisch:not(.besetzt),html.is-phone .plan-dense .cell.tisch:not(.besetzt){visibility:hidden!important}'
+  +'@media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){.plan-dense .cell.tisch:not(.besetzt){visibility:hidden!important}}';document.head.append(st)}
 })();
 ;
 

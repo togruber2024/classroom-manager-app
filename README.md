@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.45
+Stand: 06.11.2026 · Version 8.46
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1122,3 +1122,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.43: iPhone: Auswahl-Blatt für Fach und Klasse zeigt auch im Unterricht keine Zahnräder und kein „+ Fach“/„+ Klasse“ mehr
 8.44: iPhone: kein Pfeil mehr neben Klasse und Fach – ein Tipp auf das Feld öffnet die Auswahl
 8.45: Schraffur-Schalter auf allen Seiten mit Noten immer an derselben Stelle (zwischen „Kompaktansicht“ und „Drucken“); ohne Tendenzen oder 4 ausgegraut; Hausaufgaben/Material ohne
+8.46: Sitzplan (Bewertungsmodus): Felder ohne Tisch unsichtbar, freie Tische blass (iPhone unsichtbar), leere Reihen/Spalten als Gänge (hochkant ½, quer ⅓); iPhone/iPad: belegte Reihen größer (Obergrenze), Mac nur verdichtet; Sitzplanmodus, Beamer, Druck unverändert

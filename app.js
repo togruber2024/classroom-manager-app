@@ -1599,6 +1599,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['Sitzplan aufgeräumt','Im Bewertungsmodus verschwinden Felder ohne Tisch, freie Tische sind nur noch blass (iPhone: unsichtbar), leere Reihen werden zu schmalen Gängen. Auf iPhone und iPad werden die Tische dafür größer – passend zu Hoch- und Querformat. Im Sitzplanmodus bleibt das volle Raster.','Unterricht','8.46'],
    ['Fachkürzel und Hilfe auf dem iPhone','Auf dem iPhone steht neben der Klasse oben ein kleines Fachkürzel (z. B. „Ek“, „La“). Die Hilfe startet dort im Kapitel „Auf dem iPhone“, beim allerersten Öffnen in „Erste Schritte“.','iPhone','8.42'],
    ['Suche markiert im Sitzplan','„Schüler finden“ markiert beim Tippen alle passenden Plätze blau – Vor- oder Nachname. Bei genau einem Treffer öffnet Enter das Bewertungsfenster.','Unterricht → Schüler finden','8.39'],
    ['Schraffur-Schalter in der Tests-Übersicht','In der Tests-Übersicht steht der Schalter Aus/Schraffiert/Rahmen jetzt oben zwischen „Kompaktansicht“ und „Drucken“. Auf dem iPhone haben die Wischfenster kein ✕ mehr.','Noten → Tests','8.40'],
