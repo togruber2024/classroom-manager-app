@@ -2605,7 +2605,7 @@ document.addEventListener('keydown',event=>{
    const vis=cells.filter(c=>c.style.display!=='none'),R=new Map(),C=new Map();
    for(const c of vis){const r=parseInt(c.style.gridRow,10),k=parseInt(c.style.gridColumn,10),full=!!gridData[Number(c.dataset.row)]?.[Number(c.dataset.col)];if(!R.has(r))R.set(r,false);if(!C.has(k))C.set(k,false);if(full){R.set(r,true);C.set(k,true)}}
    const rowsN=R.size,colsN=C.size,eR=[...R.values()].filter(v=>!v).length,eC=[...C.values()].filter(v=>!v).length;
-   const top=scroll.getBoundingClientRect().top+window.scrollY,availH=Math.max(120,window.innerHeight-top-14),availW=scroll.clientWidth;
+   const top=scroll.getBoundingClientRect().top+window.scrollY,availH=Math.max(120,window.innerHeight-top-14),availW=Math.max(100,scroll.clientWidth-14);/* 8.57: Platz für die „2/3“-Plaketten am rechten Rand */
    const W=(colW)=>hw()+[...C.values()].reduce((a,v)=>a+(v?75:colW)+5,0),H=(rowH,emptyH)=>hh()+[...R.values()].reduce((a,v)=>a+(v?rowH:emptyH)+5,0);
    const plain=Math.min(1,availW/W(75));
    if(H(45,45)*plain>availH+1&&(eR||rowsN)){
@@ -3528,6 +3528,8 @@ document.addEventListener('keydown',event=>{
   +'}';
  document.head.append(st);
 })();
+/* 8.57: iPhone quer – Datum („Heute“/„Gestern“) und „Perspektive“ untereinander rechts neben dem Plan, gleich breit; der Plan bekommt die volle Höhe */
+(()=>{const st=document.createElement('style');st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){html.ph-lite .grid-container:has(>.pl-seatbar):not(#_){display:grid!important;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:start}html.ph-lite .grid-container>.pl-seatbar:not(#_):not(#__){grid-column:2;grid-row:1;display:flex!important;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px;margin:0!important;width:auto}html.ph-lite .grid-container>.pl-seatbar>*:not(#_){box-sizing:border-box!important;width:100%!important;min-width:0!important;margin:0!important;justify-content:center}html.ph-lite .grid-container>#roomGrid:not(#_){grid-column:1;grid-row:1;min-width:0}}';document.head.append(st)})();
 ;
 
 /* ==== no-contacts.js ==== */
