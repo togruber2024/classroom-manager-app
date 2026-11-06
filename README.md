@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.35
+Stand: 06.11.2026 · Version 8.36
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1112,3 +1112,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.33: Kompaktansicht: Q1-Tests nur mit Datum („Q1 · 10.09.2026“), ohne Titel
 8.34: Tests-Übersicht: der gestrichelte „＋ Test“ öffnet „Test erstellen“ (Rohpunkte mit Detailseite oder direkte Eingabe in der Spalte)
 8.35: Update-Hinweis: „Was ist neu?“ erscheint nur, wenn es seit der zuletzt benutzten Version neue Einträge gibt; diese sind in der Hilfe grün markiert („Neu für dich“)
+8.36: Schalter „2,3 | 2− | 2“ (bzw. „10,6 | 11“): solange alle Ergebnisse glatt sind, sind Dezimal/Tendenz ausgegraut (Tabellen, Klassenarbeits-Übersicht, iPhone-Karten); gespeicherte Auswahl gilt wieder bei Zwischenwerten

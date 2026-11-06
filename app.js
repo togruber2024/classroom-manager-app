@@ -1599,6 +1599,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['Darstellungs-Schalter nur, wenn sinnvoll','Solange es nur glatte Noten gibt (z. B. nach dem ersten Test), sind „2,3“ und „2−“ ausgegraut – alle drei Darstellungen sähen gleich aus. Sobald es Zwischenwerte gibt, sind sie wieder wählbar; deine Auswahl bleibt gespeichert.','Testmittel, Klassenarbeiten, iPhone-Karten','8.36'],
    ['Ein Weg für neue Tests','Auch „＋ Test“ in der Tests-Übersicht öffnet jetzt „Test erstellen“. Dort wählst du Rohpunkte mit Detailseite („Öffnen ›“) oder die direkte Eingabe in der Spalte. In der Kompaktansicht stehen Tests des 1. Quartals als „Q1 · Datum“.','Noten → Tests','8.34'],
    ['Umbenennen zieht überall mit','Änderst du einen Namen, folgen alle Sitzpläne (auch Räume und gespeicherte Versionen), Paare/Tabu und Notizen – auch nach dem Wiederherstellen eines Backups auf einem anderen Gerät. Nach einem Update zeigt die App kurz „Aktualisiert auf Version …“ mit „Was ist neu?“.','Alle Geräte','8.31'],
    ['iPhone: einheitliche Blätter','Hilfe, Detailblatt, Bewertungsfenster, Stundenplan und Notizen kommen auf dem iPhone von unten, haben oben einen Griff und ein ✕ und lassen sich nach unten wegwischen. Die Hilfe zeigt oben App-Name, Version und Untertitel.','iPhone','8.23'],
