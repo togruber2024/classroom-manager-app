@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.39
+Stand: 06.11.2026 · Version 8.40
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1116,3 +1116,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.37: Tests-Übersicht: Schraffur-Schalter (Aus/Schraffiert/Rahmen) über dem Testmittel-Schalter, beide gleich groß; iPhone: Wischfenster ohne ✕
 8.38: Testmittel-Kopf: Schalter 5 px höher, „Testmittel“ 5 px tiefer
 8.39: „Schüler finden“ markiert beim Tippen alle passenden Plätze im Sitzplan blau (Vor- oder Nachname) statt einer Vorschlagsliste; ein Treffer: Enter öffnet das Bewertungsfenster
+8.40: Tests-Übersicht: Schraffur-Schalter wieder in der Kopfzeile zwischen „Kompaktansicht“ und „Drucken“; Testmittel-Kopf wieder in normaler Größe, mittig

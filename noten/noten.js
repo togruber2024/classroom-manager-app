@@ -4572,16 +4572,13 @@ return}
      const checked=String(lock?isRound:want);if(btn.getAttribute('aria-checked')!==checked)btn.setAttribute('aria-checked',checked);
      const dis=lock&&!isRound;if(btn.disabled!==dis){btn.disabled=dis;if(dis){btn.dataset.tipOrig=btn.title;btn.title=TIP}else if(btn.dataset.tipOrig!==undefined){btn.title=btn.dataset.tipOrig;delete btn.dataset.tipOrig}}}
     seg.classList.toggle('mean-seg-locked',lock);
-    /* 8.37: In der Tests-Übersicht steht der Schraffur-Schalter (Aus/Schraffiert/Rahmen) direkt darüber – beide gleich groß */
-    if(pn.classList.contains('tests-ov-reduced'))stackHatch(seg)}}}
- function stackHatch(seg){let box=seg.parentElement;if(!box?.classList.contains('hs-stack')){box=document.createElement('div');box.className='hs-stack';seg.before(box);box.append(seg)}
-  if(!box.querySelector(':scope>.hs-col')){const h=document.createElement('div');h.className='mean-seg hatch-seg hs-col';h.setAttribute('role','radiogroup');h.title='Darstellung von Tendenzen (z. B. 2−); 4 Notenpunkte bleiben immer schraffiert.';
-   h.innerHTML=[['off','Aus'],['hatch','Schraffur'],['frame','Rahmen']].map(([v,l])=>'<button type="button" role="radio" data-hatch="'+v+'" aria-checked="false" title="Tendenzen: '+l+'" aria-label="Tendenzen: '+l+'"><i class="hs-sw hs-'+v+'" aria-hidden="true"></i></button>').join('');box.prepend(h);try{window.classroomHatchSync?.()}catch{}}}
+   }}}
+ /* 8.40: Schraffur-Schalter der Tests-Übersicht steht wieder in der Kopfzeile (zwischen Kompaktansicht und Drucken) */
  let planned=false;const schedule=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;guard()})};
  window.classroomMeanGuard=schedule;
  new MutationObserver(list=>{if(list.some(m=>m.type==='characterData'||[...m.addedNodes].some(n=>n.nodeType!==1||!n.closest?.('.mean-seg'))))schedule()}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
  document.addEventListener('input',schedule,true);document.addEventListener('change',schedule,true);
- const st=document.createElement('style');st.textContent='.mean-seg button:disabled{opacity:.38;cursor:not-allowed}.mean-seg button:disabled:hover{background:transparent}'+'.hs-stack{display:flex;flex-direction:column;align-items:stretch;gap:8px;width:100%;max-width:150px;margin:0 auto}'+'body .tests-ov-reduced .hs-stack>.hatch-seg.hs-col:not([hidden]){display:flex!important}'+'body .hs-stack>.mean-seg:not(#_){box-sizing:border-box!important;width:100%!important;height:36px!important;min-width:0!important;display:flex!important;padding:3px!important;gap:2px!important;margin:0!important}'+'body .hs-stack>.mean-seg:not(#_)>button{flex:1 1 0!important;min-width:0!important;width:auto!important;height:100%!important;padding:0!important;display:flex!important;align-items:center;justify-content:center}'+'body .hs-stack .hs-sw:not(#_){width:22px;height:13px}'+'body .hs-stack:not(#_):not(#__){position:relative!important;top:-5px!important}body .hs-stack:not(#_)+*{position:relative!important;top:5px!important}'+'@media print{.hs-stack>.hs-col{display:none!important}}';document.head.append(st);
+ const st=document.createElement('style');st.textContent='.mean-seg button:disabled{opacity:.38;cursor:not-allowed}.mean-seg button:disabled:hover{background:transparent}'+'body .tests-ov-reduced .oral-display-actions>.hatch-seg:not([hidden]):not(#_){display:inline-flex!important}';document.head.append(st);
  schedule();
 })();
 ;
