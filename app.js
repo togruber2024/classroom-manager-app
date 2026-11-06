@@ -1992,6 +1992,8 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
  new MutationObserver(()=>{if(!planned){planned=true;requestAnimationFrame(sync)}}).observe(document.body,{childList:true,subtree:true,characterData:true});sync();
  const st=document.createElement('style');st.textContent='@media (max-width:540px) and (orientation:portrait) and (pointer:coarse){.app-header>.compact-navigation .compact-navigation-trail>.compact-navigation-chip[data-fach]::after{content:attr(data-fach);display:inline-flex;align-items:center;margin-left:8px;padding:1px 8px;border-radius:999px;background:#fff;color:#2f5f9b;font-size:12.5px;font-weight:700;line-height:18px;vertical-align:middle;box-shadow:inset 0 0 0 1px #cbd6e5}}';document.head.append(st);
 })();
+/* 8.44: iPhone – kein Pfeil neben Klasse/Fach; ein Tipp auf das Feld öffnet die Auswahl */
+(()=>{const st=document.createElement('style');st.textContent='@media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){.app-header>.compact-navigation .compact-navigation-arrow:not(#_):not(#__){display:none!important}.app-header>.compact-navigation .compact-navigation-bar:not(#_):not(#__){padding:0 12px!important;cursor:pointer}}';document.head.append(st)})();
 ;
 
 /* ==== button-help.js ==== */
