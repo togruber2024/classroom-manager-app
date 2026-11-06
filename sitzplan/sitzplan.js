@@ -2961,8 +2961,9 @@ document.addEventListener('keydown',event=>{
 ;
 
 /* ==== sitzplan/student-finder.js ==== */
-/* „Schüler finden“: Ein Klick verwandelt „Schüler“ im Button in ein Eingabefeld mit Namensvorschlägen.
-   Nach Auswahl eines Namens springt „finden“ zum Sitzplatz. Das Feld wächst mit der Namenslänge. */
+/* „Schüler finden“: Ein Klick verwandelt „Schüler“ im Button in ein Eingabefeld.
+   8.39: Schon beim Tippen werden alle passenden Plätze im Sitzplan blau markiert (Vorname oder Nachname beginnt mit dem Text) –
+   keine Vorschlagsliste mehr. Ein Treffer: der Plan scrollt dorthin, Enter öffnet das Bewertungsfenster. Das Feld wächst mit dem Text. */
 (()=>{
  const button=document.getElementById('studentSearchToggle'),legacyInput=document.getElementById('studentSearchInput');
  if(!button)return;
@@ -2972,12 +2973,13 @@ document.addEventListener('keydown',event=>{
  for(const [k,v] of Object.entries({autocorrect:'off',autocapitalize:'off',enterkeyhint:'search','data-lpignore':'true','data-1p-ignore':'true','data-form-type':'other'}))input.setAttribute(k,v);
  input.placeholder='Suchen …';input.setAttribute('aria-label','Person im Sitzplan suchen');input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');input.setAttribute('aria-expanded','false');
  const list=document.createElement('ul');list.className='student-finder-list';list.id='studentFinderList';list.setAttribute('role','listbox');list.hidden=true;input.setAttribute('aria-controls',list.id);
+ const note=document.createElement('span');note.className='student-finder-note';note.textContent='Kein Treffer';note.hidden=true;note.setAttribute('aria-live','polite');
  const sizer=document.createElement('span');sizer.className='student-finder-sizer';sizer.setAttribute('aria-hidden','true');
  let open=false,active=-1,matches=[];
 
  function place(){
   // Der Unterrichts-Manager baut die Werkzeugleiste gelegentlich neu auf; der Button bleibt im Suchfeld-Verbund.
-  if(button.parentElement!==wrap){button.before(wrap);wrap.append(input,button,list,sizer)}
+  if(button.parentElement!==wrap){button.before(wrap);wrap.append(input,note,button,list,sizer)}
   if(legacyInput){legacyInput.hidden=true;legacyInput.setAttribute('aria-hidden','true')}
  }
  function allNames(){
@@ -3023,16 +3025,25 @@ document.addEventListener('keydown',event=>{
  }
  function setOpen(state){
   open=state;wrap.dataset.open=String(state);button.textContent=state?'finden':'Schüler finden';button.setAttribute('aria-expanded',String(state));
-  button.title=state?'Zum ausgewählten Sitzplatz springen.':'Das Suchfeld öffnen, um eine Person im Sitzplan zu finden.';button.dataset.buttonHelp='';
-  if(state){const f=getComputedStyle(button).font;for(const el of [wrap,input,sizer])el.style.font=f;grow();input.focus();input.select()}else{input.value='';matches=[];active=-1;renderList();sucheSchuelerImSitzplan('')}
+  button.title=state?'Bei genau einem Treffer: Bewertungsfenster öffnen.':'Das Suchfeld öffnen, um eine Person im Sitzplan zu finden.';button.dataset.buttonHelp='';
+  if(state){const f=getComputedStyle(button).font;for(const el of [wrap,input,sizer])el.style.font=f;grow();input.focus();input.select()}else{input.value='';matches=[];active=-1;renderList();sucheSchuelerImSitzplan('');mark(false)}
  }
- window.classroomToggleStudentSearch=()=>{place();if(!open)setOpen(true);else find()};
- input.addEventListener('input',()=>{chosen=null;matches=search(input.value);active=matches.length?0:-1;renderList();grow();if(!input.value.trim())sucheSchuelerImSitzplan('')});
+ window.classroomToggleStudentSearch=()=>{place();if(!open)setOpen(true);else if(!input.value.trim())input.focus();else openHit()};
+ /* Markierung im Sitzplan */
+ let hits=[];
+ function cellName(cell){return cell.classList.contains('besetzt')&&typeof gridData!=='undefined'?gridData[Number(cell.dataset.row)]?.[Number(cell.dataset.col)]:null}
+ function matchesQuery(full,q){const f=norm(firstName(full)),l=norm(lastName(full));return f.startsWith(q)||f.split(/[\s\-]+/).some(w=>w.startsWith(q))||(l&&(l.startsWith(q)||l.split(/[\s\-]+/).some(w=>w.startsWith(q))))}
+ function mark(scroll){const q=norm(input.value.trim());hits=[];
+  for(const cell of document.querySelectorAll('#roomGrid .cell')){const n=cellName(cell),hit=!!(open&&q&&n&&n!=='X'&&n!=='PULT'&&matchesQuery(n,q));if(cell.hasAttribute('data-finder-hit')!==hit){if(hit)cell.setAttribute('data-finder-hit','');else cell.removeAttribute('data-finder-hit')}if(hit)hits.push(cell)}
+  note.hidden=!(open&&q&&!hits.length);grow();
+  if(scroll&&hits.length===1)try{hits[0].scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'})}catch{}}
+ function openHit(){if(!hits.length)return;const cell=hits[0],name=cellName(cell);try{cell.scrollIntoView({block:'nearest',inline:'nearest'})}catch{}
+  if(hits.length===1&&name&&typeof window.classroomOpenStudent==='function'&&!document.getElementById('classroomEditRoom')?.checked){setOpen(false);window.classroomOpenStudent(name)}}
+ input.addEventListener('input',()=>{chosen=null;matches=[];active=-1;renderList();mark(true)});
+ let markPlanned=false;new MutationObserver(()=>{if(!open||!input.value.trim()||markPlanned)return;markPlanned=true;requestAnimationFrame(()=>{markPlanned=false;mark(false)})}).observe(document.getElementById('roomGrid')||document.body,{childList:true});
  wrap.addEventListener('keydown',e=>{if(e.key==='Escape'&&e.target!==input){e.preventDefault();setOpen(false);button.focus()}});
  input.addEventListener('keydown',e=>{
-  if(e.key==='ArrowDown'&&matches.length){e.preventDefault();active=(active+1)%matches.length;renderList()}
-  else if(e.key==='ArrowUp'&&matches.length){e.preventDefault();active=(active-1+matches.length)%matches.length;renderList()}
-  else if(e.key==='Enter'){e.preventDefault();if(matches.length&&active>=0)choose(matches[active]);else find()}
+  if(e.key==='Enter'){e.preventDefault();openHit()}
   else if(e.key==='Escape'){e.preventDefault();setOpen(false);button.focus()}
  });
  // Esc oder ein Klick/Tipp irgendwo außerhalb beendet die Suche: Hervorhebung weg, Name aus dem Suchfeld entfernt.
@@ -3050,7 +3061,7 @@ document.addEventListener('keydown',event=>{
  +'.student-finder-sizer{position:absolute;visibility:hidden;white-space:pre;font:inherit;pointer-events:none;left:0;top:0}'
  +'.student-finder-list{position:absolute;z-index:40;left:0;top:calc(100% + 6px);min-width:100%;max-height:260px;overflow:auto;margin:0;padding:5px;list-style:none;background:#fff;border:1px solid #ccd9e9;border-radius:12px;box-shadow:0 12px 26px #2533491f}'
  +'.student-finder-list li{padding:8px 12px;border-radius:8px;white-space:nowrap;cursor:pointer;color:#253349}'
- +'.student-finder-list li[aria-selected=true],.student-finder-list li:hover{background:#eaf0fa}';
+ +'.student-finder-list li[aria-selected=true],.student-finder-list li:hover{background:#eaf0fa}.student-finder-list{display:none!important}'+'.student-finder-note{display:none;align-self:center;padding-left:8px;color:#8794a7;font-size:.85em;white-space:nowrap}.student-finder[data-open=true] .student-finder-note:not([hidden]){display:block}'+'body .room-grid .cell[data-finder-hit]:not(#_){background:#eaf0fa!important;background-image:none!important;color:#2f5f9b!important;border:2px solid #2f5f9b!important;outline:3px solid #2f5f9b;outline-offset:2px;box-shadow:0 0 0 5px #2f5f9b30!important;z-index:2}'+'html.classroom-privacy .room-grid .cell[data-finder-hit]{color:transparent!important}';
  document.head.append(style);
 })();
 ;
