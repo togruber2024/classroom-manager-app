@@ -101,7 +101,7 @@
   for(let r=0;r<10;r++)for(let c=0;c<10;c++){let h=Math.imul(((r+1)*73856093)^((c+1)*19349663)^((seed+1)*83492791),2654435761);h=(h^(h>>>15))>>>0;h=(h>>>7)%5;rules+='html.classroom-privacy body .room-grid .cell.cell.besetzt[data-row="'+r+'"][data-col="'+c+'"]{background:'+PAL[h%5]+'!important}'}
   for(let j=0;j<3;j++)for(let k=0;k<5;k++)rules+='html.classroom-privacy .so-section:nth-of-type(3n+'+(j+1)+') :nth-child(5n+'+(k+1)+')>.so-val,html.classroom-privacy .so-section:nth-of-type(3n+'+(j+1)+') .so-val:nth-child(5n+'+(k+1)+'){background-color:'+PAL[(k*2+j*3+seed)%5]+'!important}';
   // iPhone-Karten und Detailblatt (Noten): Namen unscharf, Noten unkenntlich mit Zufallsfarben
-  rules+='html.classroom-privacy :is(.qs-name,.qd-title b,.qs-stand){color:transparent!important;text-shadow:0 0 7px rgba(36,51,71,.75)!important;-webkit-user-select:none!important;user-select:none!important}'
+  rules+='html.classroom-privacy :is(.qs-name,.qd-title b,.qs-stand,.qs-note,.tt-row b,.tt-last b){color:transparent!important;text-shadow:0 0 7px rgba(36,51,71,.75)!important;-webkit-user-select:none!important;user-select:none!important}'
    +'html.classroom-privacy :is(.qs-big,.qs-val i,.qs-sq i,.qs-q1chip i,.qd-val,.qs-miss-n,.qs-chip i){color:transparent!important;text-shadow:0 0 8px rgba(36,51,71,.6)!important;background-image:none!important;box-shadow:none!important;border-color:transparent!important}'
    +'html.classroom-privacy :is(.qs-card,.qd-panel){pointer-events:none!important}html.classroom-privacy .qd-head{pointer-events:auto!important}';
   for(let a=0;a<5;a++){rules+='html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-big,html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-q1chip i{background-color:'+PAL[(a+seed)%5]+'!important}';
@@ -1481,7 +1481,7 @@ window.addEventListener('message',event=>{
  const today=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')};
  const mins=s=>{const [h,m]=String(s||'').split(':').map(Number);return Number.isFinite(h)&&Number.isFinite(m)?h*60+m:null};
  function lessonNow(){const t=plan(),n=new Date(),day=n.getDay(),now=n.getHours()*60+n.getMinutes();if(day<1||day>5)return null;for(const [i,s] of t.slots.entries()){const a=mins(s.start),b=mins(s.end);if(a===null||b===null)continue;if(now>=a-10&&now<b){const e=t.days[day]?.[i];if(e?.ref)return {...e,key:today()+':'+i}}}return null}
- function toast(text,undo){document.querySelector('.tt-toast')?.remove();const bar=document.createElement('div');bar.className='tt-toast';bar.setAttribute('role','status');bar.innerHTML=`<span>${esc(text)}</span>${undo?'<button type="button">Rückgängig</button>':''}<button type="button" class="tt-toast-x" aria-label="Hinweis schließen">×</button>`;document.body.append(bar);bar.querySelector('.tt-toast-x').onclick=()=>bar.remove();if(undo)bar.querySelector('button').onclick=()=>{bar.remove();undo()};setTimeout(()=>bar.remove(),12000)}
+ function toast(text,undo,more){document.querySelector('.tt-toast')?.remove();const bar=document.createElement('div');bar.className='tt-toast';bar.setAttribute('role','status');bar.innerHTML=`<span>${esc(text)}</span>${undo?'<button type="button" class="tt-undo">Rückgängig</button>':''}${more?'<button type="button" class="tt-more">'+esc(more.label)+'</button>':''}<button type="button" class="tt-toast-x" aria-label="Hinweis schließen">×</button>`;document.body.append(bar);bar.querySelector('.tt-toast-x').onclick=()=>bar.remove();if(undo)bar.querySelector('.tt-undo').onclick=()=>{bar.remove();undo()};if(more)bar.querySelector('.tt-more').onclick=()=>{bar.remove();more.run()};setTimeout(()=>bar.remove(),12000)}
  async function selectRoom(name){if(!name)return;for(let i=0;i<20;i++){await new Promise(r=>setTimeout(r,250));try{const sel=classroomSeats.contentWindow.document.getElementById('classroomRoomSelect');if(!sel)continue;const opt=[...sel.options].find(o=>o.textContent.trim().toLocaleLowerCase('de')===name.toLocaleLowerCase('de'));if(!opt)return;if(sel.value!==opt.value){sel.value=opt.value;sel.dispatchEvent(new Event('change',{bubbles:true}))}return}catch{}}}
  async function apply(force=false){
   const lesson=lessonNow();if(!lesson)return;
@@ -1491,16 +1491,54 @@ window.addEventListener('message',event=>{
   return applyLesson(lesson,'Stundenplan');
  }
  // Zuletzt unterrichtete Lerngruppe (heute bis jetzt, sonst die letzten Schultage)
- function lastLesson(){const t=plan(),n=new Date();for(let back=0;back<14;back++){const d=new Date(n);d.setDate(n.getDate()-back);const day=d.getDay();if(day<1||day>5)continue;const lim=back?24*60:n.getHours()*60+n.getMinutes();let best=null;for(const [i,s] of t.slots.entries()){const a=mins(s.start);if(a===null||a>lim)continue;const e=t.days[day]?.[i];if(e?.ref)best={...e}}if(best)return best}return null}
+ function lastLesson(){const t=plan(),n=new Date();for(let back=0;back<14;back++){const d=new Date(n);d.setDate(n.getDate()-back);const day=d.getDay();if(day<1||day>5)continue;const lim=back?24*60:n.getHours()*60+n.getMinutes();let best=null;for(const [i,s] of t.slots.entries()){const a=mins(s.start);if(a===null||a>lim)continue;const e=t.days[day]?.[i];if(e?.ref)best={...e,date:dateStr(d)}}if(best)return best}return null}
  // „Aktuell“ (iPhone-Leiste): laufende Stunde, sonst die zuletzt unterrichtete Lerngruppe
+ /* „Aktuell“ (iPhone-Leiste): läuft gerade eine Stunde, direkt in deren Sitzplan (mit Datum und Raum);
+    sonst Übersicht für heute und den nächsten Schultag mit „Zuletzt“ (8.01). */
  window.classroomGoCurrent=async function(){
   const now=lessonNow();if(now){try{localStorage.setItem(APPLIED,now.key)}catch{}return applyLesson(now,'Jetzt')}
-  const last=lastLesson();if(last)return applyLesson(last,'Zuletzt');
-  if(typeof selectView==='function')selectView('sitzplan');
-  /* 7.99: genauer sagen, was fehlt (keine Einträge / nichts in den letzten zwei Wochen) */
-  const t=load(),n=Object.values(t.days||{}).reduce((a,d)=>a+Object.values(d||{}).filter(e=>e&&e.ref).length,0),l=learned(),nl=Object.values(l||{}).reduce((a,d)=>a+Object.keys(d||{}).length,0);
-  toast(n||nl?'Im Stundenplan ('+(n+nl)+' Stunden) findet sich in den letzten zwei Wochen keine Stunde mit Lerngruppe.':'Auf diesem Gerät ist kein Stundenplan gespeichert (0 Stunden). Bitte am Mac den Stundenplan prüfen, danach ein neues Backup erstellen und hier wiederherstellen.');
+  openPlan();
  };
+ const isPhone=()=>matchMedia('(max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse)').matches;
+ const WD=['So','Mo','Di','Mi','Do','Fr','Sa'],fmtD=d=>WD[d.getDay()]+', '+String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.';
+ const roomText=r=>r?(/^raum\b/i.test(r)?r:'Raum '+r):'';
+ function openPlan(){
+  document.querySelector('.tt-sheet')?.remove();
+  const t=plan(),labels=new Map(classOptions().map(o=>[o.ref,o.label])),n=new Date(),nowM=n.getHours()*60+n.getMinutes();
+  const total=Object.values(t.days).reduce((a,d)=>a+Object.values(d||{}).filter(e=>e?.ref).length,0);
+  const sh=document.createElement('div');sh.className='tt-sheet';
+  let html='<div class="tt-back"></div><section class="tt-panel" role="dialog" aria-label="Stundenplan"><div class="tt-grab"></div><div class="tt-head"><b>Stundenplan</b><button type="button" class="tt-x" aria-label="Schließen">✕</button></div><div class="tt-body">';
+  const lessons=[];
+  if(!total){html+='<p class="tt-empty">Auf diesem Gerät ist kein Stundenplan gespeichert. Bitte am Mac den Stundenplan eintragen, ein neues Backup erstellen und hier wiederherstellen.</p>'}
+  else{
+   const last=lastLesson();if(last){lessons.push(last);html+=`<button type="button" class="tt-last" data-i="0"><small>Zuletzt unterrichtet${last.date&&last.date!==today()?' · '+fmtD(new Date(last.date+'T12:00')):''}</small><b>${esc(labels.get(last.ref)||'')}</b><span>${esc(roomText(last.room))}</span></button>`}
+   const days=[];const d0=new Date(n);for(let k=0;k<10&&days.length<2;k++){const d=new Date(d0);d.setDate(d0.getDate()+k);if(d.getDay()>=1&&d.getDay()<=5)days.push(d)}
+   for(const d of days){const isToday=dateStr(d)===today(),list=t.slots.map((s,i)=>({s,i,e:t.days[d.getDay()]?.[i]})).filter(x=>x.e?.ref);
+    const FULL=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'],dm=String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.',tom=new Date(n);tom.setDate(n.getDate()+1);
+    html+=`<h4>${isToday?'Heute · '+fmtD(d):(dateStr(d)===dateStr(tom)?'Morgen · '+fmtD(d):FULL[d.getDay()]+', '+dm)}</h4>`;
+    if(!list.length)html+='<p class="tt-none">Kein Unterricht eingetragen</p>';
+    for(const x of list){const a=mins(x.s.start),b=mins(x.s.end),past=isToday&&b!==null&&b<nowM,cur=isToday&&a!==null&&b!==null&&nowM>=a-10&&nowM<b;lessons.push({...x.e,date:dateStr(d)});
+     html+=`<button type="button" class="tt-row${past?' is-past':''}${cur?' is-now':''}" data-i="${lessons.length-1}"><time>${esc(x.s.start||'')}–${esc(x.s.end||'')}</time><b>${esc(labels.get(x.e.ref)||x.e.ref)}</b><span>${esc(roomText(x.e.room))}</span></button>`}}
+  }
+  html+='</div></section>';sh.innerHTML=html;document.body.append(sh);
+  const close=()=>sh.remove();sh.querySelector('.tt-x').onclick=close;sh.querySelector('.tt-back').onclick=close;
+  sh.querySelector('.tt-body').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(!b)return;const l=lessons[+b.dataset.i];close();applyLesson(l,b.classList.contains('tt-last')?'Zuletzt':(b.classList.contains('is-now')?'Jetzt':'Stunde'))});
+  // nach unten wischen schließt
+  const pnl=sh.querySelector('.tt-panel'),body=sh.querySelector('.tt-body');let y0=null,dy=0;
+  pnl.addEventListener('touchstart',e=>{y0=(!body.contains(e.target)||body.scrollTop<=0)?e.touches[0].clientY:null;dy=0;pnl.style.transition='none'},{passive:true});
+  pnl.addEventListener('touchmove',e=>{if(y0===null)return;dy=e.touches[0].clientY-y0;if(dy>0){pnl.style.transform='translateY('+dy+'px)';if(e.cancelable)e.preventDefault()}},{passive:false});
+  pnl.addEventListener('touchend',()=>{if(y0===null)return;y0=null;pnl.style.transition='transform .18s ease';if(dy>90){pnl.style.transform='translateY(100%)';setTimeout(close,180)}else pnl.style.transform=''},{passive:true});
+ }
+ window.classroomOpenPlan=openPlan;
+ {const st=document.createElement('style');st.textContent='.tt-sheet{position:fixed;inset:0;z-index:9700}.tt-back{position:absolute;inset:0;background:#1c2b4655}'
+  +'.tt-panel{position:absolute;left:0;right:0;bottom:0;max-height:82vh;display:flex;flex-direction:column;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -12px 34px #1c2b4633;padding-bottom:env(safe-area-inset-bottom)}'
+  +'.tt-grab{width:40px;height:5px;border-radius:3px;background:#cbd6e5;margin:8px auto 4px}.tt-head{display:flex;align-items:center;justify-content:space-between;padding:4px 16px 8px}.tt-head b{font-size:17px}.tt-x{width:40px;height:40px;border:0;background:none;color:#66758a;font-size:17px}'
+  +'.tt-body{overflow:auto;padding:0 14px 16px}.tt-body h4{margin:14px 2px 6px;font-size:13px;color:#66758a;font-weight:700}.tt-none,.tt-empty{margin:4px 2px;color:#8794a7;font-size:14px;line-height:1.45}'
+  +'.tt-row,.tt-last{display:grid;grid-template-columns:92px 1fr auto;align-items:center;gap:8px;width:100%;min-height:48px;margin:0 0 6px;padding:0 12px;border:1px solid #dbe3ef;border-radius:12px;background:#fff;color:#243247;font:inherit;text-align:left;cursor:pointer}'
+  +'.tt-row time{font-size:13px;color:#66758a;font-variant-numeric:tabular-nums}.tt-row b,.tt-last b{font-size:15px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tt-row span,.tt-last span{font-size:13px;color:#66758a;white-space:nowrap}'
+  +'.tt-row.is-past{opacity:.6}.tt-row.is-now{border-color:#8fb0dc;background:#eaf0fa}'
+  +'.tt-last{grid-template-columns:1fr auto;grid-template-rows:auto auto;min-height:58px;padding:8px 12px;margin-top:2px;background:#f7f9fc}.tt-last small{grid-column:1/-1;font-size:12px;color:#66758a}'
+  +'.tt-toast .tt-more{font-weight:650}';document.head.append(st)}
  async function applyLesson(lesson,prefix){
   const [subject,classId]=lesson.ref.split('::');
   let before={};try{before=classroomNotes.contentWindow.classroomCurrentSelection()||{}}catch{}
@@ -1508,9 +1546,12 @@ window.addEventListener('message',event=>{
    if(before.subject!==subject||before.classId!==classId)await classroomCall(classroomNotes,'classroom:select-class',{subject,classId});
    if(typeof selectView==='function')selectView('sitzplan');
    await classroomEnsureSeats();await selectRoom(lesson.room);
+   /* 8.01: Datum der Stunde im Sitzplan setzen (heute bzw. Tag der zuletzt unterrichteten Stunde) */
+   const setDate=()=>{try{const w=classroomSeats.contentWindow,inp=w.classroomDateInput,d=lesson.date&&lesson.date<=today()?lesson.date:today();if(inp&&inp.value!==d){inp.value=d;inp.dispatchEvent(new w.Event('input',{bubbles:true}));inp.dispatchEvent(new w.Event('change',{bubbles:true}))}}catch{}};
+   /* der Sitzplan setzt beim Klassenwechsel das Datum ggf. selbst zurück – daher kurz danach noch einmal */setDate();setTimeout(setDate,700);setTimeout(setDate,1800);
    const label=classOptions().find(o=>o.ref===lesson.ref)?.label||'';
    const changed=before.subject!==subject||before.classId!==classId;
-   toast(`${prefix}: ${label}${lesson.room?' · '+(/^raum\b/i.test(lesson.room)?lesson.room:'Raum '+lesson.room):''}`,changed&&before.classId?async()=>{try{await classroomCall(classroomNotes,'classroom:select-class',before)}catch{}}:null);
+   toast(`${prefix}: ${label}${lesson.room?' · '+(/^raum\b/i.test(lesson.room)?lesson.room:'Raum '+lesson.room):''}`,changed&&before.classId?async()=>{try{await classroomCall(classroomNotes,'classroom:select-class',before)}catch{}}:null,isPhone()?{label:'Stundenplan',run:openPlan}:null);
   }catch(error){console.warn('Stundenplan: Auswahl nicht möglich',error)}
  }
  window.classroomApplyTimetable=apply;
@@ -1546,16 +1587,16 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['iPhone: „Aktuell“ und Stundenplan','„Aktuell“ öffnet während einer Stunde direkt deren Sitzplan – mit Raum und Datum. Sonst erscheint der Stundenplan für heute und den nächsten Schultag; „Zuletzt unterrichtet“ öffnet die letzte Lerngruppe mit deren Datum zum Nachtragen.','iPhone → Aktuell','8.01'],
+   ['Notiz je Person · Hinweise über den Karten','Im Detailblatt einer Karte (iPhone) lässt sich eine kurze Notiz eintragen, z. B. „Elterngespräch“. Sie steht in der Karte unter dem Namen und am Mac in der Quartalsübersicht (Symbol neben dem Namen). Über den Karten zeigen Hinweise, wer 3× oder öfter die HA vergessen hat – antippen filtert.','iPhone → Noten','8.01'],
    ['iPhone: Unterricht nur zum Bewerten','Auf dem iPhone zeigt der Unterricht nur noch den Sitzplan im Bewertungsmodus – ohne Knöpfe und Seitenleiste. Oben: Datum („Heute ▾“, zum Nachtragen antippen) und „Perspektive“; auch ein Tipp aufs Pult dreht den Plan.','iPhone → Unterricht','7.87'],
    ['iPhone: „Aktuell“ und neue Leiste','Unten auf dem iPhone: Unterricht · Noten · Aktuell · Hilfe. „Aktuell“ öffnet laut Stundenplan die Lerngruppe der laufenden Stunde, in Freistunden die zuletzt unterrichtete. Oben: nur die Lerngruppe, Datenschutz, Backup ⬇|⬆ und Rückgängig.','iPhone → Leiste unten','7.85'],
    ['iPhone: Noten zum Nachschauen','Auf dem iPhone (hochkant) zeigt der Noten-Manager nur noch die Karten der Klasse: Fach und Klasse wählen, Halbjahr und Quartal ergeben sich aus dem Datum. Jede Karte lässt das 1. Quartal aufklappen; eintragen lassen sich nur Selbsteinschätzung und Quartalsnote. Alles andere im Bereich „Unterricht“ bzw. am Mac/iPad.','iPhone → Noten','7.82'],
-   ['iPhone: Mündlich mit dem bunten Fenster','Auf den Seiten der mündlichen Mitarbeit öffnet ein Tipp in ein Notenfeld auf dem iPhone das bunte Bewertungsfenster als Blatt (ohne Tastatur): zehn Zeichen, Abwesend, Löschen; „Weiter ›“ springt zur nächsten Person im selben Termin.','iPhone → Noten → Mündliche Mitarbeit → Feld antippen','7.71'],
    ['iPhone: alle Einträge einer Person','Ein Tipp auf eine Karte der Quartals- oder Halbjahresübersicht öffnet ein Blatt mit allen mündlichen Noten (mit Datum), fehlenden Hausaufgaben, Sonstiger Mitarbeit und Klassenarbeit. Selbsteinschätzung und Quartalsnote sind dort eintragbar; ‹ › oder Wischen wechselt zur nächsten Person.','iPhone → Noten → Quartalsnote → Karte antippen','7.70'],
    ['iPhone: Quartalsnoten als Karten','Auf dem iPhone (hochkant) zeigt die Quartals- und Halbjahresübersicht eine Karte pro Person: Note groß, darunter jeder Bereich als farbiger Balken (je länger, desto besser), aufgebaut wie die Rechnung mit der Gewichtung in Prozent, fehlende Hausaufgaben als Zahl. Selbsteinschätzung und Quartalsnote lassen sich direkt in der Karte eintragen. Umschalter „Karten | Tabelle“.','iPhone → Noten → Quartalsnote','7.69'],
    ['iPhone: Sitzplan kompakter','Auf dem iPhone nutzt der Sitzplan die ganze Breite: ohne Spaltenbuchstaben und Reihennummern, ohne Hinweistext, Zoom nur mit − und +; „Einpassen“ und „100 %“ stehen unter ⋯.','iPhone → Unterricht','7.68'],
    ['iPhone: Bewerten Tisch für Tisch','Auf dem iPhone öffnet sich das Bewertungsfenster als Blatt (hochkant unten, quer rechts). Es bleibt nach einer Bewertung offen; „Weiter ›“ springt zum nächsten Tisch, der aktuelle Tisch ist blau umrandet. Quer sitzt die Leiste am linken Rand.','iPhone → Unterricht → Tisch antippen','7.67'],
-   ['iPhone: neue Bedienung','Auf dem iPhone (hochkant) oben nur noch Symbol, Auswahl und Rückgängig; die Auswahl öffnet sich als Blatt von unten. Unten die Leiste Unterricht · Noten · Backup · Mehr.','iPhone hochkant','7.64'],
-   ['Backup sofort wiederherstellen','Der Knopf ⬆ neben „Backup“ lädt das neueste Backup (am Mac aus dem festen Ordner, sonst per Dateiauswahl) – mit Rückfrage. Jede Wiederherstellung lässt sich rückgängig machen.','oben rechts → ⬆ neben „Backup“','7.55']]},
+   ['iPhone: neue Bedienung','Auf dem iPhone (hochkant) oben nur noch Symbol, Auswahl und Rückgängig; die Auswahl öffnet sich als Blatt von unten. Unten die Leiste Unterricht · Noten · Backup · Mehr.','iPhone hochkant','7.64']]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
    ['Zwei Bereiche','Oben wechselst du zwischen Unterrichts-Manager (Sitzplan, Mitarbeit und Hausaufgaben im Unterricht) und Noten-Manager (Bewertungen, Tests, Klausuren, Zeugnisnoten). Beide nutzen dieselben Klassen und Schülerlisten.'],
@@ -1814,8 +1855,9 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
 ;
 
 /* ==== phone.js ==== */
-/* iPhone-Ansicht (hochkant bis 540 px breit; quer bis 500 px hoch mit Leiste links): schmale Kopfzeile (Symbol · Auswahl „Fach · Klasse · …“ · Rückgängig),
-   Auswahlmenü als Blatt von unten, Leiste unten (Unterricht · Noten · Backup · Mehr). iPad und Mac bleiben unverändert.
+/* iPhone-Ansicht (hochkant bis 540 px breit; quer bis 500 px hoch mit Leiste links): schmale Kopfzeile
+   (Symbol · Auswahl · Datenschutz · Backup ⬇|⬆ · Rückgängig), Auswahlmenü als Blatt von unten,
+   Leiste unten bzw. links (Unterricht · Noten · Aktuell · Hilfe). iPad und Mac bleiben unverändert.
    Die bestehenden Elemente werden nur umgehängt bzw. per CSS anders angeordnet; alle Funktionen bleiben dieselben. */
 (()=>{
  if(window!==parent)return;
@@ -1823,41 +1865,17 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
  const icon={
   sitzplan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="14" y="4" width="7" height="6" rx="1.5"/><rect x="3" y="14" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/></svg>',
   noten:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M2 20h20"/></svg>',
-  backup:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
   now:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
-  help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/></svg>',
-  mehr:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>'};
+  help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14"/><circle cx="12" cy="17.2" r=".6" fill="currentColor"/></svg>'};
  // Leiste unten
  const bar=document.createElement('nav');bar.className='phone-tabbar';bar.setAttribute('aria-label','Bereiche');
  bar.innerHTML='<button type="button" data-ph="sitzplan">'+icon.sitzplan+'<span>Unterricht</span></button><button type="button" data-ph="noten">'+icon.noten+'<span>Noten</span></button><button type="button" data-ph="aktuell">'+icon.now+'<span>Aktuell</span></button><button type="button" data-ph="hilfe">'+icon.help+'<span>Hilfe</span></button>';
  document.body.append(bar);
- // „Mehr“-Blatt
- const sheet=document.createElement('div');sheet.className='phone-sheet';sheet.hidden=true;
- sheet.innerHTML='<div class="ph-back"></div><div class="ph-panel" role="dialog" aria-label="Mehr"><div class="ph-grab"></div><b class="ph-title">Mehr</b>'
-  +'<button type="button" data-act="help"><span>?</span>Hilfe<em class="ph-vbadge"></em></button>'
-  +'<button type="button" data-act="privacy"><span>👁</span>Datenschutzmodus</button>'
-  +'<button type="button" data-act="quick">'+icon.backup+'Backup sofort speichern</button>'
-  +'<button type="button" data-act="restore"><span class="ph-up">'+icon.backup+'</span>Neuestes Backup wiederherstellen …</button>'
-  +'<button type="button" data-act="theme"><span>🎨</span>Farbgestaltung</button>'
-  +'<b class="ph-title ph-sub">Schuljahr</b><button type="button" data-act="sy-timetable"><span>🕘</span>Stundenplan …</button><button type="button" data-act="sy-archive"><span>🗄</span>Archiv eines früheren Schuljahres …</button><button type="button" data-act="sy-close" class="ph-danger"><span>⏏</span>Schuljahr abschließen …</button><p class="ph-version"></p></div>';
- document.body.append(sheet);
- const closeSheet=()=>{sheet.hidden=true};
- const ver=()=>{const v=document.querySelector('[data-app-version]')?.textContent?.trim();sheet.querySelector('.ph-version').textContent=v?'Classroom-Manager · Version '+v:'';sheet.querySelector('.ph-vbadge').textContent=v?'Version '+v:''};ver();
- sheet.querySelector('.ph-back').onclick=closeSheet;
- sheet.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;closeSheet();const a=b.dataset.act;
-  if(a==='help')window.classroomOpenHelp?.();else if(a==='privacy')window.classroomPrivacy?.toggle();
-  else if(a==='quick')document.getElementById('classroomQuickBackup')?.click();else if(a==='restore')document.getElementById('classroomQuickRestore')?.click();
-  else if(a==='theme')document.querySelector('.app-header .brand-mark')?.click();
-  else if(a.startsWith('sy-'))document.querySelector('.sy-menu [data-sy="'+a.slice(3)+'"]')?.click()});
  bar.addEventListener('click',e=>{const b=e.target.closest('[data-ph]');if(!b)return;const t=b.dataset.ph;
   if(t==='sitzplan'||t==='noten')document.getElementById('tab-'+t)?.click();
   else if(t==='aktuell')window.classroomGoCurrent?.();
-  else if(t==='hilfe')window.classroomOpenHelp?.();
-  else if(t==='backup')document.getElementById('classroomBackupButton')?.click();
-  else if(t==='mehr'){ver();sheet.hidden=!sheet.hidden}});
- document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
- function sync(){for(const t of ['sitzplan','noten']){const on=document.getElementById('tab-'+t)?.getAttribute('aria-selected')==='true';bar.querySelector('[data-ph="'+t+'"]').classList.toggle('on',on);if(t==='noten')document.documentElement.classList.toggle('ph-noten',on)}
-  const priv=document.documentElement.classList.contains('classroom-privacy');sheet.querySelector('[data-act=privacy]').lastChild.textContent=priv?'Datenschutzmodus beenden':'Datenschutzmodus'}
+  else if(t==='hilfe')window.classroomOpenHelp?.()});
+ function sync(){for(const t of ['sitzplan','noten']){const on=document.getElementById('tab-'+t)?.getAttribute('aria-selected')==='true';bar.querySelector('[data-ph="'+t+'"]').classList.toggle('on',on);if(t==='noten')document.documentElement.classList.toggle('ph-noten',on)}}
  new MutationObserver(sync).observe(document.body,{subtree:true,attributes:true,attributeFilter:['aria-selected','class']});
  // Auswahl in die Kopfzeile holen (nur iPhone), sonst an ihren Platz über den Managern zurück
  let home=null;
@@ -1865,18 +1883,17 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   if(PHONE.matches){if(!home){home=document.createComment('nav');nav.before(home)}if(nav.parentElement!==header)brand.after(nav)}
   else if(home&&nav.parentElement===header){home.before(nav)}
   document.documentElement.classList.toggle('is-phone',PHONE.matches);sync()}
- // Blätter nach unten wegwischen (Auswahl-Blatt und „Mehr“)
+ // Auswahl-Blatt nach unten wegwischen
  function swipeDown(getEl,close){let el=null,y0=null,dy=0;
-  document.addEventListener('touchstart',e=>{el=getEl(e.target);if(!el||!PHONE.matches)return;const sc=e.target.closest('.compact-navigation-flyout,.ph-panel');if(sc&&sc.scrollTop>0){el=null;return}y0=e.touches[0].clientY;dy=0},{passive:true});
+  document.addEventListener('touchstart',e=>{el=getEl(e.target);if(!el||!PHONE.matches)return;const sc=e.target.closest('.compact-navigation-flyout');if(sc&&sc.scrollTop>0){el=null;return}y0=e.touches[0].clientY;dy=0},{passive:true});
   document.addEventListener('touchmove',e=>{if(!el||y0===null)return;dy=e.touches[0].clientY-y0;if(dy<=0){el.style.removeProperty('transform');return}if(e.cancelable)e.preventDefault();el.style.setProperty('transition','none','important');el.style.setProperty('transform','translateY('+dy+'px)','important')},{passive:false});
   document.addEventListener('touchend',()=>{if(!el||y0===null){el=null;return}const t=el,d=dy;el=null;y0=null;t.style.removeProperty('transition');if(d>70){t.style.setProperty('transition','transform .18s ease','important');t.style.setProperty('transform','translateY(100%)','important');setTimeout(()=>{close();t.style.removeProperty('transform');t.style.removeProperty('transition')},170)}else t.style.removeProperty('transform')});
  }
  swipeDown(t=>t.closest?.('.app-header>.compact-navigation.is-open .compact-navigation-flyout'),()=>{if(typeof navigationSetOpen==='function')navigationSetOpen(false);else document.querySelector('.compact-navigation-backdrop')?.click()});
- swipeDown(t=>t.closest?.('.phone-sheet .ph-panel'),closeSheet);
  PHONE.addEventListener?.('change',place);
  const tryPlace=()=>{place();if(!document.querySelector('.compact-navigation'))setTimeout(tryPlace,300)};tryPlace();
  const st=document.createElement('style');st.textContent=
-  '.phone-tabbar,.phone-sheet{display:none}'
+  '.phone-tabbar{display:none}'
   /* Mit viewport-fit=cover: Inhalt nicht unter Home-Balken oder Kamera-Aussparung (iPhone/iPad als App) */
   +'body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}'
   +'@media (max-width:540px) and (orientation:portrait), (max-height:500px) and (pointer:coarse) and (orientation:landscape){'
@@ -1886,29 +1903,25 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   +'.app-header>.module-tabs{display:none!important}'
   +'.app-header .classroom-global-actions:not(#_){display:flex!important;width:auto!important;flex:none!important;gap:0!important;margin:0!important}'
   +'.app-header .classroom-global-actions>*:not(#classroomUndoButton):not(.cb-split):not(.classroom-privacy-button){display:none!important}'
-  /* Backup speichern ⬇ | wiederherstellen ⬆ als runde Doppel-Pille, daneben rundes Rückgängig */
-  +'.app-header .classroom-global-actions:not(#_){gap:6px!important;align-items:center}'
-  +'.app-header .cb-split:not(#_){order:1;display:inline-flex!important;height:38px;border:1px solid #cbd6e5!important;border-radius:19px!important;overflow:hidden;background:#fff;box-shadow:none!important;margin:0!important;padding:0!important}'
+  /* Backup speichern ⬇ | wiederherstellen ⬆ als runde Doppel-Pille (breit genug zum Treffen), rundes Datenschutz- und Rückgängig-Symbol */
+  +'.app-header .classroom-global-actions:not(#_){gap:5px!important;align-items:center;overflow:visible}'
+  +'.app-header .cb-split:not(#_){order:1;display:inline-flex!important;flex:none!important;height:36px!important;width:auto!important;min-width:0!important;max-width:none!important;gap:0!important;border:1px solid #cbd6e5!important;border-radius:19px!important;overflow:hidden;background:#fff;box-shadow:none!important;margin:0!important;padding:0!important}'
   +'.app-header .cb-split #classroomBackupButton{display:none!important}'
-  +'.app-header .cb-split .cb-quick:not(#_){position:relative;width:38px!important;min-width:38px!important;height:36px!important;min-height:36px!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;background:#fff!important;color:#2f5f9b!important;display:inline-flex;align-items:center;justify-content:center;box-shadow:none!important}'
+  +'.app-header .cb-split .cb-quick:not(#_){position:relative;width:44px!important;min-width:44px!important;height:34px!important;min-height:34px!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;background:#fff!important;color:#2f5f9b!important;display:inline-flex;align-items:center;justify-content:center;box-shadow:none!important}'
   +'.app-header .cb-split .cb-quick+.cb-quick:not(#_){border-left:1px solid #e3e8f0!important}.app-header .cb-split .cb-quick svg{width:19px!important;height:19px!important}'
   +'.app-header .cb-split:has(#classroomBackupButton.backup-due) #classroomQuickBackup::after{content:"";position:absolute;top:3px;right:4px;width:8px;height:8px;border-radius:50%;background:#e39a3b;border:2px solid #fff}'
-  +'.app-header #classroomUndoButton:not(#_){order:2;box-sizing:border-box!important;width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;border-radius:50%!important;border:1px solid #e9cfa5!important;background:#fffaf2!important;color:#b9771a!important}'
+  +'.app-header #classroomUndoButton:not(#_){order:2;flex:none!important;box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;padding:0!important;margin:0!important;line-height:0!important;font-size:0!important;text-indent:0!important;border-radius:50%!important;border:1px solid #e9cfa5!important;background:#fffaf2!important;color:#b9771a!important}'
   +'.app-header #classroomUndoButton:not(#_)::before{content:""!important;display:block;width:20px;height:20px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27black%27 stroke-width=%272.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M9 14 4 9l5-5%27/%3E%3Cpath d=%27M4 9h10.5a5.5 5.5 0 0 1 0 11H11%27/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27black%27 stroke-width=%272.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M9 14 4 9l5-5%27/%3E%3Cpath d=%27M4 9h10.5a5.5 5.5 0 0 1 0 11H11%27/%3E%3C/svg%3E") center/contain no-repeat}'
+  +'.app-header #classroomUndoButton:not(#_)::before{flex:none;margin:0!important;position:static!important;transform:translateX(-0.5px)}'
   +'.app-header #classroomUndoButton:disabled:not(#_){opacity:.45}'
-  /* Rückgängig: Pfeil genau mittig; alle runden Knöpfe gleich groß (nicht stauchen) */
-  +'.app-header #classroomUndoButton:not(#_){display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0!important;margin:0!important;flex:none!important;line-height:0!important;text-indent:0!important;box-sizing:border-box!important}.app-header #classroomUndoButton:not(#_)::before{flex:none;margin:0!important;position:static!important;transform:translateX(-0.5px)}.app-header .classroom-privacy-button:not(#_),.app-header .cb-split:not(#_){flex:none!important}.app-header .classroom-global-actions:not(#_){flex:none!important;overflow:visible}'
-  +'.app-header .classroom-privacy-button:not(#_){order:0;box-sizing:border-box!important;display:inline-flex!important;align-items:center;justify-content:center;width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;padding:0!important;margin:0!important;border:1px solid #cbd6e5!important;border-radius:50%!important;background:#fff!important;color:#2f5f9b!important;font-size:0!important}.app-header .classroom-privacy-button svg{width:19px!important;height:19px!important}'
-  +'.app-header .cb-split:not(#_){height:36px!important;width:auto!important;min-width:0!important;max-width:none!important;flex:none!important;gap:0!important}.app-header .cb-split .cb-quick:not(#_){width:35px!important;min-width:35px!important;height:34px!important;min-height:34px!important}.app-header #classroomUndoButton:not(#_){width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important}.app-header .classroom-global-actions:not(#_){gap:5px!important}.app-header:not(#_){gap:6px!important;padding-left:10px!important;padding-right:10px!important}'
+  +'.app-header .classroom-privacy-button:not(#_){order:0;flex:none!important;box-sizing:border-box!important;display:inline-flex!important;align-items:center;justify-content:center;width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;padding:0!important;margin:0!important;border:1px solid #cbd6e5!important;border-radius:50%!important;background:#fff!important;color:#2f5f9b!important;font-size:0!important}.app-header .classroom-privacy-button svg{width:19px!important;height:19px!important}'
+  +'.app-header:not(#_){gap:6px!important;padding-left:10px!important;padding-right:10px!important}'
   /* Hochkant zeigt die Auswahl nur die Lerngruppe (ohne Fach); quer wie gehabt Fach · Klasse */
   +'@media (orientation:portrait){.app-header>.compact-navigation .compact-navigation-trail>.compact-navigation-chip:first-child:not(#_),.app-header>.compact-navigation .compact-navigation-trail>.compact-navigation-chip:first-child+.compact-navigation-separator:not(#_){display:none!important}}.app-header>.compact-navigation .compact-navigation-trail .compact-navigation-chip+.compact-navigation-separator+.compact-navigation-chip~*:not(#_){display:none!important}'
-  +'.phone-sheet .ph-vbadge{margin-left:8px;padding:1px 8px;border-radius:99px;background:#eaf0fa;color:#2f5f9b;font-size:11.5px;font-weight:700;font-style:normal}'
-  +'.app-header #classroomUndoButton:not(#_){padding:0!important;font-size:0!important}'
-  +'.app-header #classroomUndoButton::before{content:"↶";font-size:19px;line-height:1}'
   +'.app-header>.compact-navigation:not(#_){flex:1 1 auto;min-width:0;margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;position:static}'
   +'.app-header>.compact-navigation .compact-navigation-bar{min-height:38px!important;gap:0!important;padding:0 10px!important;border-radius:12px;background:#e7edf6;overflow:hidden!important;flex-direction:row!important}'
   +'.app-header>.compact-navigation .compact-navigation-arrow{order:2;flex:none;margin-left:4px;padding:0!important;color:#2f5f9b}.app-header>.compact-navigation .compact-navigation-arrow:not(#_){width:28px!important;min-width:28px!important;height:28px!important;min-height:28px!important;border-radius:8px!important}.app-header>.compact-navigation .compact-navigation-arrow:not(#_)::after{width:8px!important;height:8px!important;left:9px!important;top:7px!important}.app-header>.compact-navigation.is-open .compact-navigation-arrow:not(#_)::after{top:11px!important}.app-header>.compact-navigation .compact-navigation-bar:not(#_){padding:0 5px 0 10px!important}'
-  +'.app-header>.compact-navigation .compact-navigation-trail:not(#_){display:block!important;flex:1 1 auto!important;min-width:0;padding:0!important;background:transparent!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px;line-height:38px}'
+  +'.app-header>.compact-navigation .compact-navigation-trail:not(#_){display:block!important;flex:1 1 auto!important;min-width:0;padding:0!important;background:transparent!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px;line-height:38px;text-align:center}'
   +'.app-header>.compact-navigation .compact-navigation-chip:not(#_){display:inline!important;padding:0!important;background:none!important;box-shadow:none!important;border:0!important;font:inherit!important;font-weight:650!important;color:#243247!important}'
   +'.app-header>.compact-navigation .compact-navigation-chip+.compact-navigation-separator+.compact-navigation-chip~.compact-navigation-chip{font-weight:500!important;color:#66758a!important}'
   +'.app-header>.compact-navigation .compact-navigation-separator:not(#_){display:inline!important;width:auto!important;height:auto!important;margin:0!important;background:none!important;border:0!important;transform:none!important}'
@@ -1922,12 +1935,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   +'.phone-tabbar button{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:54px;padding:5px 0 4px;border:0;background:none;color:#8794a7;font:inherit;font-size:10.5px;font-weight:600;cursor:pointer}'
   +'.phone-tabbar button svg{width:24px;height:24px}.phone-tabbar button.on{color:#2f5f9b;font-weight:750}'
   +'.phone-tabbar .ph-dot{position:absolute;top:3px;left:calc(50% + 6px);width:9px;height:9px;border-radius:50%;background:#e39a3b;border:2px solid #fff}'
-  +'.phone-sheet:not([hidden]){display:block;position:fixed;inset:0;z-index:9600}.phone-sheet .ph-back{position:absolute;inset:0;background:#1c2b4645}'
-  +'.phone-sheet .ph-panel{position:absolute;left:0;right:0;bottom:0;padding:10px 16px calc(18px + env(safe-area-inset-bottom));background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -12px 34px #1c2b4633}'
-  +'.phone-sheet .ph-version{margin:14px 0 0;text-align:center;font-size:12.5px;color:#8794a7}.app-header>.compact-navigation .school-year{display:none!important}.phone-sheet .ph-sub{margin-top:14px;font-size:13px;color:#66758a;text-transform:uppercase;letter-spacing:.04em}.phone-sheet .ph-danger{color:#b42318}.phone-sheet .ph-panel{max-height:85dvh;overflow:auto}'
-  +'.phone-sheet .ph-grab{width:40px;height:5px;border-radius:3px;background:#cbd6e5;margin:0 auto 10px}.phone-sheet .ph-title{display:block;font-size:16px;margin:0 2px 6px}'
-  +'.phone-sheet button{display:flex;align-items:center;gap:12px;width:100%;min-height:50px;padding:0 4px;border:0;border-bottom:1px solid #eef2f7;background:none;color:#243247;font:inherit;font-size:15.5px;text-align:left;cursor:pointer}.phone-sheet button:last-child{border-bottom:0}'
-  +'.phone-sheet button>span,.phone-sheet button>svg{display:inline-flex;justify-content:center;width:26px;color:#2f5f9b;font-weight:700}.phone-sheet button svg{width:22px;height:22px}.phone-sheet .ph-up svg{transform:rotate(180deg)}'
+  +'.app-header>.compact-navigation .school-year{display:none!important}'
   +'.classroom-update-banner,.classroom-restore-banner,.classroom-storage-warning{margin:8px 10px 0!important}'
   +'.classroom-beamer-active .phone-tabbar{display:none!important}'
   +'}'
@@ -1942,11 +1950,6 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   +'}';
  document.head.append(st);
 })();
-/* 7.97: Backup-Knöpfe breiter (besser zu treffen), Klasse mittig im Feld */
-(()=>{const st=document.createElement('style');st.textContent='@media (max-width:540px) and (orientation:portrait),(max-height:500px) and (orientation:landscape) and (pointer:coarse){'
- +'.app-header .cb-split .cb-quick:not(#_){width:44px!important;min-width:44px!important}'
- +'.app-header>.compact-navigation .compact-navigation-trail:not(#_){text-align:center;padding-left:0!important}'
- +'}';document.head.append(st)})();
 ;
 
 /* ==== button-help.js ==== */

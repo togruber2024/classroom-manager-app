@@ -101,7 +101,7 @@
   for(let r=0;r<10;r++)for(let c=0;c<10;c++){let h=Math.imul(((r+1)*73856093)^((c+1)*19349663)^((seed+1)*83492791),2654435761);h=(h^(h>>>15))>>>0;h=(h>>>7)%5;rules+='html.classroom-privacy body .room-grid .cell.cell.besetzt[data-row="'+r+'"][data-col="'+c+'"]{background:'+PAL[h%5]+'!important}'}
   for(let j=0;j<3;j++)for(let k=0;k<5;k++)rules+='html.classroom-privacy .so-section:nth-of-type(3n+'+(j+1)+') :nth-child(5n+'+(k+1)+')>.so-val,html.classroom-privacy .so-section:nth-of-type(3n+'+(j+1)+') .so-val:nth-child(5n+'+(k+1)+'){background-color:'+PAL[(k*2+j*3+seed)%5]+'!important}';
   // iPhone-Karten und Detailblatt (Noten): Namen unscharf, Noten unkenntlich mit Zufallsfarben
-  rules+='html.classroom-privacy :is(.qs-name,.qd-title b,.qs-stand){color:transparent!important;text-shadow:0 0 7px rgba(36,51,71,.75)!important;-webkit-user-select:none!important;user-select:none!important}'
+  rules+='html.classroom-privacy :is(.qs-name,.qd-title b,.qs-stand,.qs-note,.tt-row b,.tt-last b){color:transparent!important;text-shadow:0 0 7px rgba(36,51,71,.75)!important;-webkit-user-select:none!important;user-select:none!important}'
    +'html.classroom-privacy :is(.qs-big,.qs-val i,.qs-sq i,.qs-q1chip i,.qd-val,.qs-miss-n,.qs-chip i){color:transparent!important;text-shadow:0 0 8px rgba(36,51,71,.6)!important;background-image:none!important;box-shadow:none!important;border-color:transparent!important}'
    +'html.classroom-privacy :is(.qs-card,.qd-panel){pointer-events:none!important}html.classroom-privacy .qd-head{pointer-events:auto!important}';
   for(let a=0;a<5;a++){rules+='html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-big,html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-q1chip i{background-color:'+PAL[(a+seed)%5]+'!important}';
@@ -3670,7 +3670,7 @@ function classroomSelectTestQuarter(){const holder=classesBySubject[currentSubje
  const style=document.createElement('style');style.textContent='[data-hatching-toggle][hidden]{display:none!important}html.hatching-off .classroom-unstriped:not(.grade-four-fail){background-image:none!important;background-color:var(--unstriped-color)!important}';document.head.append(style);
  function apply(){
   observer.disconnect();
-  if(!enabled)for(const el of document.querySelectorAll('td span,td input,td select,td button,.cell,.classroom-rating-choice,.qs-big,.qs-bar-fill,.qs-edit input,.qs-sq i,.qs-val i,.qs-q1chip i,.qs-chip i,.qd-val,.pe-grid button')){const fill=getComputedStyle(el).backgroundImage;if(!fill.includes('gradient')||el.classList.contains('grade-four-fail'))continue;/* 4 Notenpunkte bleiben immer schraffiert. */el.classList.remove('classroom-unstriped');const base=getComputedStyle(el).backgroundColor,color=base&&!/rgba\(0, 0, 0, 0\)|transparent/.test(base)?base:fill.match(/rgba?\([^)]+\)|#[\da-f]{3,8}/i)?.[0];/* Ohne Schraffur gilt die Grundfarbe der Note (z. B. 2+ grün-gelb wie 2). */if(color){if(el.style.getPropertyValue('--unstriped-color')!==color)el.style.setProperty('--unstriped-color',color);if(!el.classList.contains('classroom-unstriped'))el.classList.add('classroom-unstriped')}}
+  if(!enabled)for(const el of document.querySelectorAll('td span,td input,td select,td button,.cell,.classroom-rating-choice,.qs-big,.qs-edit input,.qs-sq i,.qs-val i,.qs-q1chip i,.qs-chip i,.qd-val')){const fill=getComputedStyle(el).backgroundImage;if(!fill.includes('gradient')||el.classList.contains('grade-four-fail'))continue;/* 4 Notenpunkte bleiben immer schraffiert. */el.classList.remove('classroom-unstriped');const base=getComputedStyle(el).backgroundColor,color=base&&!/rgba\(0, 0, 0, 0\)|transparent/.test(base)?base:fill.match(/rgba?\([^)]+\)|#[\da-f]{3,8}/i)?.[0];/* Ohne Schraffur gilt die Grundfarbe der Note (z. B. 2+ grün-gelb wie 2). */if(color){if(el.style.getPropertyValue('--unstriped-color')!==color)el.style.setProperty('--unstriped-color',color);if(!el.classList.contains('classroom-unstriped'))el.classList.add('classroom-unstriped')}}
   document.documentElement.classList.toggle('hatching-off',!enabled);
   // Schraffuren-Schalter: neben „Kompaktansicht“, auf Übersichtsseiten ohne Kompaktansicht vor „Drucken“.
   const anchors=[...document.querySelectorAll('.compact-view-toggle')];
@@ -4132,8 +4132,6 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   if(/^Sonstige Mitarbeit/i.test(t))return 'Sonst.';if(/^Selbsteinsch/i.test(t))return 'Selbsteinschätzung';if(/^Quartalsnote/i.test(t))return 'Quartalsnote';
   if(/^Klassenarbeit/i.test(t))return 'KA';if(/^Klausur/i.test(t))return 'Klausur';if(/^Tests?\b/i.test(t))return 'Tests';
   return t.length>14?t.slice(0,13)+'…':t};
- const points=()=>{try{return typeof classUsesGradePoints==='function'&&!!classUsesGradePoints()}catch{return false}};
- function gradeNumber(t){t=String(t||'').trim().replace(/[−–—]/g,'-');if(!t||t==='-')return null;let m=/^(\d+(?:,\d+)?)$/.exec(t);if(m)return Number(m[1].replace(',','.'));m=/^([1-6])\s*([+-])$/.exec(t);if(m)return Number(m[1])+(m[2]==='+'?-1/3:1/3);m=/^(\d+)\s*-\s*(\d+)$/.exec(t);if(m)return (Number(m[1])+Number(m[2]))/2;return null}
  const longLabel=t=>{t=String(t||'').replace(/\s+/g,' ').trim();if(/^MM · Mittelwert/i.test(t))return 'MM Ø';if(/^Sonstige Mitarbeit/i.test(t))return 'Sonstige Mitarbeit';if(/^Tests · Mittelwert/i.test(t))return 'Tests';return t.replace(/ · Mittelwert$/,' Ø').replace(/^Quartalsnote · /,'Quartalsnote ')};
  // Variante C: Balken als Baum mit Gewichtung (Prozente aus den Eingabefeldern der Seite)
  /* 7.92: keine Balken mehr – jede Zeile: Bezeichnung links, Note rechts in einem farbigen Kasten */
@@ -4246,6 +4244,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    if(cell.classList.contains('quarter-summary-average')){if(m&&/Mittelwert/i.test(m[2])){const g=groups.get(m[1])||{items:[]};g.avg=v;groups.set(m[1],g)}else overview.push([head.replace(/ · Fehlend$/,' – fehlend'),v]);return}
    const key=m?m[1]:head,g=groups.get(key)||{items:[]};if(v.text&&v.text!=='—')g.items.push([m?m[2]:'',v]);else g.empty=(g.empty||0)+1;groups.set(key,g)});
   const body=sheet.querySelector('.qd-body');body.replaceChildren();
+  /* 8.01: Notiz zur Person (wird mit dem Backup übertragen und erscheint am Mac in der Quartalsübersicht) */
+  if(window.classroomStudentNotes){const nb=document.createElement('label');nb.className='qd-note';const ns=document.createElement('span');ns.textContent='Notiz';const ta=document.createElement('textarea');ta.rows=2;ta.maxLength=500;ta.placeholder='z. B. Elterngespräch, Nachschreibtermin …';ta.value=classroomStudentNotes.get(detail.name);const who=detail.name;ta.onchange=()=>{classroomStudentNotes.set(who,ta.value);schedule()};nb.append(ns,ta);body.append(nb)}
   const chip=(v,alert)=>{const e=document.createElement('i');e.className='qd-val '+(v.cls||'');e.textContent=v.text||'—';if(alert)e.classList.add('qd-alert');if(v.src?.dataset.parentMailPage){e.classList.add('qs-mail');e.title='Eltern-Mail vorbereiten';e.onclick=()=>v.src.click()}return e};
   for(const [key,g] of groups){if(!g.items.length&&!g.avg)continue;const sec=document.createElement('div');sec.className='qd-sec';const h=document.createElement('h4');h.textContent=groupName(key);if(g.avg){const a=document.createElement('span');a.className='qd-avg';a.append('Ø ',chip(g.avg));h.append(a)}sec.append(h);
    const list=document.createElement('div');list.className='qd-items';for(const [date,v] of g.items){const it=document.createElement('span');it.className='qd-item';it.append(chip(v));const d=document.createElement('small');d.textContent=date.replace(/^(\d\d\.\d\d\.)\d{4}$/,'$1');it.append(d);list.append(it)}
@@ -4257,6 +4257,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   if(edits.childElementCount)body.append(edits);fixUnstriped(body);
  }
  let planned=false;
+ document.addEventListener('classroom-student-note',()=>schedule());
  function schedule(){if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;run()})}
  function run(){for(const panel of document.querySelectorAll('[data-quarter-summary]'))build(panel)}
  // iPhone: Gewichtungen als Schieberegler mit Schnellwahl (Verhältnisse wie 2:1 exakt); schreibt in die vorhandenen Felder.
@@ -4298,7 +4299,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   for(const b of bar.querySelectorAll('[data-qs]'))b.setAttribute('aria-pressed',String(b.dataset.qs===mode()));
   if(!on){box.replaceChildren();box.dataset.sig='';return}
   const headCells=[...table.tHead.rows[0].cells],heads=headCells.map(c=>c.textContent.replace(/\s+/g,' ').trim());
-  const sig=table.tBodies[0].rows.length+'|'+heads.join('|')+'|'+table.tBodies[0].textContent.length+'|'+[...table.querySelectorAll('input')].map(i=>i.value).join(',');
+  const sig=table.tBodies[0].rows.length+'|'+heads.join('|')+'|'+table.tBodies[0].textContent.length+'|'+[...table.querySelectorAll('input')].map(i=>i.value).join(',')+'|'+(()=>{try{return localStorage.getItem('notenrechner-notizen-v1')||''}catch{return ''}})();
   if(box.dataset.sig===sig&&box.childElementCount)return;box.dataset.sig=sig;
   const frag=document.createDocumentFragment();
   for(const row of table.tBodies[0].rows){
@@ -4306,10 +4307,11 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    const card=document.createElement('article');card.className='qs-card';
    const top=document.createElement('div');top.className='qs-top';const nm=document.createElement('b');nm.className='qs-name';nm.textContent=name;
    const big=document.createElement('span');big.className='qs-big';top.append(nm,big);card.append(top);
+   /* 8.01: Notiz unter dem Namen */const note=window.classroomStudentNotes?.get(name);if(note){const nt=document.createElement('div');nt.className='qs-note';nt.textContent=note;card.append(nt)}
    const chips=document.createElement('div');chips.className='qs-chips';const bars=document.createElement('div');bars.className='qs-bars';const items=[],mmList=[];const edits=document.createElement('div');edits.className='qs-edits';
    let bigText='',bigCls='';const testList=[],examDates=examDateMap();
-   const prevSum=[],prevMm=[],prevTests=[];let prevQn='',prevQnCls='';
-   cells.forEach((cell,i)=>{if(i&&cell.classList.contains('previous-quarter-history-cell')){const h=heads[i].replace(/^Q1 · /,''),sp=cell.querySelector('span'),tx=(sp||cell).textContent.trim();const md=/^MM · (\d\d\.\d\d\.)\d{4}/.exec(h),td=/^Test · (\d\d\.\d\d\.)\d{4}/.exec(h);if(md||td){if(tx&&tx!=='—')(md?prevMm:prevTests).push({date:(md||td)[1],text:tx,cls:(sp?.className||'').replace(/\bprevious-quarter-value\b/g,'')})}else if(/^Quartalsnote/.test(h)){prevQn=tx&&tx!=='—'?tx:'';prevQnCls=(sp?.className||'').replace(/\bprevious-quarter-value\b/g,'')}else if(!/^Selbst/.test(h)&&!/fehl/i.test(h)&&cell.classList.contains('quarter-summary-average'))prevSum.push({head:h,num:gradeNumber(tx),text:tx||'—',cls:(sp?.className||'').replace(/\bprevious-quarter-value\b/g,'')});return}
+   const prevMm=[],prevTests=[];let prevQn='',prevQnCls='';
+   cells.forEach((cell,i)=>{if(i&&cell.classList.contains('previous-quarter-history-cell')){const h=heads[i].replace(/^Q1 · /,''),sp=cell.querySelector('span'),tx=(sp||cell).textContent.trim();const md=/^MM · (\d\d\.\d\d\.)\d{4}/.exec(h),td=/^Test · (\d\d\.\d\d\.)\d{4}/.exec(h);if(md||td){if(tx&&tx!=='—')(md?prevMm:prevTests).push({date:(md||td)[1],text:tx,cls:(sp?.className||'').replace(/\bprevious-quarter-value\b/g,'')})}else if(/^Quartalsnote/.test(h)){prevQn=tx&&tx!=='—'?tx:'';prevQnCls=(sp?.className||'').replace(/\bprevious-quarter-value\b/g,'')};return}
     if(!i||cell.classList.contains('previous-quarter-history-cell'))return;const label=short(heads[i]);
     if(cell.classList.contains('quarter-summary-edit-cell')){const orig=cell.querySelector('input');if(!orig)return;
      edits.append(editProxy(orig,label,()=>{box.dataset.sig=''}));if(orig.value.trim()){bigText=orig.value;bigCls=orig.className}else{bigText='';bigCls=''}return}
@@ -4321,12 +4323,13 @@ return}
     if(src?.dataset.parentMailPage){chip.classList.add('qs-mail');chip.title='Eltern-Mail vorbereiten';chip.onclick=()=>src.click()}
     chip.append(k,v);
     // Variante A: Notenwerte als Balken (je länger, desto besser); Zählwerte (fehlend) bleiben kleine Marken
-    if(!/fehl/i.test(heads[i]))items.push({head:heads[i],th:headCells[i],num:gradeNumber(text),text:text||'—',cls:src?.className||'',click:chip.classList.contains('qs-mail')?chip.onclick:null});else if(!(missingInfo&&/^(HA|MA|Material)\b/i.test(heads[i])))chips.append(chip);
+    if(!/fehl/i.test(heads[i]))items.push({head:heads[i],th:headCells[i],text:text||'—',cls:src?.className||'',click:chip.classList.contains('qs-mail')?chip.onclick:null});else if(!(missingInfo&&/^(HA|MA|Material)\b/i.test(heads[i])))chips.append(chip);
    });
    if(!bigText){const cands=cells.filter(c=>!c.classList.contains('previous-quarter-history-cell')&&c.classList.contains('quarter-summary-average')&&!/fehl/i.test(heads[cells.indexOf(c)])&&/\d/.test(c.textContent)),pick=re=>cands.find(c=>re.test(heads[cells.indexOf(c)])),avg=pick(/^Halbjahresnote/)||pick(/^Sonstige Mitarbeit/)||cands.at(-1);if(avg){bigText=avg.textContent.trim();bigCls=(avg.querySelector('span')?.className||'')+' qs-soft'}}
    big.textContent=bigText||'—';big.className='qs-big '+(bigCls||'qs-empty');
    const tail=[],semester=!!panel.querySelector('[data-final-mix]');tree(bars,items,panel,mmList,testList,examDates,semester?{}:{mm:prevMm,tests:prevTests},tail);
    const split=!semester&&!!missingInfo&&missingInfo.sel>0;
+   /* für die Hinweise oben (phone-lite): HA fehlend im Halbjahr, mündliche Noten im aktuellen Quartal */card.dataset.haHalf=String(missingInfo?(missingInfo(name).ha||[]).length:0);card.dataset.mmNow=String(mmList.length);
    if(missingInfo){const mi=missingInfo(name);for(const [label,list] of [['Hausaufgaben',mi.ha],['Material',mi.mat]]){if(list===null)continue;(bars.querySelector(':scope>.qs-sub')||bars).append(missingRow(label,list,missingInfo.sel,split))/* 7.98: HA/Material gehören zur Sonstigen Mitarbeit → eingerückt */}}
    for(const t of tail)bars.append(t);if(bars.childElementCount)card.append(bars);if(chips.childElementCount)card.append(chips);
    /* 7.93: „1. Quartal“ blendet die Noten des 1. Quartals blass vor denen des 2. Quartals ein (gestrichelter Trennstrich);
@@ -4367,9 +4370,9 @@ return}
   +'.qs-big{flex:none;min-width:46px;height:40px;padding:0 8px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;font-size:20px;font-weight:750;background:#eef2f7;color:#243247}'
   +'.qs-big.qs-empty{color:#9aa6b6;font-weight:600}.qs-big.qs-soft{opacity:.75}'
   +'.qs-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}'
-  +'.qs-bars{display:grid;gap:6px;margin-top:10px}.qs-sect{display:grid;gap:3px;margin-top:4px}.qs-sh{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;color:#66758a}.qs-sh.qs-mail{cursor:pointer}.qs-sh-l{display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}.qs-sh b{color:#243247;font-size:13px;white-space:nowrap}.qs-sect.qs-lvl1{margin-left:4px;padding-left:12px;border-left:2px solid #e3e8f0}.qs-sect.qs-lvl2{margin-left:4px;padding-left:26px;border-left:2px solid #e3e8f0;background:linear-gradient(#e3e8f0,#e3e8f0) 14px 0/2px 100% no-repeat}.qs-sq.qs-t i:not(#_){box-shadow:none}.qs-sq.qs-ka i:not(#_){box-shadow:none}.qs-bar{display:grid;grid-template-columns:132px minmax(0,1fr) 40px;align-items:center;gap:8px;font-size:12.5px;color:#66758a}.qs-bar.qs-mail{cursor:pointer}'
-  +'.qs-bar-label{display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}.qs-bar-name{min-width:0;overflow:hidden;text-overflow:ellipsis}.qs-w{flex:none;padding:0 5px;border-radius:6px;background:#eaf0fa;color:#2f5f9b;font-size:10.5px;font-weight:700;line-height:16px}.qs-seq{display:flex;flex-wrap:wrap;gap:4px;padding-top:2px;padding-bottom:2px}.qs-seq.qs-lvl1,.qs-seq.qs-lvl2{border-left:0;margin-left:0;padding-left:0}.qs-seq.qs-lvl1{padding-left:18px}.qs-seq.qs-lvl2{padding-left:32px}.qs-sq{display:flex;flex-direction:column;align-items:center;gap:1px}.qs-sq i:not(#_){font-style:normal;min-width:28px;height:24px;padding:0 4px;box-sizing:border-box;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:750;color:#243247;border:0;box-shadow:none;margin:0}.qs-sq i:where(:not([class])),.qs-sq i.qs-abs:not(#_){background:#f1f3f7;color:#9aa6b6}.qs-sq small{font-size:9.5px;color:#8794a7}.qs-q1{margin-top:8px;padding:8px;border-radius:10px;background:#f7f9fc}.qs-q1[hidden]{display:none}.qs-q1h{font-size:12px;font-weight:650;color:#66758a}.qs-q1 .qs-bars{margin-top:4px}.qs-q1t svg{width:16px;height:16px;flex:none}.qs-ft{display:flex;align-items:flex-end;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid #eef2f7}.qs-ft .qs-edits:not(#_){flex:1;display:flex;align-items:flex-end;gap:8px;margin:0;padding:0;border:0;min-width:0}.qs-ft .qs-edit:not(#_),.qs-edits .qs-edit:not(#_){flex:1 1 0;min-width:0;margin:0}.qs-q1t{flex:none;display:inline-flex;align-items:center;gap:5px;box-sizing:border-box;height:36px;min-height:36px;padding:0 11px;border:1px solid #cbd6e5;border-radius:999px;background:#fff;color:#66758a;font:inherit;font-size:12.5px;white-space:nowrap;cursor:pointer}.qs-q1t[aria-expanded=true]{background:#eaf0fa;border-color:#8fb0dc;color:#2f5f9b;font-weight:700}.qs-miss{margin-top:8px}.qs-miss-h{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#66758a}.qs-miss-h b{color:#243247;font-size:13px}.qs-miss.is-alert .qs-miss-h b{color:#b42318}.qs-miss-seq{margin-top:4px}.qs-miss-seq .qs-sq i:not(#_){background:#fdf0ef;color:#b42318;border:1px solid #e9a4a0;font-size:11px}.qs-miss-seq .qs-sq.is-q1 i:not(#_){background:#f7f9fc;border-color:#f0c7c3}.qs-w.qs-hj{background:#eef2f7;color:#66758a;font-weight:600}.qs-cap{display:flex;align-items:center;gap:4px;font-size:11px;color:#8794a7;margin-bottom:-2px}.qs-bar-label{align-self:stretch}.qs-lvl1 .qs-bar-label,.qs-cap.qs-lvl1{margin-left:4px;padding-left:12px;border-left:2px solid #e3e8f0}.qs-lvl2 .qs-bar-label,.qs-cap.qs-lvl2{margin-left:4px;padding-left:26px;border-left:2px solid #e3e8f0;background:linear-gradient(#e3e8f0,#e3e8f0) 14px 0/2px 100% no-repeat}.qs-lvl1 .qs-bar-track,.qs-lvl2 .qs-bar-track{height:8px}.qs-bar-track{height:12px;border-radius:6px;background:#eef2f7;overflow:hidden;display:block}'
-  +':where(.qs-bar-fill){background:#b9c3d1}'+'.qs-bar-fill:not(#_){display:block;height:100%;min-width:0;padding:0;margin:0;border:0;border-radius:6px;box-shadow:none;font-size:0}.qs-bar b{text-align:right;color:#243247;font-size:13px}'
+  +'.qs-bars{display:grid;gap:6px;margin-top:10px}.qs-sect{display:grid;gap:3px;margin-top:4px}.qs-sh{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;color:#66758a}.qs-sh.qs-mail{cursor:pointer}.qs-sh-l{display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}.qs-sh b{color:#243247;font-size:13px;white-space:nowrap}.qs-sect.qs-lvl1{margin-left:4px;padding-left:12px;border-left:2px solid #e3e8f0}.qs-sect.qs-lvl2{margin-left:4px;padding-left:26px;border-left:2px solid #e3e8f0;background:linear-gradient(#e3e8f0,#e3e8f0) 14px 0/2px 100% no-repeat}.qs-sq.qs-t i:not(#_){box-shadow:none}.qs-sq.qs-ka i:not(#_){box-shadow:none}'
+  +'.qs-w{flex:none;padding:0 5px;border-radius:6px;background:#eaf0fa;color:#2f5f9b;font-size:10.5px;font-weight:700;line-height:16px}.qs-seq{display:flex;flex-wrap:wrap;gap:4px;padding-top:2px;padding-bottom:2px}.qs-seq.qs-lvl1,.qs-seq.qs-lvl2{border-left:0;margin-left:0;padding-left:0}.qs-seq.qs-lvl1{padding-left:18px}.qs-seq.qs-lvl2{padding-left:32px}.qs-sq{display:flex;flex-direction:column;align-items:center;gap:1px}.qs-sq i:not(#_){font-style:normal;min-width:28px;height:24px;padding:0 4px;box-sizing:border-box;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:750;color:#243247;border:0;box-shadow:none;margin:0}.qs-sq i:where(:not([class])),.qs-sq i.qs-abs:not(#_){background:#f1f3f7;color:#9aa6b6}.qs-sq small{font-size:9.5px;color:#8794a7}.qs-q1t svg{width:16px;height:16px;flex:none}.qs-ft{display:flex;align-items:flex-end;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid #eef2f7}.qs-ft .qs-edits:not(#_){flex:1;display:flex;align-items:flex-end;gap:8px;margin:0;padding:0;border:0;min-width:0}.qs-ft .qs-edit:not(#_),.qs-edits .qs-edit:not(#_){flex:1 1 0;min-width:0;margin:0}.qs-q1t{flex:none;display:inline-flex;align-items:center;gap:5px;box-sizing:border-box;height:36px;min-height:36px;padding:0 11px;border:1px solid #cbd6e5;border-radius:999px;background:#fff;color:#66758a;font:inherit;font-size:12.5px;white-space:nowrap;cursor:pointer}.qs-q1t[aria-expanded=true]{background:#eaf0fa;border-color:#8fb0dc;color:#2f5f9b;font-weight:700}.qs-miss{margin-top:8px}.qs-w.qs-hj{background:#eef2f7;color:#66758a;font-weight:600}.qs-cap{display:flex;align-items:center;gap:4px;font-size:11px;color:#8794a7;margin-bottom:-2px}.qs-cap.qs-lvl1{margin-left:4px;padding-left:12px;border-left:2px solid #e3e8f0}.qs-cap.qs-lvl2{margin-left:4px;padding-left:26px;border-left:2px solid #e3e8f0;background:linear-gradient(#e3e8f0,#e3e8f0) 14px 0/2px 100% no-repeat}'
+  +''+''
   +'.qs-chip{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 4px 0 9px;border:1px solid #e3e8f0;border-radius:999px;background:#f7f9fc;font-size:12.5px;color:#66758a}'
   +'.qs-chip small{font-size:12px}.qs-chip i{font-style:normal;min-width:22px;padding:2px 7px;border-radius:999px;text-align:center;font-weight:700;color:#243247;background:#fff}'
   +'.qs-chip.qs-alert{border-color:#e9a4a0;background:#fdf0ef;color:#b42318}.qs-chip.qs-mail{cursor:pointer}'
@@ -4408,66 +4411,9 @@ return}
   +'.qd-panel{will-change:transform}'
   +'.qs-q1chip{margin:0!important;gap:0!important}.qs-q1chip i:not(#_){min-width:46px;height:40px;padding:0 8px;border-radius:10px;font-size:20px;font-weight:750;outline:0}.qs-q1sep{align-self:stretch;margin:2px 0!important}.qs-top:has(.qs-q1chip){gap:8px}'
   +'.qs-sq i.qs-x:not(#_){background:#e5484d;color:#fff;border:1px solid #d93c42;font-size:12px;font-weight:800}'
+  +'.qs-note{margin:4px 0 0;padding:5px 9px;border-radius:8px;background:#fff7e0;color:#7a5410;font-size:12.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+  +'.qd-note{display:grid;gap:4px;margin:0 0 12px;font-size:12.5px;color:#66758a;font-weight:650}.qd-note textarea{box-sizing:border-box;width:100%;min-height:44px;padding:8px 10px;border:1px solid #cbd6e5;border-radius:10px;background:#fffdf6;color:#243247;font:inherit;font-size:16px;font-weight:400;resize:vertical}'
   +'.qd-edits{border-top:0}.qd-prev{background:#f7f9fc;margin:6px -16px 0;padding:10px 16px}.qd-prev h4{color:#66758a}'
-  +'}';
- document.head.append(st);
-})();
-;
-
-/* ==== noten/phone-entry.js ==== */
-/* iPhone hochkant: Mündliche Noten auf den Eingabeseiten mit dem bunten Bewertungsfenster eintragen.
-   Antippen eines Feldes öffnet ein Blatt von unten (keine Tastatur): zehn Bewertungszeichen, „Abwesend“, „Löschen“,
-   darunter „‹ Zurück | Weiter ›“ (gleiche Spalte, nächste Person). Gespeichert wird wie beim Eintippen. */
-(()=>{
- const PH=matchMedia('(max-width:540px) and (orientation:portrait) and (pointer:coarse) and (min-width:280px)'),SEL='input.participation-grade-input[data-student-grade][data-task-id]';
- const SYMBOLS=['++','++/+','+','+/o','o','o/-','-','-/--','--','--/---','---'],PALETTE=['','#b8e9ce','#e0f2ce','#fffbb8','#ffedb8','#fbcbc7','#edb8b8'];
- const norm=v=>String(v||'').replace(/[−–—]/g,'-').replace(/\s+/g,'').toLowerCase();
- // Auf dem iPhone Felder schreibgeschützt (keine Tastatur), sonst normal
- function lock(){for(const i of document.querySelectorAll(SEL)){if(PH.matches){if(!i.readOnly){i.readOnly=true;i.dataset.phRo='1'}}else if(i.dataset.phRo){i.readOnly=false;delete i.dataset.phRo}}}
- let lp=false;new MutationObserver(()=>{if(lp)return;lp=true;requestAnimationFrame(()=>{lp=false;lock();if(cur&&!sheet.hidden)paint()})}).observe(document.body,{subtree:true,childList:true});
- PH.addEventListener?.('change',()=>{close();lock()});lock();
- const sheet=document.createElement('div');sheet.className='pe-sheet';sheet.hidden=true;
- sheet.innerHTML='<div class="pe-panel" role="dialog" aria-label="Mündliche Mitarbeit eintragen"><div class="pe-grab"></div><div class="pe-head"><div><b class="pe-name"></b><small class="pe-date"></small></div><small class="pe-pos"></small><button type="button" class="pe-x" aria-label="Schließen">✕</button></div><div class="pe-grid"></div><div class="pe-extra"><button type="button" data-v="A">Abwesend</button><button type="button" data-v="">Löschen</button></div><div class="pe-nav"><button type="button" data-step="-1">‹ Zurück</button><button type="button" data-step="1" class="pe-next">Weiter ›</button></div></div>';
- document.body.append(sheet);
- const grid=sheet.querySelector('.pe-grid');
- SYMBOLS.forEach((s,i)=>{if(s==='--/---')return;const g=1+i/2,lo=Math.floor(g),hi=Math.ceil(g),b=document.createElement('button');b.type='button';b.dataset.v=s;b.textContent=s;b.style.background=lo===hi?PALETTE[lo]:`repeating-linear-gradient(135deg,${PALETTE[lo]} 0 9px,${PALETTE[hi]} 9px 18px)`;grid.append(b)});
- let cur=null;// {sid,tid}
- const find=()=>cur&&document.querySelector(`input.participation-grade-input[data-student-grade="${CSS.escape(cur.sid)}"][data-task-id="${CSS.escape(cur.tid)}"]`);
- const column=()=>{const i=find();const t=i?.closest('table');return t?[...t.querySelectorAll(`input.participation-grade-input[data-task-id="${CSS.escape(cur.tid)}"]`)]:[]};
- function close(){sheet.hidden=true;document.querySelector('.pe-current')?.classList.remove('pe-current');cur=null;document.body.style.paddingBottom=''}
- function paint(){
-  const i=find();if(!i){close();return}
-  document.querySelectorAll('.pe-current').forEach(e=>e!==i&&e.classList.remove('pe-current'));i.classList.add('pe-current');
-  const label=i.getAttribute('aria-label')||'',k=label.lastIndexOf(' für ');
-  const row=i.closest('tr'),nameInput=row?.querySelector('[data-student-name]');
-  sheet.querySelector('.pe-name').textContent=(nameInput?.value||(k>=0?label.slice(k+5):'')).trim();
-  sheet.querySelector('.pe-date').textContent=k>=0?label.slice(0,k):'';
-  const col=column(),n=col.indexOf(i);sheet.querySelector('.pe-pos').textContent=(n+1)+' von '+col.length;
-  sheet.querySelector('[data-step="-1"]').disabled=n<=0;sheet.querySelector('[data-step="1"]').disabled=n>=col.length-1;
-  const v=norm(i.value);for(const b of sheet.querySelectorAll('.pe-grid button,.pe-extra button'))b.setAttribute('aria-pressed',String(b.dataset.v!==''&&norm(b.dataset.v)===v));
- }
- function open(input){cur={sid:input.dataset.studentGrade,tid:input.dataset.taskId};sheet.hidden=false;paint();document.body.style.paddingBottom=(sheet.querySelector('.pe-panel').offsetHeight+16)+'px';
-  requestAnimationFrame(()=>{const i=find();if(!i)return;const r=i.getBoundingClientRect(),top=sheet.querySelector('.pe-panel').getBoundingClientRect().top;if(r.bottom>top-8)scrollBy(0,r.bottom-top+24);else if(r.top<60)scrollBy(0,r.top-80)})}
- function set(value){const i=find();if(!i)return;const ro=i.readOnly;i.readOnly=false;i.value=value;i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new Event('change',{bubbles:true}));const j=find();if(j&&ro)j.readOnly=true;paint()}
- document.addEventListener('click',e=>{if(!PH.matches)return;const i=e.target.closest?.(SEL);if(!i)return;e.preventDefault();i.blur();open(i)},true);
- sheet.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
-  if(b.classList.contains('pe-x')){close();return}
-  if(b.dataset.step){const col=column(),n=col.indexOf(find()),next=col[n+Number(b.dataset.step)];if(next)open(next);return}
-  if('v' in b.dataset){const i=find();set(b.dataset.v!==''&&norm(i?.value)===norm(b.dataset.v)?'':b.dataset.v)}});
- document.addEventListener('keydown',e=>{if(e.key==='Escape'&&cur)close()});
- const st=document.createElement('style');st.textContent='.pe-sheet{display:none}'
-  +'@media (max-width:540px) and (orientation:portrait){'
-  +'.pe-sheet:not([hidden]){display:block;position:fixed;left:0;right:0;bottom:0;z-index:9800}'
-  +'.pe-panel{padding:8px 14px 12px;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -12px 34px #1c2b4633}'
-  +'.pe-grab{width:40px;height:5px;border-radius:3px;background:#cbd6e5;margin:0 auto 8px}'
-  +'.pe-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}.pe-head>div{flex:1;min-width:0}.pe-name{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pe-date{display:block;color:#66758a;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pe-pos{color:#66758a;font-size:12.5px;white-space:nowrap}'
-  +'.pe-x{flex:none;width:36px;height:36px;border:0;background:none;color:#66758a;font-size:16px}'
-  +'.pe-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}'
-  +'.pe-grid button{min-height:50px;border:1px solid #d6dde8;border-radius:11px;color:#24334b;font:inherit;font-size:16px;font-weight:750;cursor:pointer}'
-  +'.pe-grid button[aria-pressed=true],.pe-extra button[aria-pressed=true]{outline:3px solid #2f5f9b;outline-offset:1px}'
-  +'.pe-extra{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.pe-extra button{min-height:40px;border:1px solid #d6dde8;border-radius:11px;background:#f7f9fc;color:#2f5f9b;font:inherit;font-size:14.5px;cursor:pointer}'
-  +'.pe-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.pe-nav button{min-height:44px;border:1px solid #cbd6e5;border-radius:12px;background:#fff;color:#2f5f9b;font:inherit;font-size:15px;font-weight:650;cursor:pointer}.pe-nav .pe-next{background:#2f5f9b;border-color:#2f5f9b;color:#fff}.pe-nav button:disabled{opacity:.4}'
-  +'input.participation-grade-input.pe-current{outline:3px solid #2f5f9b!important;outline-offset:1px}'
   +'}';
  document.head.append(st);
 })();
@@ -4525,8 +4471,9 @@ return}
  function syncHatch(bar){const m=hatchMode();for(const b of bar.querySelectorAll('[data-ph-hatch]')){b.setAttribute('aria-pressed',String(b.dataset.phHatch===m));b.setAttribute('role','radio');b.setAttribute('aria-checked',String(b.dataset.phHatch===m))}}
  function topBar(panel,sel){
   let bar=panel.querySelector(':scope>.pl-bar');
-  if(!bar){bar=document.createElement('div');bar.className='pl-bar';bar.innerHTML='<div class="pl-row"><span class="pl-seg pl-half"></span><span class="pl-seg pl-hatch" role="radiogroup" aria-label="Tendenzen"><button type="button" data-ph-hatch="off">Aus</button><button type="button" data-ph-hatch="hatch">Schraffiert</button><button type="button" data-ph-hatch="frame">Rahmen</button></span></div><div class="pl-stand"></div>';
-   bar.addEventListener('click',e=>{const h=e.target.closest('[data-half]'),s=e.target.closest('[data-ph-hatch]');
+  if(!bar){bar=document.createElement('div');bar.className='pl-bar';bar.innerHTML='<div class="pl-row"><span class="pl-seg pl-half"></span><span class="pl-seg pl-hatch" role="radiogroup" aria-label="Tendenzen"><button type="button" data-ph-hatch="off">Aus</button><button type="button" data-ph-hatch="hatch">Schraffiert</button><button type="button" data-ph-hatch="frame">Rahmen</button></span></div><div class="pl-stand"></div><div class="pl-flags"></div>';
+   bar.addEventListener('click',e=>{const h=e.target.closest('[data-half]'),s=e.target.closest('[data-ph-hatch]'),fl=e.target.closest('[data-flag]');
+    if(fl){panel.dataset.plFilter=panel.dataset.plFilter===fl.dataset.flag?'':fl.dataset.flag;flags(panel);if(panel.dataset.plFilter)bar.scrollIntoView({block:'start'})}
     if(h){ss.set(sk(),h.dataset.half);done.clear();schedule()}
     if(s){setHatch(s.dataset.phHatch);setTimeout(()=>syncHatch(bar),0)}});
    panel.prepend(bar)}
@@ -4535,8 +4482,15 @@ return}
   syncHatch(bar);
   const y=ys.find(g=>g.id===currentHalfYearId),name=typeof classroomQuarterPeriodName==='function'&&y?classroomQuarterPeriodName(y,sel):(sel+1)+'. Quartal';
   bar.querySelector('.pl-stand').textContent='Stand '+name+' · Antippen zeigt alle Einträge';
-  sortCards(panel);
+  sortCards(panel);flags(panel);
  }
+ /* 8.01: Hinweise über den Karten – antippen filtert die Karten, nochmal antippen zeigt wieder alle */
+ const FLAGS=[['ha','3× oder öfter HA fehlend',c=>Number(c.dataset.haHalf)>=3],['mm','Noch keine mündliche Note im Quartal',c=>c.dataset.mmNow==='0']];
+ function flags(panel){const bar=panel.querySelector(':scope>.pl-bar'),box=bar?.querySelector('.pl-flags');if(!box)return;const cards=[...panel.querySelectorAll('.qs-cards>.qs-card')];
+  let f=panel.dataset.plFilter||'';const html=[];
+  for(const [k,label,test] of FLAGS){const n=cards.filter(test).length;if(!n||n===cards.length){if(f===k)f='';continue}html.push(`<button type="button" data-flag="${k}" aria-pressed="${f===k}"><b>${n}</b> ${label}</button>`)}
+  panel.dataset.plFilter=f;const sig=html.join('');if(box.dataset.sig!==sig){box.dataset.sig=sig;box.innerHTML=sig}box.hidden=!html.length;
+  const test=FLAGS.find(x=>x[0]===f)?.[2];for(const c of cards){const hit=!test||test(c);if(c.classList.contains('pl-hit')!==hit)c.classList.toggle('pl-hit',hit)}}
  const gradeOf=card=>{const t=(card.querySelector('.qs-big')?.textContent||'').trim().replace(/[−–—]/g,'-');let m=/^(\d+(?:,\d+)?)$/.exec(t);if(m)return Number(m[1].replace(',','.'));m=/^([1-6])\s*([+-])$/.exec(t);if(m)return Number(m[1])+(m[2]==='+'?-.33:.33);m=/^(\d)\s*-\s*(\d)$/.exec(t);if(m)return (Number(m[1])+Number(m[2]))/2;return 99};
  function sortCards(panel){const box=panel.querySelector('.qs-cards');if(!box)return;const cards=[...box.children];if(!cards.length)return;
   if(!box.dataset.order||cards.some(c=>!c.dataset.idx))cards.forEach((c,i)=>{if(!c.dataset.idx)c.dataset.idx=String(i)});
@@ -4553,18 +4507,49 @@ return}
    empty.querySelector('.pl-other').onclick=()=>{try{parent.navigationSetOpen?.(true)}catch{}};
    empty.querySelector('.pl-add').onclick=()=>{const add=[...document.querySelectorAll('button.add-subject-button')].find(b=>b.textContent.includes('Quartalsnoten'));add?.click();tries=0;schedule()};document.body.append(empty)}}
  classroomHooks.add('refreshExamNavigation','phone-lite: Quartalsübersicht',{after(){schedule()}});
- new MutationObserver(list=>{if(!isPhone())return;if(list.some(m=>m.target.closest?.('.qs-cards')))for(const p of document.querySelectorAll('[data-quarter-summary]'))sortCards(p)}).observe(document.body,{subtree:true,childList:true});
+ new MutationObserver(list=>{if(!isPhone())return;if(list.some(m=>m.target.closest?.('.qs-cards')))for(const p of document.querySelectorAll('[data-quarter-summary]')){sortCards(p);flags(p)}}).observe(document.body,{subtree:true,childList:true});
  PH.addEventListener?.('change',()=>{tries=0;ensure()});PL.addEventListener?.('change',()=>{tries=0;ensure()});addEventListener('resize',()=>{if(isPhone()!==document.documentElement.classList.contains('ph-lite')){tries=0;ensure()}});setTimeout(ensure,400);window.classroomPhoneLite={ensure,wantedHalf,wantedQuarter};
  const st=document.createElement('style');st.textContent='.pl-bar,.pl-empty{display:none}'
   +'@media (max-width:540px) and (orientation:portrait),(max-height:500px) and (orientation:landscape) and (pointer:coarse){'
   +'html.ph-lite .pl-bar{display:block;margin:0 0 10px}.pl-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}'
   +'.pl-seg{display:inline-flex;padding:3px;gap:2px;border-radius:11px;background:#e7edf6}.pl-seg[hidden]{display:none}.pl-seg button{min-height:32px;padding:0 11px;border:0;border-radius:8px;background:transparent;color:#66758a;font:inherit;font-size:13px;font-weight:650;cursor:pointer}.pl-seg button[aria-pressed=true]{background:#fff;color:#2f5f9b;box-shadow:0 1px 3px #233d6018}'
-  +'.pl-hatch{margin-left:auto}.pl-stand{font-size:11.5px;color:#8794a7;margin-top:6px}'
+  +'.pl-hatch{margin-left:auto}.pl-flags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.pl-flags[hidden]{display:none}.pl-flags button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 11px;border:1px solid #f0c7c3;border-radius:16px;background:#fff7f6;color:#9b2c22;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}.pl-flags button b{min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#e5484d;color:#fff;font-size:11px;display:inline-flex;align-items:center;justify-content:center}.pl-flags button[data-flag=mm]{border-color:#cbd6e5;background:#f4f7fc;color:#2f5f9b}.pl-flags button[data-flag=mm] b{background:#2f5f9b}.pl-flags button[aria-pressed=true]{outline:2px solid currentColor;outline-offset:1px}[data-pl-filter=ha] .qs-cards>.qs-card:not(.pl-hit),[data-pl-filter=mm] .qs-cards>.qs-card:not(.pl-hit){display:none!important}.pl-stand{font-size:11.5px;color:#8794a7;margin-top:6px}'
   /* Alles außer den Karten ausblenden: Titel, Schalter, Hinweistext, Gewichtung, Karten/Tabelle */
   +'html.ph-lite [data-quarter-summary]>.section-title,html.ph-lite [data-quarter-summary]>.section-title+p,html.ph-lite [data-quarter-summary] .qs-phone-bar,html.ph-lite [data-quarter-summary] .qs-wt,html.ph-lite [data-quarter-summary] .quarter-summary-weight-controls,html.ph-lite [data-quarter-summary] .semester-weight-container,html.ph-lite [data-quarter-summary]>p,html.ph-lite [data-quarter-summary] .previous-quarter-empty{display:none!important}'
   +'html.ph-lite .pl-empty{display:block;position:fixed;inset:0;z-index:50;padding:28px 22px;background:#f6f8fc}.pl-empty b{font-size:17px}.pl-empty p{color:#66758a;font-size:14px;line-height:1.5}.pl-empty button{min-height:44px;padding:0 18px;border:0;border-radius:12px;background:#2f5f9b;color:#fff;font:inherit;font-weight:650;margin:0 8px 8px 0}.pl-empty .pl-other{background:#fff;color:#2f5f9b;border:1px solid #cbd6e5}.pl-empty .pl-x{position:absolute;top:14px;right:12px;width:40px;min-height:40px;padding:0;margin:0;background:transparent;color:#66758a;font-size:18px}.pl-empty b{display:block;padding-right:40px}'
   +'}';
  document.head.append(st);
+})();
+;
+
+/* ==== noten/student-notes.js ==== */
+/* Kurze Notiz je Person (z. B. „Elterngespräch am 12.11.“), je Fach und Klasse.
+   Gespeichert unter notenrechner-notizen-v1 – damit in Backup, Rückgängig und Geräte-Abgleich enthalten.
+   iPhone: im Detailblatt der Karte bearbeiten, in der Karte unter dem Namen sichtbar.
+   Mac/iPad: in der Quartalsübersicht ein Notiz-Symbol neben dem Namen (antippen = bearbeiten). */
+(()=>{
+ const KEY='notenrechner-notizen-v1';
+ const norm=n=>String(n||'').trim().toLocaleLowerCase('de-DE');
+ const all=()=>{try{const v=JSON.parse(localStorage.getItem(KEY)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch{return {}}};
+ const key=name=>(typeof currentSubject==='string'?currentSubject:'')+'::'+(typeof currentClassId==='string'?currentClassId:'')+'::'+norm(name);
+ const get=name=>{const v=all()[key(name)];return typeof v==='string'?v:''};
+ function set(name,text){const a=all(),k=key(name);text=String(text||'').trim().slice(0,500);if(text)a[k]=text;else delete a[k];
+  try{Object.keys(a).length?localStorage.setItem(KEY,JSON.stringify(a)):localStorage.removeItem(KEY)}catch{}
+  document.dispatchEvent(new CustomEvent('classroom-student-note',{detail:{name}}));schedule()}
+ window.classroomStudentNotes={get,set};
+ // Mac/iPad: Symbol in der Quartalsübersicht (Name-Zelle bleibt textlich unverändert, das Symbol hat keinen Text)
+ let planned=false;const schedule=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;marks()})};
+ function marks(){for(const th of document.querySelectorAll('[data-quarter-summary] tbody th[scope=row]')){
+  const name=[...th.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim();if(!name)continue;
+  const note=get(name);let b=th.querySelector(':scope>.sn-mark');
+  if(!b){b=document.createElement('button');b.type='button';b.className='sn-mark';th.append(b)}
+  if(!b._sn){b._sn=1;b.onclick=async e=>{e.stopPropagation();e.preventDefault();const v=await (window.classroomPrompt||prompt)('Notiz zu '+name+' (leer lassen zum Löschen):',get(name));if(v!==null&&v!==undefined)set(name,v)}}
+  const has=!!note;if(b.classList.contains('has-note')!==has)b.classList.toggle('has-note',has);const t=has?'Notiz: '+note:'Notiz hinzufügen';if(b.title!==t){b.title=t;b.setAttribute('aria-label',t)}}}
+ new MutationObserver(list=>{if(list.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&!n.classList?.contains('sn-mark'))))schedule()}).observe(document.documentElement,{childList:true,subtree:true});
+ addEventListener('storage',e=>{if(e.key===KEY)schedule()});schedule();
+ const st=document.createElement('style');st.textContent='.sn-mark{display:inline-block;vertical-align:middle;width:20px;height:20px;margin-left:6px;padding:0;border:0;border-radius:6px;background:transparent;cursor:pointer;opacity:0;-webkit-mask:var(--sn) center/15px no-repeat;mask:var(--sn) center/15px no-repeat;background-color:#8794a7;--sn:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27black%27 stroke-width=%272.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M4 4h16v12H8l-4 4z%27/%3E%3Cpath d=%27M8 9h8M8 12h5%27/%3E%3C/svg%3E")}'
+  +'tr:hover .sn-mark,.sn-mark:focus-visible{opacity:.6}.sn-mark.has-note{opacity:1;background-color:#d08a1f}'
+  +'@media print{.sn-mark{display:none}}html.classroom-privacy .sn-mark{display:none}';document.head.append(st);
 })();
 ;
 

@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.00
+Stand: 06.11.2026 · Version 8.02
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1013,3 +1013,7 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 7.99: iPhone-Karten: Anteile von Mündlich/Tests auf die Halbjahresnote umgerechnet (z. B. 40 % / 10 %); „Aktuell“ sagt genauer, ob kein Stundenplan gespeichert ist oder nur keine passende Stunde
 
 8.00: iPhone-Karten: Noten des 1. Quartals nicht mehr blass, Klassenarbeit-Kästchen gleich groß; Wiederherstellen zeigt, ob das Backup einen Stundenplan enthält
+
+8.01: iPhone: „Aktuell“ springt in die laufende Stunde (mit Datum und Raum), sonst Stundenplan für heute und den nächsten Schultag; Hinweise über den Karten (3× HA fehlend, ohne mündliche Note) zum Filtern; Notiz je Person (iPhone im Detailblatt, Mac in der Quartalsübersicht)
+
+8.02: Code aufgeräumt: ungenutztes „Mehr“-Blatt, nicht mehr erreichbares iPhone-Eingabeblatt und veraltete Stilregeln entfernt, Kopfzeilen-Regeln zusammengefasst (keine sichtbare Änderung)
