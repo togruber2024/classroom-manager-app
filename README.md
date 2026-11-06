@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.33
+Stand: 06.11.2026 · Version 8.34
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1110,3 +1110,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.31: Nach einem Update (auch wenn die App direkt mit der neuen Version startet) erscheint einmal kurz „✓ Aktualisiert auf Version …“ mit „Was ist neu?“ (öffnet die Hilfe bei „Neu“); Update-Prüfungen legen keine Einträge mehr im Offline-Speicher ab
 8.32: Kompaktansicht mit eingeblendetem 1. Quartal: Q1-Spalten haben die gleiche Größe wie die übrigen, lesbare Überschriften („Q1 · L14 · 10.09.2026“) und eine Trennlinie zum 2. Quartal
 8.33: Kompaktansicht: Q1-Tests nur mit Datum („Q1 · 10.09.2026“), ohne Titel
+8.34: Tests-Übersicht: der gestrichelte „＋ Test“ öffnet „Test erstellen“ (Rohpunkte mit Detailseite oder direkte Eingabe in der Spalte)
