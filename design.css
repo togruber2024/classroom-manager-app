@@ -1015,3 +1015,7 @@ body[data-module=sitzplan] .room-header .classroom-mode-toggle:not(#_){flex:none
 @media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){
  .help-head .help-close:not(#_):not(#__),.tt-x:not(#_),.sn-x:not(#_),.qd-close:not(#_),.cq-x:not(#_){display:none!important}
 }
+
+/* 8.41: Alle Auswahlschalter (Segmentschalter) in Pillenform – passend zu den Ansichts-Pillen wie „Kompaktansicht“ */
+body :is(.mean-seg,.qs-seg,.pl-seg,.rg-seg,.appearance-seg):not(#_):not(#__){border-radius:999px!important}
+body :is(.mean-seg,.qs-seg,.pl-seg,.rg-seg,.appearance-seg):not(#_):not(#__)>:is(button,label,a){border-radius:999px!important}
