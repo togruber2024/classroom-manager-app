@@ -2597,7 +2597,7 @@ document.addEventListener('keydown',event=>{
    board.style.setProperty('--print-seat-left',-(hw()+5+(left-2)*80)+'px');board.style.setProperty('--print-seat-top',-(hh()+5+(top-2)*50)+'px');board.style.setProperty('--print-seat-scale',printScale);viewport.style.setProperty('--print-seat-height',height*printScale+'px');
   }
   const d={width:hw()+colCount*80,height:hh()+rowCount*50};board.style.width=d.width+'px';board.style.height=d.height+'px';board.style.gridTemplateColumns=`${hw()}px repeat(${colCount},75px)`;board.style.gridTemplateRows=`${hh()}px repeat(${rowCount},45px)`;
-  for(const cell of cells){cell.style.removeProperty('height');cell.style.removeProperty('width')}
+  for(const cell of cells){cell.style.removeProperty('height');cell.style.removeProperty('width');cell.style.removeProperty('min-height');cell.style.removeProperty('box-sizing')}
   /* iPhone (schlanke Bewertungsansicht): passt der Plan nicht aufs Display, werden leere Reihen/Spalten zu schmalen Gängen
      und – nur falls nötig – die Tische etwas flacher (nie schmaler). */
   let liteScale=null;
@@ -2613,7 +2613,7 @@ document.addEventListener('keydown',event=>{
     if(H(45,10)*sw>availH){const full=rowsN-eR;rowH=Math.max(34,Math.floor(((availH/sw)-hh()-eR*15-full*5)/Math.max(1,full)))}
     const rowsT=[...R.entries()].sort((a,b)=>a[0]-b[0]).map(([,v])=>(v?rowH:10)+'px'),colsT=[...C.entries()].sort((a,b)=>a[0]-b[0]).map(([,v])=>(v?75:colW)+'px');
     board.style.gridTemplateRows=`${hh()}px ${rowsT.join(' ')}`;board.style.gridTemplateColumns=`${hw()}px ${colsT.join(' ')}`;
-    for(const c of vis){const r=parseInt(c.style.gridRow,10),k=parseInt(c.style.gridColumn,10);c.style.setProperty('height',(R.get(r)?rowH:10)+'px','important');if(!C.get(k))c.style.setProperty('width',colW+'px','important')}
+    for(const c of vis){const r=parseInt(c.style.gridRow,10),k=parseInt(c.style.gridColumn,10);c.style.setProperty('height',(R.get(r)?rowH:10)+'px','important');/* 8.56: Höhe inklusive Rand – sonst ragen die Tische in die schmalen Gänge */c.style.setProperty('min-height','0','important');c.style.setProperty('box-sizing','border-box','important');if(!C.get(k))c.style.setProperty('width',colW+'px','important')}
     d.width=W(colW);d.height=H(rowH,10);board.style.width=d.width+'px';board.style.height=d.height+'px';
     liteScale=Math.max(.3,Math.min(1,availW/d.width,availH/d.height));
    }else liteScale=plain;
