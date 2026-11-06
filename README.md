@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 06.11.2026 · Version 8.31
+Stand: 06.11.2026 · Version 8.32
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1108,3 +1108,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.29: iPad/iPhone: Kein Hineinzoomen mehr per Zwei-Finger-Geste oder Doppeltippen (Kopfleiste, Seiten); Scrollen bleibt
 8.30: Umbenennen: Sitzpläne (auch Räume, gespeicherte Versionen, Paare/Tabu) und Notizen ziehen den neuen Namen mit – auch nach dem Wiederherstellen eines Backups auf einem anderen Gerät; frühere Umbenennungen mit kleinem Tippfehler werden beim Laden repariert
 8.31: Nach einem Update (auch wenn die App direkt mit der neuen Version startet) erscheint einmal kurz „✓ Aktualisiert auf Version …“ mit „Was ist neu?“ (öffnet die Hilfe bei „Neu“); Update-Prüfungen legen keine Einträge mehr im Offline-Speicher ab
+8.32: Kompaktansicht mit eingeblendetem 1. Quartal: Q1-Spalten haben die gleiche Größe wie die übrigen, lesbare Überschriften („Q1 · L14 · 10.09.2026“) und eine Trennlinie zum 2. Quartal
