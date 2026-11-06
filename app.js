@@ -1495,7 +1495,9 @@ window.addEventListener('message',event=>{
   const now=lessonNow();if(now){try{localStorage.setItem(APPLIED,now.key)}catch{}return applyLesson(now,'Jetzt')}
   const last=lastLesson();if(last)return applyLesson(last,'Zuletzt');
   if(typeof selectView==='function')selectView('sitzplan');
-  toast('Kein Stundenplan auf diesem Gerät – am Mac eintragen und per Backup übertragen.');
+  /* 7.99: genauer sagen, was fehlt (keine Einträge / nichts in den letzten zwei Wochen) */
+  const t=load(),n=Object.values(t.days||{}).reduce((a,d)=>a+Object.values(d||{}).filter(e=>e&&e.ref).length,0),l=learned(),nl=Object.values(l||{}).reduce((a,d)=>a+Object.keys(d||{}).length,0);
+  toast(n||nl?'Im Stundenplan ('+(n+nl)+' Stunden) findet sich in den letzten zwei Wochen keine Stunde mit Lerngruppe.':'Auf diesem Gerät ist kein Stundenplan gespeichert (0 Stunden). Bitte am Mac den Stundenplan prüfen, danach ein neues Backup erstellen und hier wiederherstellen.');
  };
  async function applyLesson(lesson,prefix){
   const [subject,classId]=lesson.ref.split('::');
