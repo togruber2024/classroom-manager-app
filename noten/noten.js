@@ -4177,6 +4177,86 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
 })();
 ;
 
+/* ==== noten/result-overview.js ==== */
+/* 9.16: „Ergebnisübersicht“ bei Klassenarbeiten/Klausuren – bildschirmfüllende Liste nur zum Anschauen (Variante B):
+   oben Titel, Thema, Klasse, Datum, Höchstpunktzahl sowie Ø Note, Ø Punkte, Anzahl und Bestanden;
+   darunter Name · Punkte (mit Balken) · Note (farbig wie in der App). Die Spaltenzahl richtet sich nach Schülerzahl und Fensterhöhe.
+   Schließen mit „Schließen“, Esc oder Klick neben die Liste. Es wird nichts verändert. */
+(()=>{
+ const TOP=(()=>{try{return window.top.document}catch{return document}})();
+ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const num=v=>{const n=Number(String(v??'').replace(',','.'));return Number.isFinite(n)&&String(v??'').trim()!==''?n:null};
+ const fmt=(v,d=1)=>Number(v).toLocaleString('de-DE',{maximumFractionDigits:d,minimumFractionDigits:0});
+ function context(){
+  const panel=[...document.querySelectorAll('.exam-combined-page')].find(p=>p.offsetParent);if(!panel)return null;
+  const group=subjectExamGroups(currentSubject).find(g=>g.type==='exam'&&g.pages.includes(activePage));if(!group)return null;
+  const key=group.pages.find(k=>taskPageData(currentSubject,k)?.tasks?.some(t=>t.basisPage))||group.pages.at(-1),data=taskPageData(currentSubject,key);
+  const system=taskGradeSystem(currentSubject,key),table=[...panel.querySelectorAll('table.task-table')].find(t=>t.offsetParent)||panel.querySelector('table.task-table');
+  // Art je Aufgabe aus der Tabelle (Platzhalter „Fehler“/„Punkte“), sonst aus der Berechnungsseite
+  const kind={},max={};for(const inp of table?.querySelectorAll('input.task-raw-score[data-task-id]')||[]){kind[inp.dataset.taskId]??=inp.placeholder==='Fehler'?'F':'P';max[inp.dataset.taskId]??=num(inp.max)}
+  for(const t of data.tasks||[]){kind[t.id]??=/text/.test(t.basisPage||'')?'F':'P';max[t.id]??=num(t.maximum)}
+  const pTasks=(data.tasks||[]).filter(t=>kind[t.id]==='P'),fTasks=(data.tasks||[]).filter(t=>kind[t.id]==='F');
+  const maxP=pTasks.reduce((a,t)=>a+(max[t.id]||0),0);
+  const rows=(data.students||[]).filter(s=>String(s.name||'').trim()).map(s=>{
+   const sum=list=>{let any=false,v=0;for(const t of list){const n=num(s.rawScores?.[t.id]);if(n!==null){any=true;v+=n}}return any?v:null};
+   const r=taskStudentResult(data,s,false);
+   return {name:s.name.trim(),p:sum(pTasks),f:sum(fTasks),r,text:r===null?'—':formatTaskMean(r,system,data),cls:r===null?'':taskMeanClass(r,system,data)}});
+  const cls=(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId)?.label||'';
+  const topic=panel.querySelector('.test-detail-topic input,[data-exam-topic],input[placeholder*="Thema"]')?.value||data.examTopic||'';
+  return {group,data,system,rows,maxP,hasP:pTasks.length>0,hasF:fTasks.length>0,cls,topic};
+ }
+ function open(){
+  const c=context();if(!c){alert('Die Ergebnisübersicht gibt es auf der Seite einer Klassenarbeit oder Klausur.');return}
+  close();const pts=c.system==='gradePoints',done=c.rows.filter(r=>r.r!==null);
+  const mean=done.length?done.reduce((a,r)=>a+r.r,0)/done.length:null,withP=c.rows.filter(r=>r.p!==null),meanP=withP.length?withP.reduce((a,r)=>a+r.p,0)/withP.length:null;
+  const passed=done.filter(r=>pts?Math.floor(r.r+0.5)>=5:Math.max(1,Math.min(6,Math.ceil(r.r-0.5-1e-10)))<=4).length;
+  const date=c.group.examDate?c.group.examDate.split('-').reverse().join('.'):'';
+  const ov=TOP.createElement('div');ov.className='cm-ro';ov.setAttribute('role','dialog');ov.setAttribute('aria-label','Ergebnisübersicht');
+  ov.innerHTML=`<div class="cm-ro-box"><div class="cm-ro-hd"><div><h1>${esc(c.group.label||'Klassenarbeit')} · ${esc(c.cls)}</h1><small>${[c.topic,date,c.hasP&&c.maxP?'max. '+fmt(c.maxP)+' Punkte':''].filter(Boolean).map(esc).join(' · ')}</small></div><button type="button" class="cm-ro-x">Schließen</button></div>
+   <div class="cm-ro-kpi">${mean!==null?`<span>Ø ${pts?'Notenpunkte':'Note'} <b>${fmt(mean,pts?1:2)}</b></span>`:''}${meanP!==null?`<span>Ø Punkte <b>${fmt(meanP,1)}</b></span>`:''}<span>${c.rows.length} Schüler:innen</span>${done.length?`<span>Bestanden <b>${passed}/${done.length}</b></span>`:''}</div>
+   <div class="cm-ro-grid"></div></div>`;
+  TOP.body.append(ov);
+  const grid=ov.querySelector('.cm-ro-grid');
+  const head=`<thead><tr><th>Name</th>${c.hasF?'<th class="n">Fehler</th>':''}${c.hasP?'<th class="n">Punkte</th>':''}<th class="g">Note</th></tr></thead>`;
+  const row=r=>`<tr><td>${esc(r.name)}</td>${c.hasF?`<td class="n">${r.f===null?'—':fmt(r.f)}</td>`:''}${c.hasP?`<td class="n">${r.p===null?'—':fmt(r.p)}${c.maxP?`<span class="cm-ro-bar"><i style="width:${r.p===null?0:Math.max(0,Math.min(100,r.p/c.maxP*100))}%"></i></span>`:''}</td>`:''}<td class="g"><span class="task-end-grade cm-ro-chip ${esc(r.cls)}">${esc(r.text)}</span></td></tr>`;
+  // Spalten: so viele, dass alles ohne Blättern ins Fenster passt (höchstens 4)
+  const avail=Math.max(200,TOP.defaultView.innerHeight-ov.querySelector('.cm-ro-grid').getBoundingClientRect().top-40),fit=Math.max(6,Math.floor(avail/44));
+  const cols=Math.max(1,Math.min(4,Math.ceil(c.rows.length/fit))),per=Math.ceil(c.rows.length/cols)||1;
+  grid.style.gridTemplateColumns=`repeat(${cols},minmax(0,1fr))`;
+  for(let i=0;i<cols;i++){const part=c.rows.slice(i*per,(i+1)*per);if(!part.length&&i)continue;const t=TOP.createElement('table');t.innerHTML=head+'<tbody>'+part.map(row).join('')+'</tbody>';grid.append(t)}
+  if(grid.scrollHeight>grid.clientHeight+2)ov.classList.add('cm-ro-dense');
+  ov.querySelector('.cm-ro-x').onclick=close;ov.addEventListener('click',e=>{if(e.target===ov)close()});ov.querySelector('.cm-ro-x').focus();
+ }
+ function close(){TOP.querySelector('.cm-ro')?.remove()}
+ const key=e=>{if(e.key==='Escape'&&TOP.querySelector('.cm-ro')){e.preventDefault();close()}};document.addEventListener('keydown',key);try{if(TOP!==document)TOP.addEventListener('keydown',key)}catch{}
+ window.classroomResultOverview=open;
+ // Knopf in der Werkzeugleiste der Klassenarbeit (vor „Notenspiegel“)
+ function place(){for(const panel of document.querySelectorAll('.exam-combined-page')){if(panel.querySelector('.cm-ro-open'))continue;const ns=panel.querySelector('.notenspiegel-button');if(!ns)continue;
+  const b=document.createElement('button');b.type='button';b.className='cm-ro-open student-add-button is-plain';b.textContent='Ergebnisübersicht';b.title='Alle Ergebnisse bildschirmfüllend anzeigen (nur Ansicht)';b.onclick=open;ns.before(b)}}
+ classroomOnDomChange(place);place();
+ // Stile im Hauptfenster (die Übersicht liegt über der ganzen App)
+ if(!TOP.getElementById('cm-ro-style')){const st=TOP.createElement('style');st.id='cm-ro-style';
+  // Notenfarben aus der Noten-Seite übernehmen
+  let gradeCss='';try{for(const sh of document.styleSheets){let rules;try{rules=sh.cssRules}catch{continue}for(const r of rules||[])if(r.selectorText&&/\.task-end-grade|\.g[0-9]|grade-|hatch|tendency|participation-(between|lean)/.test(r.selectorText)&&!/:hover|input/.test(r.selectorText))gradeCss+=r.cssText.replace(/body\[data-module(="?noten"?)?\]\s*/g,'')+'\n'}}catch{}
+  st.textContent=gradeCss+`
+ .cm-ro{position:fixed;inset:0;z-index:99990;background:rgba(28,43,70,.38);display:flex;align-items:stretch;justify-content:center;padding:14px;font-family:inherit}
+ .cm-ro-box{flex:1;max-width:1600px;background:#fff;border-radius:18px;box-shadow:0 20px 50px rgba(20,35,60,.25);padding:22px 26px 18px;display:flex;flex-direction:column;min-height:0;color:#1f2a3d}
+ .cm-ro-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}.cm-ro-hd h1{margin:0;font-size:24px;line-height:1.2}.cm-ro-hd small{display:block;color:#5b6b82;font-size:14px;margin-top:4px}
+ .cm-ro-x{flex:none;height:40px;padding:0 16px;border:1px solid #d5deea;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:14.4px;cursor:pointer}
+ .cm-ro-kpi{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}.cm-ro-kpi span{background:#f4f7fb;border:1px solid #e3e9f1;border-radius:10px;padding:6px 12px;font-size:13.5px}.cm-ro-kpi b{font-size:15px}
+ .cm-ro-grid{flex:1;min-height:0;display:grid;gap:22px;align-content:start;overflow:auto}
+ .cm-ro table{border-collapse:collapse;width:100%;font-size:15.5px}.cm-ro th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:#7a889c;text-align:left;font-weight:600;padding:4px 8px;border-bottom:1px solid #e3e9f1}
+ .cm-ro td{padding:0 8px;height:43px;border-bottom:1px solid #f0f3f8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0}.cm-ro td:first-child{width:auto}
+ .cm-ro .n{text-align:right;width:120px;font-variant-numeric:tabular-nums;color:#4a5b73}.cm-ro .g{text-align:center;width:88px;overflow:visible}
+ .cm-ro tbody tr:nth-child(even) td{background:#f8fafd}
+ .cm-ro .cm-ro-chip{display:inline-flex;align-items:center;justify-content:center;min-width:46px;height:28px;padding:0 8px;border-radius:8px;font-weight:700;font-size:14.5px;box-sizing:border-box}
+ .cm-ro-bar{display:inline-block;width:56px;height:6px;border-radius:3px;background:#e9eef5;margin-left:8px;vertical-align:middle;position:relative;overflow:hidden}.cm-ro-bar i{position:absolute;left:0;top:0;bottom:0;background:#8fb0dc}
+ .cm-ro.cm-ro-dense td{height:34px;font-size:14px}.cm-ro.cm-ro-dense .cm-ro-chip{height:24px}
+ @media (max-width:700px){.cm-ro{padding:6px}.cm-ro-box{padding:14px}.cm-ro .n{width:84px}.cm-ro-bar{display:none}}
+ @media print{.cm-ro{display:none!important}}`;TOP.head.append(st)}
+})();
+;
+
 /* ==== noten/design-extras.js ==== */
 /* Design 6.93 – Noten-Manager. Jede Rubrik ist eigenständig und lässt sich einzeln entfernen. */
 
