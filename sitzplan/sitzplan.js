@@ -3596,14 +3596,14 @@ document.addEventListener('keydown',event=>{
 })();
 
 /* Zoomleiste über dem Sitzplan, immer einzeilig: Was nicht passt, wandert von rechts nach links in „Mehr ▾“ (ganz rechts,
-   nur sichtbar, wenn etwas darin steht): Klassenansicht, Schalter „Bewertungen“, „100 %“, „Einpassen“.
+   nur sichtbar, wenn etwas darin steht): Klassenansicht, „100 %“, „Einpassen“, zuletzt der Schalter „Bewertungen“ (9.09).
    ☰, −, Regler, Prozentanzeige und + bleiben immer sichtbar. In der Klassenansicht wird nichts verschoben. */
 (()=>{
  let planned=false,lastKey='',open=false,observed=null;
  const label=el=>(el?.textContent||'').replace(/\s+/g,' ').trim();
  const style=document.createElement('style');style.textContent=
   'body[data-module=sitzplan] .classroom-plan-zoom.zoom-fit-row{flex-wrap:nowrap}body[data-module=sitzplan] .classroom-plan-zoom.zoom-fit-wrap{flex-wrap:wrap}'
-  +'.classroom-plan-zoom>.zoom-collapsed{display:none!important}'
+  +'.classroom-plan-zoom>.zoom-collapsed,html body[data-module=sitzplan] .classroom-plan-zoom>.zoom-collapsed:not(#_):not(#__):not(#___){display:none!important}'/* 9.09: „Bewertungen“ wurde trotz Platz im Menü „Mehr“ zusätzlich angezeigt (iPad) */
   +'.zoom-more{flex:none;position:relative}/* 9.05: direkt nach „Bewertungen“ statt isoliert rechts */.zoom-more[hidden]{display:none!important}'
   +'.classroom-plan-zoom .zoom-more-toggle{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.zoom-more-toggle span{font-size:.75em}'
   +'.zoom-more-menu{display:none;position:fixed;z-index:1000;min-width:200px;padding:6px;background:#fff;border:1px solid #dce3ef;border-radius:12px;box-shadow:0 12px 30px #1c2b4626}'
@@ -3628,7 +3628,7 @@ document.addEventListener('keydown',event=>{
   if(bar.lastElementChild!==more)bar.append(more);
   return more;
  }
- function items(bar){return [bar.querySelector(':scope > .classroom-beamer-button'),bar.querySelector(':scope > .plan-assess-switch'),bar.querySelector(':scope > [data-zoom-reset]'),bar.querySelector(':scope > [data-zoom-fit]')].filter(Boolean)}
+ /* 9.09: „Bewertungen“ wandert als Letztes ins Menü – es ist der wichtigste Schalter */function items(bar){return [bar.querySelector(':scope > .classroom-beamer-button'),bar.querySelector(':scope > [data-zoom-reset]'),bar.querySelector(':scope > [data-zoom-fit]'),bar.querySelector(':scope > .plan-assess-switch')].filter(Boolean)}
  function proxyFor(el){
   const b=document.createElement('button');b.type='button';b.setAttribute('role','menuitem');b._target=el;
   if(el.matches('.plan-assess-switch')){const input=el.querySelector('input');b.setAttribute('role','menuitemcheckbox');b.innerHTML='<span>Bewertungen</span><span class="zoom-proxy-switch" aria-hidden="true"></span>';b.setAttribute('aria-checked',String(!!input?.checked));b.onclick=()=>input?.click()}

@@ -1765,6 +1765,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['„Bewertungen“ nur einmal','Wird die Zoomleiste zu schmal, wandern zuerst „Klassenansicht“, „100 %“ und „Einpassen“ ins Menü „Mehr“ – „Bewertungen“ bleibt am längsten sichtbar und erscheint nicht mehr doppelt.','Unterrichts-Manager (iPad)','9.09'],
    ['⇄ auf der Seite des Klassenraums','Steht die Spalte rechts, sitzt ⇄ links im Schalter (⇄ ☰ ☑) – immer auf der Seite des Klassenraums. ☰ und ☑ bleiben an ihrem gewohnten Platz.','Unterrichts-Manager (Mac/iPad)','9.08'],
    ['☰ und ☑ gleich bedient','Ein Klick auf den aktiven Knopf (☰ Einstellungen oder ☑ Noten) blendet die Spalte aus, der andere wechselt den Inhalt. Bei ausgeblendeter Spalte öffnet jeder Knopf sie mit seinem Inhalt; ⇄ ist dann ausgegraut.','Unterrichts-Manager (Mac/iPad)','9.07'],
    ['Einheitliche Knöpfe','Im Unterrichts-Manager haben alle Aktionsknöpfe und Knopfgruppen dieselbe Höhe und Rundung; ganz runde Pillen sind den Umschaltern vorbehalten. Der Schalter ☰ ☑ ⇄ reagiert nach dem Seitenwechsel wieder zuverlässig.','Unterrichts-Manager (Mac/iPad)','9.06'],
@@ -1773,8 +1774,7 @@ window.addEventListener('message',event=>{
    ['Tischanordnung im Sitzplanmodus','„Tischanordnung …“ steht jetzt oben im Klassenraum neben dem Schalter und erscheint nur im Sitzplanmodus – dort, wo man Tische umstellt.','Unterrichts-Manager › Klassenraum','9.04'],
    ['Doppelstunden in einer Zeile','„Aktuell“ fasst direkt aufeinanderfolgende Stunden derselben Klasse zu einer Zeile zusammen (z. B. 08:00–09:30 · 1.–2. Std).','iPhone › Aktuell','9.03'],
    ['Datum wie am Mac','Auch auf dem iPhone springen ‹ und › neben dem Datum zur vorigen bzw. nächsten Stunde mit Unterricht, ◉ führt zu heute. Ein Tipp aufs Datum öffnet den Kalender mit markierten Stunden.','iPhone › Unterricht','9.03'],
-   ['Karten per Klick auf- und zuklappen','In der Noten-Schnellansicht neben dem Sitzplan (Mac/iPad) klappt ein Klick auf eine Karte sie kompakt zusammen bzw. wieder auf. Eingetragen wird dort nicht – dafür ist der Noten-Manager da.','Mac/iPad › Schnellansicht Noten','9.02'],
-   ['Seiten statt Wischfenster','Auf dem iPhone sind „Aktuell“ und „Hilfe“ normale Seiten wie „Unterricht“ und „Noten“. Die Noteneingabe einer Person ist ebenfalls eine Seite: „‹ Übersicht“ oder ein zweiter Tipp auf „Noten“ führt zurück, ‹ › blättert zur nächsten Person. Am Mac werden Noten wieder normal getippt; die bunte Notenauswahl bleibt für iPhone und iPad.','iPhone · Mac (Schnellansicht)','9.01']]},
+   ['Karten per Klick auf- und zuklappen','In der Noten-Schnellansicht neben dem Sitzplan (Mac/iPad) klappt ein Klick auf eine Karte sie kompakt zusammen bzw. wieder auf. Eingetragen wird dort nicht – dafür ist der Noten-Manager da.','Mac/iPad › Schnellansicht Noten','9.02']]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
    ['Zwei Bereiche','Oben wechselst du zwischen Unterrichts-Manager (Sitzplan, Mitarbeit und Hausaufgaben im Unterricht) und Noten-Manager (Bewertungen, Tests, Klausuren, Zeugnisnoten). Beide nutzen dieselben Klassen und Schülerlisten.'],
