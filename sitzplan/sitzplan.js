@@ -3594,6 +3594,8 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
  +'}';document.head.append(st)})();
 /* 8.67: iPhone quer – während der Eingabe sind „H“/„P“ ausgeblendet, die Tische bekommen die ganze Kartenbreite. */
 (()=>{const st=document.createElement('style');st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){html.ph-lite body:has(.classroom-quick.is-sheet) .grid-container>.pl-seatbar:not(#_):not(#__):not(#___){display:none!important}html.ph-lite body:has(.classroom-quick.is-sheet) .grid-container:has(>.pl-seatbar):not(#_):not(#__){grid-template-columns:minmax(0,1fr)!important;column-gap:0!important}}';document.head.append(st)})();
+// 8.96: iPhone hochkant – Unterrichtsfenster wie die Noten-Karte: 6 px Rand, gleiche Rundung, füllt die Höhe bis zur Leiste.
+(()=>{const st=document.createElement('style');st.textContent='@media (max-width:540px) and (orientation:portrait) and (pointer:coarse){html.ph-lite body:not(#_){padding:6px!important}html.ph-lite .grid-container:not(#_){border-radius:20px;min-height:calc(100dvh - 12px);box-sizing:border-box}}';document.head.append(st)})();
 ;
 
 /* ==== no-contacts.js ==== */

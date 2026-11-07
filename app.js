@@ -1724,6 +1724,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['Einheitliche Fenster auf dem iPhone','Das Unterrichtsfenster hat jetzt dieselbe Größe und Rundung wie die Noten-Karte und reicht bis zur unteren Leiste. Stundenplan und Hilfe lassen links und rechts denselben schmalen Rand.','iPhone hochkant','8.96'],
    ['Realistischere Beispieldaten','Die eingebauten fiktiven Beispielklassen zeigen jetzt typische Profile (still, aber stark in Arbeiten; mündlich stark, schriftlich schwächer; Auf- und Absteiger), Einträge nur bis Anfang November, einen passenden Stundenplan mit Räumen und in Klasse 6b offene Q1-Noten. Gilt nur, wenn noch keine eigenen Daten vorhanden sind – eigene Daten werden nie verändert.','Beispieldaten (nur bei leerer App)','8.95'],
    ['Verschlüsselte Backups','Im Backup-Fenster unter „Verschlüsselung“ einschalten: Notfall-Passwort festlegen, dann Touch ID / Face ID einrichten (in Chrome „iCloud-Schlüsselbund“ wählen). Jedes Backup wird verschlüsselt gespeichert; beim Wiederherstellen fragt die App nach Touch ID, wenn das nicht klappt nach dem Notfall-Passwort. Das andere Gerät übernimmt die Verschlüsselung beim ersten Öffnen. Excel-Dateien werden nicht verschlüsselt.','Backup → Verschlüsselung','8.90'],
    ['Übergang zum 2. Quartal','Fehlen nach Beginn des 2. Quartals noch Q1-Quartalsnoten, zeigt das iPhone bis zu vier Wochen lang weiter das 1. Quartal – mit dem Hinweis „Q1-Noten noch offen · 7 von 25 eingetragen“. Sind alle eingetragen, wechselt es von selbst; „Zu Q2“ wechselt sofort.','iPhone → Noten','8.86'],
@@ -1732,8 +1733,7 @@ window.addEventListener('message',event=>{
    ['Halbjahr auf einen Blick','Auf dem iPhone zeigen die Karten ab dem 2. Quartal standardmäßig das ganze Halbjahr: groß die Halbjahresnote (aus der Halbjahresübersicht), klein darunter „Q1 … · Q2 …“, alle Bewertungen beider Quartale. Der Umschalter „Halbjahr | Q2“ zeigt bei Bedarf nur das Quartal, z. B. zum Eintragen der Quartalsnote.','iPhone → Noten','8.77'],
    ['Sitzplan im Querformat größer','Der Plan füllt die Fläche aus und schließt bündig mit den Knöpfen ab. Wird es eng, werden „Heute“ und „Perspektive“ zu kleinen Knöpfen (H ▾, ⇅ P). Leere Spalten werden nur schmal, wenn die Breite knapp ist.','iPhone → Unterricht','8.74'],
    ['Detailblatt immer ganz offen','Auf dem iPhone fährt das Blatt einer Person immer bis unter die Kopfleiste aus – Name und Pfeile stehen bei jeder Person an derselben Stelle, längerer Inhalt scrollt im Blatt.','iPhone → Noten → Karte antippen','8.73'],
-   ['Noten antippen statt tippen','Selbsteinschätzung und Quartalsnote wählst du auf dem iPhone aus farbigen Knöpfen: 1+ bis 6 mit Zwischennoten (1–2 … 5–6), bei Notenpunkten 15 bis 0 zeilenweise je Note. „Löschen“ leert das Feld.','iPhone → Noten → Detailblatt','8.72'],
-   ['Schalter von schlicht nach ausführlich','Alle Darstellungs-Schalter haben dieselbe Reihenfolge: 2 | 2− | 2,3 (bei Notenpunkten 11 | 10,6) und Aus | Rahmen | Schraffiert.','Noten (iPhone, iPad, Mac)','8.70']]},
+   ['Noten antippen statt tippen','Selbsteinschätzung und Quartalsnote wählst du auf dem iPhone aus farbigen Knöpfen: 1+ bis 6 mit Zwischennoten (1–2 … 5–6), bei Notenpunkten 15 bis 0 zeilenweise je Note. „Löschen“ leert das Feld.','iPhone → Noten → Detailblatt','8.72']]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
    ['Zwei Bereiche','Oben wechselst du zwischen Unterrichts-Manager (Sitzplan, Mitarbeit und Hausaufgaben im Unterricht) und Noten-Manager (Bewertungen, Tests, Klausuren, Zeugnisnoten). Beide nutzen dieselben Klassen und Schülerlisten.'],
@@ -2116,6 +2116,8 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
 /* 8.84: iPhone – alle Wischfenster (Noten, Hilfe, Aktuell/Stundenplan) fahren gleich weit aus: bis 10 px unter die Kopfzeile */
 (()=>{const set=()=>{const h=document.querySelector('.app-header');if(!h)return;const top=Math.round(h.getBoundingClientRect().bottom)+10;document.documentElement.style.setProperty('--ph-sheet-top',top+'px')};set();addEventListener('resize',set);setTimeout(set,800);
  const st=document.createElement('style');st.textContent='html.is-phone .tt-panel:not(#_){top:var(--ph-sheet-top,65px);max-height:none}html.is-phone dialog.classroom-help:not(#_):not(#__){height:calc(100dvh - var(--ph-sheet-top,65px));max-height:calc(100dvh - var(--ph-sheet-top,65px))}';document.head.append(st)})();
+// 8.96: Schiebefenster (Stundenplan, Hilfe) mit 6 px Abstand links und rechts – wie die Noten-Karte.
+(()=>{const st=document.createElement('style');st.textContent='html.is-phone .tt-panel:not(#_):not(#__){left:6px;right:6px;width:auto;max-width:none}html.is-phone dialog.classroom-help:not(#_):not(#__):not(#___){width:calc(100vw - 12px);max-width:calc(100vw - 12px);margin-left:6px;margin-right:6px}';document.head.append(st)})();
 ;
 
 /* ==== quickview.js ==== */
