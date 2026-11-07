@@ -3593,7 +3593,7 @@ document.addEventListener('keydown',event=>{
  const style=document.createElement('style');style.textContent=
   'body[data-module=sitzplan] .classroom-plan-zoom.zoom-fit-row{flex-wrap:nowrap}body[data-module=sitzplan] .classroom-plan-zoom.zoom-fit-wrap{flex-wrap:wrap}'
   +'.classroom-plan-zoom>.zoom-collapsed{display:none!important}'
-  +'.zoom-more{margin-left:auto;flex:none;position:relative}.zoom-more[hidden]{display:none!important}'
+  +'.zoom-more{flex:none;position:relative}/* 9.05: direkt nach „Bewertungen“ statt isoliert rechts */.zoom-more[hidden]{display:none!important}'
   +'.classroom-plan-zoom .zoom-more-toggle{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.zoom-more-toggle span{font-size:.75em}'
   +'.zoom-more-menu{display:none;position:fixed;z-index:1000;min-width:200px;padding:6px;background:#fff;border:1px solid #dce3ef;border-radius:12px;box-shadow:0 12px 30px #1c2b4626}'
   +'.zoom-more.open .zoom-more-menu{display:block}'
