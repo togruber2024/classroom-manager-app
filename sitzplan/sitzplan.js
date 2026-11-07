@@ -2730,7 +2730,7 @@ document.addEventListener('keydown',event=>{
  const select=document.createElement('select');select.id='classroomRoomSelect';select.setAttribute('aria-label','Unterrichtsraum auswählen');label.append(select);
  const add=document.createElement('button');add.type='button';add.className='btn btn-secondary';add.textContent='+ Raum';add.title='Einen weiteren Raum mit eigenem Sitzplan für diese Klasse anlegen';
  const rename=document.createElement('button');rename.type='button';rename.className='btn btn-secondary';rename.classList.add('room-rename-button');rename.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-4-4L4 16v4zM13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';rename.title='Ausgewählten Raum umbenennen';rename.setAttribute('aria-label',rename.title);
- box.append(label,add,rename);classroomDateLabel.before(box);
+ box.append(label,add,rename);classroomDateLabel.after(box);/* 9.12: erst Datum, dann Raum */
  // „Tischanordnung …“ gehört zum Raum: volle Breite unter Raum, „+ Raum“ und Stift. Der frühere Halter in der Seitenleiste entfällt.
  {const layoutButton=document.getElementById('layoutToggleButton');if(layoutButton){layoutButton.classList.add('room-layout-button');box.append(layoutButton);document.querySelector('.layout-category-actions')?.remove()}}
  function refresh(){select.replaceChildren();for(const r of entry().rooms){const o=document.createElement('option');o.value=r.id;o.textContent=r.name;select.append(o)}select.value=room().id}
@@ -2804,7 +2804,7 @@ document.addEventListener('keydown',event=>{
  let lastLayout=null,selectedId=null,selectedDate=null;
  const layout=()=>JSON.stringify([gridData,gridGroupData]);
  let loading=false,trackedClass=context(),trackedDate=classroomDate.value;
- const historyBox=document.createElement('div');historyBox.className='classroom-plan-history-box';classroomDateLabel.append(historyBox);
+ const historyBox=document.createElement('div');historyBox.className='classroom-plan-history-box';{/* 9.12: Reihenfolge Datum → Raum → gespeicherte Sitzpläne */const rs=document.querySelector('.classroom-room-selector');if(rs)rs.after(historyBox);else classroomDateLabel.append(historyBox)}
  const savedLabel=document.createElement('span');savedLabel.textContent='Gespeicherte Sitzpläne';
  const savedSelect=document.createElement('select');savedSelect.setAttribute('aria-label','Gespeicherte Sitzpläne');
  historyBox.append(savedLabel,savedSelect);
@@ -3807,6 +3807,8 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
  +'@media (max-width:540px) and (orientation:portrait) and (pointer:coarse){html.ph-lite .pl-seatbar>.pl-rotate:not(#_):not(#__):not(#___){font-size:0!important;width:44px!important;min-width:44px!important;padding:0!important;justify-content:center}html.ph-lite .pl-seatbar>.pl-rotate>span{font-size:18px}}'
  +'@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){html.ph-lite .pl-seatbar>.pl-dnav{align-self:center}html.ph-lite .pl-seatbar>.pl-cal:not(#_):not(#__){position:fixed;top:50%;left:50%;width:300px!important;min-width:0!important;height:auto!important;transform:translate(-50%,-50%) scale(.92);max-height:96vh;overflow:auto}}';
  document.head.append(st)})();
+/* 9.12: iPhone quer – ‹ ◉ › nur hochkant (quer rutschten sie bei breiten Plänen hinter die Tische); Kalender per Tipp aufs Datum bleibt */
+(()=>{const st=document.createElement('style');st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){html.ph-lite .pl-seatbar>.pl-dnav{display:none!important}}';document.head.append(st)})();
 ;
 
 /* ==== no-contacts.js ==== */

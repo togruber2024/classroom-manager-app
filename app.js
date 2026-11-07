@@ -1771,6 +1771,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['Erst Datum, dann Raum','In der linken Spalte des Unterrichts-Managers steht jetzt zuerst das Datum, dann der Raum und darunter die gespeicherten Sitzpläne. Zufallsgruppen werden nicht mehr von der Noten-Spalte verdeckt; auf dem iPhone quer entfallen ‹ ◉ › (Kalender per Tipp aufs Datum).','Unterrichts-Manager','9.12'],
    ['„Bewertungen“ nur einmal','Wird die Zoomleiste zu schmal, wandern zuerst „Klassenansicht“, „100 %“ und „Einpassen“ ins Menü „Mehr“ – „Bewertungen“ bleibt am längsten sichtbar und erscheint nicht mehr doppelt.','Unterrichts-Manager (iPad)','9.09'],
    ['⇄ auf der Seite des Klassenraums','Steht die Spalte rechts, sitzt ⇄ links im Schalter (⇄ ☰ ☑) – immer auf der Seite des Klassenraums. ☰ und ☑ bleiben an ihrem gewohnten Platz.','Unterrichts-Manager (Mac/iPad)','9.08'],
    ['☰ und ☑ gleich bedient','Ein Klick auf den aktiven Knopf (☰ Einstellungen oder ☑ Noten) blendet die Spalte aus, der andere wechselt den Inhalt. Bei ausgeblendeter Spalte öffnet jeder Knopf sie mit seinem Inhalt; ⇄ ist dann ausgegraut.','Unterrichts-Manager (Mac/iPad)','9.07'],
@@ -1779,8 +1780,7 @@ window.addEventListener('message',event=>{
    ['Spalte links oder rechts','Im Schalter ☰ ☑ ⇄ über dem Sitzplan setzt ⇄ die Spalte (Einstellungen bzw. Noten) auf die andere Seite – praktisch am iPad für Rechtshänder. Die Seite gilt nur für dieses Gerät. Am iPad öffnet ein Tipp auf eine Karte jetzt die Noteneingabe wie am iPhone.','Unterrichts-Manager (Mac/iPad)','9.04'],
    ['Tischanordnung im Sitzplanmodus','„Tischanordnung …“ steht jetzt oben im Klassenraum neben dem Schalter und erscheint nur im Sitzplanmodus – dort, wo man Tische umstellt.','Unterrichts-Manager › Klassenraum','9.04'],
    ['Doppelstunden in einer Zeile','„Aktuell“ fasst direkt aufeinanderfolgende Stunden derselben Klasse zu einer Zeile zusammen (z. B. 08:00–09:30 · 1.–2. Std).','iPhone › Aktuell','9.03'],
-   ['Datum wie am Mac','Auch auf dem iPhone springen ‹ und › neben dem Datum zur vorigen bzw. nächsten Stunde mit Unterricht, ◉ führt zu heute. Ein Tipp aufs Datum öffnet den Kalender mit markierten Stunden.','iPhone › Unterricht','9.03'],
-   ['Karten per Klick auf- und zuklappen','In der Noten-Schnellansicht neben dem Sitzplan (Mac/iPad) klappt ein Klick auf eine Karte sie kompakt zusammen bzw. wieder auf. Eingetragen wird dort nicht – dafür ist der Noten-Manager da.','Mac/iPad › Schnellansicht Noten','9.02']]},
+   ['Datum wie am Mac','Auch auf dem iPhone springen ‹ und › neben dem Datum zur vorigen bzw. nächsten Stunde mit Unterricht, ◉ führt zu heute. Ein Tipp aufs Datum öffnet den Kalender mit markierten Stunden.','iPhone › Unterricht','9.03']]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
    ['Zwei Bereiche','Oben wechselst du zwischen Unterrichts-Manager (Sitzplan, Mitarbeit und Hausaufgaben im Unterricht) und Noten-Manager (Bewertungen, Tests, Klausuren, Zeugnisnoten). Beide nutzen dieselben Klassen und Schülerlisten.'],
@@ -2197,6 +2197,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   const n=nf(),s=sf(),want=get()&&view()==='sitzplan'&&!document.documentElement.classList.contains('is-phone')&&!document.documentElement.classList.contains('classroom-beamer-active');
   sync();if(!want||!n||!s){off();return}
   let doc;try{doc=s.contentDocument}catch{}const panel=doc?.querySelector('.container>.panel');if(!panel||doc.documentElement.classList.contains('classroom-beamer')){off();return}
+  /* 9.12: Ist im Unterrichts-Manager ein Fenster offen (z. B. Zufallsgruppen), tritt die Noten-Spalte zurück, damit sie es nicht überdeckt */if([...doc.querySelectorAll('dialog[open]')].some(d=>{try{return d.matches(':modal')}catch{return true}})){off();return}
   const ws=n.parentElement.getBoundingClientRect(),sr=s.getBoundingClientRect(),r=panel.getBoundingClientRect();if(r.width<200){off();return}
   const top=Math.max(r.top,0),bottom=Math.min(r.bottom,s.clientHeight-12);
   n.hidden=false;n.classList.add('cm-quick');
@@ -2213,7 +2214,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
  /* Ansichtswechsel, Größe, Scrollen im Sitzplan */
  if(typeof selectView==='function'){const o=selectView;window.selectView=selectView=function(v){off();const r=o.apply(this,arguments);setTimeout(layout,0);return r}}
  addEventListener('resize',()=>requestAnimationFrame(layout));
- let hooked=null;setInterval(()=>{const w=sf()?.contentWindow;if(w&&w!==hooked){hooked=w;try{w.addEventListener('scroll',()=>requestAnimationFrame(layout),{passive:true});w.addEventListener('resize',()=>requestAnimationFrame(layout))}catch{}}if(get())layout();else if(active)off();else sync()},700);
+ let hooked=null;setInterval(()=>{const w=sf()?.contentWindow;if(w&&w!==hooked){hooked=w;try{w.addEventListener('scroll',()=>requestAnimationFrame(layout),{passive:true});w.addEventListener('resize',()=>requestAnimationFrame(layout));new MutationObserver(()=>requestAnimationFrame(layout)).observe(w.document.body,{subtree:true,attributes:true,attributeFilter:['open']})}catch{}}if(get())layout();else if(active)off();else sync()},700);
  new MutationObserver(()=>layout()).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
 })();
 ;
