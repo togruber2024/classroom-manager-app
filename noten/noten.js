@@ -1229,7 +1229,7 @@ if(window.parent!==window)parent.postMessage({type:'classroom:rosters',snapshot:
     caption.textContent=!summaries[0]||!summaries[1]?'Lege beide Halbjahresnoten an, um das Schuljahr zu berechnen.':!weightsValid?'Die Gewichtungen müssen zusammen 100 % ergeben.':settings.tendencies&&!pointsMode?'Tendenzen werden angezeigt.':'';
     section.querySelector('.semester-averages').innerHTML=`<tr><th scope="row">Durchschnitt</th><td>${averageFirst===null?'—':fmt(averageFirst)}</td><td>${averageSecond===null?'—':fmt(averageSecond)}</td><td>${weightsValid&&averageFirst!==null&&averageSecond!==null?fmt((averageFirst*firstWeight+averageSecond*secondWeight)/100):'—'}</td></tr>`;
   }
-  function participationGradeMarkup(student,task,value,gradeClass,taskLabel,studentLabel,data){const shown=value===''?'':String(value).toLocaleLowerCase('de-DE')==='x'?'A':participationLabel(value,data.numericParticipation,data.participationMode);return `<input type="text" class="task-grade-input participation-grade-input${gradeClass?` ${gradeClass}`:''}" value="${htmlEscape(shown)}" placeholder="—" spellcheck="false" aria-label="${htmlEscape(taskLabel)} für ${htmlEscape(studentLabel)}" data-student-grade="${htmlEscape(student.id)}" data-task-id="${htmlEscape(task.id)}" data-focus-key="grade-${htmlEscape(student.id)}-${htmlEscape(task.id)}" title="Note oder Mitarbeitssymbol eingeben; Notenblock einfügen möglich">`}
+  function participationGradeMarkup(student,task,value,gradeClass,taskLabel,studentLabel,data){const shown=value===''?'':String(value).toLocaleLowerCase('de-DE')==='x'?'A':participationLabel(value,data.numericParticipation);return `<input type="text" class="task-grade-input participation-grade-input${gradeClass?` ${gradeClass}`:''}" value="${htmlEscape(shown)}" placeholder="—" spellcheck="false" aria-label="${htmlEscape(taskLabel)} für ${htmlEscape(studentLabel)}" data-student-grade="${htmlEscape(student.id)}" data-task-id="${htmlEscape(task.id)}" data-focus-key="grade-${htmlEscape(student.id)}-${htmlEscape(task.id)}" title="Note oder Mitarbeitssymbol eingeben; Notenblock einfügen möglich">`}
   function parseParticipationGrade(value){const normalized=String(value??'').trim().toLocaleLowerCase('de-DE').replace(/[−–—]/g,'-').replace(/\s+/g,'');if(normalized==='x'||normalized==='a')return {value:'x',absence:true};if(classUsesGradePoints()){const pointRange=normalized.match(/^(\d{1,2})[-/](\d{1,2})$/);if(pointRange){const a=Number(pointRange[1]),b=Number(pointRange[2]);if(a>=0&&a<=15&&b>=0&&b<=15&&Math.abs(a-b)===1)return {value:String(pointsParticipation((a+b)/2)),absence:false};return null}}if(classUsesGradePoints()&&/^\d{1,2}(?:[.,]\d+)?$/.test(normalized)){const points=Number(normalized.replace(',','.'));return points>=0&&points<=15?{value:String(pointsParticipation(points)),absence:false}:null}const option=participationOptions.find(item=>item.label.toLocaleLowerCase('de-DE').replace(/[−–—]/g,'-').replace(/\s+/g,'')===normalized);if(option)return {value:String(option.value),absence:false};for(let index=0;index<participationSymbols.length-1;index++){const left=participationSymbols[index].toLocaleLowerCase('de-DE'),right=participationSymbols[index+1].toLocaleLowerCase('de-DE');if([left+right,right+left,left+'/'+right,right+'/'+left].includes(normalized))return {value:String(index+1.5),absence:false};}const range=normalized.match(/^([1-6])[-/]([1-6])$/);if(range&&Math.abs(Number(range[1])-Number(range[2]))===1)return {value:String((Number(range[1])+Number(range[2]))/2),absence:false};const wholeGrade=normalized.match(/^([1-6])[+-]$/);if(wholeGrade)return {value:wholeGrade[1],absence:false};const number=Number(normalized.replace(',','.'));if(Number.isFinite(number)&&number>=1&&number<=6&&Number.isInteger(number*2))return {value:String(number),absence:false};return null}
   function commitParticipationDates(subject,pageKey){
     if(taskGradeSystem(subject,pageKey)!=='participation')return false;
@@ -1664,7 +1664,7 @@ if(window.parent!==window)parent.postMessage({type:'classroom:rosters',snapshot:
         if(rawMode)return raw===''||raw===undefined?'—':`${raw} ${taskBasisConfig(currentSubject,task.basisPage).base==='text'?'Fehler':'Punkte'}`;
         if(grade===''||grade===undefined||grade===null)return '—';
         if(system==='grades')return taskGradeLabel(useTendencies?grade:roundSchoolGrade(grade),useTendencies);
-        if(system==='participation')return String(grade).toLocaleLowerCase('de-DE')==='x'?'A':participationLabel(grade,data.numericParticipation,data.participationMode);
+        if(system==='participation')return String(grade).toLocaleLowerCase('de-DE')==='x'?'A':participationLabel(grade,data.numericParticipation);
         return `${grade} Punkte`;
       }),result===null?'—':formatTaskMean(result,system,data)];
       return `<w:tr>${values.map((value,index)=>{const grade=index>0&&index<count-1?effectiveGrades[index-1]:index===count-1&&result!==null?(system==='gradePoints'?Math.round(result):roundSchoolGrade(result)):null,group=grade===null?null:taskGradeClass(grade,system).split(' ')[0],color=colored&&group?gradeColors[group]:null;return docxCell(value,widths[index],{bold:index===count-1,align:index===0?'left':'center',fill:color?.fill,color:color?.color||'202C2B',badge:!!color})}).join('')}</w:tr>`
@@ -3362,7 +3362,7 @@ classroomHooks.add('renderTasksPage','test-details: Testseiten',{intercept(subje
  window.classroomHatchSegPlace=()=>{const on=(()=>{try{return localStorage.getItem('classroom-manager-hatching-v1')!=='off'}catch{return true}})(),m=on?get():'off';for(const label of document.querySelectorAll('[data-hatching-toggle]')){const slot=label.closest('.test-detail-panel')?.querySelector('.test-results-head .test-results-print');let seg=slot?slot.parentElement.querySelector(':scope>.hatch-seg'):label.previousElementSibling;if(!seg||!seg.classList.contains('hatch-seg')){seg=document.createElement('div');seg.className='mean-seg hatch-seg';seg.setAttribute('role','radiogroup');seg.title='Darstellung von Tendenzen (z. B. 2−); 4 Notenpunkte bleiben immer schraffiert.';seg.innerHTML=['off:Aus','frame:Rahmen','hatch:Schraffur'].map(x=>{const [v,l]=x.split(':');return '<button type="button" role="radio" data-hatch="'+v+'" aria-checked="'+(v===m)+'" title="Tendenzen: '+l+'" aria-label="Tendenzen: '+l+'"><i class="hs-sw hs-'+v+'" aria-hidden="true"></i></button>'}).join('');if(slot){seg.classList.add('hs-results');slot.before(seg)}else label.before(seg)}if(seg.hidden!==label.hidden)seg.hidden=label.hidden}for(const seg of document.querySelectorAll('.hatch-seg:not(.hs-col):not(.hs-results)')){const nx=seg.nextElementSibling;if(!nx||!nx.matches('[data-hatching-toggle]'))seg.remove()}};
  window.classroomHatchSync=()=>{const on=(()=>{try{return localStorage.getItem('classroom-manager-hatching-v1')!=='off'}catch{return true}})(),m=on?get():'off';document.documentElement.classList.toggle('hatch-frame',m==='frame');document.querySelectorAll('.hatch-seg [data-hatch]').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.hatch===m)))};
  const setHatching=on=>{const inp=document.querySelector('[data-hatching-toggle] input');if(inp){if(inp.checked!==on)inp.click()}else{try{localStorage.setItem('classroom-manager-hatching-v1',on?'on':'off')}catch{}}};
- document.addEventListener('click',e=>{const b=e.target.closest?.('.hatch-seg [data-hatch]');if(!b)return;e.stopPropagation();const v=b.dataset.hatch;if(v==='off')setHatching(false);else{setHatching(true);try{localStorage.setItem(K,v)}catch{}}window.classroomHatchSync()},true);
+ document.addEventListener('click',e=>{const b=e.target.closest?.('.hatch-seg [data-hatch]');if(!b)return;e.stopPropagation();const v=b.dataset.hatch;if(v==='off')setHatching(false);else{setHatching(true);try{localStorage.setItem(K,v)}catch{}}window.classroomHatchSync();/* 9.27: nach dem Entfernen von „Rahmen“ die Schraffuren neu erfassen, sonst bleibt „Aus“ wirkungslos */window.classroomUnstripe?.()},true);
  document.addEventListener('change',e=>{if(e.target.closest?.('[data-hatching-toggle]'))setTimeout(()=>window.classroomHatchSync(),0)});
  window.addEventListener('storage',e=>{if(e.key==='classroom-manager-hatching-v1')window.classroomHatchSync()});window.addEventListener('storage',e=>{if(e.key===K)window.classroomHatchSync()});window.classroomHatchSync()})();
 /* 7.63: Kopfzeile Klassenarbeit/Klausur/Test bei mittlerer Breite (z. B. iPad quer): Übersichts-Knopf wieder exakt mittig */
@@ -3485,6 +3485,7 @@ classroomHooks.add('renderTasksPage','test-details: Testseiten',{intercept(subje
  }
  function readonlyTable(table){
   const clone=table.cloneNode(true);
+  clone.querySelectorAll('th .mean-seg:not(.seg-toggle)').forEach(seg=>seg.closest('th')?.classList.add('pq-mean-col'));/* 9.27: Mittelwert-Spalte merken – sie bekommt einen eigenen Schalter */
   clone.querySelectorAll('button,.toggle,.test-mean-slider,.mean-seg,.task-weight-toggle').forEach(e=>e.remove());
   clone.querySelectorAll('input,select,textarea').forEach(input=>{
    const span=document.createElement('span');span.className=input.className;
@@ -3525,7 +3526,7 @@ classroomHooks.add('renderTasksPage','test-details: Testseiten',{intercept(subje
      else continue;
      const source=document.querySelector(`[data-custom-panel="${CSS.escape(key)}"]`);if(!source)continue;
      const heading=document.createElement('h4');heading.textContent=g.label;box.append(heading);
-     for(const table of source.querySelectorAll('table')){const wrap=document.createElement('div');wrap.className='previous-quarter-table';wrap.append(readonlyTable(table));box.append(wrap)}
+     for(const table of source.querySelectorAll('table')){const wrap=document.createElement('div');wrap.className='previous-quarter-table';const ro=readonlyTable(table);ro._pqKey=key;wrap.append(ro);box.append(wrap)}
      if(g.type==='performance'&&['quarterSummary','semester'].includes(c.group.type)){
       const students=customPageValues(currentSubject,key).students||[];
       const reviews=document.createElement('table');reviews.className='task-table';
@@ -3545,6 +3546,8 @@ classroomHooks.add('renderTasksPage','test-details: Testseiten',{intercept(subje
   if(!box.querySelector('table')){const empty=document.createElement('p');empty.textContent='Für diese Rubrik liegen im 1. Quartal keine Eintragungen vor.';box.append(empty)}
  }
  // Schalter „1. Quartal“ in der oberen Zeile bei den Anzeige-Schaltern (vor „Drucken“; hatching.js ordnet ihn vor „Schraffuren“ ein).
+ // 9.27: Schalter der Vergleichsspalte stellt die Darstellung des 1. Quartals um (nur Anzeige)
+ document.addEventListener('click',e=>{const b=e.target.closest?.('.pq-mean-seg [data-pq-mean],.pq-mean-seg [data-pq-rounded]');if(!b)return;e.preventDefault();e.stopPropagation();const key=b.closest('.pq-mean-seg').dataset.pqKey,d=taskPageData(currentSubject,key);if(b.dataset.pqMean!==undefined)d.meanDisplay=b.dataset.pqMean;else d.resultRounded=b.dataset.pqRounded==='1';saveCurrentSubject();const c=context();if(c)merge(c)},true);
  function placeButton(c,button){
   const print=c.root.querySelector('.section-title .page-print-button');
   if(print)print.before(button);else (c.root.querySelector('.section-title')||c.root).append(button);
@@ -3581,7 +3584,7 @@ classroomHooks.add('renderTasksPage','test-details: Testseiten',{intercept(subje
   const tables=[...history.querySelectorAll('table')];
   const normalize=value=>String(value||'').trim().toLocaleLowerCase('de-DE');
   const nameOf=row=>normalize(row.cells[0]?.querySelector('input')?.value||row.cells[0]?.textContent);
-  const sources=tables.map(table=>({head:table.tHead?.rows[0],rows:new Map([...table.tBodies[0]?.rows||[]].map(row=>[nameOf(row),row]))})).filter(item=>item.head);
+  const sources=tables.map(table=>({key:table._pqKey,head:table.tHead?.rows[0],rows:new Map([...table.tBodies[0]?.rows||[]].map(row=>[nameOf(row),row]))})).filter(item=>item.head);
   const count=sources.reduce((n,item)=>n+[...item.head.cells].slice(1).filter(c=>!c.classList.contains('quarter-exam-column')).length,0);if(!count){const note=document.createElement('p');note.className='task-score-note previous-quarter-empty';note.dataset.previousQuarterCell='';note.textContent=history.querySelector('p')?.textContent||'Für diese Rubrik liegen im 1. Quartal keine Eintragungen vor.';(target.closest('.table-wrap')||target).before(note);return}
   originalTableStyles.set(target,target.getAttribute('style'));target.classList.add('previous-quarter-inline');
   const colgroup=target.querySelector('colgroup');if(colgroup){const before=colgroup.children[1]||null;for(let i=0;i<count;i++){const col=document.createElement('col');col.dataset.previousQuarterCell='';col.style.width=cellStyle?.width||'46px';colgroup.insertBefore(col,before)}}
@@ -3597,6 +3600,7 @@ classroomHooks.add('renderTasksPage','test-details: Testseiten',{intercept(subje
      if(target.matches('.compact-entry-table,.quarter-summary-table'))for(const field of cell.querySelectorAll('.previous-quarter-value'))field.style.setProperty('width','auto','important');
      if(!from)cell.textContent='—';
      if(isHead){const caption=cell.querySelector('.compact-heading-label');if(caption)caption.textContent='Q1 · '+caption.textContent;else{const label=document.createElement('small');label.className='previous-quarter-label';label.textContent='1. Quartal';cell.prepend(label)}}
+     if(isHead&&source.key&&cell.classList.contains('pq-mean-col'))try{const d=taskPageData(currentSubject,source.key),sys=taskGradeSystem(currentSubject,source.key),w=document.createElement('div');w.innerHTML=taskMeanControl(sys,d).replace(/data-mean-display=/g,'data-pq-mean=').replace(/data-result-rounded=/g,'data-pq-rounded=');const seg=w.firstElementChild;if(seg){seg.classList.add('pq-mean-seg');seg.dataset.pqKey=source.key;cell.append(seg)}}catch(e){console.error(e)}
      row.insertBefore(cell,before);
     }
    }
@@ -4193,8 +4197,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    und werden weiter ausgelöst – die Speicherlogik bleibt unverändert. Zurücknehmen: diese Datei entfernen. */
 (()=>{
  const defs=[
-  {sel:'label.task-weight-mode',aria:'Gewichtung',off:['%','Gewichtung in Prozent'],on:['x:y','Gewichtung als Verhältnis (x:y)']}
-  /* 9.13: „Zeichen | Noten“ ersetzt durch den Vierfachschalter „+ | 2 | 2− | 2,3“ (participation-mode.js) */
+  {sel:'label.task-weight-mode',aria:'Gewichtung',off:['%','Gewichtung in Prozent'],on:['x:y','Gewichtung als Verhältnis (x:y)']},
+  /* 9.27: Vierfachschalter (9.13) wieder entfernt – zurück zu „Zeichen | Noten“ */
+  {sel:'label.task-participation-display',aria:'Anzeige',off:['Zeichen','Bewertungszeichen anzeigen'],on:[()=>(typeof classUsesGradePoints==='function'&&classUsesGradePoints())?'Punkte':'Noten','Noten bzw. Punkte anzeigen']}
  ];
  const txt=v=>typeof v==='function'?v():v;
  function upgrade(){
@@ -4215,35 +4220,6 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;upgrade()})};
  classroomOnDomChange(upgrade);document.addEventListener('change',schedule,true);upgrade();
  const st=document.createElement('style');st.textContent='label.seg-hidden{display:none!important}body[data-module=noten] .seg-toggle{margin:0 auto}body[data-module=noten] .task-actions .seg-toggle,body[data-module=noten] .section-title .seg-toggle{margin:0;align-self:center}';document.head.append(st);
-})();
-;
-
-/* ==== noten/participation-mode.js ==== */
-/* 9.13: Mündliche Mitarbeit – ein Schalter für die Darstellung der Einträge: „+ | 2 | 2− | 2,3“
-   (+ = Bewertungszeichen ++, +, o …; 2 = Note gerundet; 2− = Note mit Tendenz; 2,3 = Dezimal). Bei Notenpunkten: „+ | 11 | 10,6“.
-   Ersetzt „Zeichen | Noten“. Gespeichert je Seite (numericParticipation + participationMode). Die gespeicherten Werte bleiben unverändert. */
-(()=>{
- const opts=()=>(typeof classUsesGradePoints==='function'&&classUsesGradePoints())
-  ?[['symbols','+','Bewertungszeichen (++, +, o …)'],['rounded','11','Ganze Notenpunkte'],['decimal','10,6','Notenpunkte mit Dezimalstelle']]
-  :[['symbols','+','Bewertungszeichen (++, +, o …)'],['rounded','2','Noten gerundet'],['tendency','2−','Noten mit Tendenz (z. B. 2−)'],['decimal','2,3','Noten als Dezimalzahl']];
- function current(label){const key=label.closest('[data-custom-panel]')?.dataset.customPanel,data=key&&typeof taskPageData==='function'?taskPageData(currentSubject,key):null;if(!data)return 'symbols';if(!data.numericParticipation)return 'symbols';const m=data.participationMode||'decimal';return opts().some(o=>o[0]===m)?m:'decimal'}
- function choose(label,mode){const key=label.closest('[data-custom-panel]')?.dataset.customPanel;if(!key)return;const data=taskPageData(currentSubject,key);
-  if(mode==='symbols')data.numericParticipation=false;else{data.numericParticipation=true;data.participationMode=mode}saveCurrentSubject();renderTasksPage(currentSubject,key)}
- function upgrade(){
-  for(const seg of document.querySelectorAll('.part-seg'))if(!seg.__label?.isConnected||seg.__label.__pseg!==seg)seg.remove();
-  for(const label of document.querySelectorAll('label.task-participation-display')){
-   const o=opts(),sig=o.map(x=>x[0]).join();let seg=label.__pseg?.isConnected?label.__pseg:null;
-   if(seg&&seg.dataset.sig!==sig){seg.remove();seg=null}
-   if(!seg){seg=document.createElement('div');seg.className='mean-seg part-seg';seg.dataset.sig=sig;seg.setAttribute('role','radiogroup');seg.setAttribute('aria-label','Einträge darstellen');
-    for(const [m,l,t] of o){const b=document.createElement('button');b.type='button';b.setAttribute('role','radio');b.dataset.mode=m;b.textContent=l;b.title=t;b.setAttribute('aria-label',t);b.onclick=()=>{if(b.getAttribute('aria-checked')!=='true')choose(seg.__label,m)};seg.append(b)}
-    seg.__label=label;label.__pseg=seg;label.before(seg);label.classList.add('seg-hidden')}
-   if(seg.nextElementSibling!==label)label.before(seg);
-   const c=current(label);for(const b of seg.children){const on=String(b.dataset.mode===c);if(b.getAttribute('aria-checked')!==on)b.setAttribute('aria-checked',on)}
-  }
- }
- let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;upgrade()})};
- classroomOnDomChange(upgrade);upgrade();
- const st=document.createElement('style');st.textContent='body[data-module=noten] .section-title .part-seg{margin:0;align-self:center}body[data-module=noten] .part-seg>button{min-width:40px}';document.head.append(st);
 })();
 ;
 
@@ -4455,6 +4431,34 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  window.classroomExamPrint=print;window.classroomExamPrintBuild=build;
  // „Drucken“ auf Klassenarbeitsseiten übernehmen (beide Knöpfe: Kopfzeile und Ergebnisse)
  document.addEventListener('click',e=>{const btn=e.target.closest?.('button');if(!btn||btn.textContent.trim()!=='Drucken'||!btn.closest('.exam-combined-page'))return;e.preventDefault();e.stopImmediatePropagation();print()},true);
+})();
+;
+
+/* ==== noten/mean-head.js ==== */
+/* 9.27: Kopf der Mittelwert-Spalten einheitlich:
+   – Quartalsmittel / Testmittel / Durchschnitt (Klassenarbeiten): Bezeichnung auf 1/3, Darstellungs-Schalter (2 | 2− | 2,3) auf 2/3 der Höhe.
+   – Vergleichsspalte „1. Quartal · Testmittel“: beide Wörter als Paar oben, darunter ihr eigener Schalter (previous-quarter.js).
+   – Mündliche Mitarbeit: „＋ Termin“ als großer, gestrichelter Kasten wie „＋ Test“ bzw. „＋ Klassenarbeit“. */
+(()=>{
+ const st=document.createElement('style');
+ st.textContent='th.mh-host{height:1px}th.mh-host>.mh-stack{box-sizing:border-box;height:100%;min-height:96px;display:flex;flex-direction:column;justify-content:space-evenly;align-items:center;gap:6px}'
+  +'.mh-top{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center}.mh-top>small{display:block;margin:0!important}.mh-stack>.mean-seg{margin:0!important}'
+  +'th.mh-host .exam-ov-meta{display:none!important}th.mh-host .exam-ov-segrow{display:flex;justify-content:center;margin:0!important}'
+  +'body .mm-add-big table thead th.task-add-column:not(#_){padding:8px!important;vertical-align:middle;width:160px!important;min-width:160px!important;max-width:none!important}body .mm-add-big table td.task-add-column:not(#_){width:160px!important;min-width:160px!important}'
+  +'body .mm-add-big thead th.task-add-column .task-add-button:not(#_){box-sizing:border-box;display:flex!important;align-items:center;justify-content:center;width:140px!important;min-width:140px!important;height:auto!important;min-height:var(--addh,120px);margin:0 auto;padding:0 12px!important;border:1.5px dashed #b9c6d8!important;border-radius:12px!important;background:#fff!important;color:#2f5f9b!important;font:inherit!important;font-size:15px!important;font-weight:600!important;line-height:1.2}';
+ document.head.append(st);
+ function stack(th,top,bottom){if(th.querySelector(':scope>.mh-stack'))return;const s=document.createElement('div');s.className='mh-stack';const t=document.createElement('div');t.className='mh-top';for(const n of top)if(n)t.append(n);s.append(t);if(bottom)s.append(bottom);th.append(s);th.classList.add('mh-host')}
+ function layout(){
+  // Quartalsmittel / Testmittel (aktuelle Spalte)
+  for(const th of document.querySelectorAll('th.task-result-heading:not(.mh-host)')){const seg=th.querySelector(':scope>.mean-seg:not(.seg-toggle)'),label=th.querySelector(':scope>span');if(!seg||!label)continue;stack(th,[label],seg)}
+  // Durchschnitt (Klassenarbeiten-Übersicht)
+  for(const seg of document.querySelectorAll('.ov-mean-seg')){const th=seg.closest('th');if(!th||th.classList.contains('mh-host'))continue;const top=th.querySelector(':scope>.exam-ov-top'),row=th.querySelector(':scope>.exam-ov-segrow');if(!top||!row)continue;stack(th,[top],row)}
+  // Vergleichsspalte 1. Quartal (Schalter wird von previous-quarter.js angehängt)
+  for(const th of document.querySelectorAll('th.pq-mean-col:not(.mh-host)')){const seg=th.querySelector(':scope>.pq-mean-seg');if(!seg)continue;stack(th,[th.querySelector(':scope>.previous-quarter-label'),th.querySelector(':scope>span')],seg)}
+  // Mündliche Mitarbeit: großer „＋ Termin“-Kasten
+  for(const pn of document.querySelectorAll('[data-custom-panel]')){const key=pn.dataset.customPanel;let mm=false;try{mm=subjectExamGroups(currentSubject).some(g=>g.type==='performance'&&g.pages?.includes(key))}catch{}if(!mm)continue;const ab=pn.querySelector('thead th.task-add-column .task-add-button');if(!ab)continue;if(!pn.classList.contains('mm-add-big'))pn.classList.add('mm-add-big');if(ab.textContent!=='＋ Termin'){ab.textContent='＋ Termin';ab.title='Neuen Termin (Spalte) anlegen'}const tr=ab.closest('tr'),h=Math.max(80,(tr?.offsetHeight||0)-18)+'px';if(tr&&!ab.style.getPropertyValue('--addh'))ab.style.setProperty('--addh',h)}
+ }
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(layout);layout();
 })();
 ;
 
