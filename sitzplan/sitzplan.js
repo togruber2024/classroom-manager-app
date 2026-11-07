@@ -3354,6 +3354,8 @@ document.addEventListener('keydown',event=>{
  document.head.append(st)})();
 /* 9.07: ⇄ ausgegraut, solange die Spalte ausgeblendet ist */
 (()=>{const st=document.createElement('style');st.textContent='.plan-col-pair>.plan-col-swap:disabled{color:#b8c3d2!important;cursor:default}';document.head.append(st)})();
+/* 9.08: Spalte rechts – ⇄ sitzt auf der Seite des Klassenraums (⇄ ☰ ☑), ☰ und ☑ behalten ihre Reihenfolge */
+(()=>{const st=document.createElement('style');st.textContent='html.cm-side-right .plan-col-pair>.plan-col-swap:not(#_){order:-1;border-left:0!important;border-right:1px solid #dce3ef!important}';document.head.append(st)})();
 ;
 
 /* ==== sitzplan/beamer-mode.js ==== */
