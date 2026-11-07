@@ -2614,8 +2614,10 @@ document.addEventListener('keydown',event=>{
    else if(bar?.classList.contains('pl-compact'))bar.classList.remove('pl-compact');
    const plain=Math.min(1,availW/W(75));
    if(H(45,45)*plain>availH+1&&(eR||rowsN)){
-    const colW=eC?14:75,sw=Math.min(1,availW/W(colW));let rowH=45;
-    if(H(45,10)*sw>availH){const full=rowsN-eR;rowH=Math.max(34,Math.floor(((availH/sw)-hh()-eR*15-full*5)/Math.max(1,full)))}
+    /* 8.74: leere Spalten nur verschmälern, wenn die Breite begrenzt – reicht die Breite, bleiben sie normal breit */
+    const rowFor=sw=>{let h=45;if(H(45,10)*sw>availH){const full=rowsN-eR;h=Math.max(34,Math.floor(((availH/sw)-hh()-eR*15-full*5)/Math.max(1,full)))}return h};
+    let colW=75,sw=Math.min(1,availW/W(75)),rowH=rowFor(sw);
+    if(eC&&availW/W(75)<Math.min(1,availH/H(rowH,10))-.001){colW=14;sw=Math.min(1,availW/W(colW));rowH=rowFor(sw)}
     const rowsT=[...R.entries()].sort((a,b)=>a[0]-b[0]).map(([,v])=>(v?rowH:10)+'px'),colsT=[...C.entries()].sort((a,b)=>a[0]-b[0]).map(([,v])=>(v?75:colW)+'px');
     board.style.gridTemplateRows=`${hh()}px ${rowsT.join(' ')}`;board.style.gridTemplateColumns=`${hw()}px ${colsT.join(' ')}`;
     for(const c of vis){const r=parseInt(c.style.gridRow,10),k=parseInt(c.style.gridColumn,10);c.style.setProperty('height',(R.get(r)?rowH:10)+'px','important');/* 8.56: Höhe inklusive Rand – sonst ragen die Tische in die schmalen Gänge */c.style.setProperty('min-height','0','important');c.style.setProperty('box-sizing','border-box','important');if(!C.get(k))c.style.setProperty('width',colW+'px','important')}
