@@ -4380,6 +4380,12 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    const sect=re=>[...card.querySelectorAll('.qs-sect')].find(x=>re.test((x.querySelector('.qs-sh-l')?.textContent||'').trim()));
    /* Sonstige Mitarbeit des Halbjahres aus der Halbjahresübersicht */
    if(sem){const so=cellOf(sem,name,/^Sonstige Mitarbeit/),el=sect(/^Sonstige Mitarbeit/)?.querySelector(':scope>.qs-sh .qs-val i');if(so)setVal(el,so)}
+   /* 8.88: Sonstige Mitarbeit wie die übrigen Zeilen – links Q1- und Q2-Quartalsnote (Q2 blass, solange nur Vorschlag), rechts Ø des Halbjahres */
+   {const so=sect(/^Sonstige Mitarbeit/);if(so&&!so.querySelector('.qs-row')){const get=re=>{const hh=heads,k=hh.findIndex(h=>re.test(h));if(k<0)return null;const row=[...table.tBodies[0].rows].find(r=>r.cells[0]?.textContent.trim()===name),c=row?.cells[k];if(!c)return null;const i=c.querySelector('input');if(i)return i.value.trim()?{text:i.value.trim(),cls:i.className.replace(/\bquarter-summary-input\b/,'').trim()}:null;const sp=c.querySelector('span'),tx=(sp||c).textContent.trim();return tx&&tx!=='—'?{text:tx,cls:(sp?.className||'').replace(/\bprevious-quarter-value\b/,'').trim()}:null};
+    const q1=get(/^Q1 · Quartalsnote/)||get(/^Q1 · Sonstige Mitarbeit/),q2set=get(/^Quartalsnote · Q\d/),q2=q2set||get(/^Sonstige Mitarbeit$/);
+    const chip=(v,lab,soft)=>{const sq=document.createElement('span');sq.className='qs-sq qs-qn-chip'+(soft?' qs-qn-soft':'');const i=document.createElement('i');if(v){const f=fmtMean(v.text,v.cls);i.textContent=f.text;i.className=f.cls||''}else{i.textContent='—';i.className='qs-abs'}const sm=document.createElement('small');sm.textContent=lab;sq.append(i,sm);return sq};
+    const val=so.querySelector(':scope>.qs-sh .qs-val');if(val){const row=document.createElement('div');row.className='qs-row';const seq=document.createElement('div');seq.className='qs-seq';const sep=document.createElement('span');sep.className='qs-sep';seq.append(chip(q1,'Q1',false),sep,chip(q2,'Q2',!q2set));
+     if(!val.querySelector('small')&&(val.querySelector('i')?.textContent.trim()||'—')!=='—'){const o=document.createElement('small');o.textContent='Ø';val.prepend(o)}row.append(seq,val);so.append(row)}}}
    /* Ø Q1 und Ø Q2 je zur Hälfte – nur Anzeige */
    for(const [re,h1,h2] of [[/^Mündliche Mitarbeit/,/^Q1 · MM · Mittelwert/,/^MM · Mittelwert/],[/^Tests/,/^Q1 · Tests · Mittelwert/,/^Tests · Mittelwert/]]){
     const a=numOf(cellOf(table,name,h1)?.text),b=numOf(cellOf(table,name,h2)?.text),v=a!=null&&b!=null?(a+b)/2:(a??b);if(v==null)continue;
@@ -4612,6 +4618,7 @@ return}
   /* 8.75: Note der Q1 und aktuelle Note nie umbrechen (lange Namen werden stattdessen gekürzt) */
   ".qs-q1chip,.qs-q1chip i:not(#_),.qs-big:not(#_){flex:none!important;white-space:nowrap!important}",
   ".qd-hjbox{margin-top:16px;padding:12px 14px;border:1px solid #9dbbe3;border-radius:14px;background:#f7faff;animation:qdIn .35s ease-out}.qd-hjcap{font-size:13px;font-weight:700;color:#2f5f9b;margin:0 0 6px}.qd-hjbox .qd-hjline{margin-top:12px;border:0;padding:0}.qd-hjsug{min-height:36px;height:40px;box-sizing:border-box;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;opacity:.85}@keyframes qdIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}",
+  ".qs-qn-soft i{opacity:.72}",
   ".qs-hjw{display:inline-flex;flex-direction:column;align-items:center;gap:3px;flex:none;margin-left:auto}.qs-hjq{font-size:11px;font-weight:600;color:#6b7a90;white-space:nowrap}",
   ".qs-top .qs-name:not(#_){min-width:0}",
   ".qs-q1sep{align-self:stretch;margin:2px 0!important}",

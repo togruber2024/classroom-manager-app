@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 07.11.2026 · Version 8.87
+Stand: 07.11.2026 · Version 8.88
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1164,3 +1164,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.85: Klassenarbeit/Klausur rechts immer mit Ø
 8.86: iPhone – bleibt nach Q2-Beginn im 1. Quartal, solange Q1-Quartalsnoten fehlen (max. 4 Wochen, Hinweis mit „Zu Q2“)
 8.87: iPhone 1. Quartal – Leiste kompakt: „Q1 offen“ + runder Knopf, darunter beide Dreifachschalter
+8.88: iPhone Halbjahresansicht – Sonstige Mitarbeit zeigt Q1- und Q2-Quartalsnote als Kästchen, rechts Ø des Halbjahres
