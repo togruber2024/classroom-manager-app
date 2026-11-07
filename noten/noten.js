@@ -4342,7 +4342,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function halfify(panel){
   if(!document.documentElement.classList.contains('ph-lite')||!viewHj())return;const table=panel.querySelector('table');if(!table?.tHead)return;
   const heads=[...table.tHead.rows[0].cells].map(c=>c.textContent.replace(/\s+/g,' ').trim());if(!heads.some(h=>/^Q1 · /.test(h)))return;
-  const sem=semTable(),pts=typeof classUsesGradePoints==='function'&&classUsesGradePoints();
+  const sem=semTable(),pts=typeof classUsesGradePoints==='function'&&classUsesGradePoints();let changed=false;
   for(const card of panel.querySelectorAll('.qs-cards>.qs-card:not(.qd-card)')){if(card.dataset.hj==='1')continue;const name=card.querySelector('.qs-name')?.textContent.trim();if(!name)continue;
    const big=card.querySelector('.qs-top .qs-big'),q1t=(card.querySelector('.qs-q1chip i')?.textContent||'—').trim(),q2t=(big?.textContent||'—').trim();
    card.querySelectorAll('.qs-top .qs-qtag,.qs-top .qs-q1chip,.qs-top .qs-q1sep').forEach(x=>x.style.display='none');
@@ -4358,8 +4358,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
     const a=numOf(cellOf(table,name,h1)?.text),b=numOf(cellOf(table,name,h2)?.text),v=a!=null&&b!=null?(a+b)/2:(a??b);if(v==null)continue;
     const el=sect(re)?.querySelector('.qs-row>.qs-val i');if(!el)continue;const t=String(Math.round(v*100)/100).replace('.',',');
     setVal(el,{text:t,cls:typeof taskGradeClass==='function'?taskGradeClass(v,pts?'gradePoints':'participation'):el.className})}
-   card.dataset.hj='1'}
-  window.classroomCardsFold?.apply?.()}
+   card.dataset.hj='1';changed=true}
+  /* 8.80: nur bei Änderungen neu falten – sonst Endlosschleife (Flackern beim Scrollen) */if(changed)window.classroomCardsFold?.apply?.()}
  function run(){const lite=document.documentElement.classList.contains('ph-lite');const built=[];for(const panel of document.querySelectorAll('[data-quarter-summary]'))if(!lite||panel.dataset.customPanel===activePage){build(panel);fracBox=null;built.push(panel);try{halfify(panel)}catch(e){console.warn('Halbjahresansicht',e)}}/* 8.36: nur glatte Werte → Dezimal/Tendenz sperren */const lock=!built.some(pn=>[...pn.querySelectorAll('[data-frac]')].some(b=>b.dataset.frac==='1'));if(window.classroomCardsMeanLocked!==lock){window.classroomCardsMeanLocked=lock;document.dispatchEvent(new Event('classroom-cards-mean-lock'))}}
  // iPhone: Gewichtungen als Schieberegler mit Schnellwahl (Verhältnisse wie 2:1 exakt); schreibt in die vorhandenen Felder.
  const RATIOS={pair:[[1,1],[2,1],[3,1],[4,1]],final:[[1,1],[2,1],[1,2]]};
@@ -4801,8 +4801,8 @@ return}
  function apply(){for(const b of document.querySelectorAll('.pl-fold')){b.setAttribute('aria-pressed',String(on));b.title=on?'Karten wieder ganz zeigen':'Karten verkleinern';b.setAttribute('aria-label',b.title)}
   for(const c of cards()){const folded=on&&!open.has(nameOf(c));let sum=c.querySelector(':scope>.qs-sum');
    if(on){if(!sum){sum=document.createElement('div');sum.className='qs-sum';sum.innerHTML='<span class="qs-sum-t"></span><span class="qs-sum-c" aria-hidden="true">›</span>';c.append(sum)}
-    if(folded){c.classList.remove('qs-folded');const t=summary(c);c.classList.add('qs-folded');sum.querySelector('.qs-sum-t').textContent=t}}
-   c.classList.toggle('qs-folded',folded);c.classList.toggle('qs-unfolded',on&&!folded)}}
+    if(folded){const was=c.classList.contains('qs-folded');if(was)c.classList.remove('qs-folded');const t=summary(c);if(was)c.classList.add('qs-folded');const st=sum.querySelector('.qs-sum-t');if(st.textContent!==t)st.textContent=t}}
+   /* 8.80: nur ändern, was sich ändert (keine Schleife mit den Beobachtern) */if(c.classList.contains('qs-folded')!==folded)c.classList.toggle('qs-folded',folded);const uf=on&&!folded;if(c.classList.contains('qs-unfolded')!==uf)c.classList.toggle('qs-unfolded',uf)}}
  window.classroomCardsFold={get:()=>on,toggle(){on=!on;open.clear();try{localStorage.setItem(KEY,on?'1':'0')}catch{}apply()},apply};
  document.addEventListener('click',e=>{if(!on)return;const c=e.target.closest('.qs-cards>.qs-card:not(.qd-card)');if(!c||e.target.closest('input,label,button,.qs-mail'))return;
   if(c.classList.contains('qs-folded')){e.preventDefault();e.stopImmediatePropagation();open.add(nameOf(c));apply()}
