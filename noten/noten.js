@@ -4479,7 +4479,7 @@ return}
     card.classList.toggle('q1-open',q1Open.has(name));
     const t=document.createElement('button');t.type='button';t.className='qs-q1t';const upd=()=>{const o=q1Open.has(name);t.innerHTML=(o?EYE:EYE_OFF)+'<span>1. Quartal</span>';t.setAttribute('aria-expanded',String(o));card.classList.toggle('q1-open',o)};upd();t.addEventListener('qs-sync',upd);t.onclick=e=>{e.stopPropagation();q1Open.has(name)?q1Open.delete(name):q1Open.add(name);upd()};
     const ft=document.createElement('div');ft.className='qs-ft';ft.append(t);if(edits.childElementCount)ft.append(edits);card.append(ft)}
-   else if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;if(document.documentElement.classList.contains('cm-quick'))return;/* 9.02: Schnellansicht ohne Noteneingabe-Seite */openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card){if(document.documentElement.classList.contains('cm-quick'))card.click();else openDetail(panel,name)}};frag.append(card);
+   else if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;if(document.documentElement.classList.contains('cm-quick')&&!(navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches))return;/* 9.02/9.04: Schnellansicht am Mac ohne Noteneingabe-Seite (iPad wie iPhone) */openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card){if(document.documentElement.classList.contains('cm-quick')&&!(navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches))card.click();else openDetail(panel,name)}};frag.append(card);
   }
   box.replaceChildren(frag);fixUnstriped(box);/* Schraffur „Aus“ sofort anwenden, nicht erst über den Beobachter (8.15) */window.classroomUnstripe?.(box);
   if(detail?.panel===panel&&!sheet.hidden&&!sheet.contains(document.activeElement))renderDetail();
@@ -4861,7 +4861,7 @@ return}
 })();
 
 /* 8.69: Karten verkleinern – runder Knopf neben „1. Quartal“. Klein: Name, Noten und eine Zeile „Mitarbeit · HA · KA“; Antippen klappt einzelne Karten auf. */
-(()=>{const KEY='classroom-cards-folded-v1';let on=false;try{on=localStorage.getItem(KEY)==='1'}catch{}const open=new Set(),closed=new Set();/* 9.02: Schnellansicht (Mac/iPad) – einzelne Karten auch ohne „Verkleinern“ zuklappen */const quick=()=>document.documentElement.classList.contains('cm-quick');
+(()=>{const KEY='classroom-cards-folded-v1';let on=false;try{on=localStorage.getItem(KEY)==='1'}catch{}const open=new Set(),closed=new Set();/* 9.02: Schnellansicht (Mac/iPad) – einzelne Karten auch ohne „Verkleinern“ zuklappen */const quick=()=>document.documentElement.classList.contains('cm-quick')&&!(navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches);/* 9.04: nur am Mac (ohne Touch) – am iPad öffnet ein Tipp die Noteneingabe wie am iPhone */
  const short={'Sonstige Mitarbeit':'Mitarbeit','Klassenarbeit':'KA','Klassenarbeiten':'KA','Klausur':'Klausur','Klausuren':'Klausur','Tests':'Tests','Test':'Tests'};
  const nameOf=c=>c.querySelector('.qs-name')?.textContent.trim()||'';
  const cards=()=>[...document.querySelectorAll('.qs-cards>.qs-card:not(.qd-card)')];

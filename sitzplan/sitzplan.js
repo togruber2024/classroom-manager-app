@@ -2741,6 +2741,17 @@ document.addEventListener('keydown',event=>{
    Sitzplan zurückgestellt; Tische und Namen bleiben, nur die Gruppenzuordnung der Tische wird entfernt. */
 (()=>{const hasGroups=()=>Array.isArray(gridGroupData)&&gridGroupData.some(r=>Array.isArray(r)&&r.some(Number.isInteger));
  classroomHooks.add('initGrid','rooms: Gruppenraster zurücksetzen',{before(){if(hasGroups()){gridGroupData=leeresGruppenRaster();try{datenSpeichern()}catch{}}}});})();
+/* 9.04: „Tischanordnung …“ steht im Klassenraum neben dem Schalter und erscheint nur im Sitzplanmodus (Tische stellt man nur dort um). */
+(()=>{const edit=()=>document.getElementById('classroomEditRoom');
+ function place(){const b=document.getElementById('layoutToggleButton'),head=document.querySelector('.room-header'),mode=head?.querySelector('.classroom-mode-toggle');if(!b||!head||!mode)return;
+  let box=head.querySelector('.room-head-actions');if(!box){box=document.createElement('div');box.className='room-head-actions';mode.before(box);box.append(mode)}
+  if(b.parentElement!==box){b.classList.remove('room-layout-button');b.classList.add('room-head-layout');box.prepend(b)}
+  const on=!!edit()?.checked;if(b.hidden===on)b.hidden=!on;
+  if(!on&&document.getElementById('layoutView')&&!document.getElementById('layoutView').hidden&&typeof zeigeSitzplan==='function')zeigeSitzplan()}
+ document.addEventListener('change',e=>{if(e.target?.id==='classroomEditRoom')setTimeout(place,0)});
+ new MutationObserver(()=>place()).observe(document.querySelector('.container')||document.body,{childList:true,subtree:true});place();setTimeout(place,500);
+ const st=document.createElement('style');st.textContent='.room-header>.room-head-actions{display:flex;align-items:center;gap:12px;margin-left:auto}.room-head-actions>.room-head-layout:not(#_){width:auto!important;height:36px;min-height:36px;padding:0 14px;margin:0!important;border-radius:999px;font-size:14px;white-space:nowrap}.room-head-actions>.room-head-layout[hidden]{display:none!important}html.ph-lite .room-head-layout{display:none!important}';document.head.append(st);
+})();
 ;
 
 /* ==== sitzplan/plan-history.js ==== */
@@ -3306,7 +3317,7 @@ document.addEventListener('keydown',event=>{
  zoom.prepend(seg);
  const qv=()=>{try{return parent.localStorage.getItem('classroom-quickview-v1')==='1'}catch{return false}},isOpen=()=>tog.getAttribute('aria-expanded')!=='false';
  const cur=()=>!isOpen()?'off':qv()?'notes':'set';
- function sync(){const c=cur();for(const b of seg.querySelectorAll('[data-col]')){const k=b.dataset.col,on=k===c;b.setAttribute('aria-pressed',String(on));const t=on?(k==='set'?'Einstellungen ausblenden':'Zurück zu den Einstellungen'):(k==='set'?'Einstellungen in der linken Spalte zeigen':'Noten der Klasse in der linken Spalte zeigen');b.title=t;b.setAttribute('aria-label',t)}}
+ function sync(){const c=cur();for(const b of seg.querySelectorAll('[data-col]:not([data-col=swap])')){const k=b.dataset.col,on=k===c;b.setAttribute('aria-pressed',String(on));const t=on?(k==='set'?'Einstellungen ausblenden':'Zurück zu den Einstellungen'):(k==='set'?'Einstellungen in der linken Spalte zeigen':'Noten der Klasse in der linken Spalte zeigen');b.title=t;b.setAttribute('aria-label',t)}}
  seg.addEventListener('click',e=>{const b=e.target.closest('[data-col]');if(!b)return;const k=b.dataset.col,active=cur()===k;
   /* 8.91: zweiter Klick auf ☑ Noten holt die Einstellungen zurück; zweiter Klick auf ☰ klappt die Spalte zu */
   if(active&&k==='notes'){try{parent.localStorage.setItem('classroom-quickview-v1','0')}catch{}}
@@ -3317,6 +3328,23 @@ document.addEventListener('keydown',event=>{
  const st=document.createElement('style');st.textContent='.classroom-plan-zoom>.classroom-sidebar-toggle,.classroom-plan-zoom>.plan-quick-notes{display:none!important}.plan-col-pair{display:inline-flex;flex:none;border:1px solid #dce3ef;border-radius:12px;overflow:hidden;background:#fff}.plan-col-pair button{width:46px;height:42px;min-height:0;padding:0;margin:0;border:0!important;border-radius:0!important;background:#fff!important;color:#2f5f9b;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:none!important}.plan-col-pair button+button{border-left:1px solid #dce3ef!important}.plan-col-pair button[aria-pressed=true]{background:#eaf0fa!important}html.ph-lite .plan-col-pair,.classroom-beamer .plan-col-pair{display:none!important}';document.head.append(st)})();
 /* 8.94: Abstand zwischen linker Spalte und Klassenraum = Abstand zur Navigationsleiste darüber (10 px) */
 (()=>{const st=document.createElement('style');st.textContent='html:not(.ph-lite) body[data-module=sitzplan] .container:not(#_){column-gap:10px}';document.head.append(st)})();
+/* 9.04: Spalte wahlweise rechts (z. B. am iPad für Rechtshänder): drittes Feld ⇄ im Schalter ☰ ☑ ⇄. Der Schalter wandert mit nach außen.
+   Die Seite gilt nur für dieses Gerät (nicht im Backup). */
+(()=>{const zoom=document.querySelector('.classroom-plan-zoom'),seg=zoom?.querySelector('.plan-col-pair');if(!zoom||!seg)return;const KEY='classroom-side-right-v1';
+ const b=document.createElement('button');b.type='button';b.dataset.col='swap';b.className='plan-col-swap';b.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4"/></svg>';seg.append(b);
+ const right=()=>{try{return localStorage.getItem(KEY)==='1'}catch{return false}};
+ function apply(){const r=right();document.documentElement.classList.toggle('cm-side-right',r);if(r){if(zoom.lastElementChild!==seg)zoom.append(seg)}else if(zoom.firstElementChild!==seg)zoom.prepend(seg);
+  seg.setAttribute('aria-label',r?'Rechte Spalte':'Linke Spalte');const t=r?'Spalte auf die linke Seite':'Spalte auf die rechte Seite';b.title=t;b.setAttribute('aria-label',t)}
+ b.addEventListener('click',e=>{e.stopImmediatePropagation();try{localStorage.setItem(KEY,right()?'0':'1')}catch{}apply();setTimeout(()=>{window.dispatchEvent(new Event('resize'));try{parent.classroomQuickLayout?.()}catch{}},30);setTimeout(()=>{try{parent.classroomQuickLayout?.()}catch{}},400)},true);
+ new MutationObserver(()=>{const r=right();if(r&&zoom.lastElementChild!==seg)zoom.append(seg)}).observe(zoom,{childList:true});
+ const st=document.createElement('style');st.textContent='@media (min-width:951px){html.cm-side-right body[data-module=sitzplan] .container:not(#_){grid-template-columns:minmax(0,1fr) 360px}'
+  +'html.cm-side-right body[data-module=sitzplan] .container>.panel{grid-column:2;grid-row:1}html.cm-side-right body[data-module=sitzplan] .container>:not(.panel){grid-column:1;grid-row:1}'
+  +'html.cm-side-right body[data-module=sitzplan] .container.sidebar-collapsed:not(#_){grid-template-columns:minmax(0,1fr) 0px!important}'
+  +'html.cm-side-right body[data-module=sitzplan] .container.sidebar-collapsed>.panel:not(#_){transform:translateX(calc(100% + 40px))}'
+  +'html.cm-side-right body[data-module=sitzplan] .container.sidebar-hidden:not(#_){grid-template-columns:minmax(0,1fr)!important}html.cm-side-right .classroom-plan-zoom>.plan-col-pair{margin-left:auto}}'
+  +'@media (max-width:950px){.plan-col-pair>.plan-col-swap{display:none!important}}';document.head.append(st);
+ apply();
+})();
 ;
 
 /* ==== sitzplan/beamer-mode.js ==== */
