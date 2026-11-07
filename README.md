@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 07.11.2026 · Version 9.24
+Stand: 07.11.2026 · Version 9.25
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1201,3 +1201,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.22: Notengrenzen-Schieber – im Modus „Automatisch“ nur Anzeige (keine Griffe); im manuellen Modus Schalter „Dynamisch“ (4/5 als Anker, anteiliges Mitziehen) und Live-Notenspiegel beim Ziehen
 9.23: Notengrenzen – Wechsel von „Manuell“ zu „Automatisch“ verwirft die eigenen Grenzen jetzt nach Rückfrage (vorher galten sie unbemerkt weiter)
 9.24: Schuljahresseite liest die Halbjahresnoten wieder (eigene vor berechneter); fehlende Klassenarbeit → Halbjahresnote aus vorhandenen Arbeiten, markiert mit *
+9.25: Quartalsnoten – im 2. Quartal Spalten Q1, SoMi · Halbjahr, Halbjahr ∑/✎; im 4. Quartal Halbjahr 1, Halbjahr 2 ∑/✎, Schuljahr ∑/✎ (∑ berechnet, Stift = eigene Note, geht vor); Seite „Schuljahr“ mit Spalte für die eigene Note
