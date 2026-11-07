@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 07.11.2026 · Version 9.06
+Stand: 07.11.2026 · Version 9.07
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1183,3 +1183,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.04: Spalte per ⇄ links oder rechts (pro Gerät); iPad-Schnellansicht öffnet die Noteneingabe wie am iPhone; „Tischanordnung …“ im Klassenraum, nur im Sitzplanmodus
 9.05: Zoomleiste – „Mehr ▾“ direkt nach „Bewertungen“
 9.06: Fehler behoben – Schalter ☰ ☑ ⇄ am Mac nach dem Seitenwechsel ohne Funktion (Endlosschleife); Knöpfe vereinheitlicht (40 px, 10 px Ecken), Tischanordnung als Aktionsknopf, passender Hinweis in der Mac-Schnellansicht
+9.07: Schalter ☰ ☑ ⇄ – Klick auf den aktiven Knopf blendet die Spalte aus (auch bei Noten), ⇄ bei ausgeblendeter Spalte ausgegraut

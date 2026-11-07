@@ -3317,11 +3317,12 @@ document.addEventListener('keydown',event=>{
  zoom.prepend(seg);
  const qv=()=>{try{return parent.localStorage.getItem('classroom-quickview-v1')==='1'}catch{return false}},isOpen=()=>tog.getAttribute('aria-expanded')!=='false';
  const cur=()=>!isOpen()?'off':qv()?'notes':'set';
- function sync(){const c=cur();for(const b of seg.querySelectorAll('[data-col]:not([data-col=swap])')){const k=b.dataset.col,on=k===c;b.setAttribute('aria-pressed',String(on));const t=on?(k==='set'?'Einstellungen ausblenden':'Zurück zu den Einstellungen'):(k==='set'?'Einstellungen in der linken Spalte zeigen':'Noten der Klasse in der linken Spalte zeigen');b.title=t;b.setAttribute('aria-label',t)}}
+ function sync(){const c=cur();for(const b of seg.querySelectorAll('[data-col]:not([data-col=swap])')){const k=b.dataset.col,on=k===c;b.setAttribute('aria-pressed',String(on));const t=on?(k==='set'?'Einstellungen ausblenden':'Noten ausblenden'):(k==='set'?'Einstellungen in der Spalte zeigen':'Noten der Klasse in der Spalte zeigen');b.title=t;b.setAttribute('aria-label',t)}
+  {const sw=seg.querySelector('.plan-col-swap');if(sw){const off=c==='off';if(sw.disabled!==off)sw.disabled=off;if(off){sw.title='Erst die Spalte einblenden';sw.setAttribute('aria-label',sw.title)}else if(sw.title==='Erst die Spalte einblenden'){const r=document.documentElement.classList.contains('cm-side-right');sw.title=r?'Spalte auf die linke Seite':'Spalte auf die rechte Seite';sw.setAttribute('aria-label',sw.title)}}}}
  seg.addEventListener('click',e=>{const b=e.target.closest('[data-col]');if(!b)return;const k=b.dataset.col,active=cur()===k;
   /* 8.91: zweiter Klick auf ☑ Noten holt die Einstellungen zurück; zweiter Klick auf ☰ klappt die Spalte zu */
-  if(active&&k==='notes'){try{parent.localStorage.setItem('classroom-quickview-v1','0')}catch{}}
-  else if(active){if(isOpen())tog.click()}
+  /* 9.07: Klick auf den aktiven Knopf (☰ oder ☑) blendet die Spalte aus; der andere Knopf wechselt den Inhalt */
+  if(active){if(isOpen())tog.click()}
   else{try{parent.localStorage.setItem('classroom-quickview-v1',k==='notes'?'1':'0')}catch{}if(!isOpen())tog.click()}
   try{parent.classroomQuickLayout?.()}catch{}setTimeout(()=>{try{parent.classroomQuickLayout?.()}catch{}sync()},380);sync()});
  new MutationObserver(sync).observe(tog,{attributes:true,attributeFilter:['aria-expanded']});setInterval(sync,1000);sync();
@@ -3351,6 +3352,8 @@ document.addEventListener('keydown',event=>{
  +B+'.plan-col-pair:not(#_){border-radius:10px}'+B+'.plan-col-pair button:not(#_){height:38px!important;min-height:0!important}'
  +B+'.classroom-date-only .cd-field:not(#_){height:40px;border-radius:10px}'+B+'.classroom-date-only .cd-seg:not(#_){border-radius:10px}'+B+'.classroom-date-only .cd-seg button:not(#_){height:38px}';
  document.head.append(st)})();
+/* 9.07: ⇄ ausgegraut, solange die Spalte ausgeblendet ist */
+(()=>{const st=document.createElement('style');st.textContent='.plan-col-pair>.plan-col-swap:disabled{color:#b8c3d2!important;cursor:default}';document.head.append(st)})();
 ;
 
 /* ==== sitzplan/beamer-mode.js ==== */
