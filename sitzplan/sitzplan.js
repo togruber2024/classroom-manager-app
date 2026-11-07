@@ -3159,9 +3159,11 @@ document.addEventListener('keydown',event=>{
  zoom.prepend(seg);
  const qv=()=>{try{return parent.localStorage.getItem('classroom-quickview-v1')==='1'}catch{return false}},isOpen=()=>tog.getAttribute('aria-expanded')!=='false';
  const cur=()=>!isOpen()?'off':qv()?'notes':'set';
- function sync(){const c=cur();for(const b of seg.querySelectorAll('[data-col]')){const k=b.dataset.col,on=k===c;b.setAttribute('aria-pressed',String(on));const t=on?(k==='set'?'Einstellungen ausblenden':'Noten ausblenden'):(k==='set'?'Einstellungen in der linken Spalte zeigen':'Noten der Klasse in der linken Spalte zeigen');b.title=t;b.setAttribute('aria-label',t)}}
+ function sync(){const c=cur();for(const b of seg.querySelectorAll('[data-col]')){const k=b.dataset.col,on=k===c;b.setAttribute('aria-pressed',String(on));const t=on?(k==='set'?'Einstellungen ausblenden':'Zurück zu den Einstellungen'):(k==='set'?'Einstellungen in der linken Spalte zeigen':'Noten der Klasse in der linken Spalte zeigen');b.title=t;b.setAttribute('aria-label',t)}}
  seg.addEventListener('click',e=>{const b=e.target.closest('[data-col]');if(!b)return;const k=b.dataset.col,active=cur()===k;
-  if(active){if(isOpen())tog.click()}
+  /* 8.91: zweiter Klick auf ☑ Noten holt die Einstellungen zurück; zweiter Klick auf ☰ klappt die Spalte zu */
+  if(active&&k==='notes'){try{parent.localStorage.setItem('classroom-quickview-v1','0')}catch{}}
+  else if(active){if(isOpen())tog.click()}
   else{try{parent.localStorage.setItem('classroom-quickview-v1',k==='notes'?'1':'0')}catch{}if(!isOpen())tog.click()}
   try{parent.classroomQuickLayout?.()}catch{}setTimeout(()=>{try{parent.classroomQuickLayout?.()}catch{}sync()},380);sync()});
  new MutationObserver(sync).observe(tog,{attributes:true,attributeFilter:['aria-expanded']});setInterval(sync,1000);sync();
