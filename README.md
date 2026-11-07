@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 07.11.2026 · Version 8.83
+Stand: 07.11.2026 · Version 8.84
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1160,3 +1160,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.81: Mac/iPad – Knopf „Noten“ im Unterrichts-Manager zeigt die Notenkarten der Klasse in der linken Spalte (Schnellansicht)
 8.82: Noten-Schnellansicht – beim Antippen eines Schülers im Sitzplan springt die Liste zu seiner Karte
 8.83: Detailblatt als Quartalsgespräch – erst nur das Quartal, nach Selbsteinschätzung und Quartalsnote Klassenarbeiten, Halbjahres-Vorschlag und Feld für die Halbjahresnote
+8.84: iPhone – Wischfenster von Aktuell, Hilfe und Noten fahren gleich weit aus

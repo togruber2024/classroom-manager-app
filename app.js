@@ -1989,6 +1989,9 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
 })();
 /* 8.44: iPhone – kein Pfeil neben Klasse/Fach; ein Tipp auf das Feld öffnet die Auswahl */
 (()=>{const st=document.createElement('style');st.textContent='@media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){.app-header>.compact-navigation .compact-navigation-arrow:not(#_):not(#__){display:none!important}.app-header>.compact-navigation .compact-navigation-bar:not(#_):not(#__){padding:0 12px!important;cursor:pointer}}';document.head.append(st)})();
+/* 8.84: iPhone – alle Wischfenster (Noten, Hilfe, Aktuell/Stundenplan) fahren gleich weit aus: bis 10 px unter die Kopfzeile */
+(()=>{const set=()=>{const h=document.querySelector('.app-header');if(!h)return;const top=Math.round(h.getBoundingClientRect().bottom)+10;document.documentElement.style.setProperty('--ph-sheet-top',top+'px')};set();addEventListener('resize',set);setTimeout(set,800);
+ const st=document.createElement('style');st.textContent='html.is-phone .tt-panel:not(#_){top:var(--ph-sheet-top,65px);max-height:none}html.is-phone dialog.classroom-help:not(#_):not(#__){height:calc(100dvh - var(--ph-sheet-top,65px));max-height:calc(100dvh - var(--ph-sheet-top,65px))}';document.head.append(st)})();
 ;
 
 /* ==== quickview.js ==== */
