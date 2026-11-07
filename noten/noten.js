@@ -4279,14 +4279,15 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function editProxy(orig,label,after,tag){
   const l=document.createElement('label');l.className='qs-edit';const s=document.createElement('span');const st=document.createElement('span');st.className='qs-edit-t';st.textContent=label;s.append(st);if(tag){const q=document.createElement('b');q.className='qs-qtag';q.textContent=tag;s.append(q)}const inp=document.createElement('input');inp.type='text';inp.value=orig.value;inp.placeholder=orig.placeholder||'—';inp.className=orig.className;inp.style.setProperty('--unstriped-color',orig.style.getPropertyValue('--unstriped-color'));inp.setAttribute('aria-label',orig.getAttribute('aria-label')||label);inp.autocomplete='off';
   inp.onchange=()=>{orig.value=inp.value;orig.dispatchEvent(new Event('input',{bubbles:true}));orig.dispatchEvent(new Event('change',{bubbles:true}));inp.value=orig.value;inp.className=orig.className;inp.style.setProperty('--unstriped-color',orig.style.getPropertyValue('--unstriped-color'));after?.();schedule()};
-  /* 8.71: iPhone – Noten über eine eigene Auswahl statt Tastatur */if(document.documentElement.classList.contains('ph-lite')){inp.readOnly=true;inp.inputMode='none';inp.classList.add('qs-pick-in');inp.addEventListener('click',e=>{e.preventDefault();window.classroomGradePicker?.(inp,label)})}
+  /* 8.71: iPhone – Noten über eine eigene Auswahl statt Tastatur *//* 9.01: nur mit Touch (iPhone, iPad) – am Mac mit Maus und Tastatur wird normal getippt */if(document.documentElement.classList.contains('ph-lite')&&(navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches)){inp.readOnly=true;inp.inputMode='none';inp.classList.add('qs-pick-in');inp.addEventListener('click',e=>{e.preventDefault();window.classroomGradePicker?.(inp,label)})}
   l.append(s,inp);return l}
  // Karte antippen → Blatt mit allen Einträgen dieser Person (‹ / › bzw. Wischen = nächste Person)
  const sheet=document.createElement('div');sheet.className='qs-detail';sheet.hidden=true;
- sheet.innerHTML='<div class="qd-back"></div><section class="qd-panel" role="dialog" aria-modal="true"><div class="qd-grab"></div><div class="qd-head"><button type="button" class="qd-nav" data-d="-1" aria-label="Vorherige Person">‹</button><div class="qd-title"><b></b><small></small></div><button type="button" class="qd-nav" data-d="1" aria-label="Nächste Person">›</button><button type="button" class="qd-close" aria-label="Schließen">✕</button></div><div class="qd-body"></div></section>';
+ sheet.innerHTML='<div class="qd-back"></div><section class="qd-panel" role="dialog" aria-modal="true"><div class="qd-grab"></div><div class="qd-head"><button type="button" class="qd-close" aria-label="Zurück zur Übersicht">‹ Übersicht</button><span class="qd-navs"><button type="button" class="qd-nav" data-d="-1" aria-label="Vorherige Person">‹</button><button type="button" class="qd-nav" data-d="1" aria-label="Nächste Person">›</button></span><div class="qd-title"><b></b><small></small></div></div><div class="qd-body"></div></section>';
  document.body.append(sheet);
  let detail=null;// {panel,name}
  const closeDetail=()=>{sheet.hidden=true;detail=null};
+ /* 9.01: zweiter Tipp auf „Noten“ (iPhone) schließt die Seite */window.classroomCardsDetailClose=()=>{if(!detail)return false;closeDetail();return true};
  sheet.querySelector('.qd-back').onclick=closeDetail;sheet.querySelector('.qd-close').onclick=closeDetail;
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&detail)closeDetail()});
  const step=d=>{if(!detail)return;const rows=[...(detail.panel.querySelector('table')?.tBodies[0]?.rows||[])],i=rows.findIndex(r=>r.cells[0]?.textContent.trim()===detail.name),n=rows[i+d];if(n){detail.name=n.cells[0].textContent.trim();renderDetail();sheet.querySelector('.qd-body').scrollTop=0}};
@@ -4294,9 +4295,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  /* Wischen: waagerecht = nächste/vorige Person; nach unten (oben am Blatt oder ganz hochgescrollt) = Blatt schließen (7.95) */
  {let x0=null,y0=0,down=false,dy=0;const pnl=sheet.querySelector('.qd-panel'),body=sheet.querySelector('.qd-body');
   pnl.addEventListener('touchstart',e=>{if(e.target.closest('input'))return;x0=e.touches[0].clientX;y0=e.touches[0].clientY;dy=0;down=!body.contains(e.target)||body.scrollTop<=0;pnl.style.transition='none'},{passive:true});
-  pnl.addEventListener('touchmove',e=>{if(x0===null||!down)return;const mx=e.touches[0].clientX-x0;dy=e.touches[0].clientY-y0;if(dy>0&&dy>Math.abs(mx)){pnl.style.transform='translateY('+dy+'px)';if(e.cancelable)e.preventDefault()}else if(dy<0){down=false;pnl.style.transform=''}},{passive:false});
+  pnl.addEventListener('touchmove',e=>{if(true||x0===null||!down)return;/* 9.01: kein Wegwischen mehr */const mx=e.touches[0].clientX-x0;dy=e.touches[0].clientY-y0;if(dy>0&&dy>Math.abs(mx)){pnl.style.transform='translateY('+dy+'px)';if(e.cancelable)e.preventDefault()}else if(dy<0){down=false;pnl.style.transform=''}},{passive:false});
   pnl.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,ddy=e.changedTouches[0].clientY-y0;x0=null;pnl.style.transition='transform .18s ease';
-   if(down&&ddy>90&&ddy>Math.abs(dx)){pnl.style.transform='translateY(100%)';setTimeout(()=>{closeDetail();pnl.style.transition='none';pnl.style.transform=''},180);return}
+   if(false&&down&&ddy>90&&ddy>Math.abs(dx)){pnl.style.transform='translateY(100%)';setTimeout(()=>{closeDetail();pnl.style.transition='none';pnl.style.transform=''},180);return}
    pnl.style.transform='';if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(ddy)*1.5)step(dx<0?1:-1)},{passive:true})}
  function openDetail(panel,name){detail={panel,name};renderDetail();sheet.hidden=false;sheet.querySelector('.qd-body').scrollTop=0}
  /* Halbjahresnote aus der Halbjahresübersicht lesen (die Seite wird dazu unsichtbar aufgebaut, höchstens alle 3 s) */
@@ -4674,6 +4675,16 @@ return}
   +'.gp-g1{background:#bfe8d2}.gp-g2{background:#d9efbd}.gp-g3{background:#fff6a8}.gp-g4{background:#fde7b3}.gp-g5{background:#f8cdc8}.gp-g6{background:#eeb5b5}'+'.gp-g1m{border:0!important;background:linear-gradient(135deg,#bfe8d2 0 50%,#d9efbd 50% 100%) border-box}.gp-g2m{border:0!important;background:linear-gradient(135deg,#d9efbd 0 50%,#fff6a8 50% 100%) border-box}.gp-g3m{border:0!important;background:linear-gradient(135deg,#fff6a8 0 50%,#fde7b3 50% 100%) border-box}.gp-g4m{border:0!important;background:linear-gradient(135deg,#fde7b3 0 50%,#f8cdc8 50% 100%) border-box}.gp-g5m{border:0!important;background:linear-gradient(135deg,#f8cdc8 0 50%,#eeb5b5 50% 100%) border-box}.gp-g4h{background:repeating-linear-gradient(135deg,#fde7b3 0 7px,#f8cdc8 7px 14px)}'
   +'.gp-grid button.gp-on{outline:3px solid #24334b;outline-offset:-3px}.gp-foot{display:flex;justify-content:flex-end;margin-top:10px}.gp-clear{height:36px;padding:0 16px;border:1px solid #dce3ef;border-radius:18px;background:#fff;color:#2f5f9b;font:inherit;font-size:14px;font-weight:500}.gp-clear:disabled{opacity:.4}'
   +'html.ph-lite input.qs-pick-in{caret-color:transparent;cursor:pointer}';document.head.append(st)})();
+/* 9.01: Noteneingabe als normale Seite (kein Wischfenster): Karte mit 6 px Rand wie die Übersicht, oben „‹ Übersicht“ links, ‹ › rechts, darunter der Name. */
+(()=>{const st=document.createElement('style');st.textContent=[
+ '.qs-detail:not([hidden]) .qd-back:not(#_){background:#f4f7fb}',
+ '.qs-detail .qd-panel:not(#_):not(#__){left:6px;right:6px;top:6px;bottom:6px;height:auto;max-height:none;border:1px solid #dfe6ef;border-radius:20px;box-shadow:none;transform:none!important}',
+ '.qs-detail .qd-grab:not(#_){display:none}',
+ '.qs-detail .qd-head:not(#_){display:grid;grid-template-columns:1fr auto;grid-template-areas:"back navs" "title title";align-items:center;gap:8px 6px;padding:12px 14px 10px}',
+ '.qs-detail .qd-close:not(#_){grid-area:back;justify-self:start;width:auto;height:36px;padding:0 6px;border:0;background:none;color:#2f5f9b;font-size:15px;font-weight:650}',
+ '.qs-detail .qd-navs{grid-area:navs;display:flex;gap:6px}.qs-detail .qd-nav:not(#_){width:38px;height:36px;border-radius:999px;font-size:20px}',
+ '.qs-detail .qd-title:not(#_){grid-area:title;text-align:left}.qs-detail .qd-title b:not(#_){font-size:19px}'
+].join('');document.head.append(st)})();
 ;
 
 /* ==== noten/mean-guard.js ==== */
