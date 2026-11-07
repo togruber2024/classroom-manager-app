@@ -1,3 +1,13 @@
+/* ==== device.js ==== */
+/* 9.10: Gemeinsame Geräteerkennung für alle Bereiche (statt verstreuter Einzelprüfungen).
+   touch(): Gerät mit Touch (iPhone, iPad, Android) – Mac und PC mit Maus: false.
+   ios: iPhone/iPad (auch iPadOS, das sich als Mac meldet). mobile: iOS oder Android. */
+(()=>{if(window.classroomDevice)return;const ua=navigator.userAgent||'',tp=navigator.maxTouchPoints||0;
+ const ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&tp>1)||(/Mac/i.test(navigator.platform||'')&&tp>1);
+ window.classroomDevice={ios,mobile:ios||/Android/i.test(ua),touch:()=>tp>0||matchMedia('(pointer:coarse)').matches};
+})();
+;
+
 /* ==== ui-dialogs.js ==== */
 /* 8.29: Kein Hineinzoomen per Zwei-Finger-Geste oder Doppeltippen (iPad/iPhone) – die App ist für den Bildschirm fertig gelayoutet.
    Scrollen bleibt erlaubt; der Sitzplan-Zoom läuft weiter über seine Tasten. */
@@ -1285,7 +1295,7 @@ window.addEventListener('message',event=>{
  function saveFile(name,text){
   const blob=new Blob([text],{type:'application/json'}),file=new File([blob],name,{type:'application/json'});
   if(typeof window.showSaveFilePicker==='function')return window.showSaveFilePicker({suggestedName:name,types:[{description:'Classroom-Manager-Archiv',accept:{'application/json':['.json']}}]}).then(async h=>{const w=await h.createWritable();await w.write(blob);await w.close();return 'saved'});
-  if(navigator.canShare?.({files:[file]})&&/iPad|iPhone/.test(navigator.userAgent+(navigator.maxTouchPoints>1?'iPad':'')))return navigator.share({files:[file],title:name}).then(()=>'shared');
+  if(navigator.canShare?.({files:[file]})&&classroomDevice.ios)return navigator.share({files:[file],title:name}).then(()=>'shared');
   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);return Promise.resolve('downloaded');
  }
  function openClose(){
@@ -1693,11 +1703,7 @@ window.addEventListener('message',event=>{
   html+='</div></section>';sh.innerHTML=html;document.body.append(sh);
   const close=()=>sh.remove();sh.querySelector('.tt-x').onclick=close;sh.querySelector('.tt-back').onclick=close;
   sh.querySelector('.tt-body').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(!b)return;const l=lessons[+b.dataset.i];close();applyLesson(l,b.classList.contains('tt-last')?'Zuletzt':(b.classList.contains('is-now')?'Jetzt':'Stunde'))});
-  // nach unten wischen schließt
-  const pnl=sh.querySelector('.tt-panel'),body=sh.querySelector('.tt-body');let y0=null,dy=0;
-  pnl.addEventListener('touchstart',e=>{y0=(!body.contains(e.target)||body.scrollTop<=0)?e.touches[0].clientY:null;dy=0;pnl.style.transition='none'},{passive:true});
-  pnl.addEventListener('touchmove',e=>{if(y0===null)return;dy=e.touches[0].clientY-y0;if(dy>0){pnl.style.transform='translateY('+dy+'px)';if(e.cancelable)e.preventDefault()}},{passive:false});
-  pnl.addEventListener('touchend',()=>{if(y0===null)return;y0=null;pnl.style.transition='transform .18s ease';if(dy>90){pnl.style.transform='translateY(100%)';setTimeout(close,180)}else pnl.style.transform=''},{passive:true});
+  /* 9.10: Wegwischen entfällt – „Aktuell“ ist auf dem iPhone eine normale Seite */
  }
  window.classroomOpenPlan=openPlan;
  {const st=document.createElement('style');st.textContent='.tt-sheet{position:fixed;inset:0;z-index:9700}.tt-back{position:absolute;inset:0;background:#1c2b4655}'
@@ -1866,7 +1872,7 @@ window.addEventListener('message',event=>{
  }
  nav.onclick=e=>{const b=e.target.closest('[data-help-chapter]');if(!b)return;search.value='';renderChapter(b.dataset.helpChapter)};
  search.oninput=()=>{const q=search.value.trim();q?renderSearch(q):renderChapter(active)};
- dialog.querySelector('.help-close').onclick=()=>dialog.close();/* 8.23: auf dem iPhone ein Blatt wie die anderen – Griff oben, nach unten wegwischen */{const g=document.createElement('div');g.className='help-grab';dialog.prepend(g);let y0=null,x0=0,dy=0,lock=false;const PHQ=matchMedia('(max-width:540px) and (orientation:portrait),(max-height:500px) and (orientation:landscape) and (pointer:coarse)');dialog.addEventListener('touchstart',e=>{/* 9.01: Hilfe ist auf dem iPhone eine normale Seite – kein Wegwischen */if(true||!PHQ.matches||e.target.closest('input,.help-nav'))return;const c=dialog.querySelector('.help-content');if(c&&c.contains(e.target)&&c.scrollTop>0)return;y0=e.touches[0].clientY;x0=e.touches[0].clientX;dy=0;lock=false;dialog.style.transition='none'},{passive:true});dialog.addEventListener('touchmove',e=>{if(y0===null)return;dy=e.touches[0].clientY-y0;const dx=e.touches[0].clientX-x0;if(!lock&&Math.abs(dx)>Math.abs(dy)){y0=null;return}if(dy>6){lock=true;dialog.style.transform='translateY('+dy+'px)';if(e.cancelable)e.preventDefault()}},{passive:false});dialog.addEventListener('touchend',()=>{if(y0===null)return;y0=null;dialog.style.transition='transform .18s ease';if(dy>90){dialog.style.transform='translateY(100%)';setTimeout(()=>{dialog.close();dialog.style.transition='';dialog.style.transform=''},180)}else dialog.style.transform=''},{passive:true})};
+ dialog.querySelector('.help-close').onclick=()=>dialog.close();/* 9.10: das frühere Wegwischen (8.23) ist entfallen – Hilfe ist auf dem iPhone eine normale Seite */
  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
  // Esc: zuerst die Suche leeren, beim zweiten Mal schließen.
  dialog.addEventListener('keydown',e=>{if(e.key!=='Escape')return;e.preventDefault();if(search.value){search.value='';renderChapter(active)}else dialog.close()});
@@ -2159,11 +2165,6 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
 })();
 /* 8.44: iPhone – kein Pfeil neben Klasse/Fach; ein Tipp auf das Feld öffnet die Auswahl */
 (()=>{const st=document.createElement('style');st.textContent='@media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){.app-header>.compact-navigation .compact-navigation-arrow:not(#_):not(#__){display:none!important}.app-header>.compact-navigation .compact-navigation-bar:not(#_):not(#__){padding:0 12px!important;cursor:pointer}}';document.head.append(st)})();
-/* 8.84: iPhone – alle Wischfenster (Noten, Hilfe, Aktuell/Stundenplan) fahren gleich weit aus: bis 10 px unter die Kopfzeile */
-(()=>{const set=()=>{const h=document.querySelector('.app-header');if(!h)return;const top=Math.round(h.getBoundingClientRect().bottom)+10;document.documentElement.style.setProperty('--ph-sheet-top',top+'px')};set();addEventListener('resize',set);setTimeout(set,800);
- const st=document.createElement('style');st.textContent='html.is-phone .tt-panel:not(#_){top:var(--ph-sheet-top,65px);max-height:none}html.is-phone dialog.classroom-help:not(#_):not(#__){height:calc(100dvh - var(--ph-sheet-top,65px));max-height:calc(100dvh - var(--ph-sheet-top,65px))}';document.head.append(st)})();
-// 8.96: Schiebefenster (Stundenplan, Hilfe) mit 6 px Abstand links und rechts – wie die Noten-Karte.
-(()=>{const st=document.createElement('style');st.textContent='html.is-phone .tt-panel:not(#_):not(#__){left:6px;right:6px;width:auto;max-width:none}html.is-phone dialog.classroom-help:not(#_):not(#__):not(#___){width:calc(100vw - 12px);max-width:calc(100vw - 12px);margin-left:6px;margin-right:6px}';document.head.append(st)})();
 /* 9.01: iPhone – „Aktuell“ (Stundenplan) und „Hilfe“ als normale Seiten wie „Unterricht“ und „Noten“: Karte mit 6 px Rand
    zwischen Kopfzeile und Leiste, ohne Abdunkeln, Griff, ✕ und Wegwischen. */
 (()=>{

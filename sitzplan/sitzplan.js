@@ -1,3 +1,13 @@
+/* ==== device.js ==== */
+/* 9.10: Gemeinsame Geräteerkennung für alle Bereiche (statt verstreuter Einzelprüfungen).
+   touch(): Gerät mit Touch (iPhone, iPad, Android) – Mac und PC mit Maus: false.
+   ios: iPhone/iPad (auch iPadOS, das sich als Mac meldet). mobile: iOS oder Android. */
+(()=>{if(window.classroomDevice)return;const ua=navigator.userAgent||'',tp=navigator.maxTouchPoints||0;
+ const ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&tp>1)||(/Mac/i.test(navigator.platform||'')&&tp>1);
+ window.classroomDevice={ios,mobile:ios||/Android/i.test(ua),touch:()=>tp>0||matchMedia('(pointer:coarse)').matches};
+})();
+;
+
 /* ==== ui-dialogs.js ==== */
 /* 8.29: Kein Hineinzoomen per Zwei-Finger-Geste oder Doppeltippen (iPad/iPhone) – die App ist für den Bildschirm fertig gelayoutet.
    Scrollen bleibt erlaubt; der Sitzplan-Zoom läuft weiter über seine Tasten. */
@@ -2584,7 +2594,7 @@ document.addEventListener('keydown',event=>{
 // Zoom only the seats and coordinate headings; controls remain full size.
 (()=>{
  const grid=document.getElementById('roomGrid');if(!grid)return;
- const mobileDevice=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Mac/i.test(navigator.platform)&&navigator.maxTouchPoints>1);
+ const mobileDevice=classroomDevice.mobile;
  // iPhone: ohne Spaltenbuchstaben und Reihennummern – mehr Platz für die Tische.
  const PH=matchMedia('(max-width:540px) and (orientation:portrait), (max-height:500px) and (pointer:coarse) and (orientation:landscape)'),hw=()=>PH.matches?0:35,hh=()=>PH.matches?0:45;
  let scale=1,fit=false,auto=true,rotated=false,fullBarW=0;const PLQ=matchMedia('(max-height:500px) and (orientation:landscape) and (pointer:coarse)');// auto: Desktop und iPad quer 100 %, iPad/iPhone hochkant einpassen, falls 100 % zu groß
@@ -3259,7 +3269,7 @@ document.addEventListener('keydown',event=>{
 (()=>{
  const container=document.querySelector('.container'),panel=container?.querySelector(':scope>.panel');if(!container||!panel)return;
  const key='classroom-manager-seat-sidebar-v1',duration=320;
- const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ const ios=classroomDevice.ios;
  // Aufgeklapptes iPhone Duo (kurze Seite ca. 600–700 pt) im Querformat: Leiste und Sitzplan stehen nebeneinander,
  // deshalb ist die Leiste dort standardmäßig ausgeklappt. Im Hochformat stünde sie über dem Plan und bleibt eingeklappt.
  // Eigener gespeicherter Zustand für diese Lage. iPads (ab 744 pt) bleiben unverändert.

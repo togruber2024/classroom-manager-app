@@ -1,3 +1,13 @@
+/* ==== device.js ==== */
+/* 9.10: Gemeinsame Geräteerkennung für alle Bereiche (statt verstreuter Einzelprüfungen).
+   touch(): Gerät mit Touch (iPhone, iPad, Android) – Mac und PC mit Maus: false.
+   ios: iPhone/iPad (auch iPadOS, das sich als Mac meldet). mobile: iOS oder Android. */
+(()=>{if(window.classroomDevice)return;const ua=navigator.userAgent||'',tp=navigator.maxTouchPoints||0;
+ const ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&tp>1)||(/Mac/i.test(navigator.platform||'')&&tp>1);
+ window.classroomDevice={ios,mobile:ios||/Android/i.test(ua),touch:()=>tp>0||matchMedia('(pointer:coarse)').matches};
+})();
+;
+
 /* ==== ui-dialogs.js ==== */
 /* 8.29: Kein Hineinzoomen per Zwei-Finger-Geste oder Doppeltippen (iPad/iPhone) – die App ist für den Bildschirm fertig gelayoutet.
    Scrollen bleibt erlaubt; der Sitzplan-Zoom läuft weiter über seine Tasten. */
@@ -4279,7 +4289,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function editProxy(orig,label,after,tag){
   const l=document.createElement('label');l.className='qs-edit';const s=document.createElement('span');const st=document.createElement('span');st.className='qs-edit-t';st.textContent=label;s.append(st);if(tag){const q=document.createElement('b');q.className='qs-qtag';q.textContent=tag;s.append(q)}const inp=document.createElement('input');inp.type='text';inp.value=orig.value;inp.placeholder=orig.placeholder||'—';inp.className=orig.className;inp.style.setProperty('--unstriped-color',orig.style.getPropertyValue('--unstriped-color'));inp.setAttribute('aria-label',orig.getAttribute('aria-label')||label);inp.autocomplete='off';
   inp.onchange=()=>{orig.value=inp.value;orig.dispatchEvent(new Event('input',{bubbles:true}));orig.dispatchEvent(new Event('change',{bubbles:true}));inp.value=orig.value;inp.className=orig.className;inp.style.setProperty('--unstriped-color',orig.style.getPropertyValue('--unstriped-color'));after?.();schedule()};
-  /* 8.71: iPhone – Noten über eine eigene Auswahl statt Tastatur *//* 9.01: nur mit Touch (iPhone, iPad) – am Mac mit Maus und Tastatur wird normal getippt */if(document.documentElement.classList.contains('ph-lite')&&(navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches)){inp.readOnly=true;inp.inputMode='none';inp.classList.add('qs-pick-in');inp.addEventListener('click',e=>{e.preventDefault();window.classroomGradePicker?.(inp,label)})}
+  /* 8.71: iPhone – Noten über eine eigene Auswahl statt Tastatur *//* 9.01: nur mit Touch (iPhone, iPad) – am Mac mit Maus und Tastatur wird normal getippt */if(document.documentElement.classList.contains('ph-lite')&&classroomDevice.touch()){inp.readOnly=true;inp.inputMode='none';inp.classList.add('qs-pick-in');inp.addEventListener('click',e=>{e.preventDefault();window.classroomGradePicker?.(inp,label)})}
   l.append(s,inp);return l}
  // Karte antippen → Blatt mit allen Einträgen dieser Person (‹ / › bzw. Wischen = nächste Person)
  const sheet=document.createElement('div');sheet.className='qs-detail';sheet.hidden=true;
@@ -4292,12 +4302,10 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&detail)closeDetail()});
  const step=d=>{if(!detail)return;const rows=[...(detail.panel.querySelector('table')?.tBodies[0]?.rows||[])],i=rows.findIndex(r=>r.cells[0]?.textContent.trim()===detail.name),n=rows[i+d];if(n){detail.name=n.cells[0].textContent.trim();renderDetail();sheet.querySelector('.qd-body').scrollTop=0}};
  sheet.querySelectorAll('.qd-nav').forEach(b=>b.onclick=()=>step(Number(b.dataset.d)));
- /* Wischen: waagerecht = nächste/vorige Person; nach unten (oben am Blatt oder ganz hochgescrollt) = Blatt schließen (7.95) */
+ /* Wischen: waagerecht = nächste/vorige Person (seit 9.01 kein Schließen nach unten mehr) */
  {let x0=null,y0=0,down=false,dy=0;const pnl=sheet.querySelector('.qd-panel'),body=sheet.querySelector('.qd-body');
   pnl.addEventListener('touchstart',e=>{if(e.target.closest('input'))return;x0=e.touches[0].clientX;y0=e.touches[0].clientY;dy=0;down=!body.contains(e.target)||body.scrollTop<=0;pnl.style.transition='none'},{passive:true});
-  pnl.addEventListener('touchmove',e=>{if(true||x0===null||!down)return;/* 9.01: kein Wegwischen mehr */const mx=e.touches[0].clientX-x0;dy=e.touches[0].clientY-y0;if(dy>0&&dy>Math.abs(mx)){pnl.style.transform='translateY('+dy+'px)';if(e.cancelable)e.preventDefault()}else if(dy<0){down=false;pnl.style.transform=''}},{passive:false});
   pnl.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,ddy=e.changedTouches[0].clientY-y0;x0=null;pnl.style.transition='transform .18s ease';
-   if(false&&down&&ddy>90&&ddy>Math.abs(dx)){pnl.style.transform='translateY(100%)';setTimeout(()=>{closeDetail();pnl.style.transition='none';pnl.style.transform=''},180);return}
    pnl.style.transform='';if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(ddy)*1.5)step(dx<0?1:-1)},{passive:true})}
  function openDetail(panel,name){detail={panel,name};renderDetail();sheet.hidden=false;sheet.querySelector('.qd-body').scrollTop=0}
  /* Halbjahresnote aus der Halbjahresübersicht lesen (die Seite wird dazu unsichtbar aufgebaut, höchstens alle 3 s) */
@@ -4479,7 +4487,7 @@ return}
     card.classList.toggle('q1-open',q1Open.has(name));
     const t=document.createElement('button');t.type='button';t.className='qs-q1t';const upd=()=>{const o=q1Open.has(name);t.innerHTML=(o?EYE:EYE_OFF)+'<span>1. Quartal</span>';t.setAttribute('aria-expanded',String(o));card.classList.toggle('q1-open',o)};upd();t.addEventListener('qs-sync',upd);t.onclick=e=>{e.stopPropagation();q1Open.has(name)?q1Open.delete(name):q1Open.add(name);upd()};
     const ft=document.createElement('div');ft.className='qs-ft';ft.append(t);if(edits.childElementCount)ft.append(edits);card.append(ft)}
-   else if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;if(document.documentElement.classList.contains('cm-quick')&&!(navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches))return;/* 9.02/9.04: Schnellansicht am Mac ohne Noteneingabe-Seite (iPad wie iPhone) */openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card){if(document.documentElement.classList.contains('cm-quick')&&!(navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches))card.click();else openDetail(panel,name)}};frag.append(card);
+   else if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;if(document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch())return;/* 9.02/9.04: Schnellansicht am Mac ohne Noteneingabe-Seite (iPad wie iPhone) */openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card){if(document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch())card.click();else openDetail(panel,name)}};frag.append(card);
   }
   box.replaceChildren(frag);fixUnstriped(box);/* Schraffur „Aus“ sofort anwenden, nicht erst über den Beobachter (8.15) */window.classroomUnstripe?.(box);
   if(detail?.panel===panel&&!sheet.hidden&&!sheet.contains(document.activeElement))renderDetail();
@@ -4816,7 +4824,7 @@ return}
   if(hs.dataset.sig!==sig){hs.dataset.sig=sig;hs.replaceChildren(...ys.map(y=>{const b=document.createElement('button');b.type='button';b.dataset.half=y.id;b.textContent=y.label||'Halbjahr';b.setAttribute('aria-pressed',String(y.id===currentHalfYearId));return b}));hs.hidden=ys.length<2}
   bar.dataset.sel=String(sel);syncHatch(bar);syncQ1(bar);syncMean(bar);
   const y=ys.find(g=>g.id===currentHalfYearId),name=typeof classroomQuarterPeriodName==='function'&&y?classroomQuarterPeriodName(y,sel):(sel+1)+'. Quartal';
-  /* 8.15: oben „1. Halbjahr · 2. Quartal“, der Hinweis bleibt direkt über den Karten */const hy=y?.label||'';bar.querySelector('.pl-head').textContent=sel>=1&&window.classroomCardsHalf?.on()?(hy||'Halbjahr'):(hy?hy+' · ':'')+name;bar.querySelector('.pl-stand').textContent=document.documentElement.classList.contains('cm-quick')&&!(navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches)?'Klicken klappt die Karte auf oder zu':'Antippen zeigt alle Einträge'/* 9.06: am Mac passender Hinweis */;{let h=bar.querySelector('.q1open');const st=sel===0?q1Transition():null;if(st){if(!h){h=document.createElement('div');h.className='q1open';h.innerHTML='<span class="q1o-t"><b>Q1 offen</b><small></small></span><button type="button">Zu Q2 ›</button>';h.title='Q1-Quartalsnoten noch nicht für alle eingetragen';h.querySelector('button').onclick=()=>{try{localStorage.setItem(skipKey(),'1')}catch{}h.remove();done.clear();tries=0;schedule()};bar.querySelector('.pl-head').after(h)}h.querySelector('small').textContent=st.done+'/'+st.total}else h?.remove()}arrange(bar,sel<1);
+  /* 8.15: oben „1. Halbjahr · 2. Quartal“, der Hinweis bleibt direkt über den Karten */const hy=y?.label||'';bar.querySelector('.pl-head').textContent=sel>=1&&window.classroomCardsHalf?.on()?(hy||'Halbjahr'):(hy?hy+' · ':'')+name;bar.querySelector('.pl-stand').textContent=document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch()?'Klicken klappt die Karte auf oder zu':'Antippen zeigt alle Einträge'/* 9.06: am Mac passender Hinweis */;{let h=bar.querySelector('.q1open');const st=sel===0?q1Transition():null;if(st){if(!h){h=document.createElement('div');h.className='q1open';h.innerHTML='<span class="q1o-t"><b>Q1 offen</b><small></small></span><button type="button">Zu Q2 ›</button>';h.title='Q1-Quartalsnoten noch nicht für alle eingetragen';h.querySelector('button').onclick=()=>{try{localStorage.setItem(skipKey(),'1')}catch{}h.remove();done.clear();tries=0;schedule()};bar.querySelector('.pl-head').after(h)}h.querySelector('small').textContent=st.done+'/'+st.total}else h?.remove()}arrange(bar,sel<1);
   sortCards(panel);flags(panel);
  }
  /* 8.01: Hinweise über den Karten – antippen filtert die Karten, nochmal antippen zeigt wieder alle */
@@ -4861,7 +4869,7 @@ return}
 })();
 
 /* 8.69: Karten verkleinern – runder Knopf neben „1. Quartal“. Klein: Name, Noten und eine Zeile „Mitarbeit · HA · KA“; Antippen klappt einzelne Karten auf. */
-(()=>{const KEY='classroom-cards-folded-v1';let on=false;try{on=localStorage.getItem(KEY)==='1'}catch{}const open=new Set(),closed=new Set();/* 9.02: Schnellansicht (Mac/iPad) – einzelne Karten auch ohne „Verkleinern“ zuklappen */const quick=()=>document.documentElement.classList.contains('cm-quick')&&!(navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches);/* 9.04: nur am Mac (ohne Touch) – am iPad öffnet ein Tipp die Noteneingabe wie am iPhone */
+(()=>{const KEY='classroom-cards-folded-v1';let on=false;try{on=localStorage.getItem(KEY)==='1'}catch{}const open=new Set(),closed=new Set();/* 9.02: Schnellansicht (Mac/iPad) – einzelne Karten auch ohne „Verkleinern“ zuklappen */const quick=()=>document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch();/* 9.04: nur am Mac (ohne Touch) – am iPad öffnet ein Tipp die Noteneingabe wie am iPhone */
  const short={'Sonstige Mitarbeit':'Mitarbeit','Klassenarbeit':'KA','Klassenarbeiten':'KA','Klausur':'Klausur','Klausuren':'Klausur','Tests':'Tests','Test':'Tests'};
  const nameOf=c=>c.querySelector('.qs-name')?.textContent.trim()||'';
  const cards=()=>[...document.querySelectorAll('.qs-cards>.qs-card:not(.qd-card)')];

@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 07.11.2026 · Version 9.09
+Stand: 07.11.2026 · Version 9.10
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1186,3 +1186,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.07: Schalter ☰ ☑ ⇄ – Klick auf den aktiven Knopf blendet die Spalte aus (auch bei Noten), ⇄ bei ausgeblendeter Spalte ausgegraut
 9.08: Spalte rechts – ⇄ im Schalter auf der Seite des Klassenraums (⇄ ☰ ☑)
 9.09: Fehler behoben – „Bewertungen“ am iPad doppelt (Leiste und „Mehr“); „Bewertungen“ wandert als Letztes ins Menü
+9.10: Aufräumen (Paket 1, ohne sichtbare Änderung) – gemeinsame Geräteerkennung device.js, totes Wisch-Code entfernt (Hilfe, Aktuell, Noteneingabe), überholte iPhone-Stilregeln 8.84/8.96 entfernt
