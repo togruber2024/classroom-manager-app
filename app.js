@@ -1505,7 +1505,10 @@ window.addEventListener('message',event=>{
   head=document.createElement('button');head.type='button';head.className='bk-head';head.setAttribute('aria-expanded','false');head.innerHTML='<span class="bk-chev" aria-hidden="true">›</span><span class="bk-title">Verschlüsselung</span><span class="bk-status"></span>';
   body=document.createElement('div');body.className='bk-body';body.hidden=true;
   body.innerHTML='<label class="bc-switch"><input type="checkbox"> <span>Backups verschlüsseln</span></label><p class="bc-help">Backup-Dateien (auch die automatische Sicherung) sind nur mit Touch ID oder deinem Notfall-Passwort lesbar. Auf deinen Geräten mit demselben iCloud-Schlüsselbund reicht Touch ID. Excel-Dateien lassen sich nicht verschlüsseln.</p><div class="bc-info"></div><p class="bc-warn">Notfall-Passwort gut aufbewahren: Ohne Touch ID und ohne dieses Passwort lässt sich ein verschlüsseltes Backup nicht mehr öffnen.</p>';
-  sec.append(head,body);acc.prepend(sec);box=body.querySelector('input');info=body.querySelector('.bc-info');
+  sec.append(head,body);acc.prepend(sec);
+  /* 8.92: Reihenfolge: Speicherort · Automatische Sicherung · Verschlüsselung · Speicher · Daten prüfen */
+  for(const id of ['loc','auto','crypt','store','check']){const x=acc.querySelector(':scope>[data-section="'+id+'"]');if(x)acc.append(x)}
+  for(const x of acc.querySelectorAll(':scope>.bk-sec:not([data-section])'))acc.append(x);box=body.querySelector('input');info=body.querySelector('.bc-info');
   head.onclick=()=>{const openNow=body.hidden;for(const s of acc.querySelectorAll('.bk-sec')){const b=s.querySelector('.bk-body'),h=s.querySelector('.bk-head');if(b){b.hidden=true;h?.setAttribute('aria-expanded','false')}}body.hidden=!openNow;head.setAttribute('aria-expanded',String(openNow))};
   acc.addEventListener('click',e=>{const h=e.target.closest('.bk-head');if(h&&h!==head){body.hidden=true;head.setAttribute('aria-expanded','false')}},true);
   box.onchange=async()=>{if(box.checked){box.disabled=true;try{if(!await setup())box.checked=false}catch(e){box.checked=false;await (window.classroomAlert||alert)('Verschlüsselung konnte nicht eingerichtet werden: '+e.message)}finally{box.disabled=false;sync()}}else{await save({...(cache||{}),on:false})}};
