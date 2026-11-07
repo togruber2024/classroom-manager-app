@@ -2847,8 +2847,7 @@ document.addEventListener('keydown',event=>{
 
 /* ==== sitzplan/date-nav.js ==== */
 /* Datum im Unterrichts-Manager (Mac/iPad, linke Spalte) – Vorschlag B (8.99):
-   [ 06.11.2026  📅 ] [ ‹ | › ]
-   Fr · 3. Stunde · Raum 121 · Heute ›
+   [ 06.11.2026  📅 ] [ ‹ | ◉ | › ]   (◉ = zurück zu heute; Stunde und Raum stehen im Tooltip des Feldes)
    ‹ / › springen zur vorigen bzw. nächsten Stunde, in der Unterricht stattgefunden hat (Einträge im Unterricht/Noten-Manager
    oder gespeicherter Sitzplan), › zuletzt zurück zu heute. Der eigene Kalender markiert gehaltene Stunden (hellblau gefüllt)
    und kommende Stunden laut Stundenplan (gestrichelt). Das versteckte <input type=date> bleibt die Quelle für alle anderen Module. */
@@ -2875,11 +2874,11 @@ document.addEventListener('keydown',event=>{
   for(const [ctx,days] of Object.entries(dated))if(ctx===aktuelleKlasse||ctx.startsWith(aktuelleKlasse+'::'))for(const [d,versions] of Object.entries(days||{}))if(Array.isArray(versions)&&versions.some(v=>(v.grid||[]).flat().some(x=>x&&x!=='X'&&x!=='PULT')))out.add(d);
   return out;
  }
- function lessonsOn(date){// Stunden laut Stundenplan an diesem Tag
-  const tt=read('notenrechner-stundenplan-v1'),r=new Set(refs()),w=parse(date).getDay();if(!tt?.days?.[w]||!r.size)return [];
-  return Object.entries(tt.days[w]).filter(([,e])=>e&&r.has(e.ref)).map(([slot,e])=>({slot:Number(slot),room:e.room||''})).sort((a,b)=>a.slot-b.slot);
+ function lessonsOn(date){// Stunden laut Stundenplan an diesem Tag (mit A-/B-Wochen und erkannten Stunden aus dem Hauptfenster)
+  const r=new Set(refs()),w=parse(date).getDay();if(!r.size)return [];
+  let tt=null;try{tt=parent.classroomTimetableFor?.(parse(date))}catch{}tt??=read('notenrechner-stundenplan-v1');
+  return Object.entries(tt?.days?.[w]||{}).filter(([,e])=>e&&!e.ab&&r.has(e.ref)).map(([slot,e])=>({slot:Number(slot),room:e.room||''})).sort((a,b)=>a.slot-b.slot);
  }
- const plannedWeekdays=()=>{const tt=read('notenrechner-stundenplan-v1'),r=new Set(refs()),w=new Set();for(const [d,slots] of Object.entries(tt?.days||{}))for(const e of Object.values(slots||{}))if(e&&r.has(e.ref))w.add(Number(d));return w};
 
  // ---------- Oberfläche ----------
  const st=document.createElement('style');st.textContent=`
@@ -2891,7 +2890,7 @@ document.addEventListener('keydown',event=>{
  .cd-seg{display:flex;flex:none;border:1px solid #d5deea;border-radius:12px;overflow:hidden;background:#fff}
  .cd-seg button{width:40px;height:40px;border:0;background:#fff;color:#2f5f9b;font:inherit;font-size:20px;line-height:1;cursor:pointer;padding:0}
  .cd-seg button+button{border-left:1px solid #d5deea}.cd-seg button:disabled{color:#b8c3d2;cursor:default}.cd-seg button:not(:disabled):hover{background:#f2f6fc}
- .cd-hint{font-size:12.5px;color:#5b6b82;line-height:1.35;min-height:17px}.cd-hint button{border:0;background:none;padding:0;font:inherit;color:#2f5f9b;cursor:pointer}
+ .cd-seg .cd-today{width:36px;display:flex;align-items:center;justify-content:center}.cd-today i{width:14px;height:14px;border-radius:50%;border:2px solid currentColor;position:relative;box-sizing:border-box}.cd-today i:after{content:"";position:absolute;inset:2px;border-radius:50%;background:currentColor}
  .cd-pop{position:absolute;z-index:60;left:0;top:calc(100% + 6px);width:min(300px,calc(100vw - 24px));background:#fff;border:1px solid #dfe6ef;border-radius:14px;padding:12px;box-shadow:0 12px 28px rgba(30,50,80,.16)}
  .cd-pop[hidden]{display:none}
  .cd-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-weight:700;font-size:14px}
@@ -2911,10 +2910,9 @@ document.addEventListener('keydown',event=>{
  document.head.append(st);
  input.classList.add('cd-native');
  const row=document.createElement('div');row.className='cd-row';
- row.innerHTML='<button type="button" class="cd-field" aria-haspopup="dialog" aria-expanded="false" title="Datum wählen – markiert sind die Tage mit Unterricht"><span class="cd-text"></span><i class="cd-ic" aria-hidden="true"></i></button><div class="cd-seg" role="group" aria-label="Zwischen Unterrichtsstunden wechseln"><button type="button" class="cd-prev" title="Vorige Stunde mit Unterricht" aria-label="Vorige Stunde">‹</button><button type="button" class="cd-next" title="Nächste Stunde mit Unterricht (zuletzt heute)" aria-label="Nächste Stunde">›</button></div><div class="cd-pop" role="dialog" aria-label="Kalender" hidden></div>';
- const hint=document.createElement('div');hint.className='cd-hint';hint.setAttribute('aria-live','polite');
- input.after(row,hint);
- const field=row.querySelector('.cd-field'),text=row.querySelector('.cd-text'),prev=row.querySelector('.cd-prev'),next=row.querySelector('.cd-next'),pop=row.querySelector('.cd-pop');
+ row.innerHTML='<button type="button" class="cd-field" aria-haspopup="dialog" aria-expanded="false" title="Datum wählen – markiert sind die Tage mit Unterricht"><span class="cd-text"></span><i class="cd-ic" aria-hidden="true"></i></button><div class="cd-seg" role="group" aria-label="Zwischen Unterrichtsstunden wechseln"><button type="button" class="cd-prev" title="Vorige Stunde mit Unterricht" aria-label="Vorige Stunde">‹</button><button type="button" class="cd-today" title="Zurück zu heute" aria-label="Heute"><i aria-hidden="true"></i></button><button type="button" class="cd-next" title="Nächste Stunde mit Unterricht (zuletzt heute)" aria-label="Nächste Stunde">›</button></div><div class="cd-pop" role="dialog" aria-label="Kalender" hidden></div>';
+ input.after(row);
+ const field=row.querySelector('.cd-field'),text=row.querySelector('.cd-text'),prev=row.querySelector('.cd-prev'),todayBtn=row.querySelector('.cd-today'),next=row.querySelector('.cd-next'),pop=row.querySelector('.cd-pop');
  let month=null,cache=null;
  const held=()=>cache||(cache=heldDates());
  function setDate(d){if(!d||d===input.value)return;input.value=d;input.dispatchEvent(new Event('change',{bubbles:true}))}
@@ -2923,19 +2921,17 @@ document.addEventListener('keydown',event=>{
   cache=null;const v=input.value||today(),d=parse(v);
   text.textContent=fmt(v);
   const list=stops();prev.disabled=!list.some(x=>x<v);next.disabled=!list.some(x=>x>v);
-  const lessons=lessonsOn(v),parts=[DAYS[d.getDay()]];
-  if(lessons.length){const a=lessons[0].slot+1,b=lessons.at(-1).slot+1;parts.push(a===b?a+'. Stunde':a+'.–'+b+'. Stunde');if(lessons[0].room)parts.push(lessons[0].room)}
-  hint.textContent=parts.join(' · ');
-  if(v!==today()){const t=document.createElement('button');t.type='button';t.textContent='Heute ›';t.onclick=()=>setDate(today());hint.append(' · ',t)}
+  todayBtn.disabled=v===today();
+  const lessons=lessonsOn(v);field.title=DAYS[d.getDay()]+(lessons.length?' · '+(lessons[0].slot+1===lessons.at(-1).slot+1?(lessons[0].slot+1)+'. Stunde':(lessons[0].slot+1)+'.–'+(lessons.at(-1).slot+1)+'. Stunde')+(lessons[0].room?' · '+lessons[0].room:''):'')+' – Datum wählen';
   if(!pop.hidden)drawMonth();
  }
  function drawMonth(){
-  const v=input.value||today(),h=held(),plan=plannedWeekdays(),t=today();month??=v.slice(0,7);
+  const v=input.value||today(),h=held(),t=today();month??=v.slice(0,7);
   const [y,m]=month.split('-').map(Number),first=new Date(y,m-1,1),lead=(first.getDay()+6)%7,start=new Date(y,m-1,1-lead);
   let html='<div class="cd-head"><button type="button" data-step="-1" aria-label="Voriger Monat">‹</button><span>'+MONTHS[m-1]+' '+y+'</span><button type="button" data-step="1" aria-label="Nächster Monat">›</button></div><div class="cd-grid">'+['Mo','Di','Mi','Do','Fr','Sa','So'].map(x=>'<div class="cd-dow">'+x+'</div>').join('');
   const weeks=Math.ceil((lead+new Date(y,m,0).getDate())/7);
   for(let i=0;i<weeks*7;i++){const day=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i),k=iso(day),c=['cd-day'];
-   if(day.getMonth()!==m-1)c.push('other');if(h.has(k))c.push('held');else if(k>=t&&plan.has(day.getDay()))c.push('plan');if(k===t)c.push('today');if(k===v)c.push('sel');
+   if(day.getMonth()!==m-1)c.push('other');if(h.has(k))c.push('held');else if(k>=t&&lessonsOn(k).length)c.push('plan');if(k===t)c.push('today');if(k===v)c.push('sel');
    html+='<button type="button" class="'+c.join(' ')+'" data-date="'+k+'" aria-label="'+DAYS[day.getDay()]+' '+fmt(k)+(h.has(k)?', Unterricht gehalten':'')+'"><span>'+day.getDate()+'</span></button>'}
   html+='</div><div class="cd-legend"><span><i class="l-held"></i>Unterricht gehalten</span><span><i class="l-plan"></i>laut Stundenplan</span></div>';
   pop.innerHTML=html;
@@ -2947,6 +2943,7 @@ document.addEventListener('keydown',event=>{
   const day=e.target.closest('[data-date]');if(day){setDate(day.dataset.date);close()}});
  document.addEventListener('pointerdown',e=>{if(!pop.hidden&&!row.contains(e.target))close()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pop.hidden){close();field.focus()}});
+ todayBtn.onclick=()=>setDate(today());
  prev.onclick=()=>{const v=input.value||today(),l=stops().filter(x=>x<v);if(l.length)setDate(l.at(-1))};
  next.onclick=()=>{const v=input.value||today(),l=stops().filter(x=>x>v);if(l.length)setDate(l[0])};
  // Anzeige bei jeder Änderung – auch wenn andere Module den Wert direkt setzen (z. B. „Aktuell“).
