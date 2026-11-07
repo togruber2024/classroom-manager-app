@@ -3168,6 +3168,8 @@ document.addEventListener('keydown',event=>{
   try{parent.classroomQuickLayout?.()}catch{}setTimeout(()=>{try{parent.classroomQuickLayout?.()}catch{}sync()},380);sync()});
  new MutationObserver(sync).observe(tog,{attributes:true,attributeFilter:['aria-expanded']});setInterval(sync,1000);sync();
  const st=document.createElement('style');st.textContent='.classroom-plan-zoom>.classroom-sidebar-toggle,.classroom-plan-zoom>.plan-quick-notes{display:none!important}.plan-col-pair{display:inline-flex;flex:none;border:1px solid #dce3ef;border-radius:12px;overflow:hidden;background:#fff}.plan-col-pair button{width:46px;height:42px;min-height:0;padding:0;margin:0;border:0!important;border-radius:0!important;background:#fff!important;color:#2f5f9b;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:none!important}.plan-col-pair button+button{border-left:1px solid #dce3ef!important}.plan-col-pair button[aria-pressed=true]{background:#eaf0fa!important}html.ph-lite .plan-col-pair,.classroom-beamer .plan-col-pair{display:none!important}';document.head.append(st)})();
+/* 8.94: Abstand zwischen linker Spalte und Klassenraum = Abstand zur Navigationsleiste darüber (10 px) */
+(()=>{const st=document.createElement('style');st.textContent='html:not(.ph-lite) body[data-module=sitzplan] .container:not(#_){column-gap:10px}';document.head.append(st)})();
 ;
 
 /* ==== sitzplan/beamer-mode.js ==== */
