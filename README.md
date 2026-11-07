@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 08.11.2026 · Version 9.29
+Stand: 08.11.2026 · Version 9.30
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1206,3 +1206,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.27: Vierfachschalter entfernt (wieder „Zeichen | Noten“) – behebt eine Endlosschleife, durch die „1. Quartal“ und der Dreifachschalter nicht reagierten; „Aus“ nach „Rahmen“ wirkt wieder; Mittelwert-Köpfe (Bezeichnung 1/3, Schalter 2/3), Schalter in der Vergleichsspalte 1. Quartal; „＋ Termin“ als großer Kasten
 9.28: iPhone quer – Datum, ‹ ◉ › und Perspektive hinter Knopf „⋯“, Tische volle Breite; Noten-Spalte bleibt bei offenem Fenster (z. B. Zufallsgruppen) eingefroren stehen
 9.29: Stift in den Spaltenköpfen aufrecht (Spitze unten links); Mündliche Mitarbeit ohne Schalter „Zeichen | Noten“ (immer Zeichen)
+9.30: „Ergebnisse“ und A4-Druck folgen dem Dreifachschalter (Aus | Rahmen | Schraffur)

@@ -4268,7 +4268,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const mean=done.length?done.reduce((a,r)=>a+r.r,0)/done.length:null,withP=c.rows.filter(r=>r.p!==null),meanP=withP.length?withP.reduce((a,r)=>a+r.p,0)/withP.length:null;
   const passed=done.filter(r=>pts?Math.floor(r.r+0.5)>=5:Math.max(1,Math.min(6,Math.ceil(r.r-0.5-1e-10)))<=4).length;
   const iso=c.group.examDate||c.dateInput||'',date=/^\d{4}-\d\d-\d\d$/.test(iso)?iso.split('-').reverse().join('.'):'';
-  const ov=TOP.createElement('div');ov.className='cm-ro';ov.setAttribute('role','dialog');ov.setAttribute('aria-label','Ergebnisse');
+  const ov=TOP.createElement('div');ov.className='cm-ro';/* 9.30: Darstellung wie im Dreifachschalter (Aus | Rahmen | Schraffur) */{const h=document.documentElement.classList;if(h.contains('hatch-frame'))ov.classList.add('hatch-frame');if(h.contains('hatching-off'))ov.classList.add('hatching-off')}ov.setAttribute('role','dialog');ov.setAttribute('aria-label','Ergebnisse');
   ov.innerHTML=`<div class="cm-ro-box"><div class="cm-ro-hd"><div><h1>${esc(c.group.label||c.heading||'Klassenarbeit')} · ${esc(c.cls)}</h1><small>${[c.topic,date,c.hasP&&c.maxP?'max. '+fmt(c.maxP)+' Punkte':''].filter(Boolean).map(esc).join(' · ')}</small></div><button type="button" class="cm-ro-x">Schließen</button></div>
    <div class="cm-ro-kpi">${mean!==null?`<span>Ø ${pts?'Notenpunkte':'Note'} <b>${fmt(mean,pts?1:2)}</b></span>`:''}${meanP!==null?`<span>Ø Punkte <b>${fmt(meanP,1)}</b></span>`:''}<span>${c.rows.length} Schüler:innen</span>${done.length?`<span>Bestanden <b>${passed}/${done.length}</b></span>`:''}</div>
    <div class="cm-ro-grid"></div></div>`;
@@ -4297,9 +4297,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  // Stile im Hauptfenster (die Übersicht liegt über der ganzen App)
  if(!TOP.getElementById('cm-ro-style')){const st=TOP.createElement('style');st.id='cm-ro-style';
   // Notenfarben aus der Noten-Seite übernehmen
-  let gradeCss='';try{for(const sh of document.styleSheets){let rules;try{rules=sh.cssRules}catch{continue}for(const r of rules||[])if(r.selectorText&&/\.task-end-grade|\.g[0-9]|grade-|hatch|tendency|participation-(between|lean)/.test(r.selectorText)&&!/:hover|input/.test(r.selectorText))gradeCss+=r.cssText.replace(/body\[data-module(="?noten"?)?\]\s*/g,'')+'\n'}}catch{}
+  let gradeCss='';try{for(const sh of document.styleSheets){let rules;try{rules=sh.cssRules}catch{continue}for(const r of rules||[])if(r.selectorText&&/\.task-end-grade|\.g[0-9]|grade-|hatch|tendency|participation-(between|lean)/.test(r.selectorText)&&!/:hover|input/.test(r.selectorText))gradeCss+=r.cssText.replace(/html\.(hatch-frame|hatching-off)\s+body(\[[^\]]*\])?\s*/g,'.cm-ro.$1 ').replace(/html\.(hatch-frame|hatching-off)\s+/g,'.cm-ro.$1 ').replace(/body\[data-module(="?noten"?)?\]\s*/g,'')+'\n'}}catch{}
   st.textContent=gradeCss+`
- .cm-ro{position:fixed;inset:0;z-index:99990;background:rgba(28,43,70,.38);display:flex;align-items:stretch;justify-content:center;padding:14px;font-family:inherit}
+ .cm-ro.hatching-off .task-end-grade:not(.grade-four-fail){background-image:none!important}.cm-ro{position:fixed;inset:0;z-index:99990;background:rgba(28,43,70,.38);display:flex;align-items:stretch;justify-content:center;padding:14px;font-family:inherit}
  .cm-ro-box{flex:1;max-width:1600px;background:#fff;border-radius:18px;box-shadow:0 20px 50px rgba(20,35,60,.25);padding:22px 26px 18px;display:flex;flex-direction:column;min-height:0;color:#1f2a3d}
  .cm-ro-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}.cm-ro-hd h1{margin:0;font-size:24px;line-height:1.2}.cm-ro-hd small{display:block;color:#5b6b82;font-size:14px;margin-top:4px}
  .cm-ro-x{flex:none;height:40px;padding:0 16px;border:1px solid #d5deea;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:14.4px;cursor:pointer}
@@ -4409,6 +4409,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .ep-bar i{display:block;width:62%;min-width:0;padding:0;border-radius:4px 4px 0 0;border:0;box-shadow:none}.ep-ns.p .ep-bar i{width:72%}
  .ep-note{min-height:64px;margin-top:4px}.ep-sig{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:30px}.ep-sig div{border-top:1px solid #8a97a9;padding-top:4px;font-size:10px;color:#5b6b82}
  .ep-foot{position:absolute;left:0;right:0;bottom:0;font-size:9px;color:#8a97a9}
+ html.hatching-off .ep .task-end-grade:not(.grade-four-fail){background-image:none!important}
  .ep-small td{height:18px;font-size:10.2px}.ep-small .ep-chip{height:15px;font-size:9.5px}`;
 
  function print(){
