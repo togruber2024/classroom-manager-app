@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 07.11.2026 · Version 8.98
+Stand: 07.11.2026 · Version 8.99
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1175,3 +1175,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.96: iPhone hochkant – Unterrichtsfenster wie die Noten-Karte (6 px Rand, füllt die Höhe), Stundenplan und Hilfe mit 6 px Abstand links/rechts
 8.97: Fiktive Beispielklassen mit passenden Sitzordnungen (Reihen, Gruppentische, U-Form, Doppel-U); doppelte alte Sitzplan-Beispiele 7a/9b ausgeblendet
 8.98: Testseite – Dreifachschalter (Aus | Rahmen | Schraffur) in der Zeile „Ergebnisse“ links neben „Drucken“, „Zurückgegeben“ oben ganz rechts
+8.99: Unterrichts-Manager – Datum mit Pfeilen zur vorigen/nächsten gehaltenen Stunde, eigener Kalender mit markierten Unterrichtstagen, Stunde und Raum unter dem Datum; „Verteilen“ direkt neben „Mehr“

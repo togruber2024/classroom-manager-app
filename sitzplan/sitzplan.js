@@ -2845,6 +2845,121 @@ document.addEventListener('keydown',event=>{
 })();
 ;
 
+/* ==== sitzplan/date-nav.js ==== */
+/* Datum im Unterrichts-Manager (Mac/iPad, linke Spalte) – Vorschlag B (8.99):
+   [ 06.11.2026  📅 ] [ ‹ | › ]
+   Fr · 3. Stunde · Raum 121 · Heute ›
+   ‹ / › springen zur vorigen bzw. nächsten Stunde, in der Unterricht stattgefunden hat (Einträge im Unterricht/Noten-Manager
+   oder gespeicherter Sitzplan), › zuletzt zurück zu heute. Der eigene Kalender markiert gehaltene Stunden (hellblau gefüllt)
+   und kommende Stunden laut Stundenplan (gestrichelt). Das versteckte <input type=date> bleibt die Quelle für alle anderen Module. */
+(()=>{
+ const input=window.classroomDateInput;const label=input?.closest('.classroom-date-only');if(!input||!label)return;
+ const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+ const today=()=>iso(new Date()),parse=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+ const DAYS=['So','Mo','Di','Mi','Do','Fr','Sa'],MONTHS=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+ const fmt=s=>s?s.split('-').reverse().join('.'):'';
+ const read=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch{return null}};
+
+ // Noten-Manager-Klassen (subject::classId) zur aktuellen Sitzplan-Klasse
+ function refs(){
+  const g=typeof classroomCurrentGroup==='function'?classroomCurrentGroup():null,sc=(typeof classroomLinkedModel!=='undefined'&&classroomLinkedModel?.sourceClasses)||read('classroom-manager-common-v2')?.sourceClasses||{};
+  return g?Object.keys(sc).filter(k=>sc[k]===g.id):[];
+ }
+ function heldDates(){
+  const out=new Set(),states=read('notenrechner-fachwahl-states-v1')||{};
+  for(const ref of refs()){const [subject,cls]=ref.split('::');const cv=states[subject+'::class::'+cls]?.customValues||{};
+   for(const page of Object.values(cv)){const list=[...(page?.tasks||[]),...(page?.assignments||[])];if(!list.length||!Array.isArray(page.students))continue;
+    for(const t of list){if(!/^\d{4}-\d{2}-\d{2}$/.test(t?.date||'')||out.has(t.date))continue;
+     if(page.students.some(s=>{const g=s.grades?.[t.id],st=s.statuses?.[t.id];return (g!==undefined&&g!==null&&g!=='')||!!st}))out.add(t.date)}}}
+  const dated=read('sitzplan_dated_layouts_v1')||{};
+  for(const [ctx,days] of Object.entries(dated))if(ctx===aktuelleKlasse||ctx.startsWith(aktuelleKlasse+'::'))for(const [d,versions] of Object.entries(days||{}))if(Array.isArray(versions)&&versions.some(v=>(v.grid||[]).flat().some(x=>x&&x!=='X'&&x!=='PULT')))out.add(d);
+  return out;
+ }
+ function lessonsOn(date){// Stunden laut Stundenplan an diesem Tag
+  const tt=read('notenrechner-stundenplan-v1'),r=new Set(refs()),w=parse(date).getDay();if(!tt?.days?.[w]||!r.size)return [];
+  return Object.entries(tt.days[w]).filter(([,e])=>e&&r.has(e.ref)).map(([slot,e])=>({slot:Number(slot),room:e.room||''})).sort((a,b)=>a.slot-b.slot);
+ }
+ const plannedWeekdays=()=>{const tt=read('notenrechner-stundenplan-v1'),r=new Set(refs()),w=new Set();for(const [d,slots] of Object.entries(tt?.days||{}))for(const e of Object.values(slots||{}))if(e&&r.has(e.ref))w.add(Number(d));return w};
+
+ // ---------- Oberfläche ----------
+ const st=document.createElement('style');st.textContent=`
+ .classroom-date-only>input[type=date].cd-native{display:none!important}
+ .classroom-date-only>.cd-row{display:flex;gap:8px;align-items:stretch;position:relative;align-self:stretch;width:100%}
+ .cd-field{flex:1;min-width:0;height:42px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 12px;border:1px solid #d5deea;border-radius:12px;background:#fff;font:inherit;font-size:15px;color:#1f2a3d;cursor:pointer;text-align:left}
+ .cd-field:focus-visible,.cd-field[aria-expanded=true]{outline:none;border-color:#2f6fd6;box-shadow:0 0 0 3px #d9e7fb}
+ .cd-ic{width:16px;height:16px;flex:none;border:2px solid currentColor;border-radius:3px;position:relative;opacity:.8}.cd-ic:before{content:"";position:absolute;left:-2px;right:-2px;top:2px;border-top:2px solid currentColor}
+ .cd-seg{display:flex;flex:none;border:1px solid #d5deea;border-radius:12px;overflow:hidden;background:#fff}
+ .cd-seg button{width:40px;height:40px;border:0;background:#fff;color:#2f5f9b;font:inherit;font-size:20px;line-height:1;cursor:pointer;padding:0}
+ .cd-seg button+button{border-left:1px solid #d5deea}.cd-seg button:disabled{color:#b8c3d2;cursor:default}.cd-seg button:not(:disabled):hover{background:#f2f6fc}
+ .cd-hint{font-size:12.5px;color:#5b6b82;line-height:1.35;min-height:17px}.cd-hint button{border:0;background:none;padding:0;font:inherit;color:#2f5f9b;cursor:pointer}
+ .cd-pop{position:absolute;z-index:60;left:0;top:calc(100% + 6px);width:min(300px,calc(100vw - 24px));background:#fff;border:1px solid #dfe6ef;border-radius:14px;padding:12px;box-shadow:0 12px 28px rgba(30,50,80,.16)}
+ .cd-pop[hidden]{display:none}
+ .cd-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-weight:700;font-size:14px}
+ .cd-head button{border:0;background:none;color:#2f5f9b;font-size:18px;width:30px;height:30px;border-radius:8px;cursor:pointer}.cd-head button:hover{background:#f2f6fc}
+ .cd-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+ .cd-dow{font-size:11px;color:#8090a6;padding:2px 0 4px}
+ .cd-day{height:34px;display:flex;align-items:center;justify-content:center;border:0;background:none;padding:0;cursor:pointer;font:inherit;font-size:13px;color:#1f2a3d}
+ .cd-day span{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;box-sizing:border-box}
+ .cd-day:hover span{background:#f2f6fc}
+ .cd-day.held span{background:#d9e7fb;color:#1d4f9a;font-weight:700}
+ .cd-day.plan span{border:1.5px dashed #b9cbe6}
+ .cd-day.today span{box-shadow:inset 0 0 0 1.5px #f0a03a}
+ .cd-day.sel span{background:#2f6fd6;color:#fff;font-weight:700}
+ .cd-day.other{color:#b8c3d2}
+ .cd-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#5b6b82;margin-top:8px}.cd-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+ .cd-legend .l-held{background:#d9e7fb}.cd-legend .l-plan{border:1.5px dashed #b9cbe6;box-sizing:border-box}`;
+ document.head.append(st);
+ input.classList.add('cd-native');
+ const row=document.createElement('div');row.className='cd-row';
+ row.innerHTML='<button type="button" class="cd-field" aria-haspopup="dialog" aria-expanded="false" title="Datum wählen – markiert sind die Tage mit Unterricht"><span class="cd-text"></span><i class="cd-ic" aria-hidden="true"></i></button><div class="cd-seg" role="group" aria-label="Zwischen Unterrichtsstunden wechseln"><button type="button" class="cd-prev" title="Vorige Stunde mit Unterricht" aria-label="Vorige Stunde">‹</button><button type="button" class="cd-next" title="Nächste Stunde mit Unterricht (zuletzt heute)" aria-label="Nächste Stunde">›</button></div><div class="cd-pop" role="dialog" aria-label="Kalender" hidden></div>';
+ const hint=document.createElement('div');hint.className='cd-hint';hint.setAttribute('aria-live','polite');
+ input.after(row,hint);
+ const field=row.querySelector('.cd-field'),text=row.querySelector('.cd-text'),prev=row.querySelector('.cd-prev'),next=row.querySelector('.cd-next'),pop=row.querySelector('.cd-pop');
+ let month=null,cache=null;
+ const held=()=>cache||(cache=heldDates());
+ function setDate(d){if(!d||d===input.value)return;input.value=d;input.dispatchEvent(new Event('change',{bubbles:true}))}
+ function stops(){const s=new Set(held());s.add(today());return [...s].sort()}
+ function render(){
+  cache=null;const v=input.value||today(),d=parse(v);
+  text.textContent=fmt(v);
+  const list=stops();prev.disabled=!list.some(x=>x<v);next.disabled=!list.some(x=>x>v);
+  const lessons=lessonsOn(v),parts=[DAYS[d.getDay()]];
+  if(lessons.length){const a=lessons[0].slot+1,b=lessons.at(-1).slot+1;parts.push(a===b?a+'. Stunde':a+'.–'+b+'. Stunde');if(lessons[0].room)parts.push(lessons[0].room)}
+  hint.textContent=parts.join(' · ');
+  if(v!==today()){const t=document.createElement('button');t.type='button';t.textContent='Heute ›';t.onclick=()=>setDate(today());hint.append(' · ',t)}
+  if(!pop.hidden)drawMonth();
+ }
+ function drawMonth(){
+  const v=input.value||today(),h=held(),plan=plannedWeekdays(),t=today();month??=v.slice(0,7);
+  const [y,m]=month.split('-').map(Number),first=new Date(y,m-1,1),lead=(first.getDay()+6)%7,start=new Date(y,m-1,1-lead);
+  let html='<div class="cd-head"><button type="button" data-step="-1" aria-label="Voriger Monat">‹</button><span>'+MONTHS[m-1]+' '+y+'</span><button type="button" data-step="1" aria-label="Nächster Monat">›</button></div><div class="cd-grid">'+['Mo','Di','Mi','Do','Fr','Sa','So'].map(x=>'<div class="cd-dow">'+x+'</div>').join('');
+  const weeks=Math.ceil((lead+new Date(y,m,0).getDate())/7);
+  for(let i=0;i<weeks*7;i++){const day=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i),k=iso(day),c=['cd-day'];
+   if(day.getMonth()!==m-1)c.push('other');if(h.has(k))c.push('held');else if(k>=t&&plan.has(day.getDay()))c.push('plan');if(k===t)c.push('today');if(k===v)c.push('sel');
+   html+='<button type="button" class="'+c.join(' ')+'" data-date="'+k+'" aria-label="'+DAYS[day.getDay()]+' '+fmt(k)+(h.has(k)?', Unterricht gehalten':'')+'"><span>'+day.getDate()+'</span></button>'}
+  html+='</div><div class="cd-legend"><span><i class="l-held"></i>Unterricht gehalten</span><span><i class="l-plan"></i>laut Stundenplan</span></div>';
+  pop.innerHTML=html;
+ }
+ function open(){month=(input.value||today()).slice(0,7);cache=null;drawMonth();pop.hidden=false;field.setAttribute('aria-expanded','true')}
+ function close(){pop.hidden=true;field.setAttribute('aria-expanded','false')}
+ field.onclick=()=>pop.hidden?open():close();
+ pop.addEventListener('click',e=>{e.stopPropagation();const step=e.target.closest('[data-step]');if(step){const [y,m]=month.split('-').map(Number),d=new Date(y,m-1+Number(step.dataset.step),1);month=iso(d).slice(0,7);drawMonth();return}
+  const day=e.target.closest('[data-date]');if(day){setDate(day.dataset.date);close()}});
+ document.addEventListener('pointerdown',e=>{if(!pop.hidden&&!row.contains(e.target))close()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pop.hidden){close();field.focus()}});
+ prev.onclick=()=>{const v=input.value||today(),l=stops().filter(x=>x<v);if(l.length)setDate(l.at(-1))};
+ next.onclick=()=>{const v=input.value||today(),l=stops().filter(x=>x>v);if(l.length)setDate(l[0])};
+ // Anzeige bei jeder Änderung – auch wenn andere Module den Wert direkt setzen (z. B. „Aktuell“).
+ const desc=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
+ Object.defineProperty(input,'value',{configurable:true,get(){return desc.get.call(this)},set(v){desc.set.call(this,v);queueMicrotask(render)}});
+ input.addEventListener('change',render);
+ document.getElementById('klassenSelect')?.addEventListener('change',()=>setTimeout(render,0));
+ addEventListener('storage',()=>{cache=null;render()});addEventListener('focus',render);
+ if(typeof classroomHooks!=='undefined')try{classroomHooks.add('ladeDaten','date-nav: Klasse gewechselt',{after(){setTimeout(render,0)}})}catch{}
+ render();setTimeout(render,1500);
+})();
+;
+
 /* ==== sitzplan/roll-seats.js ==== */
 // Rotate complete seating rows, including desks, while keeping anchors and the teacher's desk fixed.
 (()=>{
@@ -3326,9 +3441,9 @@ document.addEventListener('keydown',event=>{
 
 /* ==== sitzplan/plan-actions.js ==== */
 /* Buttonreihe unter dem Sitzplan geordnet, immer in einer Zeile:
-   [Schüler zuweisen] │ [Perspektive] [Schüler finden] [Zufallsauswahl] [Zufallsgruppen] │ [Rollen] │ [Drucken] [Mehr ▾] …… [Verteilen]
+   [Schüler zuweisen] │ [Perspektive] [Schüler finden] [Zufallsauswahl] [Zufallsgruppen] │ [Rollen] │ [Drucken] [Mehr ▾] [Verteilen]
    Reicht der Platz nicht, wandern Drucken, Rollen, Zufallsgruppen, Zufallsauswahl und Perspektive ins Menü „Mehr“.
-   „Start“ heißt „Verteilen“ und steht als Hauptaktion ganz rechts. „Vorlage speichern“ und „Zurücksetzen“ liegen im Menü „Mehr“.
+   „Start“ heißt „Verteilen“ und steht als Hauptaktion direkt rechts neben „Mehr“ (8.99). „Vorlage speichern“ und „Zurücksetzen“ liegen im Menü „Mehr“.
    Der Unterrichts-Manager baut die Reihe bei jedem Neuzeichnen neu auf – danach wird sie wieder geordnet. */
 (()=>{
  const grid=document.getElementById('roomGrid');if(!grid)return;
@@ -3414,7 +3529,7 @@ document.addEventListener('keydown',event=>{
   +'body[data-module=sitzplan] .classroom-plan-actions>.student-finder>#studentSearchToggle{min-height:0!important;height:100%}'
   +'body[data-module=sitzplan] .classroom-plan-actions .btn{display:inline-flex;align-items:center;justify-content:center;padding:0 12px!important;white-space:nowrap}'
   +'.plan-actions-sep{width:1px;height:26px;background:#dce3ef;flex:none}'
-  +'body[data-module=sitzplan] .classroom-plan-actions>.plan-actions-right{display:flex;align-items:center;gap:10px;margin-left:auto!important;flex:none}'
+  +'body[data-module=sitzplan] .classroom-plan-actions>.plan-actions-right{display:flex;align-items:center;gap:10px;margin-left:0!important;flex:none}'
   +'body[data-module=sitzplan] .plan-actions-right>.btn,body[data-module=sitzplan] .plan-actions-right .plan-actions-more-toggle{box-sizing:border-box;height:40px!important;min-height:40px!important;font-size:14.4px!important;width:auto!important;margin:0!important}'
   +'.plan-actions-more{position:relative;flex:none;display:flex;align-items:center;height:40px}'
   +'.plan-actions-more-toggle{gap:6px}.plan-actions-more-toggle span{font-size:.75em}'
