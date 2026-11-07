@@ -2750,7 +2750,7 @@ document.addEventListener('keydown',event=>{
   if(!on&&document.getElementById('layoutView')&&!document.getElementById('layoutView').hidden&&typeof zeigeSitzplan==='function')zeigeSitzplan()}
  document.addEventListener('change',e=>{if(e.target?.id==='classroomEditRoom')setTimeout(place,0)});
  new MutationObserver(()=>place()).observe(document.querySelector('.container')||document.body,{childList:true,subtree:true});place();setTimeout(place,500);
- const st=document.createElement('style');st.textContent='.room-header>.room-head-actions{display:flex;align-items:center;gap:12px;margin-left:auto}.room-head-actions>.room-head-layout:not(#_){width:auto!important;height:36px;min-height:36px;padding:0 14px;margin:0!important;border-radius:999px;font-size:14px;white-space:nowrap}.room-head-actions>.room-head-layout[hidden]{display:none!important}html.ph-lite .room-head-layout{display:none!important}';document.head.append(st);
+ const st=document.createElement('style');st.textContent='.room-header>.room-head-actions{display:flex;align-items:center;gap:12px;margin-left:auto}.room-head-actions>.room-head-layout:not(#_){width:auto!important;height:40px;min-height:40px;padding:0 16px;margin:0!important;border-radius:10px;font-size:14.4px;white-space:nowrap}.room-head-actions>.room-head-layout[hidden]{display:none!important}html.ph-lite .room-head-layout{display:none!important}';document.head.append(st);
 })();
 ;
 
@@ -3333,18 +3333,24 @@ document.addEventListener('keydown',event=>{
 (()=>{const zoom=document.querySelector('.classroom-plan-zoom'),seg=zoom?.querySelector('.plan-col-pair');if(!zoom||!seg)return;const KEY='classroom-side-right-v1';
  const b=document.createElement('button');b.type='button';b.dataset.col='swap';b.className='plan-col-swap';b.innerHTML='<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4"/></svg>';seg.append(b);
  const right=()=>{try{return localStorage.getItem(KEY)==='1'}catch{return false}};
- function apply(){const r=right();document.documentElement.classList.toggle('cm-side-right',r);if(r){if(zoom.lastElementChild!==seg)zoom.append(seg)}else if(zoom.firstElementChild!==seg)zoom.prepend(seg);
+ function apply(){const r=right();document.documentElement.classList.toggle('cm-side-right',r);/* 9.06: Position nur per CSS (order) – kein Umhängen im DOM, sonst Endlosschleife mit „Mehr“ (Klicks gingen am Mac verloren) */
   seg.setAttribute('aria-label',r?'Rechte Spalte':'Linke Spalte');const t=r?'Spalte auf die linke Seite':'Spalte auf die rechte Seite';b.title=t;b.setAttribute('aria-label',t)}
  b.addEventListener('click',e=>{e.stopImmediatePropagation();try{localStorage.setItem(KEY,right()?'0':'1')}catch{}apply();setTimeout(()=>{window.dispatchEvent(new Event('resize'));try{parent.classroomQuickLayout?.()}catch{}},30);setTimeout(()=>{try{parent.classroomQuickLayout?.()}catch{}},400)},true);
- new MutationObserver(()=>{const r=right();if(r&&zoom.lastElementChild!==seg)zoom.append(seg)}).observe(zoom,{childList:true});
  const st=document.createElement('style');st.textContent='@media (min-width:951px){html.cm-side-right body[data-module=sitzplan] .container:not(#_){grid-template-columns:minmax(0,1fr) 360px}'
   +'html.cm-side-right body[data-module=sitzplan] .container>.panel{grid-column:2;grid-row:1}html.cm-side-right body[data-module=sitzplan] .container>:not(.panel){grid-column:1;grid-row:1}'
   +'html.cm-side-right body[data-module=sitzplan] .container.sidebar-collapsed:not(#_){grid-template-columns:minmax(0,1fr) 0px!important}'
   +'html.cm-side-right body[data-module=sitzplan] .container.sidebar-collapsed>.panel:not(#_){transform:translateX(calc(100% + 40px))}'
-  +'html.cm-side-right body[data-module=sitzplan] .container.sidebar-hidden:not(#_){grid-template-columns:minmax(0,1fr)!important}html.cm-side-right .classroom-plan-zoom>.plan-col-pair{margin-left:auto}}'
+  +'html.cm-side-right body[data-module=sitzplan] .container.sidebar-hidden:not(#_){grid-template-columns:minmax(0,1fr)!important}html.cm-side-right .classroom-plan-zoom>.plan-col-pair{order:99;margin-left:auto}}'
   +'@media (max-width:950px){.plan-col-pair>.plan-col-swap{display:none!important}}';document.head.append(st);
  apply();
 })();
+/* 9.06: Einheitliche Knöpfe im Unterrichts-Manager (Mac/iPad): Aktionsknöpfe und Knopfgruppen 40 px hoch mit 10 px Ecken;
+   Pillen (ganz rund) bleiben den Umschaltern vorbehalten (z. B. „Bewertungen“). */
+(()=>{const B='html:not(.ph-lite) body[data-module=sitzplan] ',st=document.createElement('style');st.textContent=
+ B+':is(.classroom-plan-zoom>button,.zoom-more-toggle,.plan-actions-more-toggle,.classroom-plan-actions>button,.classroom-plan-actions>.plan-actions-right>.btn,.room-head-layout,#classroomRoomSelect,.class-selector-box button:not(.cd-seg>button):not(.cd-pop button):not(.cd-field)):not(#_){border-radius:10px!important}'
+ +B+'.plan-col-pair:not(#_){border-radius:10px}'+B+'.plan-col-pair button:not(#_){height:38px!important;min-height:0!important}'
+ +B+'.classroom-date-only .cd-field:not(#_){height:40px;border-radius:10px}'+B+'.classroom-date-only .cd-seg:not(#_){border-radius:10px}'+B+'.classroom-date-only .cd-seg button:not(#_){height:38px}';
+ document.head.append(st)})();
 ;
 
 /* ==== sitzplan/beamer-mode.js ==== */
