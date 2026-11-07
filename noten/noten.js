@@ -4212,12 +4212,12 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   return {dateInput,heading,group,data,system,rows,maxP,hasP:pTasks.length>0,hasF:fTasks.length>0,cls,topic};
  }
  function open(){
-  const c=context();if(!c){alert('Für diese Seite lässt sich keine Ergebnisübersicht anzeigen.');return}
+  const c=context();if(!c){alert('Für diese Seite lässt sich keine Ergebnisse anzeigen.');return}
   close();const pts=c.system==='gradePoints',done=c.rows.filter(r=>r.r!==null);
   const mean=done.length?done.reduce((a,r)=>a+r.r,0)/done.length:null,withP=c.rows.filter(r=>r.p!==null),meanP=withP.length?withP.reduce((a,r)=>a+r.p,0)/withP.length:null;
   const passed=done.filter(r=>pts?Math.floor(r.r+0.5)>=5:Math.max(1,Math.min(6,Math.ceil(r.r-0.5-1e-10)))<=4).length;
   const iso=c.group.examDate||c.dateInput||'',date=/^\d{4}-\d\d-\d\d$/.test(iso)?iso.split('-').reverse().join('.'):'';
-  const ov=TOP.createElement('div');ov.className='cm-ro';ov.setAttribute('role','dialog');ov.setAttribute('aria-label','Ergebnisübersicht');
+  const ov=TOP.createElement('div');ov.className='cm-ro';ov.setAttribute('role','dialog');ov.setAttribute('aria-label','Ergebnisse');
   ov.innerHTML=`<div class="cm-ro-box"><div class="cm-ro-hd"><div><h1>${esc(c.group.label||c.heading||'Klassenarbeit')} · ${esc(c.cls)}</h1><small>${[c.topic,date,c.hasP&&c.maxP?'max. '+fmt(c.maxP)+' Punkte':''].filter(Boolean).map(esc).join(' · ')}</small></div><button type="button" class="cm-ro-x">Schließen</button></div>
    <div class="cm-ro-kpi">${mean!==null?`<span>Ø ${pts?'Notenpunkte':'Note'} <b>${fmt(mean,pts?1:2)}</b></span>`:''}${meanP!==null?`<span>Ø Punkte <b>${fmt(meanP,1)}</b></span>`:''}<span>${c.rows.length} Schüler:innen</span>${done.length?`<span>Bestanden <b>${passed}/${done.length}</b></span>`:''}</div>
    <div class="cm-ro-grid"></div></div>`;
@@ -4238,7 +4238,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  window.classroomResultOverview=open;
  // Knopf in der Werkzeugleiste der Klassenarbeit (vor „Notenspiegel“)
  function place(){for(const panel of document.querySelectorAll('.exam-combined-page')){if(panel.querySelector('.cm-ro-open'))continue;const ns=panel.querySelector('.notenspiegel-button');if(!ns)continue;
-  const b=document.createElement('button');b.type='button';b.className='cm-ro-open student-add-button is-plain';b.textContent='Ergebnisübersicht';b.title='Alle Ergebnisse bildschirmfüllend anzeigen (nur Ansicht)';b.onclick=open;ns.before(b)}}
+  const b=document.createElement('button');b.type='button';b.className='cm-ro-open student-add-button is-plain';b.textContent='Ergebnisse';b.title='Alle Ergebnisse bildschirmfüllend anzeigen (nur Ansicht)';b.onclick=open;ns.before(b)}}
  classroomOnDomChange(place);place();
  // Stile im Hauptfenster (die Übersicht liegt über der ganzen App)
  if(!TOP.getElementById('cm-ro-style')){const st=TOP.createElement('style');st.id='cm-ro-style';
