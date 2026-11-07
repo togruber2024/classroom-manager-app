@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 07.11.2026 · Version 9.21
+Stand: 07.11.2026 · Version 9.22
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1198,3 +1198,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.19: Knopf „Ergebnisübersicht“ heißt jetzt „Ergebnisse“
 9.20: Klassenarbeit/Klausur drucken – eine DIN-A4-Seite: ohne Teilnoten Notenspiegel, Notengrenzen von–bis, Ergebnisse dreispaltig, Bemerkungen, Unterschriften; mit Teilnoten Kennzahlen, Notenspiegel, Teilnoten-Tabelle, Ergebnisse mit T1…Tn und Endnote
 9.21: Ergebnisse und A4-Druck mit Teilnoten (Oberstufe T1–T3; Latein Fehler/Punkte je mit Teilnote, zweispaltig); Spalte „Punkte“ nur bei echten Rohpunkten; Export-Dialog: Bereich „Druckvorlagen“ mit Leerer Klassenliste und Ergebnisseite der Klassenarbeit
+9.22: Notengrenzen-Schieber – im Modus „Automatisch“ nur Anzeige (keine Griffe); im manuellen Modus Schalter „Dynamisch“ (4/5 als Anker, anteiliges Mitziehen) und Live-Notenspiegel beim Ziehen
