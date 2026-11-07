@@ -4208,6 +4208,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  /* Variante A (7.91): ein Abschnitt je Bereich – Überschrift mit Anteil und Ø rechts, darunter alle Einzelnoten als Kästchen mit Datum (keine schmalen Balken) */
  function sect(label,pct,it,list,lvl,o={}){if(o.pct!=null)pct=o.pct;const w=document.createElement('div');w.className='qs-sect'+(lvl?' qs-lvl'+lvl:'');const h=document.createElement('div');h.className='qs-sh';if(it?.click){h.classList.add('qs-mail');h.onclick=it.click}
   const l=document.createElement('span');l.className='qs-sh-l';const t=document.createElement('span');t.textContent=label;l.append(t);if(pct!=null){const c=document.createElement('span');c.className='qs-w';c.textContent=fmtPct(pct)+' %';l.append(c)}if(o.tag){const c=document.createElement('span');c.className='qs-w qs-hj';c.textContent=o.tag;l.append(c)}
+  /* 8.85: Klassenarbeit/Klausur rechts immer mit Ø (Ergebnis, nicht Einzelwert) */if(/^(Klassenarbeit|Klausur)/i.test(label||''))o={...o,avg:true};
   const val=o.val||valBox(it,o.avg),prev=(o.prev||[]).map(m=>({...m,prev:1})),cur=list||[];
   if(!cur.length&&!prev.length){h.append(l,val);w.append(h);return w}
   /* 7.93: Wert rechts auf Höhe der Kästchen; ohne aktuelle Kästchen steht er (zugeklappt) in der Kopfzeile */
