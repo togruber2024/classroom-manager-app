@@ -2628,7 +2628,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
 /* ==== noten/blank-roster.js ==== */
 // A blank recording sheet for the current class, using the print dialog's format.
 (()=>{
- const dialog=document.getElementById('exportDialog'),box=document.createElement('fieldset');box.className='export-style';box.innerHTML='<legend>Leere Klassenliste</legend><label class="export-option"><input type="checkbox" id="exportBlankRoster"><span>Leere Klassenliste erstellen</span></label><div class="blank-roster-settings" hidden><label>Überschrift<input id="blankRosterTitle" type="text" maxlength="100" value="Klassenliste"></label><label>Leere Spalten<input id="blankRosterColumns" type="number" min="1" max="30" value="10"></label></div>';dialog.querySelector('.dialog-actions').before(box);
+ const dialog=document.getElementById('exportDialog'),box=document.createElement('fieldset');box.className='export-style';box.id='exportTemplates';box.innerHTML='<legend>Druckvorlagen</legend><label class="export-option"><input type="checkbox" id="exportBlankRoster"><span>Leere Klassenliste</span></label><div class="blank-roster-settings" hidden><label>Überschrift<input id="blankRosterTitle" type="text" maxlength="100" value="Klassenliste"></label><label>Leere Spalten<input id="blankRosterColumns" type="number" min="1" max="30" value="10"></label></div>';dialog.querySelector('.dialog-actions').before(box);
  const enabled=box.querySelector('input[type=checkbox]'),fields=box.querySelector('.blank-roster-settings');enabled.onchange=()=>{fields.hidden=!enabled.checked;const holder=classesBySubject[currentSubject]?.find(c=>c.id===currentClassId);if(enabled.checked)document.getElementById('blankRosterTitle').value=['Klassenliste',holder?.label,subjects[currentSubject]?.label].filter(Boolean).join(' · ')};
  window.classroomExportBlankRoster=()=>{const count=Number(document.getElementById('blankRosterColumns').value);if(!Number.isInteger(count)||count<1||count>30){document.getElementById('blankRosterColumns').reportValidity();return}const title=document.getElementById('blankRosterTitle').value.trim()||'Klassenliste',names=new Map(),add=p=>{if(p.name?.trim())names.set(p.name.trim().toLocaleLowerCase('de-DE'),p.name.trim())},group=typeof classroomCentralGroup==='function'?classroomCentralGroup(classroomSourceKey()):null;
  if(group)group.students.filter(s=>!s.deleted).forEach(add);else{for(const page of Object.values(subjectStates[stateScope(currentSubject)]?.customValues||{}))for(const p of page.students||[])add(p)}const people=[...names.values()].sort((a,b)=>a.localeCompare(b,'de'));if(!people.length){alert('Die aktuelle Klasse enthält noch keine Namen.');return}
@@ -4196,21 +4196,26 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const system=taskGradeSystem(currentSubject,key),table=[...panel.querySelectorAll('table.task-table')].find(t=>t.offsetParent)||panel.querySelector('table.task-table');
   // Art je Aufgabe aus der Tabelle (Platzhalter „Fehler“/„Punkte“), sonst aus der Berechnungsseite
   const kind={},max={};for(const inp of table?.querySelectorAll('input.task-raw-score[data-task-id]')||[]){kind[inp.dataset.taskId]??=inp.placeholder==='Fehler'?'F':'P';max[inp.dataset.taskId]??=num(inp.max)}
-  for(const t of data.tasks||[]){kind[t.id]??=/text/.test(t.basisPage||'')?'F':'P';max[t.id]??=num(t.maximum)}
+  for(const t of data.tasks||[]){kind[t.id]??=!t.basisPage?'G':/text/.test(t.basisPage)?'F':'P';max[t.id]??=num(t.maximum)}
   const pTasks=(data.tasks||[]).filter(t=>kind[t.id]==='P'),fTasks=(data.tasks||[]).filter(t=>kind[t.id]==='F');
+  // Teilnoten ohne Rohwerte (z. B. Oberstufe: drei Teilnoten in Notenpunkten) als eigene Spalten T1, T2 …
+  const gTasks=(data.tasks||[]).length>1?(data.tasks||[]).filter(t=>kind[t.id]==='G'):[];
+  // 9.21: mehrere Aufgaben mit Rohwerten (z. B. Latein: Fehler + Punkte) → je Aufgabe Rohwert und Teilnote
+  const rTasks=(data.tasks||[]).length>1?(data.tasks||[]).filter(t=>kind[t.id]!=='G').map(t=>({...t,kind:kind[t.id]})):[];
   const maxP=pTasks.reduce((a,t)=>a+(max[t.id]||0),0);
   const rows=(data.students||[]).filter(s=>String(s.name||'').trim()).map(s=>{
    const sum=list=>{let any=false,v=0;for(const t of list){const n=num(s.rawScores?.[t.id]);if(n!==null){any=true;v+=n}}return any?v:null};
    const r=taskStudentResult(data,s,false);
    // nur gerundete Noten bzw. ganze Notenpunkte (unabhängig von der Anzeige auf der Seite)
    const rd={...data,meanDisplay:'rounded',resultRounded:true};
-   return {name:s.name.trim(),p:sum(pTasks),f:sum(fTasks),r,text:r===null?'—':formatTaskMean(r,system,rd),cls:r===null?'':taskMeanClass(r,system,rd)}});
+   return {name:s.name.trim(),p:sum(pTasks),f:sum(fTasks),parts:gTasks.map(t=>num(s.grades?.[t.id])),rparts:rTasks.map(t=>({raw:num(s.rawScores?.[t.id]),g:num(s.grades?.[t.id])})),r,text:r===null?'—':formatTaskMean(r,system,rd),cls:r===null?'':taskMeanClass(r,system,rd)}});
   const cls=(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId)?.label||'';
   const topic=panel.querySelector('.test-detail-topic input,[data-exam-topic],input[placeholder*="Thema"]')?.value||data.examTopic||'';
   const dateInput=[...panel.querySelectorAll('input[type=date]')].find(i=>i.offsetParent&&i.value)?.value||'';
   const heading=panel.querySelector('h1,h2,.exam-title,.task-page-title')?.textContent?.trim()||'';
-  return {key,dateInput,heading,group,data,system,rows,maxP,hasP:pTasks.length>0,hasF:fTasks.length>0,cls,topic};
+  return {key,dateInput,heading,group,data,system,rows,maxP,gTasks,rTasks,hasP:pTasks.length>0,hasF:fTasks.length>0,cls,topic};
  }
+ function part(v,system){if(system==='gradePoints')return String(Math.round(v));const o=taskGradeOptions(true).reduce((b,x)=>Math.abs(x.value-v)<Math.abs(b.value-v)?x:b);return o.label}
  function open(){
   const c=context();if(!c){alert('Für diese Seite lässt sich keine Ergebnisse anzeigen.');return}
   close();const pts=c.system==='gradePoints',done=c.rows.filter(r=>r.r!==null);
@@ -4223,13 +4228,16 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    <div class="cm-ro-grid"></div></div>`;
   TOP.body.append(ov);
   const grid=ov.querySelector('.cm-ro-grid');
-  const head=`<thead><tr><th>Name</th>${c.hasF?'<th class="n">Fehler</th>':''}${c.hasP?'<th class="n">Punkte</th>'+(c.maxP?'<th class="b"></th>':''):''}<th class="g">Note</th></tr></thead>`;
-  const row=r=>`<tr><td>${esc(r.name)}</td>${c.hasF?`<td class="n">${r.f===null?'—':fmt(r.f)}</td>`:''}${c.hasP?`<td class="n">${r.p===null?'—':fmt(r.p)}</td>${c.maxP?`<td class="b"><span class="cm-ro-bar"><i style="width:${r.p===null?0:Math.max(0,Math.min(100,r.p/c.maxP*100))}%"></i></span></td>`:''}`:''}<td class="g"><span class="task-end-grade cm-ro-chip ${esc(r.cls)}">${esc(r.text)}</span></td></tr>`;
+  const head=`<thead><tr><th>Name</th>${c.hasF?'<th class="n">Fehler</th>':''}${c.gTasks.map((t,i)=>`<th class="t" title="${esc(t.name||'')}">T${i+1}</th>`).join('')}${c.hasP?'<th class="n">Punkte</th>'+(c.maxP?'<th class="b"></th>':''):''}<th class="g">Note</th></tr></thead>`;
+  const perTask=c.rTasks.length>0,partChip=v=>v===null?'—':`<span class="task-end-grade cm-ro-chip cm-ro-part ${esc(taskGradeClass(v,c.system))}">${esc(part(v,c.system))}</span>`;
+  const headR=`<thead><tr><th>Name</th>${c.rTasks.map((t,i)=>`<th class="n" title="${esc(t.name||'')}">${t.kind==='F'?'Fehler':'Punkte'}</th><th class="t" title="Teilnote ${esc(t.name||'')}">T${i+1}</th>`).join('')}<th class="g">Note</th></tr></thead>`;
+  const rowR=r=>`<tr><td>${esc(r.name)}</td>${r.rparts.map(x=>`<td class="n">${x.raw===null?'—':fmt(x.raw)}</td><td class="t">${partChip(x.g)}</td>`).join('')}<td class="g"><span class="task-end-grade cm-ro-chip ${esc(r.cls)}">${esc(r.text)}</span></td></tr>`;
+  const row=r=>`<tr><td>${esc(r.name)}</td>${c.hasF?`<td class="n">${r.f===null?'—':fmt(r.f)}</td>`:''}${r.parts.map(v=>`<td class="t">${v===null?'—':`<span class="task-end-grade cm-ro-chip cm-ro-part ${esc(taskGradeClass(v,c.system))}">${esc(part(v,c.system))}</span>`}</td>`).join('')}${c.hasP?`<td class="n">${r.p===null?'—':fmt(r.p)}</td>${c.maxP?`<td class="b"><span class="cm-ro-bar"><i style="width:${r.p===null?0:Math.max(0,Math.min(100,r.p/c.maxP*100))}%"></i></span></td>`:''}`:''}<td class="g"><span class="task-end-grade cm-ro-chip ${esc(r.cls)}">${esc(r.text)}</span></td></tr>`;
   // Spalten: auf breiten Fenstern bis zu 3–4 nebeneinander (je ≥ 380 px, ab 8 Namen pro Spalte), mindestens so viele, dass nichts gescrollt werden muss
   const avail=Math.max(200,TOP.defaultView.innerHeight-ov.querySelector('.cm-ro-grid').getBoundingClientRect().top-40),fit=Math.max(6,Math.floor(avail/44));
-  const byWidth=Math.floor(grid.clientWidth/380),cols=Math.max(1,Math.min(4,Math.max(Math.ceil(c.rows.length/fit),Math.min(byWidth,Math.ceil(c.rows.length/8))))),per=Math.ceil(c.rows.length/cols)||1;
+  const byWidth=Math.floor(grid.clientWidth/380),cols=Math.max(1,Math.min(perTask?2:4,Math.max(Math.ceil(c.rows.length/fit),Math.min(byWidth,Math.ceil(c.rows.length/8))))),per=Math.ceil(c.rows.length/cols)||1;
   grid.style.gridTemplateColumns=`repeat(${cols},minmax(0,1fr))`;
-  for(let i=0;i<cols;i++){const part=c.rows.slice(i*per,(i+1)*per);if(!part.length&&i)continue;const t=TOP.createElement('table');t.innerHTML=head+'<tbody>'+part.map(row).join('')+'</tbody>';grid.append(t)}
+  for(let i=0;i<cols;i++){const part=c.rows.slice(i*per,(i+1)*per);if(!part.length&&i)continue;const t=TOP.createElement('table');t.innerHTML=(perTask?headR:head)+"<tbody>"+part.map(perTask?rowR:row).join('')+'</tbody>';grid.append(t)}
   if(grid.scrollHeight>grid.clientHeight+2)ov.classList.add('cm-ro-dense');
   ov.querySelector('.cm-ro-x').onclick=close;ov.addEventListener('click',e=>{if(e.target===ov)close()});ov.querySelector('.cm-ro-x').focus();
  }
@@ -4253,7 +4261,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .cm-ro-grid{flex:1;min-height:0;display:grid;gap:22px;align-content:start;align-items:start;overflow:auto}
  .cm-ro table{border-collapse:collapse;width:100%;font-size:15.5px}.cm-ro th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:#7a889c;text-align:left;font-weight:600;padding:4px 8px;border-bottom:1px solid #e3e9f1}
  .cm-ro td{padding:0 8px;height:43px;border-bottom:1px solid #f0f3f8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0}.cm-ro td:first-child{width:auto}
- .cm-ro .n{text-align:right;width:62px;font-variant-numeric:tabular-nums;color:#4a5b73}.cm-ro .g{text-align:center;width:64px;overflow:visible}.cm-ro td.b,.cm-ro th.b{width:64px;padding:0 4px;text-overflow:clip}
+ .cm-ro .n{text-align:right;width:62px;font-variant-numeric:tabular-nums;color:#4a5b73}.cm-ro .t{text-align:center;width:50px;overflow:visible}.cm-ro .cm-ro-part{min-width:36px;height:24px;font-size:13px;font-weight:650}.cm-ro td.g{border-left:1px solid #e3e9f1}.cm-ro .g{text-align:center;width:64px;overflow:visible}.cm-ro td.b,.cm-ro th.b{width:64px;padding:0 4px;text-overflow:clip}
  .cm-ro tbody tr:nth-child(even) td{background:#f8fafd}
  .cm-ro .cm-ro-chip{display:inline-flex;align-items:center;justify-content:center;min-width:46px;height:28px;padding:0 8px;border-radius:8px;font-weight:700;font-size:14.5px;box-sizing:border-box}
  .cm-ro-bar{display:inline-block;width:56px;height:6px;border-radius:3px;background:#e9eef5;vertical-align:middle;position:relative;overflow:hidden}.cm-ro-bar i{position:absolute;left:0;top:0;bottom:0;background:#8fb0dc}
@@ -4267,7 +4275,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
 /* 9.20: „Drucken“ auf der Seite einer Klassenarbeit/Klausur druckt eine DIN-A4-Seite.
    Ohne Teilnoten (eine Aufgabe) → Variante C: Notenspiegel, Notengrenzen (von … bis), Ergebnisse in drei Spalten, Bemerkungen, Unterschriften.
    Mit Teilnoten (mehrere Aufgaben) → Variante A: Kennzahlen, Notenspiegel, Teilnoten-Übersicht, Ergebnisse mit T1, T2 … und Endnote
-   (bis drei Teilnoten zweispaltig, ab vier einspaltig). Endnoten immer gerundet (Noten bzw. ganze Notenpunkte). Es wird nichts verändert. */
+   (zweispaltig, solange es passt – Rohwerte stehen mit ihrer Teilnote –, sonst einspaltig). Endnoten immer gerundet (Noten bzw. ganze Notenpunkte). Es wird nichts verändert. */
 (()=>{
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
  const num=v=>{const n=Number(String(v??'').replace(',','.'));return Number.isFinite(n)&&String(v??'').trim()!==''?n:null};
@@ -4319,11 +4327,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    // Variante A
    const weights=tasks.map(t=>Number(t.weight)),wsum=weights.reduce((a,v)=>a+(Number.isFinite(v)?v:0),0);
    const raw=t=>!!t.basisPage,kind=t=>{const b=t.basisPage&&taskBasisConfig(currentSubject,t.basisPage);return b?.base==='text'?'Fehler':'Punkte'};
-   const cell=(s,t)=>{if(raw(t)){const v=num(s?.rawScores?.[t.id]);return v===null?'—':fmt(v)}const v=num(s?.grades?.[t.id]);return v===null?'—':chip(v,pts?'gradePoints':'grades',partText(v,pts?'gradePoints':'grades'))};
+   const cell=(s,t)=>{const v=num(s?.rawScores?.[t.id]);return v===null?'—':fmt(v)};
+   const gcell=(s,t)=>{const v=num(s?.grades?.[t.id]);return v===null?'—':chip(v,pts?'gradePoints':'grades',partText(v,pts?'gradePoints':'grades'))};
    const avg=t=>{const vals=done.map(r=>num(raw(t)?r.s?.rawScores?.[t.id]:r.s?.grades?.[t.id])).filter(v=>v!==null);return vals.length?fmt(vals.reduce((a,v)=>a+v,0)/vals.length,1):'—'};
    const tt=`<table class="ep-tt"><thead><tr><th></th><th>Teilnote</th><th class="n">${tasks.some(raw)?'max.':''}</th><th class="n">Gewicht</th><th class="n">Ø</th></tr></thead><tbody>${tasks.map((t,i)=>`<tr><td><b>T${i+1}</b></td><td class="nm">${esc(t.name||'Aufgabe '+(i+1))}</td><td class="n">${raw(t)&&num(t.maximum)!==null?fmt(t.maximum)+' '+(kind(t)==='Fehler'?'W.':'P.'):''}</td><td class="n">${wsum>0&&Number.isFinite(weights[i])?fmt(weights[i]/wsum*100,0)+' %':''}</td><td class="n">${avg(t)}</td></tr>`).join('')}<tr class="sum"><td></td><td>Endnote</td><td></td><td class="n">100 %</td><td class="n">${mean===null?'—':pts?fmt(mean,1):fmt2(mean)}</td></tr></tbody></table>`;
-   const one=tasks.length>3,per=one?rows.length:Math.ceil(rows.length/2)||1;
-   const res=part=>`<table class="ep-res"><thead><tr><th>Name</th>${tasks.map((t,i)=>`<th class="c" style="width:${one?46:38}px">T${i+1}</th>`).join('')}<th class="c ep-end" style="width:46px">Note</th></tr></thead><tbody>${part.map(r=>`<tr><td class="nm">${esc(r.name)}</td>${tasks.map(t=>`<td class="c">${cell(r.s,t)}</td>`).join('')}<td class="c ep-end">${r.end===null?'—':chip(r.end,pts?'gradePoints':'grades')}</td></tr>`).join('')}</tbody></table>`;
+   // Breite je Aufgabe: Rohwert + Teilnote (76 px) bzw. nur Teilnote (38 px); passt es nicht in zwei Spalten, wird die Liste einspaltig
+   const need=tasks.reduce((a,t)=>a+(raw(t)?78:38),0),one=need>190,per=one?rows.length:Math.ceil(rows.length/2)||1;
+   const res=part=>`<table class="ep-res"><thead><tr><th>Name</th>${tasks.map((t,i)=>(raw(t)?`<th class="n" style="width:${one?52:40}px">${kind(t)}</th>`:'')+`<th class="c" style="width:${one?46:38}px">T${i+1}</th>`).join('')}<th class="c ep-end" style="width:46px">Note</th></tr></thead><tbody>${part.map(r=>`<tr><td class="nm">${esc(r.name)}</td>${tasks.map(t=>(raw(t)?`<td class="n">${cell(r.s,t)}</td>`:'')+`<td class="c">${gcell(r.s,t)}</td>`).join('')}<td class="c ep-end">${r.end===null?'—':chip(r.end,pts?'gradePoints':'grades')}</td></tr>`).join('')}</tbody></table>`;
    body=`${head}${kpi}<div class="ep-cols" style="grid-template-columns:1.25fr 1fr"><div class="ep-box"><h2>Notenspiegel${pts?' (Endnote, Notenpunkte)':' (Endnote)'}</h2>${spiegel}</div><div class="ep-box"><h2>Teilnoten</h2>${tt}</div></div>
     <h2>Ergebnisse</h2><div class="ep-cols ${one?'':'two'}">${(one?[rows]:[rows.slice(0,per),rows.slice(per)]).filter((p,i)=>p.length||!i).map(res).join('')}</div>`;
   }
@@ -4364,6 +4374,14 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   window.classroomExamPrintDoc=doc;
   setTimeout(()=>{try{frame.contentWindow.focus();frame.contentWindow.print()}catch(e){console.error(e)}},250);
  }
+ // 9.21: Export-Dialog › Druckvorlagen: „Ergebnisse der Klassenarbeit/Klausur (eine A4-Seite)“ – nur auf der Seite einer Klassenarbeit/Klausur
+ function templateOption(){const box=document.getElementById('exportTemplates');if(!box)return;let lab=document.getElementById('exportExamResults')?.closest('label');
+  if(!lab){lab=document.createElement('label');lab.className='export-option';lab.innerHTML='<input type="checkbox" id="exportExamResults"><span></span>';(box.querySelector('.blank-roster-settings')||box.lastElementChild).after(lab);
+   const other=document.getElementById('exportBlankRoster');lab.querySelector('input').addEventListener('change',e=>{if(e.target.checked&&other.checked){other.checked=false;other.dispatchEvent(new Event('change'))}});other.addEventListener('change',()=>{if(other.checked)document.getElementById('exportExamResults').checked=false})}
+  const c=window.classroomExamContext?.(),label=c?((c.group.label||c.heading||'').match(/Klausur/i)||/Klausur/.test(document.querySelector('.exam-combined-page h1,.exam-combined-page h2')?.textContent||'')?'Klausur':'Klassenarbeit'):'';
+  lab.hidden=!c;lab.querySelector('input').checked=false;lab.querySelector('span').textContent=`Ergebnisse der ${label} (eine A4-Seite)`}
+ {const d=document.getElementById('exportDialog');if(d)new MutationObserver(()=>{if(d.open)templateOption()}).observe(d,{attributes:true,attributeFilter:['open']})}
+ document.getElementById('confirmExport')?.addEventListener('click',e=>{const x=document.getElementById('exportExamResults');if(!x?.checked||x.closest('label').hidden)return;e.preventDefault();e.stopImmediatePropagation();document.getElementById('exportDialog').close();print()},true);
  window.classroomExamPrint=print;window.classroomExamPrintBuild=build;
  // „Drucken“ auf Klassenarbeitsseiten übernehmen (beide Knöpfe: Kopfzeile und Ergebnisse)
  document.addEventListener('click',e=>{const btn=e.target.closest?.('button');if(!btn||btn.textContent.trim()!=='Drucken'||!btn.closest('.exam-combined-page'))return;e.preventDefault();e.stopImmediatePropagation();print()},true);
