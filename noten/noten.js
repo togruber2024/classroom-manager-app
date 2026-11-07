@@ -4348,8 +4348,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    card.querySelectorAll('.qs-top .qs-qtag,.qs-top .qs-q1chip,.qs-top .qs-q1sep').forEach(x=>x.style.display='none');
    /* große Note = Halbjahresnote der App (eingetragen oder errechnet; ohne Klassenarbeit Vorschlag aus der Sonstigen Mitarbeit) */
    const hj=halfYearNote(name);if(big&&hj){big.textContent=hj.text||'—';big.className='qs-big '+(hj.none?'qs-empty':(hj.cls||'qs-empty'))+(hj.soft?' qs-soft':'');big.title=hj.soft?'Vorschlag (noch nicht eingetragen)':'eingetragen'}
-   if(big&&!big.parentElement.classList.contains('qs-hjw')){const w=document.createElement('span');w.className='qs-hjw';big.before(w);w.append(big);const sm=document.createElement('small');sm.className='qs-hjq';w.append(sm)}
-   const sm=card.querySelector('.qs-hjq');if(sm)sm.textContent='Q1 '+(q1t||'—')+' · Q2 '+(q2t||'—');
+   if(big&&!big.parentElement.classList.contains('qs-hjw')){const w=document.createElement('span');w.className='qs-hjw';big.before(w);w.append(big)}
+   /* 8.78: keine Zeile unter der Halbjahresnote */card.querySelector('.qs-hjq')?.remove();
    const sect=re=>[...card.querySelectorAll('.qs-sect')].find(x=>re.test((x.querySelector('.qs-sh-l')?.textContent||'').trim()));
    /* Sonstige Mitarbeit des Halbjahres aus der Halbjahresübersicht */
    if(sem){const so=cellOf(sem,name,/^Sonstige Mitarbeit/),el=sect(/^Sonstige Mitarbeit/)?.querySelector(':scope>.qs-sh .qs-val i');if(so)setVal(el,so)}
@@ -4817,6 +4817,8 @@ return}
 
 /* 8.77: Leiste in zwei Zeilen – oben Ansicht, Karten verkleinern, Schraffur; unten Hinweise links, Darstellung rechts */
 (()=>{const st=document.createElement('style');st.textContent='.pl-bar .pl-row:not(.pl-row2){flex-wrap:nowrap;justify-content:flex-start}.pl-bar .pl-row:not(.pl-row2):has(.pl-half:not([hidden])){flex-wrap:wrap}.pl-bar .pl-row:not(.pl-row2) .pl-hatch button:not(#_){padding:0 9px;min-width:0}.pl-bar .pl-row:not(.pl-row2) .pl-fold:not(#_){margin-left:0}.pl-bar .pl-row:not(.pl-row2) .pl-hatch{margin-left:auto}.pl-bar .pl-view button{padding:0 11px;font-size:14px;white-space:nowrap}.pl-view button{min-height:32px}.pl-bar .pl-row2{justify-content:space-between;flex-wrap:nowrap}.pl-bar .pl-row2 .pl-flags:not(#_){margin-left:0;justify-content:flex-start;min-width:0}.pl-bar .pl-row2 .pl-flags[hidden]+.pl-mean,.pl-bar .pl-row2 .pl-mean{margin-left:auto}';document.head.append(st)})();
+/* 8.78: beide Dreifachschalter oben rechts gleich groß (Breite, Höhe, Knöpfe) */
+(()=>{const st=document.createElement('style');st.textContent='.pl-bar .pl-hatch:not(#_),.pl-bar .pl-mean:not(#_){box-sizing:border-box;width:150px;flex:none}.pl-bar :is(.pl-hatch,.pl-mean) button:not(#_):not(#__){flex:1 1 0;min-width:0;padding:0;height:32px;min-height:32px}';document.head.append(st)})();
 ;
 
 /* ==== noten/student-notes.js ==== */
