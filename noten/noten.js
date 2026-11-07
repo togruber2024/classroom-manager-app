@@ -4479,7 +4479,7 @@ return}
     card.classList.toggle('q1-open',q1Open.has(name));
     const t=document.createElement('button');t.type='button';t.className='qs-q1t';const upd=()=>{const o=q1Open.has(name);t.innerHTML=(o?EYE:EYE_OFF)+'<span>1. Quartal</span>';t.setAttribute('aria-expanded',String(o));card.classList.toggle('q1-open',o)};upd();t.addEventListener('qs-sync',upd);t.onclick=e=>{e.stopPropagation();q1Open.has(name)?q1Open.delete(name):q1Open.add(name);upd()};
     const ft=document.createElement('div');ft.className='qs-ft';ft.append(t);if(edits.childElementCount)ft.append(edits);card.append(ft)}
-   else if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card)openDetail(panel,name)};frag.append(card);
+   else if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;if(document.documentElement.classList.contains('cm-quick'))return;/* 9.02: Schnellansicht ohne Noteneingabe-Seite */openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card){if(document.documentElement.classList.contains('cm-quick'))card.click();else openDetail(panel,name)}};frag.append(card);
   }
   box.replaceChildren(frag);fixUnstriped(box);/* Schraffur „Aus“ sofort anwenden, nicht erst über den Beobachter (8.15) */window.classroomUnstripe?.(box);
   if(detail?.panel===panel&&!sheet.hidden&&!sheet.contains(document.activeElement))renderDetail();
@@ -4861,7 +4861,7 @@ return}
 })();
 
 /* 8.69: Karten verkleinern – runder Knopf neben „1. Quartal“. Klein: Name, Noten und eine Zeile „Mitarbeit · HA · KA“; Antippen klappt einzelne Karten auf. */
-(()=>{const KEY='classroom-cards-folded-v1';let on=false;try{on=localStorage.getItem(KEY)==='1'}catch{}const open=new Set();
+(()=>{const KEY='classroom-cards-folded-v1';let on=false;try{on=localStorage.getItem(KEY)==='1'}catch{}const open=new Set(),closed=new Set();/* 9.02: Schnellansicht (Mac/iPad) – einzelne Karten auch ohne „Verkleinern“ zuklappen */const quick=()=>document.documentElement.classList.contains('cm-quick');
  const short={'Sonstige Mitarbeit':'Mitarbeit','Klassenarbeit':'KA','Klassenarbeiten':'KA','Klausur':'Klausur','Klausuren':'Klausur','Tests':'Tests','Test':'Tests'};
  const nameOf=c=>c.querySelector('.qs-name')?.textContent.trim()||'';
  const cards=()=>[...document.querySelectorAll('.qs-cards>.qs-card:not(.qd-card)')];
@@ -4870,16 +4870,18 @@ return}
   for(const s of bars.querySelectorAll('.qs-sub .qs-sect')){if(!/Hausaufgaben/.test(s.querySelector('.qs-sh-l')?.textContent||''))continue;const vv=[...s.querySelectorAll('.qs-val')].find(e=>e.offsetParent||e.getClientRects().length);const n=((vv?.innerText||'').match(/\d+/g)||['0']).pop();parts.splice(parts.length?1:0,0,n==='0'?'HA ✓':'HA ✕'+n);break}
   return parts.join(' · ')}
  function apply(){for(const b of document.querySelectorAll('.pl-fold')){b.setAttribute('aria-pressed',String(on));b.title=on?'Karten wieder ganz zeigen':'Karten verkleinern';b.setAttribute('aria-label',b.title)}
-  for(const c of cards()){const folded=on&&!open.has(nameOf(c));let sum=c.querySelector(':scope>.qs-sum');
+  for(const c of cards()){const folded=on?!open.has(nameOf(c)):quick()&&closed.has(nameOf(c));let sum=c.querySelector(':scope>.qs-sum');
    if(on){if(!sum){sum=document.createElement('div');sum.className='qs-sum';sum.innerHTML='<span class="qs-sum-t"></span><span class="qs-sum-c" aria-hidden="true">›</span>';c.append(sum)}
     if(folded){const was=c.classList.contains('qs-folded');if(was)c.classList.remove('qs-folded');const t=summary(c);if(was)c.classList.add('qs-folded');const st=sum.querySelector('.qs-sum-t');if(st.textContent!==t)st.textContent=t}}
-   /* 8.80: nur ändern, was sich ändert (keine Schleife mit den Beobachtern) */if(c.classList.contains('qs-folded')!==folded)c.classList.toggle('qs-folded',folded);const uf=on&&!folded;if(c.classList.contains('qs-unfolded')!==uf)c.classList.toggle('qs-unfolded',uf)}}
- window.classroomCardsFold={get:()=>on,toggle(){on=!on;open.clear();try{localStorage.setItem(KEY,on?'1':'0')}catch{}apply()},apply};
- document.addEventListener('click',e=>{if(!on)return;const c=e.target.closest('.qs-cards>.qs-card:not(.qd-card)');if(!c||e.target.closest('input,label,button,.qs-mail'))return;
+   /* 8.80: nur ändern, was sich ändert (keine Schleife mit den Beobachtern) */if(c.classList.contains('qs-folded')!==folded)c.classList.toggle('qs-folded',folded);const uf=(on||quick())&&!folded;if(c.classList.contains('qs-unfolded')!==uf)c.classList.toggle('qs-unfolded',uf)}}
+ window.classroomCardsFold={get:()=>on,toggle(){on=!on;open.clear();closed.clear();try{localStorage.setItem(KEY,on?'1':'0')}catch{}apply()},apply};
+ document.addEventListener('click',e=>{if(!on&&!quick())return;const c=e.target.closest('.qs-cards>.qs-card:not(.qd-card)');if(!c||e.target.closest('input,label,button,.qs-mail'))return;
+  /* 9.02: Schnellansicht – ein Klick klappt die Karte auf, der nächste wieder zu (keine Noteneingabe-Seite; dafür gibt es den Noten-Manager) */
+  if(quick()){e.preventDefault();e.stopImmediatePropagation();const n=nameOf(c),f=c.classList.contains('qs-folded');if(on){if(f)open.add(n);else open.delete(n)}else{if(f)closed.delete(n);else closed.add(n)}apply();return}
   if(c.classList.contains('qs-folded')){e.preventDefault();e.stopImmediatePropagation();open.add(nameOf(c));apply()}
   else if(e.target.closest('.qs-top')){e.preventDefault();e.stopImmediatePropagation();open.delete(nameOf(c));apply()}},true);
  document.addEventListener('classroom-cards-mean-lock',()=>apply());
- new MutationObserver(()=>{if(on&&cards().some(c=>!c.classList.contains('qs-folded')&&!c.classList.contains('qs-unfolded')))apply()}).observe(document.documentElement,{childList:true,subtree:true});
+ new MutationObserver(()=>{if((on||quick())&&cards().some(c=>!c.classList.contains('qs-folded')&&!c.classList.contains('qs-unfolded')))apply()}).observe(document.documentElement,{childList:true,subtree:true});
  const st=document.createElement('style');st.textContent='.pl-fold{flex:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:38px;height:38px;min-height:38px;padding:0;margin-left:8px;border:1px solid #cbd6e5;border-radius:50%;background:#fff;color:#2f5f9b;cursor:pointer}.pl-fold svg{width:20px;height:20px}.pl-fold[aria-pressed=true]{background:#e8f0fb;border-color:#9dbbe3}'
   +'.qs-card.qs-folded .qs-bars,.qs-card.qs-folded .qs-ft,.qs-card.qs-folded>.qs-edits{display:none!important}.qs-card>.qs-sum{display:none}.qs-card.qs-folded>.qs-sum{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:14px;color:#5b6b82}.qs-sum-t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.qs-sum-c{font-size:20px;line-height:1;color:#8fa0b8}';
  document.head.append(st);
