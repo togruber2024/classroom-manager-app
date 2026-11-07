@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 07.11.2026 · Version 8.70
+Stand: 07.11.2026 · Version 8.71
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1147,3 +1147,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.68: iPhone – neues Noten-Symbol (Karte mit Häkchen aus dem App-Icon)
 8.69: iPhone Noten – runder Knopf neben „1. Quartal“ verkleinert alle Karten (Antippen klappt einzelne auf)
 8.70: Schalter einheitlich von schlicht nach ausführlich: 2 | 2− | 2,3 und Aus | Rahmen | Schraffiert (überall)
+8.71: iPhone – Selbsteinschätzung und Quartalsnote per Notenauswahl statt Tastatur

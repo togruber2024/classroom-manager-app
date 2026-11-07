@@ -4273,6 +4273,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function editProxy(orig,label,after,tag){
   const l=document.createElement('label');l.className='qs-edit';const s=document.createElement('span');const st=document.createElement('span');st.className='qs-edit-t';st.textContent=label;s.append(st);if(tag){const q=document.createElement('b');q.className='qs-qtag';q.textContent=tag;s.append(q)}const inp=document.createElement('input');inp.type='text';inp.value=orig.value;inp.placeholder=orig.placeholder||'—';inp.className=orig.className;inp.style.setProperty('--unstriped-color',orig.style.getPropertyValue('--unstriped-color'));inp.setAttribute('aria-label',orig.getAttribute('aria-label')||label);inp.autocomplete='off';
   inp.onchange=()=>{orig.value=inp.value;orig.dispatchEvent(new Event('input',{bubbles:true}));orig.dispatchEvent(new Event('change',{bubbles:true}));inp.value=orig.value;inp.className=orig.className;inp.style.setProperty('--unstriped-color',orig.style.getPropertyValue('--unstriped-color'));after?.();schedule()};
+  /* 8.71: iPhone – Noten über eine eigene Auswahl statt Tastatur */if(document.documentElement.classList.contains('ph-lite')){inp.readOnly=true;inp.inputMode='none';inp.classList.add('qs-pick-in');inp.addEventListener('click',e=>{e.preventDefault();window.classroomGradePicker?.(inp,label)})}
   l.append(s,inp);return l}
  // Karte antippen → Blatt mit allen Einträgen dieser Person (‹ / › bzw. Wischen = nächste Person)
  const sheet=document.createElement('div');sheet.className='qs-detail';sheet.hidden=true;
@@ -4571,6 +4572,28 @@ return}
  ].join('');
  document.head.append(st);
 })();
+
+/* 8.71: Notenauswahl für das iPhone (Selbsteinschätzung, Quartalsnote) – ein Tipp statt Tastatur */
+(()=>{const pk=document.createElement('div');pk.className='gp-wrap';pk.hidden=true;pk.innerHTML='<div class="gp-back"></div><section class="gp-panel" role="dialog" aria-modal="true"><div class="gp-head"><b class="gp-title"></b><button type="button" class="gp-x" aria-label="Schließen">✕</button></div><div class="gp-grid"></div><div class="gp-foot"><button type="button" class="gp-clear">Löschen</button></div></section>';document.body.append(pk);
+ let target=null;const close=()=>{pk.hidden=true;target=null};
+ const set=v=>{if(!target)return;const t=target;close();t.value=v;t.onchange?.()};
+ pk.querySelector('.gp-back').onclick=close;pk.querySelector('.gp-x').onclick=close;pk.querySelector('.gp-clear').onclick=()=>set('');
+ pk.querySelector('.gp-grid').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(b)set(b.dataset.v)});
+ const norm=v=>String(v||'').trim().replace(/−/g,'-').replace(/\s+/g,'');
+ window.classroomGradePicker=(inp,label)=>{target=inp;const pts=typeof classUsesGradePoints==='function'&&classUsesGradePoints();const cur=norm(inp.value);
+  let items=[];if(pts){for(let v=15;v>=0;v--){const g=v>=13?1:v>=10?2:v>=7?3:v>=4?4:v>=1?5:6;items.push([String(v),String(v),g])}}
+  else{for(let g=1;g<=5;g++)for(const t of ['+','','-'])items.push([g+t,g+(t==='-'?'−':t),g]);items.push(['6','6',6])}
+  const grid=pk.querySelector('.gp-grid');grid.classList.toggle('gp-pts',pts);
+  grid.innerHTML=items.map(([v,l,g])=>'<button type="button" data-v="'+v+'" class="gp-g'+g+(norm(v)===cur?' gp-on':'')+'">'+l+'</button>').join('');
+  pk.querySelector('.gp-title').textContent=label||'Note';pk.querySelector('.gp-clear').disabled=!cur;pk.hidden=false};
+ const st=document.createElement('style');st.textContent='.gp-wrap[hidden]{display:none}.gp-wrap{position:fixed;inset:0;z-index:100000}.gp-back{position:absolute;inset:0;background:#1c2b4633}'
+  +'.gp-panel{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:18px 18px 0 0;padding:12px 14px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -6px 24px #1c2b4622}'
+  +'.gp-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px}.gp-title{font-size:16px;color:#243247}.gp-x{width:36px;height:36px;border:0;border-radius:50%;background:#eef2f8;color:#5b6b82;font-size:16px}'
+  +'.gp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.gp-grid.gp-pts{grid-template-columns:repeat(4,1fr)}'
+  +'.gp-grid button{height:46px;border:1px solid #0000;border-radius:10px;font:inherit;font-size:19px;font-weight:700;color:#243247}'
+  +'.gp-g1{background:#bfe8d2}.gp-g2{background:#d9efbd}.gp-g3{background:#fff6a8}.gp-g4{background:#fde7b3}.gp-g5{background:#f8cdc8}.gp-g6{background:#eeb5b5}'
+  +'.gp-grid button.gp-on{border:3px solid #24334b}.gp-foot{display:flex;justify-content:flex-end;margin-top:10px}.gp-clear{height:36px;padding:0 16px;border:1px solid #dce3ef;border-radius:18px;background:#fff;color:#2f5f9b;font:inherit;font-size:14px;font-weight:500}.gp-clear:disabled{opacity:.4}'
+  +'html.ph-lite input.qs-pick-in{caret-color:transparent;cursor:pointer}';document.head.append(st)})();
 ;
 
 /* ==== noten/mean-guard.js ==== */
