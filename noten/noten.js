@@ -4550,6 +4550,9 @@ return}
   ".qd-panel .qd-body:not(#_){flex:1 1 auto;min-height:0;overscroll-behavior:contain}",
   ".qs-q1chip{margin:0!important;gap:0!important}",
   ".qs-q1chip i:not(#_){min-width:46px;height:40px;padding:0 8px;border-radius:10px;font-size:20px;font-weight:750;outline:0}",
+  /* 8.75: Note der Q1 und aktuelle Note nie umbrechen (lange Namen werden stattdessen gekürzt) */
+  ".qs-q1chip,.qs-q1chip i:not(#_),.qs-big:not(#_){flex:none!important;white-space:nowrap!important}",
+  ".qs-top .qs-name:not(#_){min-width:0}",
   ".qs-q1sep{align-self:stretch;margin:2px 0!important}",
   ".qs-top:has(.qs-q1chip){gap:8px}",
   ".qs-sq i.qs-x:not(#_){background:#e5484d;color:#fff;border:1px solid #d93c42;font-size:12px;font-weight:800}",

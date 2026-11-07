@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 07.11.2026 · Version 8.74
+Stand: 07.11.2026 · Version 8.75
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1151,3 +1151,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.72: Notenauswahl mit Zwischennoten (1–2 … 5–6); Notenpunkte zeilenweise je Note, 4 Punkte schraffiert
 8.73: iPhone – Detailblatt einer Person öffnet immer ganz (bis unter die Kopfleiste)
 8.74: iPhone – leere Spalten im Sitzplan nur schmal, wenn die Breite knapp ist
+8.75: iPhone Noten – Zwischennoten wie „3-4“ brechen bei langen Namen nicht mehr um
