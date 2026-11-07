@@ -4678,7 +4678,7 @@ return}
  const PH=matchMedia('(max-width:540px) and (orientation:portrait) and (pointer:coarse)');
  /* Nur auf einem echten iPhone: ein ausgeblendeter Rahmen (0 px) am Mac darf nie als „Handy“ gelten. */
  const PL=matchMedia('(max-height:500px) and (orientation:landscape) and (pointer:coarse)');
- const isPhone=()=>(PH.matches&&innerWidth>=280&&innerHeight>=400)||(PL.matches&&innerWidth>=400&&innerHeight>=150);
+ const isPhone=()=>window.classroomQuickView===true||(PH.matches&&innerWidth>=280&&innerHeight>=400)||(PL.matches&&innerWidth>=400&&innerHeight>=150);
  const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
  const sk=()=>'classroom-lite-half:'+currentSubject+':'+currentClassId;
  const ss={get:k=>{try{return sessionStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{sessionStorage.setItem(k,v)}catch{}}};
@@ -4713,6 +4713,9 @@ return}
   }finally{busy=false;if(acted&&tries++<12)setTimeout(ensure,350);if(!acted)tries=0}
  }
  function schedule(){if(planned)return;planned=true;setTimeout(()=>{planned=false;ensure()},30)}
+ /* 8.81: Schnellansicht am Mac/iPad (vom Unterrichts-Manager gesteuert): Karten wie auf dem iPhone, danach zurück zur vorigen Seite */
+ let qvPrev=null;window.classroomQuickViewSet=on=>{on=!!on;if(on===(window.classroomQuickView===true))return;if(on){qvPrev=activePage;window.classroomQuickView=true;document.documentElement.classList.add('cm-quick');done.clear();tries=0;ensure()}
+  else{window.classroomQuickView=false;document.documentElement.classList.remove('cm-quick');ensure();if(qvPrev&&qvPrev!==activePage){try{setPage(qvPrev)}catch{}}qvPrev=null;try{renderAll?.(true)}catch{}}};
  // Kopfzeile über den Karten: Halbjahr · Tendenzen (Aus/Schraffiert/Rahmen) · Stand
  /* Tendenzen-Schalter: nutzt den vorhandenen Dreifachschalter der Seite (gleiche Einstellung wie am Mac/iPad) */
  const ls=k=>{try{return localStorage.getItem(k)}catch{return null}};
@@ -4821,6 +4824,8 @@ return}
 (()=>{const st=document.createElement('style');st.textContent='.pl-bar .pl-hatch:not(#_),.pl-bar .pl-mean:not(#_){box-sizing:border-box;width:150px;flex:none}.pl-bar :is(.pl-hatch,.pl-mean) button:not(#_):not(#__){flex:1 1 0;min-width:0;padding:0;height:32px;min-height:32px}';document.head.append(st)})();
 /* 8.79: Hinweise über den Karten („3× HA fehlend“ …) als Pille wie die übrigen Knöpfe */
 (()=>{const st=document.createElement('style');st.textContent='.pl-flags button:not(#_){border-radius:999px!important;padding:0 14px 0 6px;min-height:38px}';document.head.append(st)})();
+/* 8.81: Schnellansicht am Mac/iPad – ohne doppelten Rahmen, volle Breite der Spalte */
+(()=>{const st=document.createElement('style');st.textContent='html.cm-quick,html.cm-quick body{background:#fff!important}html.cm-quick body{margin:0!important;padding:0!important}html.cm-quick main,html.cm-quick .app,html.cm-quick .container{margin:0!important;padding:0!important;max-width:none!important}html.cm-quick [data-custom-panel]:not([hidden]){border:0!important;box-shadow:none!important;border-radius:0!important;margin:0!important;padding:12px 10px!important;background:#fff!important}';document.head.append(st)})();
 ;
 
 /* ==== noten/student-notes.js ==== */

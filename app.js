@@ -1599,6 +1599,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['Noten neben dem Sitzplan','Am Mac und iPad zeigt der Knopf „Noten“ über dem Sitzplan die Notenkarten der Klasse (wie auf dem iPhone) in der linken Spalte – Halbjahr oder Quartal, kleine Karten, alle Schalter. Nochmal tippen holt die Einstellungen zurück. In der Klassenansicht bleibt sie verborgen.','Unterricht → Noten','8.81'],
    ['Halbjahr auf einen Blick','Auf dem iPhone zeigen die Karten ab dem 2. Quartal standardmäßig das ganze Halbjahr: groß die Halbjahresnote (aus der Halbjahresübersicht), klein darunter „Q1 … · Q2 …“, alle Bewertungen beider Quartale. Der Umschalter „Halbjahr | Q2“ zeigt bei Bedarf nur das Quartal, z. B. zum Eintragen der Quartalsnote.','iPhone → Noten','8.77'],
    ['Sitzplan im Querformat größer','Der Plan füllt die Fläche aus und schließt bündig mit den Knöpfen ab. Wird es eng, werden „Heute“ und „Perspektive“ zu kleinen Knöpfen (H ▾, ⇅ P). Leere Spalten werden nur schmal, wenn die Breite knapp ist.','iPhone → Unterricht','8.74'],
    ['Detailblatt immer ganz offen','Auf dem iPhone fährt das Blatt einer Person immer bis unter die Kopfleiste aus – Name und Pfeile stehen bei jeder Person an derselben Stelle, längerer Inhalt scrollt im Blatt.','iPhone → Noten → Karte antippen','8.73'],
@@ -1607,8 +1608,7 @@ window.addEventListener('message',event=>{
    ['Karten verkleinern','Der runde Knopf neben „1. Quartal“ macht alle Karten klein: Name, Noten und eine Zeile wie „Mitarbeit 2 · HA ✕1 · KA —“. Antippen klappt eine Karte auf, Tipp auf den Namen klappt sie wieder zu.','iPhone → Noten','8.69'],
    ['Neues Noten-Symbol','Der Bereich „Noten“ hat jetzt das Häkchen aus dem App-Icon.','iPhone → untere Leiste','8.68'],
    ['Eingabe im Querformat aufgeräumt','Sitzplan und Bewertungsfenster sind zwei gleich hohe Karten mit gleichen Knöpfen. Während der Eingabe sind „H“ und „P“ ausgeblendet – die Tische werden größer.','iPhone quer → Unterricht','8.67'],
-   ['Keine Stunden-Meldung mehr','Beim automatischen Wechsel zur aktuellen Stunde erscheint keine Meldung mehr – die App wechselt still zu Klasse, Raum und Datum.','Aktuell / Stundenplan','8.65'],
-   ['Quartal für alle Lerngruppen','„＋ Quartal“ legt das neue Quartal im selben Halbjahr auch in allen anderen Lerngruppen an. Noten werden nie kopiert.','Noten → ＋ Quartal','8.62']
+   ['Keine Stunden-Meldung mehr','Beim automatischen Wechsel zur aktuellen Stunde erscheint keine Meldung mehr – die App wechselt still zu Klasse, Raum und Datum.','Aktuell / Stundenplan','8.65']
   ]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
@@ -1989,6 +1989,38 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
 })();
 /* 8.44: iPhone – kein Pfeil neben Klasse/Fach; ein Tipp auf das Feld öffnet die Auswahl */
 (()=>{const st=document.createElement('style');st.textContent='@media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){.app-header>.compact-navigation .compact-navigation-arrow:not(#_):not(#__){display:none!important}.app-header>.compact-navigation .compact-navigation-bar:not(#_):not(#__){padding:0 12px!important;cursor:pointer}}';document.head.append(st)})();
+;
+
+/* ==== quickview.js ==== */
+/* 8.81: Noten-Schnellansicht am Mac/iPad – im Unterrichts-Manager zeigt der Knopf „Noten“ die Notenkarten (wie auf dem iPhone)
+   in der linken Spalte neben dem Sitzplan. Es gibt nur EINEN Noten-Manager: sein Rahmen wird dafür über die linke Spalte gelegt. */
+(()=>{
+ const KEY='classroom-quickview-v1',get=()=>{try{return localStorage.getItem(KEY)==='1'}catch{return false}};
+ const nf=()=>document.getElementById('view-noten'),sf=()=>document.getElementById('view-sitzplan');
+ let active=false;
+ const view=()=>{try{return localStorage.getItem('classroom-manager-last-view-v1')||'noten'}catch{return 'noten'}};
+ function sync(){const f=sf();try{const b=f?.contentDocument?.querySelector('[data-quickview]');if(b){const on=get();b.setAttribute('aria-pressed',String(on));b.title=on?'Noten-Schnellansicht schließen':'Noten der Klasse neben dem Sitzplan zeigen'}}catch{}}
+ function off(){if(!active)return;active=false;const n=nf(),s=sf();if(n){n.classList.remove('cm-quick');n.removeAttribute('style');n.hidden=view()!=='noten'}try{s?.contentDocument?.documentElement.classList.remove('cm-quick-on')}catch{}try{n?.contentWindow?.classroomQuickViewSet?.(false)}catch{}}
+ function layout(){
+  const n=nf(),s=sf(),want=get()&&view()==='sitzplan'&&!document.documentElement.classList.contains('is-phone')&&!document.documentElement.classList.contains('classroom-beamer-active');
+  sync();if(!want||!n||!s){off();return}
+  let doc;try{doc=s.contentDocument}catch{}const panel=doc?.querySelector('.container>.panel');if(!panel||doc.documentElement.classList.contains('classroom-beamer')){off();return}
+  const ws=n.parentElement.getBoundingClientRect(),sr=s.getBoundingClientRect(),r=panel.getBoundingClientRect();if(r.width<200){off();return}
+  const top=Math.max(r.top,12),bottom=Math.min(r.bottom,s.clientHeight-12);
+  n.hidden=false;n.classList.add('cm-quick');
+  Object.assign(n.style,{position:'absolute',left:(sr.left-ws.left+r.left)+'px',top:(sr.top-ws.top+top)+'px',width:r.width+'px',height:Math.max(200,bottom-top)+'px',zIndex:'5'});
+  doc.documentElement.classList.add('cm-quick-on');
+  if(!active){active=true;try{n.contentWindow?.classroomQuickViewSet?.(true)}catch{}}
+ }
+ window.classroomQuickToggle=()=>{try{localStorage.setItem(KEY,get()?'0':'1')}catch{}layout()};
+ window.classroomQuickLayout=layout;
+ const st=document.createElement('style');st.textContent='.workspace iframe.cm-quick{border:1px solid #dce3ef!important;border-radius:18px;background:#fff;box-shadow:0 1px 3px #233d600d}';document.head.append(st);
+ /* Ansichtswechsel, Größe, Scrollen im Sitzplan */
+ if(typeof selectView==='function'){const o=selectView;window.selectView=selectView=function(v){off();const r=o.apply(this,arguments);setTimeout(layout,0);return r}}
+ addEventListener('resize',()=>requestAnimationFrame(layout));
+ let hooked=null;setInterval(()=>{const w=sf()?.contentWindow;if(w&&w!==hooked){hooked=w;try{w.addEventListener('scroll',()=>requestAnimationFrame(layout),{passive:true});w.addEventListener('resize',()=>requestAnimationFrame(layout))}catch{}}if(get())layout();else if(active)off();else sync()},700);
+ new MutationObserver(()=>layout()).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+})();
 ;
 
 /* ==== button-help.js ==== */
