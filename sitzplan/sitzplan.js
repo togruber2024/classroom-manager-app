@@ -3821,6 +3821,30 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
  document.head.append(st)})();
 /* 9.12: iPhone quer – ‹ ◉ › nur hochkant (quer rutschten sie bei breiten Plänen hinter die Tische); Kalender per Tipp aufs Datum bleibt */
 (()=>{const st=document.createElement('style');st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){html.ph-lite .pl-seatbar>.pl-dnav{display:none!important}}';document.head.append(st)})();
+/* 9.28: iPhone quer – die Tische bekommen die volle Breite; Datum, ‹ ◉ › und Perspektive liegen hinter dem runden Knopf „⋯“ unten rechts.
+   Ein Tipp öffnet die kleine Leiste, ein zweiter Tipp oder ein Tipp daneben schließt sie. Das Datum steht dort kurz als „7.11.“. */
+(()=>{const start=()=>{const bar=document.querySelector('.pl-seatbar');if(!bar)return false;const date=bar.querySelector('.pl-date');
+ const dm=document.createElement('span');dm.className='pl-date-dm';date?.prepend(dm);
+ const sync=()=>{const v=(typeof classroomDate!=='undefined'&&classroomDate.value)||'',m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v);const t=m?(+m[3])+'.'+(+m[2])+'.':'Datum';if(dm.textContent!==t)dm.textContent=t};
+ sync();try{classroomDate.addEventListener('change',sync)}catch{}setInterval(sync,2000);
+ const more=document.createElement('button');more.type='button';more.className='pl-more';more.textContent='⋯';more.setAttribute('aria-label','Datum und Perspektive');more.setAttribute('aria-expanded','false');document.body.append(more);
+ const set=on=>{document.documentElement.classList.toggle('pl-more-open',on);more.setAttribute('aria-expanded',String(on))};
+ more.onclick=e=>{e.stopPropagation();set(!document.documentElement.classList.contains('pl-more-open'))};
+ /* Schließen nur bei einem Tipp außerhalb; der Pfad wird beim Antippen gelesen, weil sich ‹ ◉ › danach neu aufbauen */const outside=e=>{if(!document.documentElement.classList.contains('pl-more-open'))return;if(e.composedPath().some(n=>n.nodeType===1&&n.matches?.('.pl-seatbar,.pl-more,.pl-cal,.cd-pop')))return;set(false)};for(const t of ['pointerdown','touchstart','mousedown'])window.addEventListener(t,outside,{capture:true,passive:true});
+ const L='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse)',B='html.ph-lite .grid-container>.pl-seatbar';
+ const st=document.createElement('style');st.textContent='.pl-more,.pl-date-dm{display:none}'+L+'{'
+  +'html.ph-lite .grid-container:has(>.pl-seatbar):not(#_):not(#__){grid-template-columns:minmax(0,1fr)!important;column-gap:0!important}'
+  +B+':not(#_):not(#__):not(#___){position:fixed!important;right:62px;bottom:10px;z-index:60;display:none!important;flex-direction:row!important;align-items:center!important;gap:8px!important;width:auto!important;margin:0!important;padding:8px!important;background:#fff;border:1px solid #dce3ec;border-radius:16px;box-shadow:0 8px 24px #233d6033}'
+  +'html.ph-lite.pl-more-open .grid-container>.pl-seatbar:not(#_):not(#__):not(#___){display:flex!important}'
+  +B+'>:is(.pl-date,.pl-rotate):not(#_):not(#__):not(#___){width:auto!important;min-width:0!important;padding:0 14px!important;font-size:14px!important;gap:6px!important}'
+  +B+'>.pl-date>:is(.pl-date-text,.pl-chev):not(#_){display:none!important}'+B+'>.pl-date>.pl-date-dm{display:inline;font-size:14px;font-weight:600}'
+  +B+'>.pl-dnav:not(#_):not(#__):not(#___){display:inline-flex!important;width:auto!important}'+B+'>.pl-dnav>button{width:38px}'
+  +'html.ph-lite .pl-more{display:flex;position:fixed;right:10px;bottom:10px;z-index:61;width:44px;height:44px;align-items:center;justify-content:center;border:1px solid #cbd6e5;border-radius:22px;background:#fff;color:#2f5f9b;font:inherit;font-size:22px;line-height:1;box-shadow:0 4px 12px #233d6026;cursor:pointer}'
+  +'html.ph-lite.pl-more-open .pl-more{background:#eaf1fb}'
+  +'html.ph-lite body:has(.classroom-quick.is-sheet) .pl-more{display:none}}';
+ document.head.append(st);return true};
+ /* die Leiste wird erst eingesetzt, wenn das iPhone erkannt ist */const t=setInterval(()=>{if(start())clearInterval(t)},300);setTimeout(()=>clearInterval(t),30000);
+})();
 ;
 
 /* ==== no-contacts.js ==== */
