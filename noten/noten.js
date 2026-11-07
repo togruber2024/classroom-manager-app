@@ -4850,7 +4850,7 @@ return}
  const nameOf=c=>c.querySelector('.qs-name')?.textContent.trim()||'';
  const cards=()=>[...document.querySelectorAll('.qs-cards>.qs-card:not(.qd-card)')];
  function summary(c){const bars=c.querySelector('.qs-bars');if(!bars)return '';const parts=[];
-  for(const s of bars.querySelectorAll(':scope>.qs-sect')){const l=s.querySelector('.qs-sh-l span')?.textContent.trim();if(!l)continue;const v=(s.querySelector(':scope>.qs-sh .qs-val')?.innerText||'').trim()||'—';parts.push((short[l]||l)+' '+v)}
+  for(const s of bars.querySelectorAll(':scope>.qs-sect')){const l=s.querySelector('.qs-sh-l span')?.textContent.trim();if(!l)continue;const ve=s.querySelector(':scope>.qs-sh .qs-val i')||s.querySelector(':scope>.qs-row>.qs-val i');/* 8.93: Wert steht seit 8.88 auch in der Kästchen-Zeile */const v=(ve?.textContent||'').trim()||'—';parts.push((short[l]||l)+' '+v)}
   for(const s of bars.querySelectorAll('.qs-sub .qs-sect')){if(!/Hausaufgaben/.test(s.querySelector('.qs-sh-l')?.textContent||''))continue;const vv=[...s.querySelectorAll('.qs-val')].find(e=>e.offsetParent||e.getClientRects().length);const n=((vv?.innerText||'').match(/\d+/g)||['0']).pop();parts.splice(parts.length?1:0,0,n==='0'?'HA ✓':'HA ✕'+n);break}
   return parts.join(' · ')}
  function apply(){for(const b of document.querySelectorAll('.pl-fold')){b.setAttribute('aria-pressed',String(on));b.title=on?'Karten wieder ganz zeigen':'Karten verkleinern';b.setAttribute('aria-label',b.title)}
@@ -4889,6 +4889,8 @@ return}
 (()=>{const st=document.createElement('style');st.textContent='.q1open{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:8px 8px 8px 14px;border:1px solid #e9cfa5;border-radius:999px;background:#fff7e8;color:#8a5a12}.q1o-t{display:flex;flex-direction:column;line-height:1.25;min-width:0}.q1o-t b{font-size:14px;font-weight:650}.q1o-t small{font-size:12px;color:#9a6b2a}.q1open button{flex:none;height:34px;padding:0 14px;border:1px solid #e9cfa5;border-radius:999px;background:#fff;color:#8a5a12;font:inherit;font-size:14px;font-weight:600;cursor:pointer}';document.head.append(st)})();
 /* 8.87: kompakte Leiste im 1. Quartal */
 (()=>{const st=document.createElement('style');st.textContent='.pl-bar.pl-compact1 .pl-row:not(.pl-row2):not(.pl-row3){flex-wrap:nowrap;gap:8px}.pl-bar.pl-compact1 .pl-row:not(.pl-row2):not(.pl-row3) .q1open:not(#_){flex:1;margin:0;min-width:0;height:38px;box-sizing:border-box;padding:0 3px 0 14px}.pl-bar.pl-compact1 .q1o-t:not(#_){flex-direction:row;align-items:baseline;gap:6px;white-space:nowrap}.pl-bar.pl-compact1 .q1o-t small{font-size:13px}.pl-bar.pl-compact1 .q1open button:not(#_){height:32px}.pl-bar.pl-compact1 .pl-fold:not(#_){margin-left:0}.pl-bar.pl-compact1 .pl-row2:not(#_){justify-content:space-between;margin-top:8px}.pl-bar.pl-compact1 .pl-row2 .pl-hatch:not(#_):not(#__),.pl-bar.pl-compact1 .pl-row2 .pl-mean:not(#_):not(#__){width:calc(50% - 4px);margin:0}.pl-bar .pl-row3{margin-top:8px;justify-content:flex-start}.pl-bar .pl-row3[hidden],.pl-bar .pl-row3:not(:has(.pl-flags:not([hidden]))){display:none}.pl-bar .pl-row3 .pl-flags:not(#_){margin-left:0;justify-content:flex-start}';document.head.append(st)})();
+/* 8.93: iPhone – Kartenfenster: Rand links/rechts halbiert (6 px), oben derselbe Abstand */
+(()=>{const st=document.createElement('style');st.textContent='html.ph-lite:not(.cm-quick) body>main:not(#_){padding-left:6px!important;padding-right:6px!important;padding-top:6px!important}';document.head.append(st)})();
 ;
 
 /* ==== noten/student-notes.js ==== */
