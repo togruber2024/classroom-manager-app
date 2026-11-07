@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 07.11.2026 · Version 8.85
+Stand: 07.11.2026 · Version 8.86
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1162,3 +1162,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.83: Detailblatt als Quartalsgespräch – erst nur das Quartal, nach Selbsteinschätzung und Quartalsnote Klassenarbeiten, Halbjahres-Vorschlag und Feld für die Halbjahresnote
 8.84: iPhone – Wischfenster von Aktuell, Hilfe und Noten fahren gleich weit aus
 8.85: Klassenarbeit/Klausur rechts immer mit Ø
+8.86: iPhone – bleibt nach Q2-Beginn im 1. Quartal, solange Q1-Quartalsnoten fehlen (max. 4 Wochen, Hinweis mit „Zu Q2“)

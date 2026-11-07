@@ -4718,8 +4718,18 @@ return}
  function wantedHalf(){const ys=years();if(!ys.length)return null;const chosen=ss.get(sk());if(chosen&&ys.some(y=>y.id===chosen))return chosen;
   const t=today(),dated=ys.map(y=>({id:y.id,start:typeof classroomPeriodDate==='function'?classroomPeriodDate(y,'start'):''})).filter(y=>y.start&&y.start<=t).sort((a,b)=>a.start<b.start?1:-1);
   return dated[0]?.id||currentHalfYearId||ys[0].id}
- function wantedQuarter(){const y=years().find(g=>g.id===currentHalfYearId),sel=Number(holder()?.sharedQuarterSelection?.[currentHalfYearId])||0;
+ function dateQuarter(){const y=years().find(g=>g.id===currentHalfYearId),sel=Number(holder()?.sharedQuarterSelection?.[currentHalfYearId])||0;
   return typeof classroomQuarterForDate==='function'?classroomQuarterForDate(y,today(),sel):sel}
+ /* 8.86: Übergang Q1 → Q2 – solange Q1-Quartalsnoten fehlen (höchstens 4 Wochen nach Q2-Beginn), bleibt die Ansicht im 1. Quartal; „Zu Q2“ überspringt das */
+ const skipKey=()=>'classroom-q1-skip:'+currentSubject+':'+currentClassId+':'+currentHalfYearId;
+ function q1Status(){try{const perf=subjectExamGroups(currentSubject).find(g=>g.type==='performance'&&g.halfYearId===currentHalfYearId);if(!perf?.pages?.[0])return null;
+  const studs=(taskPageData(currentSubject,perf.pages[0]).students||[]).filter(x=>x.name?.trim()&&!x.placeholder);if(!studs.length)return null;
+  const sum=subjectExamGroups(currentSubject).find(g=>g.type==='quarterSummary'&&g.halfYearId===currentHalfYearId),rev=sum?.pages?.[0]?(customPageValues(currentSubject,sum.pages[0]).reviews||{}):{},nm=n=>String(n||'').trim().toLocaleLowerCase('de-DE');
+  const done=studs.filter(x=>{const v=x.quarterReview?.teacher??rev[nm(x.name)]?.teacher;return v!=null&&String(v).trim()!==''}).length;return {done,total:studs.length}}catch{return null}}
+ function q1Transition(){if(dateQuarter()!==1)return null;try{if(localStorage.getItem(skipKey())==='1')return null}catch{}
+  const y=years().find(g=>g.id===currentHalfYearId),b=typeof classroomQuarterBoundary==='function'?classroomQuarterBoundary(y):null;if(!b)return null;
+  const days=(new Date(today())-new Date(b))/864e5;if(days<0||days>28)return null;const st=q1Status();return st&&st.done<st.total?st:null}
+ function wantedQuarter(){const q=dateQuarter();return q===1&&q1Transition()?0:q}
  function ensure(){
   const on=isPhone();document.documentElement.classList.toggle('ph-lite',on);if(!on||busy||!currentClassId)return;
   busy=true;let acted=false;try{
@@ -4728,7 +4738,7 @@ return}
    const half=wantedHalf();if(half&&half!==currentHalfYearId){const b=nf.querySelector(`.half-year-picker .page-tab[data-half-year-id="${CSS.escape(half)}"]`);if(b&&once('half:'+half)){b.click();acted=true;return}}
    // 2. Quartal nach Datum
    const q=wantedQuarter(),qTabs=[...nf.querySelectorAll('.shared-quarter-picker .page-tab')],sel=Number(holder()?.sharedQuarterSelection?.[currentHalfYearId])||0;
-   if(qTabs[q]&&sel!==q&&once('q:'+q)){qTabs[q].click();acted=true;return}
+   if(qTabs[q]&&sel!==q&&!document.querySelector('.qs-detail:not([hidden])')&&once('q:'+q)){qTabs[q].click();acted=true;return}
    // 3. Quartalsübersicht öffnen (ggf. für dieses Quartal freischalten)
    const sum=subjectExamGroups(currentSubject).find(g=>g.type==='quarterSummary'&&g.halfYearId===currentHalfYearId);
    showEmpty(!sum);if(!sum)return;
@@ -4776,7 +4786,7 @@ return}
   if(hs.dataset.sig!==sig){hs.dataset.sig=sig;hs.replaceChildren(...ys.map(y=>{const b=document.createElement('button');b.type='button';b.dataset.half=y.id;b.textContent=y.label||'Halbjahr';b.setAttribute('aria-pressed',String(y.id===currentHalfYearId));return b}));hs.hidden=ys.length<2}
   bar.dataset.sel=String(sel);syncHatch(bar);syncQ1(bar);syncMean(bar);
   const y=ys.find(g=>g.id===currentHalfYearId),name=typeof classroomQuarterPeriodName==='function'&&y?classroomQuarterPeriodName(y,sel):(sel+1)+'. Quartal';
-  /* 8.15: oben „1. Halbjahr · 2. Quartal“, der Hinweis bleibt direkt über den Karten */const hy=y?.label||'';bar.querySelector('.pl-head').textContent=sel>=1&&window.classroomCardsHalf?.on()?(hy||'Halbjahr'):(hy?hy+' · ':'')+name;bar.querySelector('.pl-stand').textContent='Antippen zeigt alle Einträge';
+  /* 8.15: oben „1. Halbjahr · 2. Quartal“, der Hinweis bleibt direkt über den Karten */const hy=y?.label||'';bar.querySelector('.pl-head').textContent=sel>=1&&window.classroomCardsHalf?.on()?(hy||'Halbjahr'):(hy?hy+' · ':'')+name;bar.querySelector('.pl-stand').textContent='Antippen zeigt alle Einträge';{let h=bar.querySelector('.q1open');const st=sel===0?q1Transition():null;if(st){if(!h){h=document.createElement('div');h.className='q1open';h.innerHTML='<span class="q1o-t"><b>Q1-Noten noch offen</b><small></small></span><button type="button">Zu Q2 ›</button>';h.querySelector('button').onclick=()=>{try{localStorage.setItem(skipKey(),'1')}catch{}h.remove();done.clear();tries=0;schedule()};bar.querySelector('.pl-head').after(h)}h.querySelector('small').textContent=st.done+' von '+st.total+' eingetragen'}else h?.remove()}
   sortCards(panel);flags(panel);
  }
  /* 8.01: Hinweise über den Karten – antippen filtert die Karten, nochmal antippen zeigt wieder alle */
@@ -4861,6 +4871,8 @@ return}
   const card=cards.find(c=>{const n=norm(c.querySelector('.qs-name')?.textContent);if(n===want)return true;const m=/^(.+?),\s*(.+)$/.exec(n);return m&&(m[2]+' '+m[1]===want)});
   if(!card)return;card.scrollIntoView({block:'start',behavior:'smooth'});card.classList.remove('qs-flash');void card.offsetWidth;card.classList.add('qs-flash');setTimeout(()=>card.classList.remove('qs-flash'),1800)};
  const st=document.createElement('style');st.textContent='@keyframes qsFlash{0%,60%{box-shadow:0 0 0 3px #8fb0dc;border-color:#2f5f9b}100%{box-shadow:0 0 0 0 #8fb0dc00}}.qs-card.qs-flash{animation:qsFlash 1.8s ease-out}html.cm-quick .qs-cards>.qs-card{scroll-margin-top:10px}';document.head.append(st)})();
+/* 8.86: Hinweis „Q1-Noten noch offen“ */
+(()=>{const st=document.createElement('style');st.textContent='.q1open{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:8px 8px 8px 14px;border:1px solid #e9cfa5;border-radius:999px;background:#fff7e8;color:#8a5a12}.q1o-t{display:flex;flex-direction:column;line-height:1.25;min-width:0}.q1o-t b{font-size:14px;font-weight:650}.q1o-t small{font-size:12px;color:#9a6b2a}.q1open button{flex:none;height:34px;padding:0 14px;border:1px solid #e9cfa5;border-radius:999px;background:#fff;color:#8a5a12;font:inherit;font-size:14px;font-weight:600;cursor:pointer}';document.head.append(st)})();
 ;
 
 /* ==== noten/student-notes.js ==== */
