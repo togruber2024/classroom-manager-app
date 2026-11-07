@@ -4312,7 +4312,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   /* 8.06: Detailblatt im selben Aufbau wie die Karte (Abschnitte, Werte rechts, 1. Quartal immer eingeblendet), nur größer;
      dazu Notiz oben und bei Tests/Klassenarbeit der Name unter dem Datum. Selbsteinschätzung und Quartalsnote unten zum Eintragen. */
   const edits=document.createElement('div');edits.className='qs-edits qd-edits';
-  cells.forEach((cell,k)=>{if(!k||!cell.classList.contains('quarter-summary-edit-cell')||cell.classList.contains('previous-quarter-history-cell'))return;const orig=cell.querySelector('input');if(orig)edits.append(editProxy(orig,heads[k].replace(/ · Q\d$/,''),()=>setTimeout(renderDetail,0)))});
+  cells.forEach((cell,k)=>{if(!k||!cell.classList.contains('quarter-summary-edit-cell')||cell.classList.contains('previous-quarter-history-cell'))return;const orig=cell.querySelector('input');if(orig)edits.append(editProxy(orig,heads[k].replace(/ · Q\d$/,''),()=>{semAt=0;setTimeout(renderDetail,0)}))});
   const body=sheet.querySelector('.qd-body');body.replaceChildren();
   if(window.classroomStudentNotes){const nb=document.createElement('label');nb.className='qd-note';const ns=document.createElement('span');ns.textContent='Notiz';const ta=document.createElement('textarea');ta.rows=2;ta.maxLength=500;ta.placeholder='z. B. Elterngespräch, Nachschreibtermin …';ta.value=classroomStudentNotes.get(detail.name);const who=detail.name;ta.onchange=()=>{classroomStudentNotes.set(who,ta.value);schedule()};nb.append(ns,ta);body.append(nb)}
   const card=[...detail.panel.querySelectorAll('.qs-cards>.qs-card')].find(c=>c.querySelector('.qs-name')?.textContent.trim()===detail.name);
@@ -4322,8 +4322,34 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
     wrap.append(top)}
    for(const part of card.querySelectorAll(':scope>.qs-bars,:scope>.qs-chips'))wrap.append(part.cloneNode(true));
    body.append(wrap)}
-  if(edits.childElementCount)body.append(edits);fixUnstriped(body);window.classroomUnstripe?.(body);
+  if(edits.childElementCount)body.append(edits);try{talk(body,edits,heads,cells)}catch(e){console.warn('Quartalsgespräch',e)}fixUnstriped(body);window.classroomUnstripe?.(body);
  }
+ /* 8.83: Detailblatt = Quartalsgespräch. Schritt 1: nur das aktuelle Quartal (ohne Q1-Einträge, Halbjahresnote, Klassenarbeit),
+    oben der Vorschlag für die Quartalsnote. Schritt 2 (Selbsteinschätzung und Quartalsnote eingetragen): Kasten „Für das Halbjahr“
+    mit Klassenarbeit(en) und – ab dem 2. Quartal – Halbjahresnote: links Vorschlag der App, rechts das eigene Feld (dasselbe wie am Mac). */
+ function talk(body,edits,heads,cells){
+  const wrap=body.querySelector('.qd-card');if(!wrap)return;const cellOfHead=re=>{const k=heads.findIndex(h=>re.test(h));if(k<0)return null;const c=cells[k],sp=c?.querySelector('span'),tx=(sp||c)?.textContent.trim();return tx&&tx!=='—'?{text:tx,cls:(sp?.className||'').replace(/\bprevious-quarter-value\b/,'')}:null};
+  const sel=(()=>{try{return Number((classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId)?.sharedQuarterSelection?.[currentHalfYearId])||0}catch{return 0}})();
+  wrap.classList.remove('q1-open');wrap.querySelectorAll('.qs-prev,.qs-seq>.qs-sep,.qs-q1chip,.qs-q1sep').forEach(x=>x.remove());
+  wrap.querySelector('.qd-hj')?.remove();
+  const top=[...wrap.querySelectorAll(':scope>.qs-top')].pop();if(top){const lab=top.querySelector('.qd-qn');if(lab)lab.textContent='Quartalsnote Q'+(sel+1)+' · Vorschlag';const big=top.querySelector('.qs-big');const so=cellOfHead(/^Sonstige Mitarbeit$/);
+   if(big){const w=big.closest('.qs-hjw');if(w)w.replaceWith(big);if(so){const f=fmtMean(so.text,so.cls);big.textContent=f.text;big.className='qs-big qs-soft '+(f.cls||'')}else{big.textContent='—';big.className='qs-big qs-empty'}big.title='Vorschlag aus der Sonstigen Mitarbeit dieses Quartals'}}
+  const sect=re=>[...wrap.querySelectorAll('.qs-sect')].find(x=>re.test((x.querySelector('.qs-sh-l')?.textContent||'').trim()));
+  const setv=(el,it)=>{if(!el)return;if(!it){el.textContent='—';el.className='qs-abs qs-none';return}const f=fmtMean(it.text,it.cls);el.textContent=f.text;el.className=f.cls||''};
+  setv(sect(/^Sonstige Mitarbeit/)?.querySelector(':scope>.qs-sh .qs-val i'),cellOfHead(/^Sonstige Mitarbeit$/));
+  {const s=sect(/^Mündliche Mitarbeit/);if(s)setv([...s.querySelectorAll('.qs-val i')].pop(),cellOfHead(/^MM · Mittelwert/))}
+  {const s=sect(/^Tests/);if(s)setv([...s.querySelectorAll('.qs-val i')].pop(),cellOfHead(/^Tests · Mittelwert/))}
+  const exams=[...wrap.querySelectorAll('.qs-sect')].filter(x=>/^(Klassenarbeit|Klausur)/.test((x.querySelector('.qs-sh-l')?.textContent||'').trim()));exams.forEach(x=>x.remove());
+  const ins=[...edits.querySelectorAll('input')];if(ins.length<2||ins.some(i=>!i.value.trim()))return;
+  const box=document.createElement('div');box.className='qd-hjbox';const cap=document.createElement('div');cap.className='qd-hjcap';cap.textContent='Für das Halbjahr';box.append(cap,...exams);
+  if(sel>=1){const t=semTable();if(t){const name=detail.name,hh=[...t.tHead.rows[0].cells].map(c=>c.textContent.replace(/\s+/g,' ').trim()),row=[...t.tBodies[0].rows].find(r=>r.cells[0]?.textContent.trim()===name);
+   if(row){let calc=null,inp=null;hh.forEach((h,k)=>{if(!/^Halbjahresnote/.test(h))return;const c=row.cells[k];const i=c?.querySelector('input');if(i)inp=i;else{const sp=c?.querySelector('span'),tx=(sp||c)?.textContent.trim();if(tx&&tx!=='—')calc={text:tx,cls:sp?.className||''}}});
+    if(!calc){const so=cellOfHead(/^Sonstige Mitarbeit$/);hh.forEach((h,k)=>{if(/^Sonstige Mitarbeit/.test(h)&&!calc){const c=row.cells[k],sp=c?.querySelector('span'),tx=(sp||c)?.textContent.trim();if(tx&&tx!=='—')calc={text:tx,cls:sp?.className||''}}})}
+    const line=document.createElement('div');line.className='qs-edits qd-edits qd-hjline';
+    const lv=document.createElement('label');lv.className='qs-edit';const lt=document.createElement('span');const ltt=document.createElement('span');ltt.className='qs-edit-t';ltt.textContent='Halbjahresnote · Vorschlag';lt.append(ltt);const v=document.createElement('div');v.className='qd-hjsug';if(calc){const f=fmtMean(calc.text,calc.cls);v.textContent=f.text;v.className+=' '+(f.cls||'')}else{v.textContent='—';v.className+=' qs-empty'}lv.append(lt,v);
+    line.append(lv);if(inp)line.append(editProxy(inp,'Halbjahresnote',()=>{semAt=0;setTimeout(renderDetail,0)}));box.append(line)}}}
+  edits.after(box)}
+
  let planned=false;
  document.addEventListener('classroom-student-note',()=>schedule());
  function schedule(){if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;run()})}
@@ -4584,6 +4610,7 @@ return}
   ".qs-q1chip i:not(#_){min-width:46px;height:40px;padding:0 8px;border-radius:10px;font-size:20px;font-weight:750;outline:0}",
   /* 8.75: Note der Q1 und aktuelle Note nie umbrechen (lange Namen werden stattdessen gekürzt) */
   ".qs-q1chip,.qs-q1chip i:not(#_),.qs-big:not(#_){flex:none!important;white-space:nowrap!important}",
+  ".qd-hjbox{margin-top:16px;padding:12px 14px;border:1px solid #9dbbe3;border-radius:14px;background:#f7faff;animation:qdIn .35s ease-out}.qd-hjcap{font-size:13px;font-weight:700;color:#2f5f9b;margin:0 0 6px}.qd-hjbox .qd-hjline{margin-top:12px;border:0;padding:0}.qd-hjsug{min-height:36px;height:40px;box-sizing:border-box;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;opacity:.85}@keyframes qdIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}",
   ".qs-hjw{display:inline-flex;flex-direction:column;align-items:center;gap:3px;flex:none;margin-left:auto}.qs-hjq{font-size:11px;font-weight:600;color:#6b7a90;white-space:nowrap}",
   ".qs-top .qs-name:not(#_){min-width:0}",
   ".qs-q1sep{align-self:stretch;margin:2px 0!important}",

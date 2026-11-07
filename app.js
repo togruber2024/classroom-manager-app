@@ -1599,6 +1599,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['Quartalsgespräch im Detailblatt','Ein Tipp auf eine Karte zeigt nur das aktuelle Quartal mit dem Vorschlag für die Quartalsnote. Sind Selbsteinschätzung und Quartalsnote eingetragen, erscheint „Für das Halbjahr“: Klassenarbeiten und – ab dem 2. Quartal – links der Vorschlag der App, rechts dein Feld für die Halbjahresnote (dasselbe wie am Mac).','Noten → Karte antippen','8.83'],
    ['Noten neben dem Sitzplan','Am Mac und iPad zeigt der Knopf „Noten“ über dem Sitzplan die Notenkarten der Klasse (wie auf dem iPhone) in der linken Spalte – Halbjahr oder Quartal, kleine Karten, alle Schalter. Tippst du einen Schüler im Plan an, springt die Liste zu seiner Karte. Nochmal tippen auf „Noten“ holt die Einstellungen zurück. In der Klassenansicht bleibt sie verborgen.','Unterricht → Noten','8.81'],
    ['Halbjahr auf einen Blick','Auf dem iPhone zeigen die Karten ab dem 2. Quartal standardmäßig das ganze Halbjahr: groß die Halbjahresnote (aus der Halbjahresübersicht), klein darunter „Q1 … · Q2 …“, alle Bewertungen beider Quartale. Der Umschalter „Halbjahr | Q2“ zeigt bei Bedarf nur das Quartal, z. B. zum Eintragen der Quartalsnote.','iPhone → Noten','8.77'],
    ['Sitzplan im Querformat größer','Der Plan füllt die Fläche aus und schließt bündig mit den Knöpfen ab. Wird es eng, werden „Heute“ und „Perspektive“ zu kleinen Knöpfen (H ▾, ⇅ P). Leere Spalten werden nur schmal, wenn die Breite knapp ist.','iPhone → Unterricht','8.74'],
@@ -1607,8 +1608,7 @@ window.addEventListener('message',event=>{
    ['Schalter von schlicht nach ausführlich','Alle Darstellungs-Schalter haben dieselbe Reihenfolge: 2 | 2− | 2,3 (bei Notenpunkten 11 | 10,6) und Aus | Rahmen | Schraffiert.','Noten (iPhone, iPad, Mac)','8.70'],
    ['Karten verkleinern','Der runde Knopf neben „1. Quartal“ macht alle Karten klein: Name, Noten und eine Zeile wie „Mitarbeit 2 · HA ✕1 · KA —“. Antippen klappt eine Karte auf, Tipp auf den Namen klappt sie wieder zu.','iPhone → Noten','8.69'],
    ['Neues Noten-Symbol','Der Bereich „Noten“ hat jetzt das Häkchen aus dem App-Icon.','iPhone → untere Leiste','8.68'],
-   ['Eingabe im Querformat aufgeräumt','Sitzplan und Bewertungsfenster sind zwei gleich hohe Karten mit gleichen Knöpfen. Während der Eingabe sind „H“ und „P“ ausgeblendet – die Tische werden größer.','iPhone quer → Unterricht','8.67'],
-   ['Keine Stunden-Meldung mehr','Beim automatischen Wechsel zur aktuellen Stunde erscheint keine Meldung mehr – die App wechselt still zu Klasse, Raum und Datum.','Aktuell / Stundenplan','8.65']
+   ['Eingabe im Querformat aufgeräumt','Sitzplan und Bewertungsfenster sind zwei gleich hohe Karten mit gleichen Knöpfen. Während der Eingabe sind „H“ und „P“ ausgeblendet – die Tische werden größer.','iPhone quer → Unterricht','8.67']
   ]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
