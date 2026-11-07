@@ -3148,6 +3148,24 @@ document.addEventListener('keydown',event=>{
  place();apply(false);
  new MutationObserver(place).observe(document.body,{childList:true,subtree:true});
 })();
+
+/* 8.89: Linke Spalte – zwei verbundene Symbol-Knöpfe ganz links: ☰ Einstellungen | ☑ Noten (ersetzt ☰ und „Noten“).
+   Ein Tipp auf den aktiven Knopf klappt die Spalte zu, ein Tipp auf einen Knopf bei zugeklappter Spalte öffnet sie mit diesem Inhalt. */
+(()=>{const zoom=document.querySelector('.classroom-plan-zoom'),tog=zoom?.querySelector('.classroom-sidebar-toggle');if(!zoom||!tog)return;
+ const I={set:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+  notes:'<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>'};
+ const seg=document.createElement('span');seg.className='plan-col-pair';seg.setAttribute('role','group');seg.setAttribute('aria-label','Linke Spalte');
+ seg.innerHTML='<button type="button" data-col="set">'+I.set+'</button><button type="button" data-col="notes">'+I.notes+'</button>';
+ zoom.prepend(seg);
+ const qv=()=>{try{return parent.localStorage.getItem('classroom-quickview-v1')==='1'}catch{return false}},isOpen=()=>tog.getAttribute('aria-expanded')!=='false';
+ const cur=()=>!isOpen()?'off':qv()?'notes':'set';
+ function sync(){const c=cur();for(const b of seg.querySelectorAll('[data-col]')){const k=b.dataset.col,on=k===c;b.setAttribute('aria-pressed',String(on));const t=on?(k==='set'?'Einstellungen ausblenden':'Noten ausblenden'):(k==='set'?'Einstellungen in der linken Spalte zeigen':'Noten der Klasse in der linken Spalte zeigen');b.title=t;b.setAttribute('aria-label',t)}}
+ seg.addEventListener('click',e=>{const b=e.target.closest('[data-col]');if(!b)return;const k=b.dataset.col,active=cur()===k;
+  if(active){if(isOpen())tog.click()}
+  else{try{parent.localStorage.setItem('classroom-quickview-v1',k==='notes'?'1':'0')}catch{}if(!isOpen())tog.click()}
+  try{parent.classroomQuickLayout?.()}catch{}setTimeout(()=>{try{parent.classroomQuickLayout?.()}catch{}sync()},380);sync()});
+ new MutationObserver(sync).observe(tog,{attributes:true,attributeFilter:['aria-expanded']});setInterval(sync,1000);sync();
+ const st=document.createElement('style');st.textContent='.classroom-plan-zoom>.classroom-sidebar-toggle,.classroom-plan-zoom>.plan-quick-notes{display:none!important}.plan-col-pair{display:inline-flex;flex:none;border:1px solid #dce3ef;border-radius:12px;overflow:hidden;background:#fff}.plan-col-pair button{width:46px;height:42px;min-height:0;padding:0;margin:0;border:0!important;border-radius:0!important;background:#fff!important;color:#2f5f9b;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:none!important}.plan-col-pair button+button{border-left:1px solid #dce3ef!important}.plan-col-pair button[aria-pressed=true]{background:#eaf0fa!important}html.ph-lite .plan-col-pair,.classroom-beamer .plan-col-pair{display:none!important}';document.head.append(st)})();
 ;
 
 /* ==== sitzplan/beamer-mode.js ==== */
