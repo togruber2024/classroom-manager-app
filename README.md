@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 07.11.2026 · Version 9.02
+Stand: 07.11.2026 · Version 9.03
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1179,3 +1179,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.00: Stundenplan mit A-/B-Wochen (Startpunkte, geteilte Stunden, Wochenanzeige in „Aktuell“ und Kalender); Datum: Knopf „Heute“ zwischen den Pfeilen statt Text darunter
 9.01: iPhone – „Aktuell“, „Hilfe“ und die Noteneingabe als normale Seiten (kein Wischen), Noteneingabe mit „‹ Übersicht“ und ‹ ›, zweiter Tipp auf „Noten“ schließt; Mac ohne bunte Notenauswahl
 9.02: Mac/iPad-Schnellansicht – Klick auf eine Karte klappt sie auf bzw. zu, keine Noteneingabe-Seite mehr
+9.03: iPhone – Doppelstunden in „Aktuell“ als eine Zeile; Datum über dem Sitzplan mit ‹ ◉ › und demselben Kalender wie am Mac

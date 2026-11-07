@@ -2913,7 +2913,7 @@ document.addEventListener('keydown',event=>{
  row.innerHTML='<button type="button" class="cd-field" aria-haspopup="dialog" aria-expanded="false" title="Datum wählen – markiert sind die Tage mit Unterricht"><span class="cd-text"></span><i class="cd-ic" aria-hidden="true"></i></button><div class="cd-seg" role="group" aria-label="Zwischen Unterrichtsstunden wechseln"><button type="button" class="cd-prev" title="Vorige Stunde mit Unterricht" aria-label="Vorige Stunde">‹</button><button type="button" class="cd-today" title="Zurück zu heute" aria-label="Heute"><i aria-hidden="true"></i></button><button type="button" class="cd-next" title="Nächste Stunde mit Unterricht (zuletzt heute)" aria-label="Nächste Stunde">›</button></div><div class="cd-pop" role="dialog" aria-label="Kalender" hidden></div>';
  input.after(row);
  const field=row.querySelector('.cd-field'),text=row.querySelector('.cd-text'),prev=row.querySelector('.cd-prev'),todayBtn=row.querySelector('.cd-today'),next=row.querySelector('.cd-next'),pop=row.querySelector('.cd-pop');
- let month=null,cache=null;
+ let month=null,cache=null,target=pop,owner=row;
  const held=()=>cache||(cache=heldDates());
  function setDate(d){if(!d||d===input.value)return;input.value=d;input.dispatchEvent(new Event('change',{bubbles:true}))}
  function stops(){const s=new Set(held());s.add(today());return [...s].sort()}
@@ -2923,7 +2923,8 @@ document.addEventListener('keydown',event=>{
   const list=stops();prev.disabled=!list.some(x=>x<v);next.disabled=!list.some(x=>x>v);
   todayBtn.disabled=v===today();
   const lessons=lessonsOn(v);field.title=DAYS[d.getDay()]+(lessons.length?' · '+(lessons[0].slot+1===lessons.at(-1).slot+1?(lessons[0].slot+1)+'. Stunde':(lessons[0].slot+1)+'.–'+(lessons.at(-1).slot+1)+'. Stunde')+(lessons[0].room?' · '+lessons[0].room:''):'')+' – Datum wählen';
-  if(!pop.hidden)drawMonth();
+  if(!target.hidden)drawMonth();
+  for(const f of listeners)try{f()}catch{}
  }
  function drawMonth(){
   const v=input.value||today(),h=held(),t=today();month??=v.slice(0,7);
@@ -2934,15 +2935,17 @@ document.addEventListener('keydown',event=>{
    if(day.getMonth()!==m-1)c.push('other');if(h.has(k))c.push('held');else if(k>=t&&lessonsOn(k).length)c.push('plan');if(k===t)c.push('today');if(k===v)c.push('sel');
    html+='<button type="button" class="'+c.join(' ')+'" data-date="'+k+'" aria-label="'+DAYS[day.getDay()]+' '+fmt(k)+(h.has(k)?', Unterricht gehalten':'')+'"><span>'+day.getDate()+'</span></button>'}
   html+='</div><div class="cd-legend"><span><i class="l-held"></i>Unterricht gehalten</span><span><i class="l-plan"></i>laut Stundenplan</span></div>';
-  pop.innerHTML=html;
+  target.innerHTML=html;
  }
- function open(){month=(input.value||today()).slice(0,7);cache=null;drawMonth();pop.hidden=false;field.setAttribute('aria-expanded','true')}
- function close(){pop.hidden=true;field.setAttribute('aria-expanded','false')}
+ const listeners=[];
+ function open(el=pop,own=row){if(target!==el&&!target.hidden)close();target=el;owner=own;month=(input.value||today()).slice(0,7);cache=null;drawMonth();el.hidden=false;if(el===pop)field.setAttribute('aria-expanded','true')}
+ function close(){target.hidden=true;field.setAttribute('aria-expanded','false')}
  field.onclick=()=>pop.hidden?open():close();
- pop.addEventListener('click',e=>{e.stopPropagation();const step=e.target.closest('[data-step]');if(step){const [y,m]=month.split('-').map(Number),d=new Date(y,m-1+Number(step.dataset.step),1);month=iso(d).slice(0,7);drawMonth();return}
-  const day=e.target.closest('[data-date]');if(day){setDate(day.dataset.date);close()}});
- document.addEventListener('pointerdown',e=>{if(!pop.hidden&&!row.contains(e.target))close()});
- document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pop.hidden){close();field.focus()}});
+ const bound=new WeakSet();function attach(el){if(bound.has(el))return;bound.add(el);el.addEventListener('click',e=>{e.stopPropagation();const step=e.target.closest('[data-step]');if(step){const [y,m]=month.split('-').map(Number),d=new Date(y,m-1+Number(step.dataset.step),1);month=iso(d).slice(0,7);drawMonth();return}
+  const day=e.target.closest('[data-date]');if(day){setDate(day.dataset.date);close()}})}
+ attach(pop);
+ document.addEventListener('pointerdown',e=>{if(!target.hidden&&!owner.contains(e.target))close()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!target.hidden){close();if(target===pop)field.focus()}});
  todayBtn.onclick=()=>setDate(today());
  prev.onclick=()=>{const v=input.value||today(),l=stops().filter(x=>x<v);if(l.length)setDate(l.at(-1))};
  next.onclick=()=>{const v=input.value||today(),l=stops().filter(x=>x>v);if(l.length)setDate(l[0])};
@@ -2953,6 +2956,10 @@ document.addEventListener('keydown',event=>{
  document.getElementById('klassenSelect')?.addEventListener('change',()=>setTimeout(render,0));
  addEventListener('storage',()=>{cache=null;render()});addEventListener('focus',render);
  if(typeof classroomHooks!=='undefined')try{classroomHooks.add('ladeDaten','date-nav: Klasse gewechselt',{after(){setTimeout(render,0)}})}catch{}
+ /* 9.03: Schnittstelle für die iPhone-Leiste über dem Sitzplan (gleiche Sprünge, gleicher Kalender) */
+ window.classroomDateNav={prev:()=>prev.click(),next:()=>next.click(),today:()=>setDate(today()),
+  state(){const v=input.value||today(),l=stops();return {value:v,prev:l.some(x=>x<v),next:l.some(x=>x>v),isToday:v===today()}},
+  toggle(el,own){attach(el);if(!el.hidden&&target===el)close();else open(el,own)},onChange(f){listeners.push(f)}};
  render();setTimeout(render,1500);
 })();
 ;
@@ -3675,10 +3682,14 @@ document.addEventListener('keydown',event=>{
  const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
  const dateLabel=v=>{const t=new Date(),today=iso(t),y=new Date(t);y.setDate(t.getDate()-1);if(v===today)return 'Heute';if(v===iso(y))return 'Gestern';const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v||'');if(!m)return 'Datum';const d=new Date(+m[1],+m[2]-1,+m[3]);return ['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()]+', '+m[3]+'.'+m[2]+'.'};
  const bar=document.createElement('div');bar.className='pl-seatbar';
- bar.innerHTML='<label class="pl-date"><span class="pl-date-text">Heute</span><span class="pl-chev">▾</span><input type="date" aria-label="Datum der Unterrichtsstunde"></label><button type="button" class="pl-rotate" aria-pressed="false" data-short="P"><span aria-hidden="true">⇅</span> Perspektive</button>';
- const dateInput=bar.querySelector('input'),dateText=bar.querySelector('.pl-date-text'),rotateBtn=bar.querySelector('.pl-rotate');
+ bar.innerHTML='<label class="pl-date" role="button" tabindex="0" aria-label="Datum wählen"><span class="pl-date-text">Heute</span><span class="pl-chev">▾</span></label><span class="pl-dnav" role="group" aria-label="Zwischen Unterrichtsstunden wechseln"><button type="button" class="pl-dstep" data-dir="prev" aria-label="Vorige Stunde mit Unterricht">‹</button><button type="button" class="pl-dtoday" aria-label="Zurück zu heute"><i aria-hidden="true"></i></button><button type="button" class="pl-dstep" data-dir="next" aria-label="Nächste Stunde mit Unterricht">›</button></span><div class="cd-pop pl-cal" role="dialog" aria-label="Kalender" hidden></div><button type="button" class="pl-rotate" aria-pressed="false" data-short="P"><span aria-hidden="true">⇅</span> Perspektive</button>';
+ const dateInput={value:''},/* 9.03: eigener Kalender statt iOS-Datumswahl */dateText=bar.querySelector('.pl-date-text'),rotateBtn=bar.querySelector('.pl-rotate');
  const syncDate=()=>{dateInput.value=classroomDate.value;dateText.textContent=dateLabel(classroomDate.value);{const l=dateText.textContent;bar.querySelector('.pl-date').dataset.short=l==='Heute'?'H':l==='Gestern'?'G':(/(\d+)\./.exec(l)?.[1]||'D').replace(/^0/,'')}bar.querySelector('.pl-date').classList.toggle('is-past',classroomDate.value!==iso(new Date()))};
- dateInput.addEventListener('change',()=>{if(!dateInput.value)return;classroomDate.value=dateInput.value;classroomDate.dispatchEvent(new Event('input',{bubbles:true}));classroomDate.dispatchEvent(new Event('change',{bubbles:true}));syncDate()});
+ {const nav=()=>window.classroomDateNav,cal=bar.querySelector('.pl-cal'),dl=bar.querySelector('.pl-date');
+  dl.addEventListener('click',e=>{e.preventDefault();nav()?.toggle(cal,bar)});dl.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();nav()?.toggle(cal,bar)}});
+  bar.querySelectorAll('.pl-dstep').forEach(b=>b.onclick=()=>nav()?.[b.dataset.dir]());bar.querySelector('.pl-dtoday').onclick=()=>nav()?.today();
+  const syncNav=()=>{const s=nav()?.state();if(!s)return;bar.querySelector('[data-dir="prev"]').disabled=!s.prev;bar.querySelector('[data-dir="next"]').disabled=!s.next;bar.querySelector('.pl-dtoday').disabled=s.isToday};
+  const wait=setInterval(()=>{if(nav()){clearInterval(wait);nav().onChange(()=>{syncNav();syncDate()});syncNav()}},200);setTimeout(()=>clearInterval(wait),10000)}
  classroomDate.addEventListener('change',syncDate);
  const rotate=()=>{const b=document.getElementById('classroomRotateButton');if(!b)return;b.click();setTimeout(syncRotate,0)};
  const syncRotate=()=>rotateBtn.setAttribute('aria-pressed',document.getElementById('classroomRotateButton')?.getAttribute('aria-pressed')||'false');
@@ -3736,6 +3747,17 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
 (()=>{const st=document.createElement('style');st.textContent='@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){html.ph-lite body:has(.classroom-quick.is-sheet) .grid-container>.pl-seatbar:not(#_):not(#__):not(#___){display:none!important}html.ph-lite body:has(.classroom-quick.is-sheet) .grid-container:has(>.pl-seatbar):not(#_):not(#__){grid-template-columns:minmax(0,1fr)!important;column-gap:0!important}}';document.head.append(st)})();
 // 8.96: iPhone hochkant – Unterrichtsfenster wie die Noten-Karte: 6 px Rand, gleiche Rundung, füllt die Höhe bis zur Leiste.
 (()=>{const st=document.createElement('style');st.textContent='@media (max-width:540px) and (orientation:portrait) and (pointer:coarse){html.ph-lite body:not(#_){padding:6px!important}html.ph-lite .grid-container:not(#_){border-radius:20px;min-height:calc(100dvh - 12px);box-sizing:border-box}}';document.head.append(st)})();
+/* 9.03: iPhone – Datum wie am Mac: [Datum ▾] [‹ ◉ ›], Tipp aufs Datum öffnet den Kalender mit markierten Stunden; „Perspektive“ hochkant nur als ⇅ */
+(()=>{const st=document.createElement('style');st.textContent='html.ph-lite .pl-seatbar{position:relative}'
+ +'html.ph-lite .pl-seatbar>.pl-date:not(#_):not(#__){white-space:nowrap;cursor:pointer}'
+ +'html.ph-lite .pl-seatbar>.pl-dnav{flex:none;display:inline-flex;box-sizing:border-box;height:36px;border:1px solid #dce3ec;border-radius:18px;overflow:hidden;background:#fff}'
+ +'html.ph-lite .pl-dnav>button{width:38px;height:34px;padding:0;border:0;background:#fff;color:#2f5f9b;font:inherit;font-size:19px;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}'
+ +'html.ph-lite .pl-dnav>button+button{border-left:1px solid #dce3ec}html.ph-lite .pl-dnav>button:disabled{color:#b8c3d2}'
+ +'html.ph-lite .pl-dnav .pl-dtoday i{width:13px;height:13px;border-radius:50%;border:2px solid currentColor;position:relative;box-sizing:border-box}html.ph-lite .pl-dnav .pl-dtoday i:after{content:"";position:absolute;inset:2px;border-radius:50%;background:currentColor}'
+ +'html.ph-lite .pl-seatbar>.pl-cal:not(#_){top:calc(100% + 6px);left:0;z-index:80}'
+ +'@media (max-width:540px) and (orientation:portrait) and (pointer:coarse){html.ph-lite .pl-seatbar>.pl-rotate:not(#_):not(#__):not(#___){font-size:0!important;width:44px!important;min-width:44px!important;padding:0!important;justify-content:center}html.ph-lite .pl-seatbar>.pl-rotate>span{font-size:18px}}'
+ +'@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){html.ph-lite .pl-seatbar>.pl-dnav{align-self:center}html.ph-lite .pl-seatbar>.pl-cal:not(#_):not(#__){position:fixed;top:50%;left:50%;width:300px!important;min-width:0!important;height:auto!important;transform:translate(-50%,-50%) scale(.92);max-height:96vh;overflow:auto}}';
+ document.head.append(st)})();
 ;
 
 /* ==== no-contacts.js ==== */
