@@ -4581,18 +4581,19 @@ return}
  pk.querySelector('.gp-grid').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(b)set(b.dataset.v)});
  const norm=v=>String(v||'').trim().replace(/−/g,'-').replace(/\s+/g,'');
  window.classroomGradePicker=(inp,label)=>{target=inp;const pts=typeof classUsesGradePoints==='function'&&classUsesGradePoints();const cur=norm(inp.value);
-  let items=[];if(pts){for(let v=15;v>=0;v--){const g=v>=13?1:v>=10?2:v>=7?3:v>=4?4:v>=1?5:6;items.push([String(v),String(v),g])}}
-  else{for(let g=1;g<=5;g++)for(const t of ['+','','-'])items.push([g+t,g+(t==='-'?'−':t),g]);items.push(['6','6',6])}
-  const grid=pk.querySelector('.gp-grid');grid.classList.toggle('gp-pts',pts);
+  /* 8.72: Noten mit Zwischennoten (1–2 …) in einer vierten Spalte; Notenpunkte zeilenweise je Note (15 14 13 …), 4 Punkte schraffiert */
+  let items=[];if(pts){for(let n=1;n<=5;n++)for(let k=0;k<3;k++){const v=18-3*n-k;items.push([String(v),String(v),v===4?'4h':n])}items.push(['0','0',6])}
+  else{for(let g=1;g<=5;g++){for(const t of ['+','','-'])items.push([g+t,g+(t==='-'?'−':t),g]);items.push([g+'-'+(g+1),g+'–'+(g+1),g+'m'])}items.push(['6','6',6])}
+  const grid=pk.querySelector('.gp-grid');grid.classList.toggle('gp-pts',pts);grid.classList.toggle('gp-four',!pts);
   grid.innerHTML=items.map(([v,l,g])=>'<button type="button" data-v="'+v+'" class="gp-g'+g+(norm(v)===cur?' gp-on':'')+'">'+l+'</button>').join('');
   pk.querySelector('.gp-title').textContent=label||'Note';pk.querySelector('.gp-clear').disabled=!cur;pk.hidden=false};
  const st=document.createElement('style');st.textContent='.gp-wrap[hidden]{display:none}.gp-wrap{position:fixed;inset:0;z-index:100000}.gp-back{position:absolute;inset:0;background:#1c2b4633}'
   +'.gp-panel{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:18px 18px 0 0;padding:12px 14px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -6px 24px #1c2b4622}'
   +'.gp-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px}.gp-title{font-size:16px;color:#243247}.gp-x{width:36px;height:36px;border:0;border-radius:50%;background:#eef2f8;color:#5b6b82;font-size:16px}'
-  +'.gp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.gp-grid.gp-pts{grid-template-columns:repeat(4,1fr)}'
+  +'.gp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.gp-grid.gp-four{grid-template-columns:repeat(4,1fr)}'
   +'.gp-grid button{height:46px;border:1px solid #0000;border-radius:10px;font:inherit;font-size:19px;font-weight:700;color:#243247}'
-  +'.gp-g1{background:#bfe8d2}.gp-g2{background:#d9efbd}.gp-g3{background:#fff6a8}.gp-g4{background:#fde7b3}.gp-g5{background:#f8cdc8}.gp-g6{background:#eeb5b5}'
-  +'.gp-grid button.gp-on{border:3px solid #24334b}.gp-foot{display:flex;justify-content:flex-end;margin-top:10px}.gp-clear{height:36px;padding:0 16px;border:1px solid #dce3ef;border-radius:18px;background:#fff;color:#2f5f9b;font:inherit;font-size:14px;font-weight:500}.gp-clear:disabled{opacity:.4}'
+  +'.gp-g1{background:#bfe8d2}.gp-g2{background:#d9efbd}.gp-g3{background:#fff6a8}.gp-g4{background:#fde7b3}.gp-g5{background:#f8cdc8}.gp-g6{background:#eeb5b5}'+'.gp-g1m{border:0!important;background:linear-gradient(135deg,#bfe8d2 0 50%,#d9efbd 50% 100%) border-box}.gp-g2m{border:0!important;background:linear-gradient(135deg,#d9efbd 0 50%,#fff6a8 50% 100%) border-box}.gp-g3m{border:0!important;background:linear-gradient(135deg,#fff6a8 0 50%,#fde7b3 50% 100%) border-box}.gp-g4m{border:0!important;background:linear-gradient(135deg,#fde7b3 0 50%,#f8cdc8 50% 100%) border-box}.gp-g5m{border:0!important;background:linear-gradient(135deg,#f8cdc8 0 50%,#eeb5b5 50% 100%) border-box}.gp-g4h{background:repeating-linear-gradient(135deg,#fde7b3 0 7px,#f8cdc8 7px 14px)}'
+  +'.gp-grid button.gp-on{outline:3px solid #24334b;outline-offset:-3px}.gp-foot{display:flex;justify-content:flex-end;margin-top:10px}.gp-clear{height:36px;padding:0 16px;border:1px solid #dce3ef;border-radius:18px;background:#fff;color:#2f5f9b;font:inherit;font-size:14px;font-weight:500}.gp-clear:disabled{opacity:.4}'
   +'html.ph-lite input.qs-pick-in{caret-color:transparent;cursor:pointer}';document.head.append(st)})();
 ;
 
