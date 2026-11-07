@@ -4545,6 +4545,9 @@ return}
   ".qs-sub,.qs-sub-flat{display:grid;gap:8px}",
   ".qs-sub{margin-left:3px;padding-left:10px;border-left:2px solid #e3e8f0}",
   ".qd-panel{will-change:transform}",
+  /* 8.73: Blatt immer ganz ausgefahren (bis knapp unter die Kopfleiste) – gleiche Position für jede Person, Inhalt scrollt innen */
+  ".qd-panel:not(#_){height:calc(100% - 10px);max-height:calc(100% - 10px)}",
+  ".qd-panel .qd-body:not(#_){flex:1 1 auto;min-height:0;overscroll-behavior:contain}",
   ".qs-q1chip{margin:0!important;gap:0!important}",
   ".qs-q1chip i:not(#_){min-width:46px;height:40px;padding:0 8px;border-radius:10px;font-size:20px;font-weight:750;outline:0}",
   ".qs-q1sep{align-self:stretch;margin:2px 0!important}",
