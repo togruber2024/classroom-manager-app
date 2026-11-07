@@ -4328,7 +4328,39 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  document.addEventListener('classroom-student-note',()=>schedule());
  function schedule(){if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;run()})}
  let fracBox=null;
- function run(){const lite=document.documentElement.classList.contains('ph-lite');const built=[];for(const panel of document.querySelectorAll('[data-quarter-summary]'))if(!lite||panel.dataset.customPanel===activePage){build(panel);fracBox=null;built.push(panel)}/* 8.36: nur glatte Werte → Dezimal/Tendenz sperren */const lock=!built.some(pn=>[...pn.querySelectorAll('[data-frac]')].some(b=>b.dataset.frac==='1'));if(window.classroomCardsMeanLocked!==lock){window.classroomCardsMeanLocked=lock;document.dispatchEvent(new Event('classroom-cards-mean-lock'))}}
+ /* 8.77: iPhone – Ansicht „Halbjahr“ (Standard ab dem 2. Quartal): Halbjahresnote und Sonstige Mitarbeit aus der Halbjahresübersicht der App
+    (keine eigene Rechnung); Ø Mündlich/Tests = Ø Q1 und Ø Q2 je zur Hälfte (nur Anzeige); darunter klein „Q1 … · Q2 …“ */
+ const viewHj=()=>{try{return localStorage.getItem('classroom-cards-view-v1')!=='q'}catch{return true}};
+ window.classroomCardsHalf={on:viewHj,refresh(){for(const b of document.querySelectorAll('.qs-cards'))b.dataset.sig='';schedule()}};
+ function semTable(){const sem=subjectExamGroups(currentSubject).find(g=>g.type==='semester'&&g.halfYearId===currentHalfYearId),key=sem?.pages?.[0];if(!key)return null;
+  const pn=document.querySelector(`[data-custom-panel="${CSS.escape(key)}"]`);if(!pn)return null;
+  if(!pn.querySelector('table')||semKey!==currentSubject+'|'+currentClassId+'|'+key||Date.now()-semAt>3000){classroomRenderSummary(currentSubject,key);semAt=Date.now();semKey=currentSubject+'|'+currentClassId+'|'+key}
+  const t=pn.querySelector('table');return t?.tHead?t:null}
+ function cellOf(table,name,re){const heads=[...table.tHead.rows[0].cells].map(c=>c.textContent.replace(/\s+/g,' ').trim()),k=heads.findIndex(h=>re.test(h));if(k<0)return null;const row=[...table.tBodies[0].rows].find(r=>r.cells[0]?.textContent.trim()===name);const c=row?.cells[k];if(!c)return null;const sp=c.querySelector('span'),tx=(sp||c).textContent.trim();return tx&&tx!=='—'?{text:tx,cls:sp?.className||''}:null}
+ const numOf=t=>{if(t==null||!String(t).trim())return null;const v=Number(String(t).trim().replace(',','.'));return Number.isFinite(v)?v:null};
+ function setVal(el,it){if(!el||!it)return;const f=fmtMean(it.text,it.cls);el.textContent=f.text;el.className=f.cls||'';}
+ function halfify(panel){
+  if(!document.documentElement.classList.contains('ph-lite')||!viewHj())return;const table=panel.querySelector('table');if(!table?.tHead)return;
+  const heads=[...table.tHead.rows[0].cells].map(c=>c.textContent.replace(/\s+/g,' ').trim());if(!heads.some(h=>/^Q1 · /.test(h)))return;
+  const sem=semTable(),pts=typeof classUsesGradePoints==='function'&&classUsesGradePoints();
+  for(const card of panel.querySelectorAll('.qs-cards>.qs-card:not(.qd-card)')){if(card.dataset.hj==='1')continue;const name=card.querySelector('.qs-name')?.textContent.trim();if(!name)continue;
+   const big=card.querySelector('.qs-top .qs-big'),q1t=(card.querySelector('.qs-q1chip i')?.textContent||'—').trim(),q2t=(big?.textContent||'—').trim();
+   card.querySelectorAll('.qs-top .qs-qtag,.qs-top .qs-q1chip,.qs-top .qs-q1sep').forEach(x=>x.style.display='none');
+   /* große Note = Halbjahresnote der App (eingetragen oder errechnet; ohne Klassenarbeit Vorschlag aus der Sonstigen Mitarbeit) */
+   const hj=halfYearNote(name);if(big&&hj){big.textContent=hj.text||'—';big.className='qs-big '+(hj.none?'qs-empty':(hj.cls||'qs-empty'))+(hj.soft?' qs-soft':'');big.title=hj.soft?'Vorschlag (noch nicht eingetragen)':'eingetragen'}
+   if(big&&!big.parentElement.classList.contains('qs-hjw')){const w=document.createElement('span');w.className='qs-hjw';big.before(w);w.append(big);const sm=document.createElement('small');sm.className='qs-hjq';w.append(sm)}
+   const sm=card.querySelector('.qs-hjq');if(sm)sm.textContent='Q1 '+(q1t||'—')+' · Q2 '+(q2t||'—');
+   const sect=re=>[...card.querySelectorAll('.qs-sect')].find(x=>re.test((x.querySelector('.qs-sh-l')?.textContent||'').trim()));
+   /* Sonstige Mitarbeit des Halbjahres aus der Halbjahresübersicht */
+   if(sem){const so=cellOf(sem,name,/^Sonstige Mitarbeit/),el=sect(/^Sonstige Mitarbeit/)?.querySelector(':scope>.qs-sh .qs-val i');if(so)setVal(el,so)}
+   /* Ø Q1 und Ø Q2 je zur Hälfte – nur Anzeige */
+   for(const [re,h1,h2] of [[/^Mündliche Mitarbeit/,/^Q1 · MM · Mittelwert/,/^MM · Mittelwert/],[/^Tests/,/^Q1 · Tests · Mittelwert/,/^Tests · Mittelwert/]]){
+    const a=numOf(cellOf(table,name,h1)?.text),b=numOf(cellOf(table,name,h2)?.text),v=a!=null&&b!=null?(a+b)/2:(a??b);if(v==null)continue;
+    const el=sect(re)?.querySelector('.qs-row>.qs-val i');if(!el)continue;const t=String(Math.round(v*100)/100).replace('.',',');
+    setVal(el,{text:t,cls:typeof taskGradeClass==='function'?taskGradeClass(v,pts?'gradePoints':'participation'):el.className})}
+   card.dataset.hj='1'}
+  window.classroomCardsFold?.apply?.()}
+ function run(){const lite=document.documentElement.classList.contains('ph-lite');const built=[];for(const panel of document.querySelectorAll('[data-quarter-summary]'))if(!lite||panel.dataset.customPanel===activePage){build(panel);fracBox=null;built.push(panel);try{halfify(panel)}catch(e){console.warn('Halbjahresansicht',e)}}/* 8.36: nur glatte Werte → Dezimal/Tendenz sperren */const lock=!built.some(pn=>[...pn.querySelectorAll('[data-frac]')].some(b=>b.dataset.frac==='1'));if(window.classroomCardsMeanLocked!==lock){window.classroomCardsMeanLocked=lock;document.dispatchEvent(new Event('classroom-cards-mean-lock'))}}
  // iPhone: Gewichtungen als Schieberegler mit Schnellwahl (Verhältnisse wie 2:1 exakt); schreibt in die vorhandenen Felder.
  const RATIOS={pair:[[1,1],[2,1],[3,1],[4,1]],final:[[1,1],[2,1],[1,2]]};
  const pctText=v=>{for(const [a,b] of [[1,1],[2,1],[1,2],[3,1],[4,1]])if(Math.abs(v-100*a/(a+b))<.01&&(a!==1||b!==1))return a+':'+b;return String(Math.round(v*10)/10).replace('.',',')+' %'};
@@ -4552,6 +4584,7 @@ return}
   ".qs-q1chip i:not(#_){min-width:46px;height:40px;padding:0 8px;border-radius:10px;font-size:20px;font-weight:750;outline:0}",
   /* 8.75: Note der Q1 und aktuelle Note nie umbrechen (lange Namen werden stattdessen gekürzt) */
   ".qs-q1chip,.qs-q1chip i:not(#_),.qs-big:not(#_){flex:none!important;white-space:nowrap!important}",
+  ".qs-hjw{display:inline-flex;flex-direction:column;align-items:center;gap:3px;flex:none;margin-left:auto}.qs-hjq{font-size:11px;font-weight:600;color:#6b7a90;white-space:nowrap}",
   ".qs-top .qs-name:not(#_){min-width:0}",
   ".qs-q1sep{align-self:stretch;margin:2px 0!important}",
   ".qs-top:has(.qs-q1chip){gap:8px}",
@@ -4687,7 +4720,10 @@ return}
  function setHatch(v){const b=document.querySelector('.hatch-seg [data-hatch="'+v+'"]:not(:disabled)');if(b){b.click();return}const inp=document.querySelector('[data-hatching-toggle] input');if(inp&&inp.checked!==(v!=='off'))inp.click();if(v!=='off'){try{localStorage.setItem('classroom-hatch-style-v1',v)}catch{}}window.classroomHatchSync?.()}
  const EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>',EYE_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path d="M3 21L21 3"/></svg>';
  /* 1. Quartal bei allen Karten ein-/ausblenden (nur im 2. Quartal sichtbar) */
- function syncQ1(bar){const b=bar.querySelector('.pl-q1all');if(!b)return;const on=!!window.classroomCardsQ1?.get(),has=!!bar.parentElement?.querySelector('.qs-q1t');b.hidden=!has;const h=(on?EYE:EYE_OFF)+'<span>1. Quartal</span>';if(b.dataset.on!==String(on)){b.dataset.on=String(on);b.innerHTML=h;b.setAttribute('aria-pressed',String(on));b.title=on?'1. Quartal bei allen ausblenden':'1. Quartal bei allen einblenden'}}
+ /* 8.77: Ansicht „Halbjahr | Q2“ (ersetzt „1. Quartal“): Halbjahr = beide Quartale, Noten fürs ganze Halbjahr; nur ab dem 2. Quartal */
+ function syncQ1(bar){const seg=bar.querySelector('.pl-view');if(!seg)return;const sel=Number(bar.dataset.sel||0),has=sel>=1;seg.hidden=!has;const v=has&&window.classroomCardsHalf?.on()?'hj':'q';
+  const qb=seg.querySelector('[data-view="q"]');if(qb)qb.textContent='Q'+(sel+1);for(const b of seg.querySelectorAll('[data-view]')){b.setAttribute('aria-pressed',String(b.dataset.view===v));b.setAttribute('role','radio');b.setAttribute('aria-checked',String(b.dataset.view===v))}
+  const want=v==='hj';if(window.classroomCardsQ1&&window.classroomCardsQ1.get()!==want)window.classroomCardsQ1.set(want)}
  /* Dezimal / Tendenz / Gerundet (Notenpunkte: Dezimal / Ganze Punkte) – wie der Schalter „Durchschnitt darstellen“ am Mac */
  function syncMean(bar){const seg=bar.querySelector('.pl-mean');if(!seg)return;const pts=typeof classUsesGradePoints==='function'&&classUsesGradePoints();const opts=pts?[['rounded','Ganze Notenpunkte','11'],['decimal','Dezimal','10,6']]:[['rounded','Gerundet','2'],['tendency','Tendenz','2−'],['decimal','Dezimal','2,3']];
   let m=window.classroomCardsMean?.get()||'decimal';if(!opts.some(o=>o[0]===m))m='decimal';const lock=!!window.classroomCardsMeanLocked;if(lock)m='rounded';const sig=opts.map(o=>o[0]).join()+'|'+m+'|'+lock;if(seg.dataset.sig===sig)return;seg.dataset.sig=sig;
@@ -4696,20 +4732,20 @@ return}
  function syncHatch(bar){const m=hatchMode();for(const b of bar.querySelectorAll('[data-ph-hatch]')){b.setAttribute('aria-pressed',String(b.dataset.phHatch===m));b.setAttribute('role','radio');b.setAttribute('aria-checked',String(b.dataset.phHatch===m))}}
  function topBar(panel,sel){
   let bar=panel.querySelector(':scope>.pl-bar');
-  if(!bar){bar=document.createElement('div');bar.className='pl-bar';bar.innerHTML='<div class="pl-head"></div><div class="pl-row"><span class="pl-seg pl-half"></span><button type="button" class="pl-q1all" aria-pressed="false"></button><button type="button" class="pl-fold" aria-pressed="false" title="Karten verkleinern" aria-label="Karten verkleinern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5l4 4 4-4"/><path d="M4 10.5h16M4 13.5h16"/><path d="M8 20.5l4-4 4 4"/></svg></button><div class="pl-flags"></div></div><div class="pl-row pl-row2"><span class="pl-seg pl-hatch" role="radiogroup" aria-label="Tendenzen"><button type="button" data-ph-hatch="off" title="Tendenzen: Aus" aria-label="Tendenzen: Aus"><i class="hs-sw hs-off" aria-hidden="true"></i></button><button type="button" data-ph-hatch="frame" title="Tendenzen: Rahmen" aria-label="Tendenzen: Rahmen"><i class="hs-sw hs-frame" aria-hidden="true"></i></button><button type="button" data-ph-hatch="hatch" title="Tendenzen: Schraffiert" aria-label="Tendenzen: Schraffiert"><i class="hs-sw hs-hatch" aria-hidden="true"></i></button></span><span class="pl-seg pl-mean" role="radiogroup" aria-label="Durchschnitt darstellen"></span></div><div class="pl-stand"></div>';
+  if(!bar){bar=document.createElement('div');bar.className='pl-bar';bar.innerHTML='<div class="pl-head"></div><div class="pl-row"><span class="pl-seg pl-half"></span><span class="pl-seg pl-view" role="radiogroup" aria-label="Ansicht" hidden><button type="button" data-view="hj">Halbjahr</button><button type="button" data-view="q">Q2</button></span><button type="button" class="pl-fold" aria-pressed="false" title="Karten verkleinern" aria-label="Karten verkleinern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5l4 4 4-4"/><path d="M4 10.5h16M4 13.5h16"/><path d="M8 20.5l4-4 4 4"/></svg></button><span class="pl-seg pl-hatch" role="radiogroup" aria-label="Tendenzen"><button type="button" data-ph-hatch="off" title="Tendenzen: Aus" aria-label="Tendenzen: Aus"><i class="hs-sw hs-off" aria-hidden="true"></i></button><button type="button" data-ph-hatch="frame" title="Tendenzen: Rahmen" aria-label="Tendenzen: Rahmen"><i class="hs-sw hs-frame" aria-hidden="true"></i></button><button type="button" data-ph-hatch="hatch" title="Tendenzen: Schraffiert" aria-label="Tendenzen: Schraffiert"><i class="hs-sw hs-hatch" aria-hidden="true"></i></button></span></div><div class="pl-row pl-row2"><div class="pl-flags"></div><span class="pl-seg pl-mean" role="radiogroup" aria-label="Durchschnitt darstellen"></span></div><div class="pl-stand"></div>';
    bar.addEventListener('click',e=>{const h=e.target.closest('[data-half]'),s=e.target.closest('[data-ph-hatch]'),fl=e.target.closest('[data-flag]'),qa=e.target.closest('.pl-q1all'),mn=e.target.closest('[data-mean]'),nt=e.target.closest('[data-notes]');
     if(nt){window.classroomStudentNotes?.openList();return}
     if(mn){window.classroomCardsMean?.set(mn.dataset.mean);syncMean(bar)}
-    if(qa){window.classroomCardsQ1?.set(!window.classroomCardsQ1.get());syncQ1(bar)}if(e.target.closest('.pl-fold')){window.classroomCardsFold?.toggle()}
+    {const v=e.target.closest('[data-view]');if(v){try{localStorage.setItem('classroom-cards-view-v1',v.dataset.view)}catch{}syncQ1(bar);window.classroomCardsHalf?.refresh();schedule()}}if(e.target.closest('.pl-fold')){window.classroomCardsFold?.toggle()}
     if(fl){panel.dataset.plFilter=panel.dataset.plFilter===fl.dataset.flag?'':fl.dataset.flag;flags(panel);if(panel.dataset.plFilter)bar.scrollIntoView({block:'start'})}
     if(h){ss.set(sk(),h.dataset.half);done.clear();schedule()}
     if(s){setHatch(s.dataset.phHatch);setTimeout(()=>syncHatch(bar),0)}});
    panel.prepend(bar)}
   const hs=bar.querySelector('.pl-half'),ys=years(),sig=ys.map(y=>y.id+y.label).join('|')+currentHalfYearId;
   if(hs.dataset.sig!==sig){hs.dataset.sig=sig;hs.replaceChildren(...ys.map(y=>{const b=document.createElement('button');b.type='button';b.dataset.half=y.id;b.textContent=y.label||'Halbjahr';b.setAttribute('aria-pressed',String(y.id===currentHalfYearId));return b}));hs.hidden=ys.length<2}
-  syncHatch(bar);syncQ1(bar);syncMean(bar);
+  bar.dataset.sel=String(sel);syncHatch(bar);syncQ1(bar);syncMean(bar);
   const y=ys.find(g=>g.id===currentHalfYearId),name=typeof classroomQuarterPeriodName==='function'&&y?classroomQuarterPeriodName(y,sel):(sel+1)+'. Quartal';
-  /* 8.15: oben „1. Halbjahr · 2. Quartal“, der Hinweis bleibt direkt über den Karten */const hy=y?.label||'';bar.querySelector('.pl-head').textContent=(hy?hy+' · ':'')+name;bar.querySelector('.pl-stand').textContent='Antippen zeigt alle Einträge';
+  /* 8.15: oben „1. Halbjahr · 2. Quartal“, der Hinweis bleibt direkt über den Karten */const hy=y?.label||'';bar.querySelector('.pl-head').textContent=sel>=1&&window.classroomCardsHalf?.on()?(hy||'Halbjahr'):(hy?hy+' · ':'')+name;bar.querySelector('.pl-stand').textContent='Antippen zeigt alle Einträge';
   sortCards(panel);flags(panel);
  }
  /* 8.01: Hinweise über den Karten – antippen filtert die Karten, nochmal antippen zeigt wieder alle */
@@ -4778,6 +4814,9 @@ return}
  document.head.append(st);
  const t=setInterval(()=>{if(document.querySelector('.pl-fold')){apply();clearInterval(t)}},500);setTimeout(()=>clearInterval(t),20000);
 })();
+
+/* 8.77: Leiste in zwei Zeilen – oben Ansicht, Karten verkleinern, Schraffur; unten Hinweise links, Darstellung rechts */
+(()=>{const st=document.createElement('style');st.textContent='.pl-bar .pl-row:not(.pl-row2){flex-wrap:nowrap;justify-content:flex-start}.pl-bar .pl-row:not(.pl-row2):has(.pl-half:not([hidden])){flex-wrap:wrap}.pl-bar .pl-row:not(.pl-row2) .pl-hatch button:not(#_){padding:0 9px;min-width:0}.pl-bar .pl-row:not(.pl-row2) .pl-fold:not(#_){margin-left:0}.pl-bar .pl-row:not(.pl-row2) .pl-hatch{margin-left:auto}.pl-bar .pl-view button{padding:0 11px;font-size:14px;white-space:nowrap}.pl-view button{min-height:32px}.pl-bar .pl-row2{justify-content:space-between;flex-wrap:nowrap}.pl-bar .pl-row2 .pl-flags:not(#_){margin-left:0;justify-content:flex-start;min-width:0}.pl-bar .pl-row2 .pl-flags[hidden]+.pl-mean,.pl-bar .pl-row2 .pl-mean{margin-left:auto}';document.head.append(st)})();
 ;
 
 /* ==== noten/student-notes.js ==== */

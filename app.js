@@ -1599,6 +1599,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['Halbjahr auf einen Blick','Auf dem iPhone zeigen die Karten ab dem 2. Quartal standardmäßig das ganze Halbjahr: groß die Halbjahresnote (aus der Halbjahresübersicht), klein darunter „Q1 … · Q2 …“, alle Bewertungen beider Quartale. Der Umschalter „Halbjahr | Q2“ zeigt bei Bedarf nur das Quartal, z. B. zum Eintragen der Quartalsnote.','iPhone → Noten','8.77'],
    ['Sitzplan im Querformat größer','Der Plan füllt die Fläche aus und schließt bündig mit den Knöpfen ab. Wird es eng, werden „Heute“ und „Perspektive“ zu kleinen Knöpfen (H ▾, ⇅ P). Leere Spalten werden nur schmal, wenn die Breite knapp ist.','iPhone → Unterricht','8.74'],
    ['Detailblatt immer ganz offen','Auf dem iPhone fährt das Blatt einer Person immer bis unter die Kopfleiste aus – Name und Pfeile stehen bei jeder Person an derselben Stelle, längerer Inhalt scrollt im Blatt.','iPhone → Noten → Karte antippen','8.73'],
    ['Noten antippen statt tippen','Selbsteinschätzung und Quartalsnote wählst du auf dem iPhone aus farbigen Knöpfen: 1+ bis 6 mit Zwischennoten (1–2 … 5–6), bei Notenpunkten 15 bis 0 zeilenweise je Note. „Löschen“ leert das Feld.','iPhone → Noten → Detailblatt','8.72'],
@@ -1607,8 +1608,7 @@ window.addEventListener('message',event=>{
    ['Neues Noten-Symbol','Der Bereich „Noten“ hat jetzt das Häkchen aus dem App-Icon.','iPhone → untere Leiste','8.68'],
    ['Eingabe im Querformat aufgeräumt','Sitzplan und Bewertungsfenster sind zwei gleich hohe Karten mit gleichen Knöpfen. Während der Eingabe sind „H“ und „P“ ausgeblendet – die Tische werden größer.','iPhone quer → Unterricht','8.67'],
    ['Keine Stunden-Meldung mehr','Beim automatischen Wechsel zur aktuellen Stunde erscheint keine Meldung mehr – die App wechselt still zu Klasse, Raum und Datum.','Aktuell / Stundenplan','8.65'],
-   ['Quartal für alle Lerngruppen','„＋ Quartal“ legt das neue Quartal im selben Halbjahr auch in allen anderen Lerngruppen an. Noten werden nie kopiert.','Noten → ＋ Quartal','8.62'],
-   ['Fachkürzel und Hilfe auf dem iPhone','Auf dem iPhone steht neben der Klasse oben ein kleines Fachkürzel (z. B. „Ek“, „La“). Die Hilfe startet dort im Kapitel „Auf dem iPhone“, beim allerersten Öffnen in „Erste Schritte“.','iPhone','8.42']
+   ['Quartal für alle Lerngruppen','„＋ Quartal“ legt das neue Quartal im selben Halbjahr auch in allen anderen Lerngruppen an. Noten werden nie kopiert.','Noten → ＋ Quartal','8.62']
   ]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
