@@ -1599,7 +1599,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
-   ['Noten neben dem Sitzplan','Am Mac und iPad zeigt der Knopf „Noten“ über dem Sitzplan die Notenkarten der Klasse (wie auf dem iPhone) in der linken Spalte – Halbjahr oder Quartal, kleine Karten, alle Schalter. Nochmal tippen holt die Einstellungen zurück. In der Klassenansicht bleibt sie verborgen.','Unterricht → Noten','8.81'],
+   ['Noten neben dem Sitzplan','Am Mac und iPad zeigt der Knopf „Noten“ über dem Sitzplan die Notenkarten der Klasse (wie auf dem iPhone) in der linken Spalte – Halbjahr oder Quartal, kleine Karten, alle Schalter. Tippst du einen Schüler im Plan an, springt die Liste zu seiner Karte. Nochmal tippen auf „Noten“ holt die Einstellungen zurück. In der Klassenansicht bleibt sie verborgen.','Unterricht → Noten','8.81'],
    ['Halbjahr auf einen Blick','Auf dem iPhone zeigen die Karten ab dem 2. Quartal standardmäßig das ganze Halbjahr: groß die Halbjahresnote (aus der Halbjahresübersicht), klein darunter „Q1 … · Q2 …“, alle Bewertungen beider Quartale. Der Umschalter „Halbjahr | Q2“ zeigt bei Bedarf nur das Quartal, z. B. zum Eintragen der Quartalsnote.','iPhone → Noten','8.77'],
    ['Sitzplan im Querformat größer','Der Plan füllt die Fläche aus und schließt bündig mit den Knöpfen ab. Wird es eng, werden „Heute“ und „Perspektive“ zu kleinen Knöpfen (H ▾, ⇅ P). Leere Spalten werden nur schmal, wenn die Breite knapp ist.','iPhone → Unterricht','8.74'],
    ['Detailblatt immer ganz offen','Auf dem iPhone fährt das Blatt einer Person immer bis unter die Kopfleiste aus – Name und Pfeile stehen bei jeder Person an derselben Stelle, längerer Inhalt scrollt im Blatt.','iPhone → Noten → Karte antippen','8.73'],
@@ -2014,6 +2014,8 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
  }
  window.classroomQuickToggle=()=>{try{localStorage.setItem(KEY,get()?'0':'1')}catch{}layout()};
  window.classroomQuickLayout=layout;
+ /* 8.82: Karte zur angetippten Person zeigen (nur wenn die Schnellansicht offen ist) */
+ window.classroomQuickFocus=name=>{if(!active)return;try{nf()?.contentWindow?.classroomCardsFocus?.(name)}catch{}};
  const st=document.createElement('style');st.textContent='.workspace iframe.cm-quick{border:1px solid #dce3ef!important;border-radius:18px;background:#fff;box-shadow:0 1px 3px #233d600d}';document.head.append(st);
  /* Ansichtswechsel, Größe, Scrollen im Sitzplan */
  if(typeof selectView==='function'){const o=selectView;window.selectView=selectView=function(v){off();const r=o.apply(this,arguments);setTimeout(layout,0);return r}}

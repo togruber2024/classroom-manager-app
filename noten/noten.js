@@ -4826,6 +4826,13 @@ return}
 (()=>{const st=document.createElement('style');st.textContent='.pl-flags button:not(#_){border-radius:999px!important;padding:0 14px 0 6px;min-height:38px}';document.head.append(st)})();
 /* 8.81: Schnellansicht am Mac/iPad – ohne doppelten Rahmen, volle Breite der Spalte */
 (()=>{const st=document.createElement('style');st.textContent='html.cm-quick,html.cm-quick body{background:#fff!important}html.cm-quick body{margin:0!important;padding:0!important}html.cm-quick main,html.cm-quick .app,html.cm-quick .container{margin:0!important;padding:0!important;max-width:none!important}html.cm-quick [data-custom-panel]:not([hidden]){border:0!important;box-shadow:none!important;border-radius:0!important;margin:0!important;padding:12px 10px!important;background:#fff!important}';document.head.append(st)})();
+
+/* 8.82: Karte einer Person anspringen und kurz hervorheben (Schnellansicht am Mac/iPad) */
+(()=>{const norm=t=>String(t||'').toLocaleLowerCase('de-DE').normalize('NFC').replace(/\s+/g,' ').trim();
+ window.classroomCardsFocus=name=>{const want=norm(name);const cards=[...document.querySelectorAll('.qs-cards>.qs-card:not(.qd-card)')];
+  const card=cards.find(c=>{const n=norm(c.querySelector('.qs-name')?.textContent);if(n===want)return true;const m=/^(.+?),\s*(.+)$/.exec(n);return m&&(m[2]+' '+m[1]===want)});
+  if(!card)return;card.scrollIntoView({block:'start',behavior:'smooth'});card.classList.remove('qs-flash');void card.offsetWidth;card.classList.add('qs-flash');setTimeout(()=>card.classList.remove('qs-flash'),1800)};
+ const st=document.createElement('style');st.textContent='@keyframes qsFlash{0%,60%{box-shadow:0 0 0 3px #8fb0dc;border-color:#2f5f9b}100%{box-shadow:0 0 0 0 #8fb0dc00}}.qs-card.qs-flash{animation:qsFlash 1.8s ease-out}html.cm-quick .qs-cards>.qs-card{scroll-margin-top:10px}';document.head.append(st)})();
 ;
 
 /* ==== noten/student-notes.js ==== */
