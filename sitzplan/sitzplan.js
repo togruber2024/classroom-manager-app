@@ -1891,6 +1891,26 @@ aktualisiereKlassenDropdown=function(){
   for(const option of document.getElementById('klassenSelect')?.options||[])if(byName.has(option.value))option.textContent=byName.get(option.value);
   const title=document.getElementById('titelKlasse');if(title&&byName.has(aktuelleKlasse))title.textContent='Klassenraum ('+byName.get(aktuelleKlasse)+')';
 };
+// Eingebaute fiktive Beispielklassen: passende Sitzordnung, sobald die Klasse zum ersten Mal ankommt (nie für eigene Klassen).
+// Raster 10×10, vorne = unten (Pult). '.' kein Tisch, 'X' Tisch, 'P' Pult, Ziffer = Tisch einer Gruppentisch-Insel (nur zur Lesbarkeit).
+const classroomDemoLayouts=(()=>{
+ const reihen2=['XX.XXXX.XX','..........','XX.XXXX.XX','..........','XX.XXXX.XX','..........','XX.XXXX.XX','..........','..........','....PP....'];
+ const reihen3=['XXX.XX.XXX','..........','XXX.XX.XXX','..........','XXX.XX.XXX','..........','XXX.XX.XXX','..........','..........','....PP....'];
+ const gruppen=['00..11..22','00..11..22','..........','33..44..55','33..44..55','..........','66......77','66......77','..........','....PP....'];
+ const uForm=['XXXXXXXXXX','X........X','X........X','X........X','X........X','X........X','X........X','X........X','..........','....PP....'];
+ const doppelU=['XXXXXXXXXX','X........X','X.XXXXXX.X','X.X....X.X','X.X....X.X','X.X....X.X','X........X','X........X','..........','....PP....'];
+ return {'demo-class-1':gruppen,'demo-class-2':reihen2,'demo-class-3':uForm,'demo-class-4':gruppen,'demo-class-5':reihen3,'demo-class-6':reihen2,'demo-class-7':doppelU,'demo-class-8':uForm};
+})();
+function classroomDemoSeating(demoId,names){
+ const map=classroomDemoLayouts[demoId];if(!map)return null;
+ let seed=[...demoId].reduce((a,c)=>a*31+c.charCodeAt(0),7)>>>0;const rnd=()=>(seed=(seed*1664525+1013904223)>>>0)/4294967296;
+ const list=[...names];for(let i=list.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[list[i],list[j]]=[list[j],list[i]]}
+ const grid=map.map(row=>[...row].map(ch=>ch==='.'?'':ch==='P'?'PULT':'X'));
+ // Plätze von vorne nach hinten besetzen, damit leere Tische hinten bleiben.
+ const seats=[];for(let r=grid.length-1;r>=0;r--)for(let c=0;c<grid[r].length;c++)if(grid[r][c]==='X')seats.push([r,c]);
+ seats.slice(0,list.length).forEach(([r,c],i)=>grid[r][c]=list[i]);
+ return {grid};
+}
 function classroomSyncRosters(snapshot){
   if(!snapshot||!Array.isArray(snapshot.classes))throw new Error('Klassen fehlen');
   datenSpeichern();
@@ -1917,8 +1937,16 @@ function classroomSyncRosters(snapshot){
     }
     localStorage.setItem(prefix+'einzel',JSON.stringify(roster));
     localStorage.setItem(prefix+'paare',JSON.stringify(pairs));
+    if(!grid&&item.demo&&localStorage.getItem(prefix+'grid')===null){const seated=classroomDemoSeating(item.demo,roster.map(s=>s.name));if(seated)grid=seated.grid;}
     if(grid)localStorage.setItem(prefix+'grid',JSON.stringify(grid));
     if(!klassenListe.includes(storageName))klassenListe.push(storageName);
+  }
+  // Mit den Noten-Beispielklassen sind die alten Sitzplan-Beispiele „Klasse 7a/9b“ (nur Vornamen, ohne Plan) doppelt – unverändert ausblenden.
+  if(snapshot.classes.some(item=>item.demo)&&typeof BEISPIELKLASSEN==='object')for(const [name,roster] of Object.entries(BEISPIELKLASSEN)){
+    if(!klassenListe.includes(name)||klassenListe.length<2)continue;const prefix=classroomStoragePrefix(name);
+    try{const people=classroomReadArray(prefix+'einzel').map(s=>s.name),grid=JSON.parse(localStorage.getItem(prefix+'grid')||'[]');
+      const untouched=people.join('|')===roster.map(r=>r[0]).join('|')&&!(Array.isArray(grid)&&grid.flat().some(v=>v&&v!=='X'&&v!=='PULT'));
+      if(untouched){klassenListe=klassenListe.filter(k=>k!==name);if(aktuelleKlasse===name)aktuelleKlasse=klassenListe[0]}}catch{}
   }
   localStorage.setItem(classroomLinkMapKey,JSON.stringify(links));
   localStorage.setItem('sitzplan_klassen_liste',JSON.stringify(klassenListe));
@@ -1976,7 +2004,7 @@ window.addEventListener('message',event=>{
   for(const group of msg.model.classes){if(!oldLinks[group.id]){const source=Object.keys(msg.model.sourceClasses).find(k=>msg.model.sourceClasses[k]===group.id&&oldLinks[k]);if(source)oldLinks[group.id]=oldLinks[source];}}
   localStorage.setItem(classroomLinkMapKey,JSON.stringify(oldLinks));
   const activeIds=new Set(msg.snapshot.classes.map(c=>msg.model.sourceClasses[c.id]));
-  const classes=msg.model.classes.filter(g=>activeIds.has(g.id)).map(g=>({id:g.id,label:g.name,subject:'',students:g.students.filter(s=>!s.deleted).map(s=>({id:s.id,name:s.name,gender:s.gender||''}))}));
+  const classes=msg.model.classes.filter(g=>activeIds.has(g.id)).map(g=>({id:g.id,demo:(Object.keys(msg.model.sourceClasses).find(k=>msg.model.sourceClasses[k]===g.id&&/::demo-class-\d+$/.test(k))||'').split('::').pop()||'',label:g.name,subject:'',students:g.students.filter(s=>!s.deleted).map(s=>({id:s.id,name:s.name,gender:s.gender||''}))}));
   // Keep a manually selected seating class when only an attendance/value update arrives.
   const active=msg.model.sourceClasses[msg.snapshot.activeClass];
   const shouldFollow=classroomLastSource!==msg.snapshot.activeClass;
