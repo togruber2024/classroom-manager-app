@@ -4189,7 +4189,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const fmt=(v,d=1)=>Number(v).toLocaleString('de-DE',{maximumFractionDigits:d,minimumFractionDigits:0});
  function context(){
   const panel=[...document.querySelectorAll('.exam-combined-page')].find(p=>p.offsetParent);if(!panel)return null;
-  const group=subjectExamGroups(currentSubject).find(g=>g.type==='exam'&&g.pages.includes(activePage));if(!group)return null;
+  // ältere Klassenarbeiten haben noch keinen Typ gespeichert – jede Gruppe mit dieser Seite zählt, außer den bekannten anderen Arten
+  const other=new Set(['tests','semester','halfYear','performance','homework','quarterSummary']);
+  const group=subjectExamGroups(currentSubject).find(g=>g.pages?.includes(activePage)&&!other.has(g.type))||{pages:[...panel.querySelectorAll('[data-custom-panel]')].map(e=>e.dataset.customPanel).concat(activePage)};
   const key=group.pages.find(k=>taskPageData(currentSubject,k)?.tasks?.some(t=>t.basisPage))||group.pages.at(-1),data=taskPageData(currentSubject,key);
   const system=taskGradeSystem(currentSubject,key),table=[...panel.querySelectorAll('table.task-table')].find(t=>t.offsetParent)||panel.querySelector('table.task-table');
   // Art je Aufgabe aus der Tabelle (Platzhalter „Fehler“/„Punkte“), sonst aus der Berechnungsseite
@@ -4205,16 +4207,18 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    return {name:s.name.trim(),p:sum(pTasks),f:sum(fTasks),r,text:r===null?'—':formatTaskMean(r,system,rd),cls:r===null?'':taskMeanClass(r,system,rd)}});
   const cls=(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId)?.label||'';
   const topic=panel.querySelector('.test-detail-topic input,[data-exam-topic],input[placeholder*="Thema"]')?.value||data.examTopic||'';
-  return {group,data,system,rows,maxP,hasP:pTasks.length>0,hasF:fTasks.length>0,cls,topic};
+  const dateInput=[...panel.querySelectorAll('input[type=date]')].find(i=>i.offsetParent&&i.value)?.value||'';
+  const heading=panel.querySelector('h1,h2,.exam-title,.task-page-title')?.textContent?.trim()||'';
+  return {dateInput,heading,group,data,system,rows,maxP,hasP:pTasks.length>0,hasF:fTasks.length>0,cls,topic};
  }
  function open(){
-  const c=context();if(!c){alert('Die Ergebnisübersicht gibt es auf der Seite einer Klassenarbeit oder Klausur.');return}
+  const c=context();if(!c){alert('Für diese Seite lässt sich keine Ergebnisübersicht anzeigen.');return}
   close();const pts=c.system==='gradePoints',done=c.rows.filter(r=>r.r!==null);
   const mean=done.length?done.reduce((a,r)=>a+r.r,0)/done.length:null,withP=c.rows.filter(r=>r.p!==null),meanP=withP.length?withP.reduce((a,r)=>a+r.p,0)/withP.length:null;
   const passed=done.filter(r=>pts?Math.floor(r.r+0.5)>=5:Math.max(1,Math.min(6,Math.ceil(r.r-0.5-1e-10)))<=4).length;
-  const date=c.group.examDate?c.group.examDate.split('-').reverse().join('.'):'';
+  const iso=c.group.examDate||c.dateInput||'',date=/^\d{4}-\d\d-\d\d$/.test(iso)?iso.split('-').reverse().join('.'):'';
   const ov=TOP.createElement('div');ov.className='cm-ro';ov.setAttribute('role','dialog');ov.setAttribute('aria-label','Ergebnisübersicht');
-  ov.innerHTML=`<div class="cm-ro-box"><div class="cm-ro-hd"><div><h1>${esc(c.group.label||'Klassenarbeit')} · ${esc(c.cls)}</h1><small>${[c.topic,date,c.hasP&&c.maxP?'max. '+fmt(c.maxP)+' Punkte':''].filter(Boolean).map(esc).join(' · ')}</small></div><button type="button" class="cm-ro-x">Schließen</button></div>
+  ov.innerHTML=`<div class="cm-ro-box"><div class="cm-ro-hd"><div><h1>${esc(c.group.label||c.heading||'Klassenarbeit')} · ${esc(c.cls)}</h1><small>${[c.topic,date,c.hasP&&c.maxP?'max. '+fmt(c.maxP)+' Punkte':''].filter(Boolean).map(esc).join(' · ')}</small></div><button type="button" class="cm-ro-x">Schließen</button></div>
    <div class="cm-ro-kpi">${mean!==null?`<span>Ø ${pts?'Notenpunkte':'Note'} <b>${fmt(mean,pts?1:2)}</b></span>`:''}${meanP!==null?`<span>Ø Punkte <b>${fmt(meanP,1)}</b></span>`:''}<span>${c.rows.length} Schüler:innen</span>${done.length?`<span>Bestanden <b>${passed}/${done.length}</b></span>`:''}</div>
    <div class="cm-ro-grid"></div></div>`;
   TOP.body.append(ov);
