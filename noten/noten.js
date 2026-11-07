@@ -4200,7 +4200,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const rows=(data.students||[]).filter(s=>String(s.name||'').trim()).map(s=>{
    const sum=list=>{let any=false,v=0;for(const t of list){const n=num(s.rawScores?.[t.id]);if(n!==null){any=true;v+=n}}return any?v:null};
    const r=taskStudentResult(data,s,false);
-   return {name:s.name.trim(),p:sum(pTasks),f:sum(fTasks),r,text:r===null?'—':formatTaskMean(r,system,data),cls:r===null?'':taskMeanClass(r,system,data)}});
+   // nur gerundete Noten bzw. ganze Notenpunkte (unabhängig von der Anzeige auf der Seite)
+   const rd={...data,meanDisplay:'rounded',resultRounded:true};
+   return {name:s.name.trim(),p:sum(pTasks),f:sum(fTasks),r,text:r===null?'—':formatTaskMean(r,system,rd),cls:r===null?'':taskMeanClass(r,system,rd)}});
   const cls=(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId)?.label||'';
   const topic=panel.querySelector('.test-detail-topic input,[data-exam-topic],input[placeholder*="Thema"]')?.value||data.examTopic||'';
   return {group,data,system,rows,maxP,hasP:pTasks.length>0,hasF:fTasks.length>0,cls,topic};
@@ -4217,11 +4219,11 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    <div class="cm-ro-grid"></div></div>`;
   TOP.body.append(ov);
   const grid=ov.querySelector('.cm-ro-grid');
-  const head=`<thead><tr><th>Name</th>${c.hasF?'<th class="n">Fehler</th>':''}${c.hasP?'<th class="n">Punkte</th>':''}<th class="g">Note</th></tr></thead>`;
-  const row=r=>`<tr><td>${esc(r.name)}</td>${c.hasF?`<td class="n">${r.f===null?'—':fmt(r.f)}</td>`:''}${c.hasP?`<td class="n">${r.p===null?'—':fmt(r.p)}${c.maxP?`<span class="cm-ro-bar"><i style="width:${r.p===null?0:Math.max(0,Math.min(100,r.p/c.maxP*100))}%"></i></span>`:''}</td>`:''}<td class="g"><span class="task-end-grade cm-ro-chip ${esc(r.cls)}">${esc(r.text)}</span></td></tr>`;
-  // Spalten: so viele, dass alles ohne Blättern ins Fenster passt (höchstens 4)
+  const head=`<thead><tr><th>Name</th>${c.hasF?'<th class="n">Fehler</th>':''}${c.hasP?'<th class="n">Punkte</th>'+(c.maxP?'<th class="b"></th>':''):''}<th class="g">Note</th></tr></thead>`;
+  const row=r=>`<tr><td>${esc(r.name)}</td>${c.hasF?`<td class="n">${r.f===null?'—':fmt(r.f)}</td>`:''}${c.hasP?`<td class="n">${r.p===null?'—':fmt(r.p)}</td>${c.maxP?`<td class="b"><span class="cm-ro-bar"><i style="width:${r.p===null?0:Math.max(0,Math.min(100,r.p/c.maxP*100))}%"></i></span></td>`:''}`:''}<td class="g"><span class="task-end-grade cm-ro-chip ${esc(r.cls)}">${esc(r.text)}</span></td></tr>`;
+  // Spalten: auf breiten Fenstern bis zu 3–4 nebeneinander (je ≥ 380 px, ab 8 Namen pro Spalte), mindestens so viele, dass nichts gescrollt werden muss
   const avail=Math.max(200,TOP.defaultView.innerHeight-ov.querySelector('.cm-ro-grid').getBoundingClientRect().top-40),fit=Math.max(6,Math.floor(avail/44));
-  const cols=Math.max(1,Math.min(4,Math.ceil(c.rows.length/fit))),per=Math.ceil(c.rows.length/cols)||1;
+  const byWidth=Math.floor(grid.clientWidth/380),cols=Math.max(1,Math.min(4,Math.max(Math.ceil(c.rows.length/fit),Math.min(byWidth,Math.ceil(c.rows.length/8))))),per=Math.ceil(c.rows.length/cols)||1;
   grid.style.gridTemplateColumns=`repeat(${cols},minmax(0,1fr))`;
   for(let i=0;i<cols;i++){const part=c.rows.slice(i*per,(i+1)*per);if(!part.length&&i)continue;const t=TOP.createElement('table');t.innerHTML=head+'<tbody>'+part.map(row).join('')+'</tbody>';grid.append(t)}
   if(grid.scrollHeight>grid.clientHeight+2)ov.classList.add('cm-ro-dense');
@@ -4244,15 +4246,15 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .cm-ro-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}.cm-ro-hd h1{margin:0;font-size:24px;line-height:1.2}.cm-ro-hd small{display:block;color:#5b6b82;font-size:14px;margin-top:4px}
  .cm-ro-x{flex:none;height:40px;padding:0 16px;border:1px solid #d5deea;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:14.4px;cursor:pointer}
  .cm-ro-kpi{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}.cm-ro-kpi span{background:#f4f7fb;border:1px solid #e3e9f1;border-radius:10px;padding:6px 12px;font-size:13.5px}.cm-ro-kpi b{font-size:15px}
- .cm-ro-grid{flex:1;min-height:0;display:grid;gap:22px;align-content:start;overflow:auto}
+ .cm-ro-grid{flex:1;min-height:0;display:grid;gap:22px;align-content:start;align-items:start;overflow:auto}
  .cm-ro table{border-collapse:collapse;width:100%;font-size:15.5px}.cm-ro th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:#7a889c;text-align:left;font-weight:600;padding:4px 8px;border-bottom:1px solid #e3e9f1}
  .cm-ro td{padding:0 8px;height:43px;border-bottom:1px solid #f0f3f8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0}.cm-ro td:first-child{width:auto}
- .cm-ro .n{text-align:right;width:120px;font-variant-numeric:tabular-nums;color:#4a5b73}.cm-ro .g{text-align:center;width:88px;overflow:visible}
+ .cm-ro .n{text-align:right;width:62px;font-variant-numeric:tabular-nums;color:#4a5b73}.cm-ro .g{text-align:center;width:64px;overflow:visible}.cm-ro td.b,.cm-ro th.b{width:64px;padding:0 4px;text-overflow:clip}
  .cm-ro tbody tr:nth-child(even) td{background:#f8fafd}
  .cm-ro .cm-ro-chip{display:inline-flex;align-items:center;justify-content:center;min-width:46px;height:28px;padding:0 8px;border-radius:8px;font-weight:700;font-size:14.5px;box-sizing:border-box}
- .cm-ro-bar{display:inline-block;width:56px;height:6px;border-radius:3px;background:#e9eef5;margin-left:8px;vertical-align:middle;position:relative;overflow:hidden}.cm-ro-bar i{position:absolute;left:0;top:0;bottom:0;background:#8fb0dc}
+ .cm-ro-bar{display:inline-block;width:56px;height:6px;border-radius:3px;background:#e9eef5;vertical-align:middle;position:relative;overflow:hidden}.cm-ro-bar i{position:absolute;left:0;top:0;bottom:0;background:#8fb0dc}
  .cm-ro.cm-ro-dense td{height:34px;font-size:14px}.cm-ro.cm-ro-dense .cm-ro-chip{height:24px}
- @media (max-width:700px){.cm-ro{padding:6px}.cm-ro-box{padding:14px}.cm-ro .n{width:84px}.cm-ro-bar{display:none}}
+ @media (max-width:700px){.cm-ro{padding:6px}.cm-ro-box{padding:14px}.cm-ro .n{width:56px}.cm-ro .b{display:none}}
  @media print{.cm-ro{display:none!important}}`;TOP.head.append(st)}
 })();
 ;

@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 07.11.2026 · Version 9.16
+Stand: 07.11.2026 · Version 9.17
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1193,3 +1193,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.14: Aufräumen (Paket 3, ohne sichtbare Änderung) – gemeinsamer gedrosselter Beobachter je Seite (classroomOnDomChange) statt neun einzelner, mit Schutz vor Dauer-Änderungsschleifen
 9.15: Aufräumen (Paket 2b, ohne sichtbare Änderung) – 89 überflüssige „!important“/„:not(#_)“ in phone.js entfernt, per Stilvergleich geprüft
 9.16: Ergebnisübersicht bei Klassenarbeiten/Klausuren – bildschirmfüllende Liste (Name, Punkte mit Balken, Note in App-Farben, Ø Note/Punkte, Bestanden), automatische Spaltenzahl, nur Ansicht
+9.17: Ergebnisübersicht – nur gerundete Noten bzw. ganze Notenpunkte, drei Spalten auf breiten Fenstern, Punkte nicht mehr abgeschnitten (Balken in eigener Spalte)
