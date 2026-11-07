@@ -4819,6 +4819,8 @@ return}
 (()=>{const st=document.createElement('style');st.textContent='.pl-bar .pl-row:not(.pl-row2){flex-wrap:nowrap;justify-content:flex-start}.pl-bar .pl-row:not(.pl-row2):has(.pl-half:not([hidden])){flex-wrap:wrap}.pl-bar .pl-row:not(.pl-row2) .pl-hatch button:not(#_){padding:0 9px;min-width:0}.pl-bar .pl-row:not(.pl-row2) .pl-fold:not(#_){margin-left:0}.pl-bar .pl-row:not(.pl-row2) .pl-hatch{margin-left:auto}.pl-bar .pl-view button{padding:0 11px;font-size:14px;white-space:nowrap}.pl-view button{min-height:32px}.pl-bar .pl-row2{justify-content:space-between;flex-wrap:nowrap}.pl-bar .pl-row2 .pl-flags:not(#_){margin-left:0;justify-content:flex-start;min-width:0}.pl-bar .pl-row2 .pl-flags[hidden]+.pl-mean,.pl-bar .pl-row2 .pl-mean{margin-left:auto}';document.head.append(st)})();
 /* 8.78: beide Dreifachschalter oben rechts gleich groß (Breite, Höhe, Knöpfe) */
 (()=>{const st=document.createElement('style');st.textContent='.pl-bar .pl-hatch:not(#_),.pl-bar .pl-mean:not(#_){box-sizing:border-box;width:150px;flex:none}.pl-bar :is(.pl-hatch,.pl-mean) button:not(#_):not(#__){flex:1 1 0;min-width:0;padding:0;height:32px;min-height:32px}';document.head.append(st)})();
+/* 8.79: Hinweise über den Karten („3× HA fehlend“ …) als Pille wie die übrigen Knöpfe */
+(()=>{const st=document.createElement('style');st.textContent='.pl-flags button:not(#_){border-radius:999px!important;padding:0 14px 0 6px;min-height:38px}';document.head.append(st)})();
 ;
 
 /* ==== noten/student-notes.js ==== */

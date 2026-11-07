@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 07.11.2026 · Version 8.78
+Stand: 07.11.2026 · Version 8.79
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1155,3 +1155,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 8.76: Hilfe → „Neu“ wieder aktuell (Neuerungen 8.62–8.74 ergänzt)
 8.77: iPhone Noten – Ansicht „Halbjahr | Q2“ (Standard: ganzes Halbjahr mit Halbjahresnote aus der App, Q1/Q2 klein darunter); Leiste neu angeordnet
 8.78: iPhone Halbjahresansicht ohne Zeile unter der Note; beide Dreifachschalter oben gleich groß
+8.79: iPhone – Hinweise über den Karten (z. B. „3× HA fehlend“) rund
