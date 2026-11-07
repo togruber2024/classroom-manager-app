@@ -899,7 +899,7 @@ if(window.parent!==window)parent.postMessage({type:'classroom:rosters',snapshot:
   const taskGradeOptions=tendencies=>tendencies?grades.map(label=>{const grade=Number(label[0])+(label.endsWith('+')?-1/3:label.endsWith('−')?1/3:0);return {value:grade,label}}):Array.from({length:6},(_,index)=>({value:index+1,label:String(index+1)}));
   const participationSymbols=['++','+','o','-','--','---'];
   const participationOptions=participationSymbols.flatMap((label,index)=>index<participationSymbols.length-1?[{value:index+1,label},{value:index+1.5,label:index===1?'o/+':`${label}/${participationSymbols[index+1]}`}]:[{value:index+1,label}]);
-  const participationLabel=(value,numeric=false)=>{const number=Number(value);if(!Number.isFinite(number))return '—';if(numeric)return formatTaskResult(classUsesGradePoints()?participationPoints(number):number);if(classUsesGradePoints()){const points=Math.round(participationPoints(number));return points>=13?'++':points===12?'++/+':points===11?'+':points>=9?'+/o':points===8?'o':points>=6?'o/-':points===5?'-':points>=3?'-/--':points===2?'--':points===1?'--/---':'---'}const low=Math.max(1,Math.min(6,Math.floor(number))),high=Math.max(1,Math.min(6,Math.ceil(number)));return low===high?participationSymbols[low-1]:`${participationSymbols[low-1]}/${participationSymbols[high-1]}`};
+  const participationLabel=(value,numeric=false,mode='decimal')=>{const number=Number(value);if(!Number.isFinite(number))return '—';if(numeric){/* 9.13: Darstellung gerundet | Tendenz | Dezimal */const v=classUsesGradePoints()?participationPoints(number):number;if(mode==='rounded')return formatTaskResult(classUsesGradePoints()?Math.floor(v+0.5):roundSchoolGrade(v));if(mode==='tendency'&&!classUsesGradePoints())return formatTaskMean(v,'grades',{meanDisplay:'tendency'});return formatTaskResult(v)}/* wie die Ø-Darstellung (2 | 2− | 2,3) */if(classUsesGradePoints()){const points=Math.round(participationPoints(number));return points>=13?'++':points===12?'++/+':points===11?'+':points>=9?'+/o':points===8?'o':points>=6?'o/-':points===5?'-':points>=3?'-/--':points===2?'--':points===1?'--/---':'---'}const low=Math.max(1,Math.min(6,Math.floor(number))),high=Math.max(1,Math.min(6,Math.ceil(number)));return low===high?participationSymbols[low-1]:`${participationSymbols[low-1]}/${participationSymbols[high-1]}`};
   const taskGradeLabel=(value,tendencies)=>{const score=Number(value);if(!tendencies)return formatTaskResult(score);return taskGradeOptions(true).find(option=>Math.abs(option.value-score)<.01)?.label||formatTaskResult(score)};
   function taskPageData(subject,pageKey='tasks'){
     const data=customPageValues(subject,pageKey);
@@ -1217,7 +1217,7 @@ if(window.parent!==window)parent.postMessage({type:'classroom:rosters',snapshot:
     caption.textContent=!summaries[0]||!summaries[1]?'Lege beide Halbjahresnoten an, um das Schuljahr zu berechnen.':!weightsValid?'Die Gewichtungen müssen zusammen 100 % ergeben.':settings.tendencies&&!pointsMode?'Tendenzen werden angezeigt.':'';
     section.querySelector('.semester-averages').innerHTML=`<tr><th scope="row">Durchschnitt</th><td>${averageFirst===null?'—':fmt(averageFirst)}</td><td>${averageSecond===null?'—':fmt(averageSecond)}</td><td>${weightsValid&&averageFirst!==null&&averageSecond!==null?fmt((averageFirst*firstWeight+averageSecond*secondWeight)/100):'—'}</td></tr>`;
   }
-  function participationGradeMarkup(student,task,value,gradeClass,taskLabel,studentLabel,data){const shown=value===''?'':String(value).toLocaleLowerCase('de-DE')==='x'?'A':participationLabel(value,data.numericParticipation);return `<input type="text" class="task-grade-input participation-grade-input${gradeClass?` ${gradeClass}`:''}" value="${htmlEscape(shown)}" placeholder="—" spellcheck="false" aria-label="${htmlEscape(taskLabel)} für ${htmlEscape(studentLabel)}" data-student-grade="${htmlEscape(student.id)}" data-task-id="${htmlEscape(task.id)}" data-focus-key="grade-${htmlEscape(student.id)}-${htmlEscape(task.id)}" title="Note oder Mitarbeitssymbol eingeben; Notenblock einfügen möglich">`}
+  function participationGradeMarkup(student,task,value,gradeClass,taskLabel,studentLabel,data){const shown=value===''?'':String(value).toLocaleLowerCase('de-DE')==='x'?'A':participationLabel(value,data.numericParticipation,data.participationMode);return `<input type="text" class="task-grade-input participation-grade-input${gradeClass?` ${gradeClass}`:''}" value="${htmlEscape(shown)}" placeholder="—" spellcheck="false" aria-label="${htmlEscape(taskLabel)} für ${htmlEscape(studentLabel)}" data-student-grade="${htmlEscape(student.id)}" data-task-id="${htmlEscape(task.id)}" data-focus-key="grade-${htmlEscape(student.id)}-${htmlEscape(task.id)}" title="Note oder Mitarbeitssymbol eingeben; Notenblock einfügen möglich">`}
   function parseParticipationGrade(value){const normalized=String(value??'').trim().toLocaleLowerCase('de-DE').replace(/[−–—]/g,'-').replace(/\s+/g,'');if(normalized==='x'||normalized==='a')return {value:'x',absence:true};if(classUsesGradePoints()){const pointRange=normalized.match(/^(\d{1,2})[-/](\d{1,2})$/);if(pointRange){const a=Number(pointRange[1]),b=Number(pointRange[2]);if(a>=0&&a<=15&&b>=0&&b<=15&&Math.abs(a-b)===1)return {value:String(pointsParticipation((a+b)/2)),absence:false};return null}}if(classUsesGradePoints()&&/^\d{1,2}(?:[.,]\d+)?$/.test(normalized)){const points=Number(normalized.replace(',','.'));return points>=0&&points<=15?{value:String(pointsParticipation(points)),absence:false}:null}const option=participationOptions.find(item=>item.label.toLocaleLowerCase('de-DE').replace(/[−–—]/g,'-').replace(/\s+/g,'')===normalized);if(option)return {value:String(option.value),absence:false};for(let index=0;index<participationSymbols.length-1;index++){const left=participationSymbols[index].toLocaleLowerCase('de-DE'),right=participationSymbols[index+1].toLocaleLowerCase('de-DE');if([left+right,right+left,left+'/'+right,right+'/'+left].includes(normalized))return {value:String(index+1.5),absence:false};}const range=normalized.match(/^([1-6])[-/]([1-6])$/);if(range&&Math.abs(Number(range[1])-Number(range[2]))===1)return {value:String((Number(range[1])+Number(range[2]))/2),absence:false};const wholeGrade=normalized.match(/^([1-6])[+-]$/);if(wholeGrade)return {value:wholeGrade[1],absence:false};const number=Number(normalized.replace(',','.'));if(Number.isFinite(number)&&number>=1&&number<=6&&Number.isInteger(number*2))return {value:String(number),absence:false};return null}
   function commitParticipationDates(subject,pageKey){
     if(taskGradeSystem(subject,pageKey)!=='participation')return false;
@@ -1652,7 +1652,7 @@ if(window.parent!==window)parent.postMessage({type:'classroom:rosters',snapshot:
         if(rawMode)return raw===''||raw===undefined?'—':`${raw} ${taskBasisConfig(currentSubject,task.basisPage).base==='text'?'Fehler':'Punkte'}`;
         if(grade===''||grade===undefined||grade===null)return '—';
         if(system==='grades')return taskGradeLabel(useTendencies?grade:roundSchoolGrade(grade),useTendencies);
-        if(system==='participation')return String(grade).toLocaleLowerCase('de-DE')==='x'?'A':participationLabel(grade,data.numericParticipation);
+        if(system==='participation')return String(grade).toLocaleLowerCase('de-DE')==='x'?'A':participationLabel(grade,data.numericParticipation,data.participationMode);
         return `${grade} Punkte`;
       }),result===null?'—':formatTaskMean(result,system,data)];
       return `<w:tr>${values.map((value,index)=>{const grade=index>0&&index<count-1?effectiveGrades[index-1]:index===count-1&&result!==null?(system==='gradePoints'?Math.round(result):roundSchoolGrade(result)):null,group=grade===null?null:taskGradeClass(grade,system).split(' ')[0],color=colored&&group?gradeColors[group]:null;return docxCell(value,widths[index],{bold:index===count-1,align:index===0?'left':'center',fill:color?.fill,color:color?.color||'202C2B',badge:!!color})}).join('')}</w:tr>`
@@ -4111,8 +4111,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    und werden weiter ausgelöst – die Speicherlogik bleibt unverändert. Zurücknehmen: diese Datei entfernen. */
 (()=>{
  const defs=[
-  {sel:'label.task-weight-mode',aria:'Gewichtung',off:['%','Gewichtung in Prozent'],on:['x:y','Gewichtung als Verhältnis (x:y)']},
-  {sel:'label.task-participation-display',aria:'Anzeige',off:['Zeichen','Bewertungszeichen anzeigen'],on:[()=>(typeof classUsesGradePoints==='function'&&classUsesGradePoints())?'Punkte':'Noten','Noten bzw. Punkte anzeigen']}
+  {sel:'label.task-weight-mode',aria:'Gewichtung',off:['%','Gewichtung in Prozent'],on:['x:y','Gewichtung als Verhältnis (x:y)']}
+  /* 9.13: „Zeichen | Noten“ ersetzt durch den Vierfachschalter „+ | 2 | 2− | 2,3“ (participation-mode.js) */
  ];
  const txt=v=>typeof v==='function'?v():v;
  function upgrade(){
@@ -4133,6 +4133,35 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;upgrade()})};
  new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});document.addEventListener('change',schedule,true);upgrade();
  const st=document.createElement('style');st.textContent='label.seg-hidden{display:none!important}body[data-module=noten] .seg-toggle{margin:0 auto}body[data-module=noten] .task-actions .seg-toggle,body[data-module=noten] .section-title .seg-toggle{margin:0;align-self:center}';document.head.append(st);
+})();
+;
+
+/* ==== noten/participation-mode.js ==== */
+/* 9.13: Mündliche Mitarbeit – ein Schalter für die Darstellung der Einträge: „+ | 2 | 2− | 2,3“
+   (+ = Bewertungszeichen ++, +, o …; 2 = Note gerundet; 2− = Note mit Tendenz; 2,3 = Dezimal). Bei Notenpunkten: „+ | 11 | 10,6“.
+   Ersetzt „Zeichen | Noten“. Gespeichert je Seite (numericParticipation + participationMode). Die gespeicherten Werte bleiben unverändert. */
+(()=>{
+ const opts=()=>(typeof classUsesGradePoints==='function'&&classUsesGradePoints())
+  ?[['symbols','+','Bewertungszeichen (++, +, o …)'],['rounded','11','Ganze Notenpunkte'],['decimal','10,6','Notenpunkte mit Dezimalstelle']]
+  :[['symbols','+','Bewertungszeichen (++, +, o …)'],['rounded','2','Noten gerundet'],['tendency','2−','Noten mit Tendenz (z. B. 2−)'],['decimal','2,3','Noten als Dezimalzahl']];
+ function current(label){const key=label.closest('[data-custom-panel]')?.dataset.customPanel,data=key&&typeof taskPageData==='function'?taskPageData(currentSubject,key):null;if(!data)return 'symbols';if(!data.numericParticipation)return 'symbols';const m=data.participationMode||'decimal';return opts().some(o=>o[0]===m)?m:'decimal'}
+ function choose(label,mode){const key=label.closest('[data-custom-panel]')?.dataset.customPanel;if(!key)return;const data=taskPageData(currentSubject,key);
+  if(mode==='symbols')data.numericParticipation=false;else{data.numericParticipation=true;data.participationMode=mode}saveCurrentSubject();renderTasksPage(currentSubject,key)}
+ function upgrade(){
+  for(const seg of document.querySelectorAll('.part-seg'))if(!seg.__label?.isConnected||seg.__label.__pseg!==seg)seg.remove();
+  for(const label of document.querySelectorAll('label.task-participation-display')){
+   const o=opts(),sig=o.map(x=>x[0]).join();let seg=label.__pseg?.isConnected?label.__pseg:null;
+   if(seg&&seg.dataset.sig!==sig){seg.remove();seg=null}
+   if(!seg){seg=document.createElement('div');seg.className='mean-seg part-seg';seg.dataset.sig=sig;seg.setAttribute('role','radiogroup');seg.setAttribute('aria-label','Einträge darstellen');
+    for(const [m,l,t] of o){const b=document.createElement('button');b.type='button';b.setAttribute('role','radio');b.dataset.mode=m;b.textContent=l;b.title=t;b.setAttribute('aria-label',t);b.onclick=()=>{if(b.getAttribute('aria-checked')!=='true')choose(seg.__label,m)};seg.append(b)}
+    seg.__label=label;label.__pseg=seg;label.before(seg);label.classList.add('seg-hidden')}
+   if(seg.nextElementSibling!==label)label.before(seg);
+   const c=current(label);for(const b of seg.children){const on=String(b.dataset.mode===c);if(b.getAttribute('aria-checked')!==on)b.setAttribute('aria-checked',on)}
+  }
+ }
+ let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;upgrade()})};
+ new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});upgrade();
+ const st=document.createElement('style');st.textContent='body[data-module=noten] .section-title .part-seg{margin:0;align-self:center}body[data-module=noten] .part-seg>button{min-width:40px}';document.head.append(st);
 })();
 ;
 
