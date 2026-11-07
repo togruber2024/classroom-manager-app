@@ -157,7 +157,7 @@
 /* ==== index.html (eingebettet) ==== */
 
 /* „Alle Daten löschen“: nach dem Neuladen zuerst alles entfernen – bevor ein Skript Speicher oder Datenbanken öffnet. */
-try{if(sessionStorage.getItem('classroom-reset-all')==='1'){sessionStorage.clear();localStorage.clear();for(const name of ['classroom-manager-sync','classroom-manager-auto-backup'])indexedDB.deleteDatabase(name);/* leer starten statt mit Beispieldaten */localStorage.setItem('notenrechner-klassen-v1','{}');localStorage.setItem('sitzplan_beispielklassen_v1','1');sessionStorage.setItem('classroom-reset-done','1')}}catch{}
+try{if(sessionStorage.getItem('classroom-reset-all')==='1'){sessionStorage.clear();localStorage.clear();for(const name of ['classroom-manager-sync','classroom-manager-auto-backup','classroom-manager-backup-crypto'])indexedDB.deleteDatabase(name);/* leer starten statt mit Beispieldaten */localStorage.setItem('notenrechner-klassen-v1','{}');localStorage.setItem('sitzplan_beispielklassen_v1','1');sessionStorage.setItem('classroom-reset-done','1')}}catch{}
 const tabs=[...document.querySelectorAll('[data-view]')];function selectView(view){view=view==='sitzplan'?'sitzplan':'noten';try{localStorage.setItem('classroom-manager-last-view-v1',view)}catch{}if(view==='sitzplan'&&typeof classroomRequestRosters==='function')classroomRequestRosters();for(const tab of tabs){const active=tab.dataset.view===view;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;const frame=document.getElementById('view-'+tab.dataset.view);frame.hidden=!active;if(active&&frame.dataset.src){frame.src=frame.dataset.src;delete frame.dataset.src;}}}for(const tab of tabs){tab.addEventListener('click',()=>selectView(tab.dataset.view));tab.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const index=event.key==='Home'?0:event.key==='End'?tabs.length-1:(tabs.indexOf(tab)+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;selectView(tabs[index].dataset.view);tabs[index].focus();}});}
 /* Start: zuletzt benutzter Manager, wenn die App vor weniger als 2 Stunden noch offen war – sonst Unterrichts-Manager. */
 const resumeKey='classroom-manager-last-active-v1',resumeWindow=2*60*60*1000;
@@ -560,7 +560,7 @@ document.getElementById('classroomExportBackup').onclick=async()=>{
  try{
   // Open the picker while the click still grants user activation.
   const target=window.classroomBackupLocation?await window.classroomBackupLocation.prepare(name,'json'):(typeof window.showSaveFilePicker==='function'?{file:await window.showSaveFilePicker({suggestedName:name,types:[{description:'Classroom-Manager-Backup',accept:{'application/json':['.json']}}]}),where:null}:null),handle=target?.file||null;
-  const backup=await classroomBackupData(),blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+  const backup=await classroomBackupData(),blob=new Blob([window.classroomBackupText?await window.classroomBackupText(backup):JSON.stringify(backup,null,2)],{type:'application/json'});
   if(handle){const writable=await handle.createWritable();await writable.write(blob);await writable.close();status.textContent=target.where?'Gespeichert im Ordner „'+target.where+'“: '+name:'Das Backup wurde gespeichert.';window.classroomMarkBackup?.();if(target.where){await new Promise(r=>setTimeout(r,1400))}}
   else{const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=name;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);status.textContent='Das Backup wurde als Download bereitgestellt.';window.classroomMarkBackup?.()}
   backupDialog.close();
@@ -763,7 +763,7 @@ window.addEventListener('message',event=>{
    classroomValidBackup(data);
    const now=new Date(),pad=value=>String(value).padStart(2,'0'),stamp=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}`;
    const file=await handle.getFileHandle(`Classroom-Manager-${stamp}-automatisch.json`,{create:true}),writer=await file.createWritable();
-   try{await writer.write(JSON.stringify(data,null,2));await writer.close();window.classroomMarkBackup?.()}catch(error){try{await writer.abort()}catch{}throw error}
+   try{await writer.write(window.classroomBackupText?await window.classroomBackupText(data):JSON.stringify(data,null,2));await writer.close();window.classroomMarkBackup?.()}catch(error){try{await writer.abort()}catch{}throw error}
    lastContent=content;lastDay=day;lastSaved=new Date().toLocaleString('de-DE');
    status.textContent=`Aktiv · Ordner: ${handle.name} · Zuletzt gesichert: ${lastSaved}`;
   }catch(error){status.textContent=`Automatische Sicherung fehlgeschlagen: ${error.message}. Bitte das manuelle Backup verwenden.`}
@@ -1402,6 +1402,128 @@ window.addEventListener('message',event=>{
 })();
 ;
 
+/* ==== backup-crypto.js ==== */
+/* 8.90: Verschlüsselte Backups (Backup-Fenster → „Verschlüsselung“).
+   Ein zufälliger Backup-Schlüssel (AES-256-GCM) verschlüsselt jede Backup-Datei. In jeder Datei steckt dieser Schlüssel zweimal,
+   selbst verschlüsselt: mit dem Notfall-Passwort (PBKDF2) und – falls eingerichtet – mit Touch ID / Face ID (Passkey, WebAuthn-PRF).
+   Speichern braucht keine Bestätigung (der Schlüssel liegt nur auf diesem Gerät, in IndexedDB); Wiederherstellen verlangt
+   automatisch Touch ID, bei Fehlschlag/Abbruch das Notfall-Passwort. Ein Gerät ohne eigene Einrichtung übernimmt die Verschlüsselung
+   beim ersten erfolgreichen Öffnen. Excel-Dateien lassen sich nicht verschlüsseln. */
+(()=>{
+ const FORMAT='classroom-manager-encrypted',enc=new TextEncoder(),dec=new TextDecoder();
+ const b64=buf=>{let s='';const a=new Uint8Array(buf);for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000));return btoa(s)};
+ const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+ const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
+ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const canPasskey=()=>!!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext&&location.protocol!=='file:');
+
+ /* ---------- Speicher (IndexedDB, nicht im Backup enthalten) ---------- */
+ const DB='classroom-manager-backup-crypto';
+ const db=()=>new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+ async function load(){try{const d=await db();try{return await new Promise((res,rej)=>{const r=d.transaction('kv').objectStore('kv').get('cfg');r.onsuccess=()=>res(r.result||null);r.onerror=()=>rej(r.error)})}finally{d.close()}}catch{return null}}
+ async function save(cfg){const d=await db();try{await new Promise((res,rej)=>{const tx=d.transaction('kv','readwrite');cfg?tx.objectStore('kv').put(cfg,'cfg'):tx.objectStore('kv').delete('cfg');tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})}finally{d.close()}cache=cfg;sync()}
+ let cache=null;load().then(c=>{cache=c;sync()});
+
+ /* ---------- Krypto ---------- */
+ const aes=raw=>crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt']);
+ async function pwKey(password,salt){const base=await crypto.subtle.importKey('raw',enc.encode(password),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+ async function seal(key,bytes){const iv=rnd(12);return {iv:b64(iv),data:b64(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,bytes))}}
+ async function open(key,box){return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(box.iv)},key,unb64(box.data)))}
+ async function wrapPw(master,password){const salt=rnd(16);return {salt:b64(salt),...await seal(await pwKey(password,salt),master)}}
+
+ /* ---------- Touch ID / Face ID (Passkey mit PRF) ---------- */
+ async function prfGet(credId,salt){
+  const cred=await navigator.credentials.get({publicKey:{challenge:rnd(32),allowCredentials:[{type:'public-key',id:unb64(credId)}],userVerification:'required',timeout:60000,extensions:{prf:{eval:{first:unb64(salt)}}}}});
+  const out=cred?.getClientExtensionResults?.()?.prf?.results?.first;if(!out)throw Object.assign(new Error('Dieses Gerät unterstützt die Verschlüsselung mit Touch ID nicht.'),{name:'NoPrf'});
+  return aes(new Uint8Array(out))}
+ async function prfCreate(){
+  const cred=await navigator.credentials.create({publicKey:{rp:{name:'Classroom-Manager'},user:{id:rnd(16),name:'Classroom-Manager Backup',displayName:'Classroom-Manager Backup'},challenge:rnd(32),
+   pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{residentKey:'required',userVerification:'required'},timeout:60000,extensions:{prf:{}}}});
+  const ext=cred?.getClientExtensionResults?.()?.prf;if(ext&&ext.enabled===false)throw Object.assign(new Error('Touch ID kann hier nicht für die Verschlüsselung genutzt werden.'),{name:'NoPrf'});
+  return b64(cred.rawId)}
+
+ /* ---------- Dialoge ---------- */
+ function dialog(html){const d=document.createElement('dialog');d.className='ui-dialog bc-dlg';d.innerHTML=html;document.body.append(d);d.showModal();return d}
+ function askPassword(text,twice){return new Promise(resolve=>{
+  const d=dialog(`<p class="ui-dialog-text">${esc(text)}</p><input type="password" autocomplete="${twice?'new-password':'current-password'}" placeholder="${twice?'Notfall-Passwort':'Passwort'}" aria-label="Passwort">${twice?'<input type="password" autocomplete="new-password" placeholder="Wiederholen" aria-label="Passwort wiederholen">':''}<p class="bc-err" role="alert"></p><div class="ui-dialog-actions"><button type="button" data-c>Abbrechen</button><button type="button" class="primary" data-o>OK</button></div>`);
+  const [a,b]=d.querySelectorAll('input'),err=d.querySelector('.bc-err');a.focus();const done=v=>{d.close();d.remove();resolve(v)};
+  const ok=()=>{if(!a.value){err.textContent='Bitte ein Passwort eingeben.';return}if(b&&a.value!==b.value){err.textContent='Die Passwörter stimmen nicht überein.';return}if(b&&a.value.length<6){err.textContent='Bitte mindestens 6 Zeichen verwenden.';return}done(a.value)};
+  d.querySelector('[data-o]').onclick=ok;d.querySelector('[data-c]').onclick=()=>done(null);d.addEventListener('cancel',e=>{e.preventDefault();done(null)});d.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();ok()}})})}
+ /* Touch-ID-Schritt mit Knopf (falls der Browser die Abfrage nur direkt nach einem Tipp erlaubt) */
+ function touchButton(title,text){return new Promise(resolve=>{
+  const d=dialog(`<div class="bc-center"><div class="bc-lock">🔒</div><p class="bc-title">${esc(title)}</p><p class="bc-sub">${esc(text)}</p><button type="button" class="primary bc-wide" data-t>Mit Touch ID öffnen</button><button type="button" class="bc-wide bc-alt" data-p>Notfall-Passwort eingeben</button><button type="button" class="bc-link" data-c>Abbrechen</button></div>`);
+  const done=v=>{d.close();d.remove();resolve(v)};d.querySelector('[data-t]').onclick=()=>done('touch');d.querySelector('[data-p]').onclick=()=>done('pw');d.querySelector('[data-c]').onclick=()=>done(null);d.addEventListener('cancel',e=>{e.preventDefault();done(null)})})}
+
+ /* ---------- Verschlüsseln beim Speichern ---------- */
+ window.classroomBackupEncryptionOn=()=>!!(cache?.on&&cache.master);
+ window.classroomBackupText=async(data,pretty=true)=>{
+  const text=JSON.stringify(data,null,pretty?2:0);if(!window.classroomBackupEncryptionOn())return text;
+  const body=await seal(await aes(unb64(cache.master)),enc.encode(text));
+  return JSON.stringify({format:FORMAT,version:2,createdAt:data.createdAt||new Date().toISOString(),keyId:cache.keyId,wraps:{pw:cache.pwWrap,...(cache.prf?{prf:cache.prf}:{})},...body},null,1)};
+
+ /* ---------- Entschlüsseln beim Wiederherstellen ---------- */
+ const stamp=iso=>{const d=new Date(iso||'');return isNaN(d)?'':d.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})};
+ async function unlock(obj){
+  const title='Verschlüsseltes Backup'+(stamp(obj.createdAt)?' vom '+stamp(obj.createdAt):''),prf=obj.wraps?.prf;
+  const viaPrf=async()=>open(await prfGet(prf.credId,prf.salt),prf.wrap);
+  if(prf&&canPasskey()){
+   const t0=performance.now();
+   try{return {master:await viaPrf(),how:'touch'}}catch(e){
+    /* sofortige Ablehnung = keine Abfrage angezeigt (Browser verlangt einen Tipp) → Knopf; sonst Abbruch/Fehlschlag → Passwort */
+    if(e?.name==='NotAllowedError'&&performance.now()-t0<600){const c=await touchButton(title,'Zum Öffnen Touch ID verwenden.');if(c===null)throw Error('Abgebrochen.');if(c==='touch'){try{return {master:await viaPrf(),how:'touch'}}catch{}}}
+   }}
+  for(;;){const pw=await askPassword(title+(prf&&canPasskey()?' – Touch ID hat nicht geklappt. Bitte das Notfall-Passwort eingeben.':' – bitte das Notfall-Passwort eingeben.'),false);if(pw===null)throw Error('Abgebrochen – kein Passwort eingegeben.');
+   try{return {master:await open(await pwKey(pw,unb64(obj.wraps.pw.salt)),obj.wraps.pw),how:'pw'}}catch{await (window.classroomAlert||alert)('Das Passwort ist falsch.')}}}
+ const previous=window.classroomMaybeDecrypt;
+ window.classroomMaybeDecrypt=async obj=>{
+  if(obj?.format!==FORMAT||obj.version!==2)return previous?previous(obj):obj;
+  const {master}=await unlock(obj);const text=dec.decode(await open(await aes(master),obj));
+  /* Gerät ohne eigene Einrichtung übernimmt die Verschlüsselung (gleicher Schlüssel, gleiches Touch ID, gleiches Notfall-Passwort) */
+  if(!cache?.master){try{await save({on:true,master:b64(master),keyId:obj.keyId,pwWrap:obj.wraps.pw,prf:obj.wraps.prf||null,adopted:new Date().toISOString()})}catch{}}
+  return JSON.parse(text)};
+
+ /* ---------- Einrichten / Ändern ---------- */
+ async function setup(){
+  let master=cache?.master?unb64(cache.master):rnd(32);
+  if(!cache?.pwWrap){const pw=await askPassword('Notfall-Passwort festlegen. Es öffnet deine verschlüsselten Backups, wenn Touch ID nicht verfügbar ist (z. B. auf einem anderen Gerät). Gut aufbewahren – ohne Touch ID und ohne dieses Passwort lässt sich ein Backup nicht mehr öffnen.',true);if(pw===null)return false;
+   cache={...(cache||{}),master:b64(master),keyId:b64(rnd(8)),pwWrap:await wrapPw(master,pw)}}
+  let prf=cache.prf||null;
+  if(!prf&&canPasskey()){
+   try{const credId=await prfCreate(),salt=b64(rnd(32));let key;
+    try{key=await prfGet(credId,salt)}catch(e){if(e?.name==='NoPrf')throw e;const c=await touchButton('Touch ID bestätigen','Einmal bestätigen, damit Touch ID deine Backups öffnen kann.');if(c!=='touch')throw e;key=await prfGet(credId,salt)}
+    prf={credId,salt,wrap:await seal(key,master)}}
+   catch(e){await (window.classroomAlert||alert)((e?.name==='NoPrf'?e.message:'Touch ID wurde nicht eingerichtet.')+' Die Backups werden trotzdem verschlüsselt und lassen sich mit dem Notfall-Passwort öffnen.')}}
+  await save({...cache,on:true,prf});return true}
+ async function changePw(){if(!cache?.master)return;const pw=await askPassword('Neues Notfall-Passwort. Es gilt für alle künftigen Backups; ältere Backups öffnen weiterhin mit dem alten Passwort (oder Touch ID).',true);if(pw===null)return;await save({...cache,pwWrap:await wrapPw(unb64(cache.master),pw)})}
+ async function redoTouch(){if(!cache?.master)return;const c={...cache,prf:null};cache=c;await setup()}
+
+ /* ---------- Bereich im Backup-Fenster ---------- */
+ const dlg=document.querySelector('.classroom-backup-dialog'),acc=dlg?.querySelector('.bk-acc');
+ let sec,head,body,box,info;
+ if(dlg&&acc){
+  sec=document.createElement('section');sec.className='bk-sec';sec.dataset.section='crypt';
+  head=document.createElement('button');head.type='button';head.className='bk-head';head.setAttribute('aria-expanded','false');head.innerHTML='<span class="bk-chev" aria-hidden="true">›</span><span class="bk-title">Verschlüsselung</span><span class="bk-status"></span>';
+  body=document.createElement('div');body.className='bk-body';body.hidden=true;
+  body.innerHTML='<label class="bc-switch"><input type="checkbox"> <span>Backups verschlüsseln</span></label><p class="bc-help">Backup-Dateien (auch die automatische Sicherung) sind nur mit Touch ID oder deinem Notfall-Passwort lesbar. Auf deinen Geräten mit demselben iCloud-Schlüsselbund reicht Touch ID. Excel-Dateien lassen sich nicht verschlüsseln.</p><div class="bc-info"></div><p class="bc-warn">Notfall-Passwort gut aufbewahren: Ohne Touch ID und ohne dieses Passwort lässt sich ein verschlüsseltes Backup nicht mehr öffnen.</p>';
+  sec.append(head,body);acc.prepend(sec);box=body.querySelector('input');info=body.querySelector('.bc-info');
+  head.onclick=()=>{const openNow=body.hidden;for(const s of acc.querySelectorAll('.bk-sec')){const b=s.querySelector('.bk-body'),h=s.querySelector('.bk-head');if(b){b.hidden=true;h?.setAttribute('aria-expanded','false')}}body.hidden=!openNow;head.setAttribute('aria-expanded',String(openNow))};
+  acc.addEventListener('click',e=>{const h=e.target.closest('.bk-head');if(h&&h!==head){body.hidden=true;head.setAttribute('aria-expanded','false')}},true);
+  box.onchange=async()=>{if(box.checked){box.disabled=true;try{if(!await setup())box.checked=false}catch(e){box.checked=false;await (window.classroomAlert||alert)('Verschlüsselung konnte nicht eingerichtet werden: '+e.message)}finally{box.disabled=false;sync()}}else{await save({...(cache||{}),on:false})}};
+  info.addEventListener('click',async e=>{const b=e.target.closest('[data-bc]');if(!b)return;if(b.dataset.bc==='pw')await changePw();else await redoTouch()});
+ }
+ function sync(){
+  const on=window.classroomBackupEncryptionOn();
+  if(head){const st=head.querySelector('.bk-status');st.textContent=on?'🔒 An'+(cache?.prf?' · Touch ID':' · Passwort'):'Aus';st.classList.toggle('bc-on',on)}
+  if(box)box.checked=on;
+  if(info)info.innerHTML=on?`<div>${cache.prf?'✓ Touch ID eingerichtet <span class="bc-dim">(iCloud-Schlüsselbund)</span>':'– Touch ID nicht eingerichtet'+(canPasskey()?' <button type="button" class="bc-mini" data-bc="touch">Einrichten</button>':' <span class="bc-dim">(nur in der installierten App bzw. im Browser möglich)</span>')}</div><div>✓ Notfall-Passwort festgelegt <button type="button" class="bc-mini" data-bc="pw">Ändern</button></div>`:'';
+  /* Excel sperren, solange verschlüsselt wird */
+  const x=dlg?.querySelector('input[name=classroomBackupFormat][value=xlsx]');if(x){x.disabled=on;const lab=x.closest('label');lab?.classList.toggle('bc-xdis',on);if(on&&x.checked){const j=dlg.querySelector('input[name=classroomBackupFormat][value=json]');if(j)j.checked=true}}
+ }
+ const st=document.createElement('style');st.textContent='.bc-switch{display:flex;align-items:center;gap:10px;font-weight:600;cursor:pointer}.bc-switch input{width:20px;height:20px;margin:0}.bc-help{margin:6px 0 10px;font-size:.86rem;color:#5b6b82}.bc-info{display:flex;flex-direction:column;gap:6px;font-size:.9rem}.bc-info:empty{display:none}.bc-dim{color:#66758a}.bc-mini{margin-left:8px;padding:2px 12px!important;min-height:0!important;border:1px solid #dce3ef!important;border-radius:999px!important;background:#fff!important;color:#2f5f9b!important;font:inherit!important;font-size:.82rem!important;cursor:pointer}.bc-warn{margin:10px 0 0;padding:8px 12px;border-radius:10px;background:#fff7e8;color:#8a5a12;font-size:.82rem}.bk-status.bc-on{color:#2f7a3f}.bc-xdis{opacity:.45;pointer-events:none}.bc-dlg input[type=password]{display:block;width:100%;box-sizing:border-box;margin:8px 0 0;padding:10px 12px;border:1px solid #cbd6e5;border-radius:10px;font:inherit}.bc-err{min-height:1.2em;margin:6px 0 0;color:#a33127;font-size:.85rem}.bc-center{text-align:center}.bc-lock{font-size:40px}.bc-title{font-weight:700;font-size:1.05rem;margin:6px 0}.bc-sub{color:#5b6b82;margin:0 0 16px;font-size:.92rem}.bc-wide{display:block;width:100%;height:44px;border-radius:12px;font:inherit;font-weight:600;cursor:pointer}.bc-wide.primary{border:0;background:#2f5f9b;color:#fff}.bc-alt{margin-top:10px;border:1px solid #dce3ef;background:#fff;color:#2f5f9b}.bc-link{margin-top:8px;border:0;background:none;color:#66758a;font:inherit;font-size:.88rem;cursor:pointer}';document.head.append(st);
+ window.classroomBackupCryptoDebug={load,save,setup,unlock,pwKey,aes,open,seal,b64,unb64};
+})();
+;
+
 /* ==== timetable.js ==== */
 /* Stundenplan: Zeiten einmal eintragen – die Klassen erkennt die App selbst aus den Eingaben (Bewertungen, Hausaufgaben,
    Abwesenheiten zum heutigen Datum, auch in der Pause direkt nach der Stunde). Ab zwei Wochen mit derselben Klasse in derselben
@@ -1599,6 +1721,7 @@ window.addEventListener('message',event=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
   {id:'neu',title:'Neu',cards:true,news:true,items:[
+   ['Verschlüsselte Backups','Im Backup-Fenster unter „Verschlüsselung“ einschalten: Notfall-Passwort festlegen, dann Touch ID / Face ID einrichten (in Chrome „iCloud-Schlüsselbund“ wählen). Jedes Backup wird verschlüsselt gespeichert; beim Wiederherstellen fragt die App nach Touch ID, wenn das nicht klappt nach dem Notfall-Passwort. Das andere Gerät übernimmt die Verschlüsselung beim ersten Öffnen. Excel-Dateien werden nicht verschlüsselt.','Backup → Verschlüsselung','8.90'],
    ['Übergang zum 2. Quartal','Fehlen nach Beginn des 2. Quartals noch Q1-Quartalsnoten, zeigt das iPhone bis zu vier Wochen lang weiter das 1. Quartal – mit dem Hinweis „Q1-Noten noch offen · 7 von 25 eingetragen“. Sind alle eingetragen, wechselt es von selbst; „Zu Q2“ wechselt sofort.','iPhone → Noten','8.86'],
    ['Quartalsgespräch im Detailblatt','Ein Tipp auf eine Karte zeigt nur das aktuelle Quartal mit dem Vorschlag für die Quartalsnote. Sind Selbsteinschätzung und Quartalsnote eingetragen, erscheint „Für das Halbjahr“: Klassenarbeiten und – ab dem 2. Quartal – links der Vorschlag der App, rechts dein Feld für die Halbjahresnote (dasselbe wie am Mac).','Noten → Karte antippen','8.83'],
    ['Noten neben dem Sitzplan','Am Mac und iPad wählen die beiden Knöpfe ganz links über dem Sitzplan, was die linke Spalte zeigt: ☰ Einstellungen oder ☑ Noten der Klasse (wie auf dem iPhone); nochmal tippen klappt die Spalte zu – Halbjahr oder Quartal, kleine Karten, alle Schalter. Tippst du einen Schüler im Plan an, springt die Liste zu seiner Karte. In der Klassenansicht bleibt sie verborgen.','Unterricht → Noten','8.81'],
@@ -1607,8 +1730,7 @@ window.addEventListener('message',event=>{
    ['Detailblatt immer ganz offen','Auf dem iPhone fährt das Blatt einer Person immer bis unter die Kopfleiste aus – Name und Pfeile stehen bei jeder Person an derselben Stelle, längerer Inhalt scrollt im Blatt.','iPhone → Noten → Karte antippen','8.73'],
    ['Noten antippen statt tippen','Selbsteinschätzung und Quartalsnote wählst du auf dem iPhone aus farbigen Knöpfen: 1+ bis 6 mit Zwischennoten (1–2 … 5–6), bei Notenpunkten 15 bis 0 zeilenweise je Note. „Löschen“ leert das Feld.','iPhone → Noten → Detailblatt','8.72'],
    ['Schalter von schlicht nach ausführlich','Alle Darstellungs-Schalter haben dieselbe Reihenfolge: 2 | 2− | 2,3 (bei Notenpunkten 11 | 10,6) und Aus | Rahmen | Schraffiert.','Noten (iPhone, iPad, Mac)','8.70'],
-   ['Karten verkleinern','Der runde Knopf neben „1. Quartal“ macht alle Karten klein: Name, Noten und eine Zeile wie „Mitarbeit 2 · HA ✕1 · KA —“. Antippen klappt eine Karte auf, Tipp auf den Namen klappt sie wieder zu.','iPhone → Noten','8.69'],
-   ['Neues Noten-Symbol','Der Bereich „Noten“ hat jetzt das Häkchen aus dem App-Icon.','iPhone → untere Leiste','8.68']
+   ['Karten verkleinern','Der runde Knopf neben „1. Quartal“ macht alle Karten klein: Name, Noten und eine Zeile wie „Mitarbeit 2 · HA ✕1 · KA —“. Antippen klappt eine Karte auf, Tipp auf den Namen klappt sie wieder zu.','iPhone → Noten','8.69']
   ]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
