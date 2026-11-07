@@ -6,6 +6,18 @@
  const ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&tp>1)||(/Mac/i.test(navigator.platform||'')&&tp>1);
  window.classroomDevice={ios,mobile:ios||/Android/i.test(ua),touch:()=>tp>0||matchMedia('(pointer:coarse)').matches};
 })();
+/* 9.14: Ein gemeinsamer Beobachter je Seite statt vieler einzelner. Module melden sich mit classroomOnDomChange(fn) an;
+   nach Änderungen im Dokument laufen alle angemeldeten Funktionen gebündelt einmal vor dem nächsten Bild.
+   Schutz vor Endlosschleifen (vgl. 9.06): Ändern die Funktionen selbst über viele Bilder hinweg ständig das Dokument,
+   wird auf ruhige 2-mal pro Sekunde gedrosselt und ein Eintrag ins Fehlerprotokoll geschrieben. */
+(()=>{if(window.classroomOnDomChange)return;const fns=[];let planned=false,busy=false,streak=0,slow=false,warned=false,obs=null;
+ const note=()=>{if(warned)return;warned=true;try{const k='classroom-error-log-v1',l=JSON.parse(localStorage.getItem(k)||'[]');l.push({t:new Date().toISOString(),w:document.body?.dataset.module||'App',m:'Darstellung: Dauer-Änderungsschleife erkannt – gedrosselt',s:'device.js'});localStorage.setItem(k,JSON.stringify(l.slice(-50)))}catch{}};
+ const run=()=>{planned=false;obs?.takeRecords();busy=true;for(const f of fns){try{f()}catch(e){console.error(e)}}busy=false;
+  const changed=(obs?.takeRecords()||[]).length>0;if(changed){streak++;if(streak>40&&!slow){slow=true;note()}schedule()}else{streak=0;slow=false}};
+ const schedule=()=>{if(planned)return;planned=true;if(slow)setTimeout(()=>requestAnimationFrame(run),500);else requestAnimationFrame(run)};
+ const start=()=>{if(obs)return;obs=new MutationObserver(()=>{if(!busy)schedule()});obs.observe(document.documentElement,{childList:true,subtree:true,characterData:true})};
+ window.classroomOnDomChange=fn=>{fns.push(fn);start();schedule()};
+})();
 ;
 
 /* ==== ui-dialogs.js ==== */
@@ -2759,7 +2771,7 @@ document.addEventListener('keydown',event=>{
   const on=!!edit()?.checked;if(b.hidden===on)b.hidden=!on;
   if(!on&&document.getElementById('layoutView')&&!document.getElementById('layoutView').hidden&&typeof zeigeSitzplan==='function')zeigeSitzplan()}
  document.addEventListener('change',e=>{if(e.target?.id==='classroomEditRoom')setTimeout(place,0)});
- new MutationObserver(()=>place()).observe(document.querySelector('.container')||document.body,{childList:true,subtree:true});place();setTimeout(place,500);
+ classroomOnDomChange(place);place();setTimeout(place,500);
  const st=document.createElement('style');st.textContent='.room-header>.room-head-actions{display:flex;align-items:center;gap:12px;margin-left:auto}.room-head-actions>.room-head-layout:not(#_){width:auto!important;height:40px;min-height:40px;padding:0 16px;margin:0!important;border-radius:10px;font-size:14.4px;white-space:nowrap}.room-head-actions>.room-head-layout[hidden]{display:none!important}html.ph-lite .room-head-layout{display:none!important}';document.head.append(st);
 })();
 ;
@@ -3245,7 +3257,7 @@ document.addEventListener('keydown',event=>{
  // Esc oder ein Klick/Tipp irgendwo außerhalb beendet die Suche: Hervorhebung weg, Name aus dem Suchfeld entfernt.
  document.addEventListener('pointerdown',e=>{if(open&&!wrap.contains(e.target))setOpen(false)},true);
  document.addEventListener('keydown',e=>{if(open&&e.key==='Escape'&&!wrap.contains(e.target)){e.preventDefault();setOpen(false)}},true);
- place();new MutationObserver(place).observe(document.body,{childList:true,subtree:true});
+ place();classroomOnDomChange(place);
  const style=document.createElement('style');style.textContent=
  '.student-finder{position:relative;display:inline-flex!important;align-items:stretch;flex:0 0 auto!important;width:auto!important;min-width:0;max-width:100%;border-radius:10px;box-sizing:border-box}'
  +'body[data-module=sitzplan] .student-finder>#studentSearchToggle{min-height:38px;padding:7px 12px;font:inherit;font-size:1rem;font-weight:500;line-height:1.4;box-sizing:border-box}.student-finder>#studentSearchToggle{margin:0;flex:0 0 auto!important;width:auto!important;max-width:none!important;white-space:nowrap!important}'
@@ -3314,7 +3326,7 @@ document.addEventListener('keydown',event=>{
   +'@media (prefers-reduced-motion:reduce){body[data-module=sitzplan] .container,body[data-module=sitzplan] .container>.panel{transition:none}}';
  document.head.append(style);
  place();apply(false);
- new MutationObserver(place).observe(document.body,{childList:true,subtree:true});
+ classroomOnDomChange(place);
 })();
 
 /* 8.89: Linke Spalte – zwei verbundene Symbol-Knöpfe ganz links: ☰ Einstellungen | ☑ Noten (ersetzt ☰ und „Noten“).
@@ -3403,7 +3415,7 @@ document.addEventListener('keydown',event=>{
   +'.classroom-beamer body[data-module=sitzplan] .container{grid-template-columns:minmax(0,1fr)!important}'
   +'.classroom-beamer #roomGrid .cell{cursor:default!important}.classroom-beamer .classroom-absent{opacity:1!important;filter:none!important;text-decoration:none!important}';
  document.head.append(style);
- place();apply();new MutationObserver(place).observe(document.body,{childList:true,subtree:true});
+ place();apply();classroomOnDomChange(place);
 })();
 ;
 
@@ -3714,7 +3726,7 @@ document.addEventListener('keydown',event=>{
    const g=document.getElementById('gridInstructions');if(g&&/Rechtsklick/.test(g.textContent))g.textContent='Tippen oder ziehen: Tische setzen oder entfernen. Lange drücken: Pult setzen oder entfernen.';
    document.querySelectorAll('.info-text').forEach(el=>{if(/Rechtsklick für das Pult/.test(el.textContent))el.textContent=el.textContent.replace('Rechtsklick für das Pult','lange drücken für das Pult').replace('kurzer Klick','kurzes Tippen')});
   };
-  fix();new MutationObserver(fix).observe(document.body,{subtree:true,childList:true,characterData:true});
+  fix();classroomOnDomChange(fix);
  }
 })();
 ;

@@ -6,6 +6,18 @@
  const ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&tp>1)||(/Mac/i.test(navigator.platform||'')&&tp>1);
  window.classroomDevice={ios,mobile:ios||/Android/i.test(ua),touch:()=>tp>0||matchMedia('(pointer:coarse)').matches};
 })();
+/* 9.14: Ein gemeinsamer Beobachter je Seite statt vieler einzelner. Module melden sich mit classroomOnDomChange(fn) an;
+   nach Änderungen im Dokument laufen alle angemeldeten Funktionen gebündelt einmal vor dem nächsten Bild.
+   Schutz vor Endlosschleifen (vgl. 9.06): Ändern die Funktionen selbst über viele Bilder hinweg ständig das Dokument,
+   wird auf ruhige 2-mal pro Sekunde gedrosselt und ein Eintrag ins Fehlerprotokoll geschrieben. */
+(()=>{if(window.classroomOnDomChange)return;const fns=[];let planned=false,busy=false,streak=0,slow=false,warned=false,obs=null;
+ const note=()=>{if(warned)return;warned=true;try{const k='classroom-error-log-v1',l=JSON.parse(localStorage.getItem(k)||'[]');l.push({t:new Date().toISOString(),w:document.body?.dataset.module||'App',m:'Darstellung: Dauer-Änderungsschleife erkannt – gedrosselt',s:'device.js'});localStorage.setItem(k,JSON.stringify(l.slice(-50)))}catch{}};
+ const run=()=>{planned=false;obs?.takeRecords();busy=true;for(const f of fns){try{f()}catch(e){console.error(e)}}busy=false;
+  const changed=(obs?.takeRecords()||[]).length>0;if(changed){streak++;if(streak>40&&!slow){slow=true;note()}schedule()}else{streak=0;slow=false}};
+ const schedule=()=>{if(planned)return;planned=true;if(slow)setTimeout(()=>requestAnimationFrame(run),500);else requestAnimationFrame(run)};
+ const start=()=>{if(obs)return;obs=new MutationObserver(()=>{if(!busy)schedule()});obs.observe(document.documentElement,{childList:true,subtree:true,characterData:true})};
+ window.classroomOnDomChange=fn=>{fns.push(fn);start();schedule()};
+})();
 ;
 
 /* ==== ui-dialogs.js ==== */
@@ -2360,7 +2372,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
  }
  document.addEventListener('click',e=>{for(const m of document.querySelectorAll('.nav-add-menu')){if(!m.__btn?.isConnected){m.remove();continue}if(!m.hidden&&!m.contains(e.target)&&!m.__btn.contains(e.target)){m.hidden=true;m.__btn.setAttribute('aria-expanded','false')}}});
  let q=false;const sched=()=>{if(q)return;q=true;requestAnimationFrame(()=>{q=false;upgrade()})};
- const start=()=>{new MutationObserver(sched).observe(document.body,{childList:true,subtree:true});sched()};
+ const start=()=>{classroomOnDomChange(sched);sched()};
  if(document.body)start();else document.addEventListener('DOMContentLoaded',start,{once:true});
  const st=document.createElement('style');st.textContent='.compact-navigation-row .nav-add-bundled{display:none!important}.nav-add-wrap{position:relative;display:inline-flex}.nav-add-menu{position:fixed;z-index:9500;min-width:210px;padding:6px;border:1px solid #d6dfec;border-radius:12px;background:#fff;box-shadow:0 10px 26px #233d6026;display:flex;flex-direction:column;gap:2px}.nav-add-menu[hidden]{display:none}.nav-add-menu>button{text-align:left;padding:9px 12px;border:0;border-radius:8px;background:transparent;color:#243247;font:inherit;font-size:14.4px;cursor:pointer;white-space:nowrap}.nav-add-menu>button:hover,.nav-add-menu>button:focus-visible{background:#eef3fa}';document.head.append(st);
 })();

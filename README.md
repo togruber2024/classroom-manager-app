@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 07.11.2026 · Version 9.13
+Stand: 07.11.2026 · Version 9.14
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1190,3 +1190,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.11: Aufräumen (Paket 2a, ohne sichtbare Änderung) – 100 überflüssige „!important“/„:not(#_)“ in den iPhone-Kartendateien entfernt, geprüft per Stilvergleich (iPhone, iPad, Mac)
 9.12: Zufallsgruppen nicht mehr von der Noten-Spalte verdeckt; iPhone quer ohne ‹ ◉ ›; linke Spalte: Datum → Raum → gespeicherte Sitzpläne
 9.13: Mündliche Mitarbeit – Vierfachschalter „+ | 2 | 2− | 2,3“ statt „Zeichen | Noten“ (Notenpunkte: „+ | 11 | 10,6“)
+9.14: Aufräumen (Paket 3, ohne sichtbare Änderung) – gemeinsamer gedrosselter Beobachter je Seite (classroomOnDomChange) statt neun einzelner, mit Schutz vor Dauer-Änderungsschleifen

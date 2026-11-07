@@ -6,6 +6,18 @@
  const ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&tp>1)||(/Mac/i.test(navigator.platform||'')&&tp>1);
  window.classroomDevice={ios,mobile:ios||/Android/i.test(ua),touch:()=>tp>0||matchMedia('(pointer:coarse)').matches};
 })();
+/* 9.14: Ein gemeinsamer Beobachter je Seite statt vieler einzelner. Module melden sich mit classroomOnDomChange(fn) an;
+   nach Änderungen im Dokument laufen alle angemeldeten Funktionen gebündelt einmal vor dem nächsten Bild.
+   Schutz vor Endlosschleifen (vgl. 9.06): Ändern die Funktionen selbst über viele Bilder hinweg ständig das Dokument,
+   wird auf ruhige 2-mal pro Sekunde gedrosselt und ein Eintrag ins Fehlerprotokoll geschrieben. */
+(()=>{if(window.classroomOnDomChange)return;const fns=[];let planned=false,busy=false,streak=0,slow=false,warned=false,obs=null;
+ const note=()=>{if(warned)return;warned=true;try{const k='classroom-error-log-v1',l=JSON.parse(localStorage.getItem(k)||'[]');l.push({t:new Date().toISOString(),w:document.body?.dataset.module||'App',m:'Darstellung: Dauer-Änderungsschleife erkannt – gedrosselt',s:'device.js'});localStorage.setItem(k,JSON.stringify(l.slice(-50)))}catch{}};
+ const run=()=>{planned=false;obs?.takeRecords();busy=true;for(const f of fns){try{f()}catch(e){console.error(e)}}busy=false;
+  const changed=(obs?.takeRecords()||[]).length>0;if(changed){streak++;if(streak>40&&!slow){slow=true;note()}schedule()}else{streak=0;slow=false}};
+ const schedule=()=>{if(planned)return;planned=true;if(slow)setTimeout(()=>requestAnimationFrame(run),500);else requestAnimationFrame(run)};
+ const start=()=>{if(obs)return;obs=new MutationObserver(()=>{if(!busy)schedule()});obs.observe(document.documentElement,{childList:true,subtree:true,characterData:true})};
+ window.classroomOnDomChange=fn=>{fns.push(fn);start();schedule()};
+})();
 ;
 
 /* ==== ui-dialogs.js ==== */
@@ -4131,7 +4143,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   }
  }
  let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;upgrade()})};
- new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});document.addEventListener('change',schedule,true);upgrade();
+ classroomOnDomChange(upgrade);document.addEventListener('change',schedule,true);upgrade();
  const st=document.createElement('style');st.textContent='label.seg-hidden{display:none!important}body[data-module=noten] .seg-toggle{margin:0 auto}body[data-module=noten] .task-actions .seg-toggle,body[data-module=noten] .section-title .seg-toggle{margin:0;align-self:center}';document.head.append(st);
 })();
 ;
@@ -4160,7 +4172,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   }
  }
  let queued=false;const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;upgrade()})};
- new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});upgrade();
+ classroomOnDomChange(upgrade);upgrade();
  const st=document.createElement('style');st.textContent='body[data-module=noten] .section-title .part-seg{margin:0;align-self:center}body[data-module=noten] .part-seg>button{min-width:40px}';document.head.append(st);
 })();
 ;
@@ -4918,7 +4930,7 @@ return}
   if(c.classList.contains('qs-folded')){e.preventDefault();e.stopImmediatePropagation();open.add(nameOf(c));apply()}
   else if(e.target.closest('.qs-top')){e.preventDefault();e.stopImmediatePropagation();open.delete(nameOf(c));apply()}},true);
  document.addEventListener('classroom-cards-mean-lock',()=>apply());
- new MutationObserver(()=>{if((on||quick())&&cards().some(c=>!c.classList.contains('qs-folded')&&!c.classList.contains('qs-unfolded')))apply()}).observe(document.documentElement,{childList:true,subtree:true});
+ classroomOnDomChange(()=>{if((on||quick())&&cards().some(c=>!c.classList.contains('qs-folded')&&!c.classList.contains('qs-unfolded')))apply()});/* 9.14: gemeinsamer Beobachter */
  const st=document.createElement('style');st.textContent='.pl-fold{flex:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:38px;height:38px;min-height:38px;padding:0;margin-left:8px;border:1px solid #cbd6e5;border-radius:50%;background:#fff;color:#2f5f9b;cursor:pointer}.pl-fold svg{width:20px;height:20px}.pl-fold[aria-pressed=true]{background:#e8f0fb;border-color:#9dbbe3}'
   +'.qs-card.qs-folded .qs-bars,.qs-card.qs-folded .qs-ft,.qs-card.qs-folded>.qs-edits{display:none}.qs-card>.qs-sum{display:none}.qs-card.qs-folded>.qs-sum{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:14px;color:#5b6b82}.qs-sum-t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.qs-sum-c{font-size:20px;line-height:1;color:#8fa0b8}';
  document.head.append(st);
