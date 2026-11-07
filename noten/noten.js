@@ -4190,7 +4190,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function context(){
   const panel=[...document.querySelectorAll('.exam-combined-page')].find(p=>p.offsetParent);if(!panel)return null;
   // ältere Klassenarbeiten haben noch keinen Typ gespeichert – jede Gruppe mit dieser Seite zählt, außer den bekannten anderen Arten
-  const other=new Set(['tests','semester','halfYear','performance','homework','quarterSummary']);
+  const other=new Set(['tests','semester','halfYear','performance','homework','quarterSummary','schoolYear']);
   const group=subjectExamGroups(currentSubject).find(g=>g.pages?.includes(activePage)&&!other.has(g.type))||{pages:[...panel.querySelectorAll('[data-custom-panel]')].map(e=>e.dataset.customPanel).concat(activePage)};
   const key=group.pages.find(k=>taskPageData(currentSubject,k)?.tasks?.some(t=>t.basisPage))||group.pages.at(-1),data=taskPageData(currentSubject,key);
   const system=taskGradeSystem(currentSubject,key),table=[...panel.querySelectorAll('table.task-table')].find(t=>t.offsetParent)||panel.querySelector('table.task-table');
@@ -4209,7 +4209,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const topic=panel.querySelector('.test-detail-topic input,[data-exam-topic],input[placeholder*="Thema"]')?.value||data.examTopic||'';
   const dateInput=[...panel.querySelectorAll('input[type=date]')].find(i=>i.offsetParent&&i.value)?.value||'';
   const heading=panel.querySelector('h1,h2,.exam-title,.task-page-title')?.textContent?.trim()||'';
-  return {dateInput,heading,group,data,system,rows,maxP,hasP:pTasks.length>0,hasF:fTasks.length>0,cls,topic};
+  return {key,dateInput,heading,group,data,system,rows,maxP,hasP:pTasks.length>0,hasF:fTasks.length>0,cls,topic};
  }
  function open(){
   const c=context();if(!c){alert('Für diese Seite lässt sich keine Ergebnisse anzeigen.');return}
@@ -4235,7 +4235,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  }
  function close(){TOP.querySelector('.cm-ro')?.remove()}
  const key=e=>{if(e.key==='Escape'&&TOP.querySelector('.cm-ro')){e.preventDefault();close()}};document.addEventListener('keydown',key);try{if(TOP!==document)TOP.addEventListener('keydown',key)}catch{}
- window.classroomResultOverview=open;
+ window.classroomResultOverview=open;window.classroomExamContext=context;
  // Knopf in der Werkzeugleiste der Klassenarbeit (vor „Notenspiegel“)
  function place(){for(const panel of document.querySelectorAll('.exam-combined-page')){if(panel.querySelector('.cm-ro-open'))continue;const ns=panel.querySelector('.notenspiegel-button');if(!ns)continue;
   const b=document.createElement('button');b.type='button';b.className='cm-ro-open student-add-button is-plain';b.textContent='Ergebnisse';b.title='Alle Ergebnisse bildschirmfüllend anzeigen (nur Ansicht)';b.onclick=open;ns.before(b)}}
@@ -4260,6 +4260,113 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .cm-ro.cm-ro-dense td{height:34px;font-size:14px}.cm-ro.cm-ro-dense .cm-ro-chip{height:24px}
  @media (max-width:700px){.cm-ro{padding:6px}.cm-ro-box{padding:14px}.cm-ro .n{width:56px}.cm-ro .b{display:none}}
  @media print{.cm-ro{display:none!important}}`;TOP.head.append(st)}
+})();
+;
+
+/* ==== noten/exam-print.js ==== */
+/* 9.20: „Drucken“ auf der Seite einer Klassenarbeit/Klausur druckt eine DIN-A4-Seite.
+   Ohne Teilnoten (eine Aufgabe) → Variante C: Notenspiegel, Notengrenzen (von … bis), Ergebnisse in drei Spalten, Bemerkungen, Unterschriften.
+   Mit Teilnoten (mehrere Aufgaben) → Variante A: Kennzahlen, Notenspiegel, Teilnoten-Übersicht, Ergebnisse mit T1, T2 … und Endnote
+   (bis drei Teilnoten zweispaltig, ab vier einspaltig). Endnoten immer gerundet (Noten bzw. ganze Notenpunkte). Es wird nichts verändert. */
+(()=>{
+ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const num=v=>{const n=Number(String(v??'').replace(',','.'));return Number.isFinite(n)&&String(v??'').trim()!==''?n:null};
+ const fmt=(v,d=1)=>Number(v).toLocaleString('de-DE',{maximumFractionDigits:d,minimumFractionDigits:0});
+ const fmt2=v=>Number(v).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const today=()=>new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+ // Notengrenzen „von … bis“ für eine einzelne Aufgabe mit Berechnungsseite (Punkte oder Fehler)
+ function ranges(task,pts){
+  if(!task?.basisPage)return null;const basis=taskBasisConfig(currentSubject,task.basisPage),step=basis.allowHalf?.5:1,max=Number(task.maximum)||basis.total,list=[];
+  for(let i=0;i<=Math.round(max/step);i++){const v=i*step,raw=taskRawValue(currentSubject,task,v);if(raw===null)continue;const g=pts?Math.max(0,Math.min(15,Math.round(raw))):roundSchoolGrade(raw);
+   const last=list.at(-1);if(last&&last.g===g)last.to=v;else list.push({g,from:v,to:v})}
+  return {list:list.sort((a,b)=>pts?b.g-a.g:a.g-b.g),error:basis.base==='text',basis,max};
+ }
+ function chip(value,system,text){return `<span class="task-end-grade ep-chip ${esc(taskGradeClass(value,system))}">${esc(text??value)}</span>`}
+ function partText(value,system){if(system==='gradePoints')return String(Math.round(value));const o=taskGradeOptions(true).reduce((b,x)=>Math.abs(x.value-value)<Math.abs(b.value-value)?x:b);return o.label}
+
+ function build(){
+  const c=window.classroomExamContext?.();if(!c)return null;
+  const pts=c.system==='gradePoints',data=c.data,tasks=data.tasks||[],multi=tasks.length>1;
+  const rows=c.rows.map((r,i)=>({...r,s:(data.students||[]).filter(s=>String(s.name||'').trim())[i],end:r.r===null?null:(pts?Math.max(0,Math.min(15,Math.floor(r.r+.5+1e-9))):roundSchoolGrade(r.r))}));
+  const done=rows.filter(r=>r.end!==null),n=done.length,mean=n?done.reduce((a,r)=>a+r.r,0)/n:null;
+  const withP=rows.filter(r=>r.p!==null),meanP=withP.length?withP.reduce((a,r)=>a+r.p,0)/withP.length:null;
+  const withF=rows.filter(r=>r.f!==null),meanF=withF.length?withF.reduce((a,r)=>a+r.f,0)/withF.length:null;
+  const weak=done.filter(r=>pts?r.end<5:r.end>=5).length;
+  const subj=subjects[currentSubject]?.label||'',title=[c.group.label||c.heading||'Klassenarbeit',subj,c.cls].filter(Boolean).join(' · ');
+  const iso=c.group.examDate||c.dateInput||'',date=/^\d{4}-\d\d-\d\d$/.test(iso)?iso.split('-').reverse().join('.'):'';
+  const rg=!multi?ranges(tasks[0],pts):null;
+  const right=[date&&'Datum: '+date,c.hasP&&c.maxP?'Höchstpunktzahl: '+fmt(c.maxP)+' Punkte':'',rg&&!pts?(rg.error?'ausreichend bis '+fmt(rg.basis.pass*100)+' % Fehler':'ausreichend ab '+fmt(rg.basis.pass*100)+' %'):'',multi?tasks.length+' Teilnoten · Endnote gewichtet':''].filter(Boolean).join('<br>');
+  const head=`<div class="ep-hd"><div><h1>${esc(title)}</h1>${c.topic?`<div class="ep-sub">${esc(c.topic)}</div>`:''}</div><div class="ep-r">${right}</div></div>`;
+  const kpi=`<div class="ep-kpi">${mean!==null?`<span>Ø ${pts?'Notenpunkte':'Note'} <b>${pts?fmt(mean,1):fmt2(mean)}</b></span>`:''}${meanP!==null?`<span>Ø Punkte <b>${fmt(meanP,1)}</b>${c.maxP?' / '+fmt(c.maxP):''}</span>`:meanF!==null?`<span>Ø Fehler <b>${fmt(meanF,1)}</b></span>`:''}<span>Teilnehmende <b>${n}</b></span>${n?`<span>${pts?'unter 5 Punkten':'Note 5/6'} <b>${weak}</b> (${Math.round(weak/n*100)} %)</span>`:''}</div>`;
+  // Notenspiegel
+  const cats=pts?Array.from({length:16},(_,i)=>15-i):[1,2,3,4,5,6],count=new Map(cats.map(g=>[g,0]));for(const r of done)count.set(r.end,count.get(r.end)+1);
+  const mx=Math.max(1,...count.values()),H=pts?54:(multi?46:70);
+  const spiegel=`<div class="ep-ns ${pts?'p':''}">${cats.map(g=>`<div><div class="ep-bar" style="height:${H}px">${count.get(g)?`<i class="task-end-grade ${esc(taskGradeClass(g,pts?'gradePoints':'grades'))}" style="height:${Math.max(3,count.get(g)/mx*(H-4))}px"></i>`:''}</div><b>${count.get(g)||(pts?'·':'0')}</b>${pts?g:'Note '+g}</div>`).join('')}</div>`;
+  const foot=`<div class="ep-foot"><span>Classroom-Manager · gedruckt am ${today()}</span></div>`;
+  let body='';
+  if(!multi){
+   // Variante C
+   const unit=rg?.error?'Fehler':'Punkte';
+   const limits=rg?`<div class="ep-box"><h2>Notengrenzen</h2>${(()=>{const L=rg.list,half=pts?Math.ceil(L.length/2):L.length,t=part=>`<table class="ep-lim"><thead><tr><th>${pts?'NP':'Note'}</th><th class="n">${unit} von</th><th class="n">bis</th><th class="n">Anzahl</th></tr></thead><tbody>${part.map(x=>`<tr><td>${chip(x.g,pts?'gradePoints':'grades')}</td><td class="n">${fmt(Math.min(x.from,x.to))}</td><td class="n">${fmt(Math.max(x.from,x.to))}</td><td class="n">${count.get(x.g)||0}</td></tr>`).join('')}</tbody></table>`;return pts?`<div class="ep-two">${t(L.slice(0,half))}${t(L.slice(half))}</div>`:t(L)})()}</div>`:'';
+   const showRaw=c.hasP||c.hasF,rawOf=r=>c.hasP?r.p:r.f;
+   const res=part=>`<table class="ep-res"><thead><tr><th>Name</th>${showRaw?`<th class="n" style="width:50px">${c.hasP?'Punkte':'Fehler'}</th>`:''}<th class="c" style="width:44px">Note</th></tr></thead><tbody>${part.map(r=>`<tr><td class="nm">${esc(r.name)}</td>${showRaw?`<td class="n">${rawOf(r)===null?'—':fmt(rawOf(r))}</td>`:''}<td class="c">${r.end===null?'—':chip(r.end,pts?'gradePoints':'grades')}</td></tr>`).join('')}</tbody></table>`;
+   const k=Math.ceil(rows.length/3)||1;
+   body=`${head}<div class="ep-cols" style="grid-template-columns:${limits?'1.25fr 1fr':'1fr'}"><div class="ep-box"><h2>Notenspiegel</h2>${spiegel}${kpi.replace('ep-kpi','ep-kpi in')}</div>${limits}</div>
+    <h2>Ergebnisse</h2><div class="ep-cols three">${[0,1,2].map(i=>rows.slice(i*k,(i+1)*k)).filter((p,i)=>p.length||!i).map(res).join('')}</div>
+    <div class="ep-box ep-note"><h2>Bemerkungen</h2></div><div class="ep-sig"><div>Lehrkraft</div><div>Fachleitung</div><div>Schulleitung</div></div>`;
+  }else{
+   // Variante A
+   const weights=tasks.map(t=>Number(t.weight)),wsum=weights.reduce((a,v)=>a+(Number.isFinite(v)?v:0),0);
+   const raw=t=>!!t.basisPage,kind=t=>{const b=t.basisPage&&taskBasisConfig(currentSubject,t.basisPage);return b?.base==='text'?'Fehler':'Punkte'};
+   const cell=(s,t)=>{if(raw(t)){const v=num(s?.rawScores?.[t.id]);return v===null?'—':fmt(v)}const v=num(s?.grades?.[t.id]);return v===null?'—':chip(v,pts?'gradePoints':'grades',partText(v,pts?'gradePoints':'grades'))};
+   const avg=t=>{const vals=done.map(r=>num(raw(t)?r.s?.rawScores?.[t.id]:r.s?.grades?.[t.id])).filter(v=>v!==null);return vals.length?fmt(vals.reduce((a,v)=>a+v,0)/vals.length,1):'—'};
+   const tt=`<table class="ep-tt"><thead><tr><th></th><th>Teilnote</th><th class="n">${tasks.some(raw)?'max.':''}</th><th class="n">Gewicht</th><th class="n">Ø</th></tr></thead><tbody>${tasks.map((t,i)=>`<tr><td><b>T${i+1}</b></td><td class="nm">${esc(t.name||'Aufgabe '+(i+1))}</td><td class="n">${raw(t)&&num(t.maximum)!==null?fmt(t.maximum)+' '+(kind(t)==='Fehler'?'W.':'P.'):''}</td><td class="n">${wsum>0&&Number.isFinite(weights[i])?fmt(weights[i]/wsum*100,0)+' %':''}</td><td class="n">${avg(t)}</td></tr>`).join('')}<tr class="sum"><td></td><td>Endnote</td><td></td><td class="n">100 %</td><td class="n">${mean===null?'—':pts?fmt(mean,1):fmt2(mean)}</td></tr></tbody></table>`;
+   const one=tasks.length>3,per=one?rows.length:Math.ceil(rows.length/2)||1;
+   const res=part=>`<table class="ep-res"><thead><tr><th>Name</th>${tasks.map((t,i)=>`<th class="c" style="width:${one?46:38}px">T${i+1}</th>`).join('')}<th class="c ep-end" style="width:46px">Note</th></tr></thead><tbody>${part.map(r=>`<tr><td class="nm">${esc(r.name)}</td>${tasks.map(t=>`<td class="c">${cell(r.s,t)}</td>`).join('')}<td class="c ep-end">${r.end===null?'—':chip(r.end,pts?'gradePoints':'grades')}</td></tr>`).join('')}</tbody></table>`;
+   body=`${head}${kpi}<div class="ep-cols" style="grid-template-columns:1.25fr 1fr"><div class="ep-box"><h2>Notenspiegel${pts?' (Endnote, Notenpunkte)':' (Endnote)'}</h2>${spiegel}</div><div class="ep-box"><h2>Teilnoten</h2>${tt}</div></div>
+    <h2>Ergebnisse</h2><div class="ep-cols ${one?'':'two'}">${(one?[rows]:[rows.slice(0,per),rows.slice(per)]).filter((p,i)=>p.length||!i).map(res).join('')}</div>`;
+  }
+  return {title,html:`<div class="ep ${rows.length>32?'ep-small':''}">${body}${foot}</div>`};
+ }
+
+ const CSS=`@page{size:A4 portrait;margin:12mm}
+ *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ html,body{margin:0;background:#fff!important;color:#1f2a3d;font-family:Inter,-apple-system,"Helvetica Neue",Arial,sans-serif}
+ .ep{position:relative;min-height:270mm;font-size:11.5px}
+ .ep h1{font-size:20px;margin:0 0 2px;line-height:1.2}.ep h2{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:#6b7a90;margin:0 0 6px;font-weight:650}
+ .ep-sub{color:#5b6b82;font-size:12px}.ep-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #2f5f9b;padding-bottom:9px;margin-bottom:12px}
+ .ep-r{text-align:right;font-size:11px;color:#5b6b82;line-height:1.5;white-space:nowrap}
+ .ep-kpi{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 12px}.ep-kpi span{border:1px solid #dfe6ef;border-radius:8px;padding:4px 9px;font-size:11px;background:#f6f8fb}.ep-kpi b{font-size:12.5px}.ep-kpi.in{margin:10px 0 0}
+ .ep-cols{display:grid;gap:14px;align-items:start;margin-bottom:12px}.ep-cols.two{grid-template-columns:1fr 1fr}.ep-cols.three{grid-template-columns:1fr 1fr 1fr;gap:12px}
+ .ep-box{border:1px solid #e3e9f1;border-radius:10px;padding:9px 11px}.ep-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ .ep table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:11px}.ep th{font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:#7a889c;text-align:left;font-weight:600;padding:3px 5px;border-bottom:1px solid #d5deea;background:none}
+ .ep td{padding:0 5px;height:21px;border-bottom:1px solid #eef2f7;background:none}.ep .n{text-align:right;font-variant-numeric:tabular-nums}.ep .c{text-align:center}
+ .ep td.nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ep .ep-end{border-left:1px solid #e3e9f1}
+ .ep .ep-tt td:first-child,.ep .ep-tt th:first-child{width:26px}.ep .ep-tt th:nth-child(3),.ep .ep-tt th:nth-child(4),.ep .ep-tt th:nth-child(5){width:50px}.ep .ep-tt tr.sum td{font-weight:700;border-bottom:0}
+ .ep .ep-lim th:first-child{width:40px}
+ .ep .ep-chip{display:inline-flex;align-items:center;justify-content:center;min-width:24px;width:auto;height:17px;padding:0 5px;border-radius:5px;font-weight:700;font-size:10.5px;line-height:1;margin:0;box-shadow:none;border:0}
+ .ep-ns{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.ep-ns.p{grid-template-columns:repeat(16,1fr);gap:3px}
+ .ep-ns>div{text-align:center;font-size:10px;color:#5b6b82}.ep-ns:not(.p)>div{border:1px solid #e3e9f1;border-radius:8px;padding:5px 2px 4px}
+ .ep-ns b{display:block;color:#1f2a3d;font-size:14px}.ep-ns.p b{font-size:10.5px}
+ .ep-bar{display:flex;align-items:flex-end;justify-content:center;margin-bottom:3px}.ep-ns.p .ep-bar{border-bottom:1px solid #d5deea}
+ .ep-bar i{display:block;width:62%;min-width:0;padding:0;border-radius:4px 4px 0 0;border:0;box-shadow:none}.ep-ns.p .ep-bar i{width:72%}
+ .ep-note{min-height:64px;margin-top:4px}.ep-sig{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:30px}.ep-sig div{border-top:1px solid #8a97a9;padding-top:4px;font-size:10px;color:#5b6b82}
+ .ep-foot{position:absolute;left:0;right:0;bottom:0;font-size:9px;color:#8a97a9}
+ .ep-small td{height:18px;font-size:10.2px}.ep-small .ep-chip{height:15px;font-size:9.5px}`;
+
+ function print(){
+  const b=build();if(!b){alert('Für diese Seite lässt sich keine Druckansicht erstellen.');return}
+  document.getElementById('examPrintFrame')?.remove();const frame=document.createElement('iframe');frame.id='examPrintFrame';frame.title='Druckansicht';frame.style.cssText='position:fixed;width:794px;height:1123px;left:-10000px;top:0;border:0';document.body.append(frame);
+  // Notenfarben (inkl. Schraffuren) aus der Noten-Seite übernehmen
+  let grade='';for(const sh of document.styleSheets){let rules;try{rules=sh.cssRules}catch{continue}for(const r of rules||[])if(r.selectorText&&/\.task-end-grade|\.g[0-9]|grade-|hatch|tendency|participation-(between|lean)/.test(r.selectorText)&&!/:hover|input|select/.test(r.selectorText))grade+=r.cssText+'\n'}
+  const doc=frame.contentDocument;doc.open();doc.write(`<!doctype html><html lang="de" class="${esc(document.documentElement.className)}"><head><meta charset="utf-8"><title>${esc(b.title)}</title><style>${grade}${CSS}</style></head><body data-module="noten">${b.html}</body></html>`);doc.close();
+  window.classroomExamPrintDoc=doc;
+  setTimeout(()=>{try{frame.contentWindow.focus();frame.contentWindow.print()}catch(e){console.error(e)}},250);
+ }
+ window.classroomExamPrint=print;window.classroomExamPrintBuild=build;
+ // „Drucken“ auf Klassenarbeitsseiten übernehmen (beide Knöpfe: Kopfzeile und Ergebnisse)
+ document.addEventListener('click',e=>{const btn=e.target.closest?.('button');if(!btn||btn.textContent.trim()!=='Drucken'||!btn.closest('.exam-combined-page'))return;e.preventDefault();e.stopImmediatePropagation();print()},true);
 })();
 ;
 
