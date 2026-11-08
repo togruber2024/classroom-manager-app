@@ -4490,7 +4490,11 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   +'.mm-add-big .seg-toggle:has(+label.task-participation-display),.mm-add-big label.task-participation-display{display:none!important}'
   +'body .mm-add-big table thead th.task-add-column:not(#_){padding:8px!important;vertical-align:middle;width:160px!important;min-width:160px!important;max-width:none!important}body .mm-add-big table td.task-add-column:not(#_){width:160px!important;min-width:160px!important}'
   +'body .mm-add-big thead th.task-add-column .task-add-button:not(#_){box-sizing:border-box;display:flex!important;align-items:center;justify-content:center;width:140px!important;min-width:140px!important;height:auto!important;min-height:var(--addh,120px);margin:0 auto;padding:0 12px!important;border:1.5px dashed #b9c6d8!important;border-radius:12px!important;background:#fff!important;color:#2f5f9b!important;font:inherit!important;font-size:15px!important;font-weight:600!important;line-height:1.2}';
- st.textContent+='.task-head-label{display:block;max-width:150px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}';
+ st.textContent+='.task-head-label{display:block;max-width:150px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+  /* 9.41: alle Aufgabenspalten gleich breit, Eingabefelder fest */
+  +'body .exam-combined-page table.task-table thead th.task-assessment-column:not(#_){width:170px;min-width:170px;max-width:170px;box-sizing:border-box}'
+  +'body .exam-combined-page table.task-table td:has(>:is(input.task-raw-score,input.task-grade-input,select)):not(#_){width:170px;max-width:170px}'
+  +'body .exam-combined-page table.task-table td>:is(input.task-raw-score,input.task-grade-input,select):not(#_):not(#__){width:110px!important;min-width:110px!important;max-width:110px!important;margin-inline:auto;display:block}';
  document.head.append(st);
  function stack(th,top,bottom){if(th.querySelector(':scope>.mh-stack'))return;const s=document.createElement('div');s.className='mh-stack';const t=document.createElement('div');t.className='mh-top';for(const n of top)if(n)t.append(n);s.append(t);if(bottom)s.append(bottom);th.append(s);th.classList.add('mh-host')}
  function layout(){
