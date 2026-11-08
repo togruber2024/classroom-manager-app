@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 08.11.2026 · Version 9.71
+Stand: 08.11.2026 · Version 9.72
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1248,3 +1248,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.69: Notenknopf der Sortierung zeigt die Richtung (6–1/1–6 bzw. 0–15/15–0)
 9.70: Sortierung auch auf den Einzelseiten (MM, Tests, Test, Klassenarbeit, Übersicht); Hausaufgaben/Material nach Anzahl fehlend
 9.71: Flackern/tote Schalter bei MM, Hausaufgaben/Material, Quartalsnoten behoben; „A“ zählt nicht als offen
+9.72: iPhone: Sortierung nach Note erst bei vollständigen Karten, Hinweis beim Antippen

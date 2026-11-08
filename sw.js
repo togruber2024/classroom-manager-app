@@ -1,4 +1,4 @@
-const CACHE='classroom-manager-v971';
+const CACHE='classroom-manager-v972';
 const ASSETS=["./","./index.html","./Start.html","./app.js","./design.css","./manifest.webmanifest","./icon.svg","./icon-192.png","./icon-512.png","./apple-touch-icon.png","./noten/index.html","./noten/noten.js","./sitzplan/index.html","./sitzplan/sitzplan.js","./vendor/pdfjs.js","./vendor/pdfjs-worker.js"];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil((async()=>{
