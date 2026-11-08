@@ -4506,6 +4506,62 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
 })();
 ;
 
+/* ==== noten/language-deduct.js ==== */
+/* 9.32: Sprachrichtigkeit (Oberstufe, Notenpunkte) – nur bei betroffenen Schüler:innen Fehler und Seiten eintragen.
+   Ab 5 Fehlern je Seite −1 Notenpunkt, ab 7 Fehlern je Seite −2 Notenpunkte (von den gerundeten Punkten, nie unter 0).
+   Der Abzug wirkt überall, wo die Endnote der Klausur verwendet wird (Ergebnisse, Druck, Notenspiegel, Halbjahresnote). */
+(()=>{
+ const LIMITS=[[7,2],[5,1]];
+ const ratio=sr=>{const e=Number(sr?.errors),p=Number(sr?.pages);return Number.isFinite(e)&&Number.isFinite(p)&&p>0&&e>=0?e/p:null};
+ const deduction=sr=>{const q=ratio(sr);if(q===null)return 0;for(const [min,d] of LIMITS)if(q>=min-1e-9)return d;return 0};
+ const fmt=v=>Number(v).toLocaleString('de-DE',{maximumFractionDigits:1});
+ window.classroomLanguageDeduction=deduction;
+ // Endnote: Abzug nach dem Runden
+ const orig=window.taskStudentResult;
+ if(typeof orig==='function')window.taskStudentResult=taskStudentResult=function(data,student,...rest){const r=orig.call(this,data,student,...rest);if(r===null||r===undefined||!student?.sr)return r;const d=deduction(student.sr);if(!d)return r;let pts=false;try{pts=classUsesGradePoints()}catch{}if(!pts)return r;return Math.max(0,Math.floor(Number(r)+0.5+1e-9)-d)};
+ const rawResult=(data,student)=>{const r=orig.call(null,data,student,false);return r===null?null:Math.max(0,Math.min(15,Math.floor(Number(r)+0.5+1e-9)))};
+ function decorate(){
+  let pts=false;try{pts=classUsesGradePoints()}catch{}
+  for(const table of document.querySelectorAll('.exam-combined-page table.task-table')){
+   const key=table.closest('[data-custom-panel]')?.dataset.customPanel;if(!key)continue;
+   const head=table.tHead?.rows[0];if(!head)continue;
+   const existing=head.querySelector('.sr-th');
+   if(!pts){if(existing){existing.remove();table.querySelectorAll('.sr-td').forEach(x=>x.remove())}continue}
+   let data;try{data=taskPageData(currentSubject,key)}catch{continue}if(!data?.tasks?.length)continue;
+   const cells=[...head.cells],end=cells.findLastIndex(c=>c.classList.contains('task-result-heading')||c.querySelector('.mean-seg:not(.seg-toggle)')||/Ergebnis/i.test(c.textContent));if(end<0)continue;
+   if(!existing){const th=document.createElement('th');th.className='sr-th';th.title='Abzug für Verstöße gegen die Sprachrichtigkeit: ab 5 Fehlern je Seite −1, ab 7 Fehlern je Seite −2 Notenpunkte';th.innerHTML='Sprachr.<small>Fehler / Seiten</small>';head.insertBefore(th,cells[end])}
+   const rows=[...table.tBodies[0]?.rows||[]];
+   rows.forEach((row,i)=>{const s=data.students[i];if(!s||row.cells.length<2)return;let td=row.querySelector(':scope>.sr-td');const endCell=row.cells[row.cells.length-1];
+    if(!td){td=document.createElement('td');td.className='sr-td';row.insertBefore(td,endCell)}
+    const d=deduction(s.sr),q=ratio(s.sr),sig=s.sr?`${s.sr.errors}|${s.sr.pages}`:'';
+    if(td.dataset.sig!==sig||!td.firstChild){td.dataset.sig=sig;td.innerHTML=q===null?`<button type="button" class="sr-add" data-sr="${i}" title="Sprachrichtigkeit eintragen" aria-label="Sprachrichtigkeit für ${htmlEscape(s.name||'')} eintragen">＋</button>`:`<button type="button" class="sr-chip${d?'':' is-zero'}" data-sr="${i}" title="Ändern oder löschen">${fmt(s.sr.errors)} F / ${fmt(s.sr.pages)} S · ${fmt(q)}${d?' → −'+d:''}</button>`}
+    // Endnote: Abzug markieren
+    const chip=endCell.querySelector('.task-end-grade');if(chip){const has=chip.querySelector('.sr-minus');if(d&&!has){const raw=rawResult(data,s);chip.insertAdjacentHTML('beforeend','<span class="sr-minus">−'+d+'</span>');chip.title=raw===null?'':'vor Abzug: '+raw+' Notenpunkte'}else if(!d&&has){has.remove();chip.removeAttribute('title')}}
+   });
+   const foot=table.tFoot?.rows[0];if(foot&&!foot.querySelector('.sr-td')){const td=document.createElement('td');td.className='sr-td';foot.insertBefore(td,foot.cells[foot.cells.length-1])}
+  }
+ }
+ function closePop(){document.querySelector('.sr-pop')?.remove()}
+ document.addEventListener('click',e=>{const b=e.target.closest?.('[data-sr]');if(!b){if(!e.target.closest?.('.sr-pop'))closePop();return}
+  e.preventDefault();e.stopPropagation();closePop();const key=b.closest('[data-custom-panel]').dataset.customPanel,data=taskPageData(currentSubject,key),s=data.students[Number(b.dataset.sr)];if(!s)return;
+  const pop=document.createElement('div');pop.className='sr-pop';pop.setAttribute('role','dialog');
+  pop.innerHTML=`<b>Sprachrichtigkeit – ${htmlEscape(s.name||'')}</b><label>Fehler <input type="text" inputmode="decimal" data-f value="${s.sr?.errors??''}"> Seiten <input type="text" inputmode="decimal" data-p value="${s.sr?.pages??''}"></label><span class="sr-out"></span><span class="sr-hint">ab 5 F/S −1 · ab 7 F/S −2 Notenpunkte</span><div class="sr-act">${s.sr?'<button type="button" data-del>Löschen</button>':''}<button type="button" class="primary" data-ok>Übernehmen</button></div>`;
+  document.body.append(pop);const r=b.getBoundingClientRect();pop.style.left=Math.max(8,Math.min(innerWidth-pop.offsetWidth-8,r.left+r.width/2-pop.offsetWidth/2))+'px';pop.style.top=(r.bottom+window.scrollY+6)+'px';
+  const f=pop.querySelector('[data-f]'),p=pop.querySelector('[data-p]'),out=pop.querySelector('.sr-out'),num=v=>{const n=Number(String(v).replace(',','.'));return String(v).trim()!==''&&Number.isFinite(n)&&n>=0?n:null};
+  const upd=()=>{const sr={errors:num(f.value),pages:num(p.value)},q=ratio(sr),d=deduction(sr);out.innerHTML=q===null?'&nbsp;':'= '+fmt(q)+' Fehler/Seite '+(d?'<em>→ −'+d+' Notenpunkt'+(d>1?'e':'')+'</em>':'→ kein Abzug')};upd();f.oninput=p.oninput=upd;
+  const done=()=>{closePop();saveCurrentSubject();try{updateTaskResultsDisplay(currentSubject,key)}catch{}decorate()};
+  pop.querySelector('[data-ok]').onclick=()=>{const e2=num(f.value),p2=num(p.value);if(e2===null||p2===null||p2===0){(e2===null?f:p).focus();return}s.sr={errors:e2,pages:p2};done()};
+  pop.querySelector('[data-del]')?.addEventListener('click',()=>{delete s.sr;done()});
+  pop.addEventListener('keydown',ev=>{if(ev.key==='Enter')pop.querySelector('[data-ok]').click();if(ev.key==='Escape')closePop()});f.focus();f.select()},true);
+ const st=document.createElement('style');st.textContent='th.sr-th{color:#9a6212!important;text-align:center}th.sr-th small{display:block;font-weight:500;text-transform:none;letter-spacing:0;font-size:.85em}td.sr-td{text-align:center;white-space:nowrap}'
+  +'.sr-add{width:34px;height:30px;border:1px dashed #b9c6d8;border-radius:8px;background:#fff;color:#8a97a9;font:inherit;font-size:13px;cursor:pointer}.sr-chip{height:30px;padding:0 10px;border:1px solid #efcf9c;border-radius:8px;background:#fff7e8;color:#8a5a12;font:inherit;font-size:13px;font-weight:650;white-space:nowrap;cursor:pointer}.sr-chip.is-zero{background:#f4f7fb;border-color:#d6dde8;color:#5b6b82}'
+  +'.sr-minus{font-size:.72em;font-weight:800;color:#c0504a;margin-left:4px;vertical-align:super}'
+  +'.sr-pop{position:absolute;z-index:200;background:#fff;border:1px solid #d6dde8;border-radius:12px;box-shadow:0 10px 26px #233d6033;padding:12px 14px;display:flex;flex-direction:column;gap:8px;font-size:13px;color:#243247;white-space:nowrap}.sr-pop label{display:flex;align-items:center;gap:8px}.sr-pop input{width:56px;height:32px;border:1px solid #d6dde8;border-radius:8px;text-align:center;font:inherit}.sr-pop em{font-style:normal;color:#8a5a12;font-weight:700}.sr-hint{color:#66758a}.sr-act{display:flex;justify-content:flex-end;gap:8px}.sr-act button{height:34px;padding:0 12px;border:1px solid #cbd6e5;border-radius:9px;background:#fff;color:#2f5f9b;font:inherit;cursor:pointer}.sr-act .primary{background:#2f5f9b;border-color:#2f5f9b;color:#fff}.sr-act [data-del]{color:#b0453c;border-color:#e6c2bd}'
+  +'@media print{.sr-add{visibility:hidden}}';document.head.append(st);
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(decorate);decorate();
+})();
+;
+
 /* ==== noten/design-extras.js ==== */
 /* Design 6.93 – Noten-Manager. Jede Rubrik ist eigenständig und lässt sich einzeln entfernen. */
 
