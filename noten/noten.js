@@ -4584,10 +4584,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const existingLabels=()=>Object.values(subjects).map(s=>s.label);
  // Fach einer Lerngruppe: Kursbeschreibung („Erdkunde Kurs 1 …“) oder Kürzel („EK1e28“)
  function subjectOf(g){if(g.kind==='course'){const d=norm(g.description);const hit=[...state.subjects].find(s=>d.startsWith(norm(s))||d.includes(norm(s)));if(hit)return hit;const code=(g.label.match(/^[A-Za-zÄÖÜ]+/)||[''])[0].toUpperCase();return ALIAS[code]||ALIAS[code.slice(0,2)]||''}return ''}
- const level=g=>{const m=String(g.kind==='course'?(g.description+' '+g.label):g.label).match(/(?:^|\D)(1[0-3]|[5-9])(?:\D|$)/);return m?+m[1]:0};
+ const yearEnd=(()=>{const d=new Date();return d.getMonth()>=7?d.getFullYear()+1:d.getFullYear()})();
+ const abi=g=>{if(g.kind!=='course')return 0;const m=g.label.match(/^[A-Za-zÄÖÜ]+\d+[efg](\d{2})$/i)||String(g.description).match(/Abiturjahrgang\s*20(\d{2})/i);return m?2000+ +m[1]:0};
+ const jg=g=>{const a=abi(g);return a?13-(a-yearEnd):0};
+ const level=g=>{if(jg(g))return jg(g);const m=String(g.kind==='course'?(g.description+' '+g.label):g.label).match(/(?:^|\D)(1[0-3]|[5-9])(?:\D|$)/);return m?+m[1]:0};
  const upper=g=>g.kind==='course'||g.upperSchool||level(g)>=11;
- function groupInfo(g){if(g.kind!=='course')return '';const m=g.label.match(/^[A-Za-zÄÖÜ]+(\d+)([efg])(\d+)?/i);if(!m)return '';return (m[2].toLowerCase()==='e'?'Leistungskurs':'Grundkurs')}
- function render(){const s=state;let body='';
+ function groupInfo(g){if(g.kind!=='course')return '';const m=g.label.match(/^[A-Za-zÄÖÜ]+(\d+)([efg])(\d+)?/i);if(!m)return '';const j=jg(g);return (m[2].toLowerCase()==='e'?'Leistungskurs':'Grundkurs')+(j?' · Jg. '+j+' (Abitur '+abi(g)+')':'')}
+ function render(){const keep=dlg.querySelector('.ys-body')?.scrollTop||0;const s=state;let body='';
   const steps=['Fächer','Listen','Lerngruppen'];
   const nav=`<ol class="ys-steps">${steps.map((t,i)=>`<li class="${i===s.step?'on':i<s.step?'done':''}">${i+1} · ${t}</li>`).join('')}</ol>`;
   if(s.step===0){const all=[...new Set([...existingLabels(),...CATALOG.map(c=>c[0]),...s.extra])].sort((a,b)=>a.localeCompare(b,'de'));
@@ -4595,18 +4598,18 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   if(s.step===1){body=`<p>Lade die Klassen- und Kurslisten der Schule als PDF – gern mehrere auf einmal (z. B. Sek. I, Jahrgang 11, Jahrgang 12/13). Die Listen werden nur auf diesem Gerät gelesen.</p><label class="ys-drop"><input type="file" accept="application/pdf,.pdf" multiple data-files><b>PDFs auswählen</b><span>oder hierher ziehen</span></label><div class="ys-files">${s.files.map(f=>`<div class="ys-file ${f.error?'err':''}"><b>${esc(f.name)}</b> · ${f.error?esc(f.error):f.busy?'wird gelesen …':`${f.groups.filter(g=>g.kind!=='course').length} Klassen, ${f.groups.filter(g=>g.kind==='course').length} Kurse, ${f.groups.reduce((a,g)=>a+g.students.length,0)} Schüler:innen`}</div>`).join('')}</div>`}
   if(s.step===2){const groups=s.groups;
    if(!groups.length)body='<p>Es wurden noch keine Lerngruppen gefunden. Bitte im Schritt „Listen“ PDFs laden.</p>';
-   else{const opts=v=>['',...s.subjects].map(l=>`<option value="${esc(l)}"${l===v?' selected':''}>${l?esc(l):'– Fach –'}</option>`).join('');
+   else{const opts=v=>['',...[...s.subjects].sort((a,b)=>a.localeCompare(b,'de'))].map(l=>`<option value="${esc(l)}"${l===v?' selected':''}>${l?esc(l):'– Fach –'}</option>`).join('');
     const row=(g,i)=>`<tr class="${g.use?'on':''}"><td><input type="checkbox" data-use="${i}"${g.use?' checked':''}></td><td><b>${esc(g.display)}</b><button type="button" class="ys-dup" data-dup="${i}" title="Diese Lerngruppe zusätzlich in einem weiteren Fach anlegen">＋ Fach</button><small>${esc(g.kind==='course'?g.description:'Klasse')}${groupInfo(g)?' · '+groupInfo(g):''} · ${g.students.length} SuS${g.matches===false?' · <em>Anzahl prüfen</em>':''}</small></td><td><select data-sub="${i}">${opts(g.subject)}</select></td><td><select data-sys="${i}"><option value="grades"${g.system==='grades'?' selected':''}>Noten</option><option value="gradePoints"${g.system==='gradePoints'?' selected':''}>Notenpunkte</option></select></td><td><select data-ep="${i}"><option value="year"${g.epoch==='year'?' selected':''}>ganzjährig</option><option value="h1"${g.epoch==='h1'?' selected':''}>Epochal (1. Hj.)</option><option value="h2"${g.epoch==='h2'?' selected':''}>Epochal (2. Hj.)</option></select></td></tr>`;
-    const sek=groups.map((g,i)=>[g,i]).filter(([g])=>!upper(g)),ob=groups.map((g,i)=>[g,i]).filter(([g])=>upper(g));
+    const sek=groups.map((g,i)=>[g,i]).filter(([g])=>!upper(g)),ob=groups.map((g,i)=>[g,i]).filter(([g])=>upper(g)).sort(([a],[b])=>(level(a)-level(b))||a.display.localeCompare(b.display,'de',{numeric:true}));
     const n=groups.filter(g=>g.use).length;
     body=`<p>Hake deine Lerngruppen an und ordne sie einem Fach zu. In der Oberstufe sind nur Kurse deiner Fächer aufgeführt.</p><div class="ys-tablewrap"><table class="ys-table"><thead><tr><th></th><th>Lerngruppe</th><th>Fach</th><th>Notensystem</th><th>Unterricht</th></tr></thead><tbody>${sek.length?`<tr class="ys-sec"><td colspan="5">Sekundarstufe I</td></tr>`+sek.map(([g,i])=>row(g,i)).join(''):''}${ob.length?`<tr class="ys-sec"><td colspan="5">Oberstufe</td></tr>`+ob.map(([g,i])=>row(g,i)).join(''):''}</tbody></table></div><p class="ys-sum">${n?`Es werden <b>${n}</b> Lerngruppen angelegt.`:'Noch keine Lerngruppe ausgewählt.'}</p>`}}
   dlg.innerHTML=`<form method="dialog"><div class="ys-head"><h2>Schuljahr einrichten</h2>${nav}</div><div class="ys-body">${body}</div><p class="ys-err" role="status">${esc(s.error||'')}</p><div class="dialog-actions"><button type="button" data-cancel>Abbrechen</button>${s.step?'<button type="button" data-back>Zurück</button>':''}<button type="button" class="primary" data-next>${s.step===2?'Lerngruppen anlegen':'Weiter'}</button></div></form>`;
-  bind()}
+  const nb=dlg.querySelector('.ys-body');if(nb)nb.scrollTop=keep;bind()}
  function buildGroups(){const all=[];for(const f of state.files)for(const g of f.groups||[])all.push(g);
   const seen=new Set(),out=[];for(const g of all){const display=g.kind==='course'?g.label:'Klasse '+classroomClassKey(g.label);const k=norm(display);if(seen.has(k))continue;seen.add(k);
    const prev=state.groups.find(x=>norm(x.display)===k);const subject=prev?.subject??subjectOf(g);
    if(upper(g)&&g.kind==='course'&&!state.subjects.has(subject))continue;// Oberstufe: nur Kurse der eigenen Fächer
-   out.push({...g,display,subject:state.subjects.has(subject)?subject:'',use:prev?.use??(g.kind==='course'),system:prev?.system??(upper(g)?'gradePoints':'grades'),epoch:prev?.epoch??'year'})}
+   out.push({...g,display,subject:state.subjects.has(subject)?subject:'',use:prev?.use??false,system:prev?.system??(upper(g)?'gradePoints':'grades'),epoch:prev?.epoch??'year'})}
   state.groups=out}
  async function readFiles(list){for(const file of list){const entry={name:file.name,busy:true,groups:[]};state.files.push(entry);render();try{entry.groups=await window.classroomReadSchoolPdf(file)}catch(e){entry.error=e.message||'Konnte nicht gelesen werden.'}entry.busy=false;render()}}
  function bind(){const q=s=>dlg.querySelector(s),s=state;
@@ -4634,7 +4637,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   try{for(const g of groups){const id=ensureSubject(g.subject);if(!id){skipped.push(g.display);continue}setSubject(id);
     if((classesBySubject[id]||[]).some(c=>norm(c.label)===norm(g.display))){skipped.push(g.display+' ('+g.subject+', schon vorhanden)');continue}
     window.classroomCreateClassDialog=()=>Promise.resolve({label:g.display,people:g.students.map(p=>({name:p.name,gender:p.gender||''})),gradingSystem:g.system});
-    await addClass();const item=(classesBySubject[id]||[]).find(c=>norm(c.label)===norm(g.display));if(item){if(g.epoch!=='year')item.epoch=g.epoch;made++}}
+    await addClass();const item=(classesBySubject[id]||[]).find(c=>norm(c.label)===norm(g.display));if(item){if(g.epoch!=='year')item.epoch=g.epoch;made++;
+     /* immer: Mündliche Mitarbeit anlegen */try{if(!subjectExamGroups(id).some(x=>x.type==='performance')){showAddPerformanceDialog();confirmAddPerformance();document.getElementById('addPerformanceDialog')?.close()}}catch(e){console.error(e)}}}
+   /* Fächer ohne Lerngruppe ausblenden */for(const [sid,v] of Object.entries(subjects))if(!(classesBySubject[sid]||[]).length){try{v.custom?await removeCustomSubject(sid,document.querySelector(`[data-settings-subject="${sid}"]`),true):await removeBuiltInSubject(sid,true)}catch(e){console.error(e)}}
   }finally{window.classroomCreateClassDialog=orig;persistClasses();renderClassNavigation();renderAll?.()}
   try{window.classroomEmptyStart?.()}catch{}
   return `${made} Lerngruppe${made===1?'':'n'} angelegt.`+(skipped.length?' Übersprungen: '+skipped.join(', ')+'.':'')}
