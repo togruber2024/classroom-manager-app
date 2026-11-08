@@ -5019,6 +5019,46 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
 })();
 ;
 
+/* ==== noten/print-name.js ==== */
+/* 9.73: Dateiname beim Drucken/als PDF sichern – z. B. „8d Latein KA 2 2026-10-28“.
+   Browser schlagen den Seitentitel als Dateinamen vor. Für die Dauer des Druckens wird deshalb der Titel
+   (auch der der Hauptseite) gesetzt und danach wiederhergestellt. */
+(()=>{
+ const clean=t=>String(t||'').replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim();
+ function crumbs(){try{return [...window.parent.document.querySelectorAll('.compact-navigation-bar *')].filter(e=>!e.children.length).map(e=>e.textContent.trim()).filter(t=>t&&t!=='▾'&&!/^Schuljahr/.test(t))}catch{return []}}
+ function base(){const c=crumbs();let subj=c[0]||'',cls=c[1]||'';
+  try{const k=(classesBySubject?.[currentSubject]||[]).find(x=>x.id===currentClassId);if(k?.name)cls=k.name}catch{}
+  return [String(cls).replace(/^Klasse\s+/i,''),subj]}
+ const vis=s=>[...document.querySelectorAll(s)].find(x=>x.offsetParent);
+ function exam(){try{const all=subjectExamGroups(currentSubject).filter(g=>!g.type);const g=all.find(g=>(g.pages||[]).includes(activePage));if(!g)return null;
+   const same=all.filter(x=>/klausur/i.test(x.label||'')===/klausur/i.test(g.label||''));const n=same.indexOf(g)+1;
+   const word=/klausur/i.test(g.label||'')||/klausur/i.test(document.querySelector('[data-custom-panel] h2')?.textContent||'')?'Klausur':'KA';
+   return [word+' '+n,g.examDate||'']}catch{return null}}
+ function part(){
+  const td=vis('.test-detail-panel');if(td){const thema=td.querySelector('input[type=text]')?.value||'',d=td.querySelector('input[type=date]')?.value||'';return ['Test',thema,d]}
+  const e=exam();if(e)return e;
+  const ov=vis('.exam-overview-page h2');if(ov)return [ov.textContent.replace(/\s*·\s*/,' ')];
+  const h=vis('[data-custom-panel] .section-title h2')||vis('[data-custom-panel] h2');let t=h?h.textContent:'';
+  t=t.replace(/\s*[-–·]\s*(\d)\. Quartal/,' Q$1').replace(/\s*[-–·]\s*(\d)\. Halbjahr/,' HJ$1');return [t]}
+ function name(win){const extra=(()=>{try{const t=win&&win!==window?win.document.title:'';return /Klassenliste/i.test(t)?['Klassenliste']:null}catch{return null}})();
+  return clean([...base(),...(extra||part())].filter(Boolean).join(' '))||'Classroom-Manager'}
+ window.classroomPrintName=()=>name(window);
+ function withTitle(win,run){let docs=[];try{docs=[document,win.document];try{docs.push(window.parent.document)}catch{}}catch{}
+  docs=[...new Set(docs.filter(Boolean))];const old=docs.map(d=>d.title);const n=name(win);docs.forEach(d=>{d.title=n});
+  let done=false;const restore=()=>{if(done)return;done=true;docs.forEach((d,i)=>{try{if(d.title===n)d.title=old[i]}catch{}})};
+  try{win.addEventListener('afterprint',()=>setTimeout(restore,300),{once:true})}catch{}
+  const t0=Date.now();try{return run()}finally{if(Date.now()-t0>800)setTimeout(restore,300);else setTimeout(restore,30000)}}
+ function patch(win){try{if(!win||win.__cmPrintName)return;const orig=win.print;if(typeof orig!=='function')return;win.__cmPrintName=true;win.print=function(){return withTitle(win,()=>orig.call(win))}}catch{}}
+ patch(window);
+ // Druck-Rahmen (Klassenarbeit, Listen, Notenspiegel …)
+ const watch=f=>{patch(f.contentWindow);f.addEventListener('load',()=>patch(f.contentWindow))};
+ document.querySelectorAll('iframe').forEach(watch);
+ new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes){if(n.tagName==='IFRAME')watch(n);else n.querySelectorAll?.('iframe').forEach(watch)}}).observe(document.documentElement,{childList:true,subtree:true});
+ // Druckfenster
+ const open=window.open;window.open=function(...a){const w=open.apply(window,a);patch(w);return w};
+})();
+;
+
 /* ==== noten/design-extras.js ==== */
 /* Design 6.93 – Noten-Manager. Jede Rubrik ist eigenständig und lässt sich einzeln entfernen. */
 
