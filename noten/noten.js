@@ -4994,8 +4994,10 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    {const open=phoneOpen(phoneCards());seg.dataset.open=String(open);paint(seg,mode==='grade'&&open?'name':mode)}
    /* passt die 2. Zeile nicht, wandert der Schalter rechts in die Hinweiszeile („Antippen zeigt …“) */
    const r2=bar.querySelector('.pl-row2'),stand=bar.querySelector('.pl-stand');const over=()=>{if(!r2)return false;const kids=[...r2.children].filter(k=>k.offsetParent&&getComputedStyle(k).display!=='none');const gap=parseFloat(getComputedStyle(r2).columnGap)||8;const need=kids.reduce((a,k)=>a+Math.max(k.scrollWidth,k.getBoundingClientRect().width),0)+gap*Math.max(0,kids.length-1);return need>r2.clientWidth+1};
+   /* 9.74: ohne Hin- und Herschieben prüfen, ob der Schalter in die 2. Zeile passt (sonst Endlosschleife mit anderen Beobachtern) */
+   const fits=()=>{if(!r2)return false;const kids=[...r2.children].filter(k=>k!==seg&&k.offsetParent&&getComputedStyle(k).display!=='none');const gap=parseFloat(getComputedStyle(r2).columnGap)||8;const need=kids.reduce((a,k)=>a+Math.max(k.scrollWidth,k.getBoundingClientRect().width),0)+seg.getBoundingClientRect().width+gap*kids.length;return need<=r2.clientWidth+1};
    if(r2&&seg.parentElement===r2&&over()&&stand){stand.classList.add('ps-stand');stand.append(seg)}
-   else if(r2&&seg.parentElement===stand){const mean=r2.querySelector('.pl-mean');mean?mean.before(seg):r2.append(seg);if(over())stand.append(seg);else stand.classList.remove('ps-stand')}}
+   else if(r2&&stand&&seg.parentElement===stand&&fits()){const mean=r2.querySelector('.pl-mean');mean?mean.before(seg):r2.append(seg);stand.classList.remove('ps-stand')}}
   for(const box of document.querySelectorAll('.qs-cards')){const cards=[...box.children].filter(c=>c.matches('.qs-card:not(.qd-card)'));if(cards.length<2)continue;const sorted=order(cards);if(sorted.some((c,i)=>c!==cards[i])){const anchor=cards.at(-1).nextSibling;for(const c of sorted)box.insertBefore(c,anchor)}}}
  /* 9.72: auch am iPhone erst nach Note, wenn jede begonnene Karte eine Note hat; ganz leere Karten unten */
  const cardVal=c=>parse(c.querySelector('.qs-big')?.textContent);
@@ -5004,13 +5006,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const phoneCards=()=>[...document.querySelectorAll('.qs-cards')].flatMap(b=>[...b.children].filter(c=>c.matches('.qs-card:not(.qd-card)')&&c.offsetParent!==null));
  function order(cards){let mode=get();if(mode==='grade'&&phoneOpen(cards))mode='name';cards.forEach((c,i)=>{if(!c.dataset.idx)c.dataset.idx=String(i)});const items=cards.map(c=>({c,n:(c.querySelector('.qs-name')?.textContent||'').trim(),i:Number(c.dataset.idx),v:mode==='grade'?cardVal(c):null}));return items.sort(sorter(mode,(a,b)=>a.i-b.i)).map(x=>x.c)}
  /* kein Tooltip am iPhone: Antippen des blassen Knopfs zeigt kurz den Hinweis */
- function hint(btn,text){document.querySelector('.ps-hint')?.remove();const h=document.createElement('div');h.className='ps-hint';h.textContent=text;document.body.append(h);const r=btn.getBoundingClientRect();h.style.top=(r.bottom+window.scrollY+6)+'px';h.style.left=Math.max(8,Math.min(window.innerWidth-h.offsetWidth-8,r.right-h.offsetWidth))+'px';setTimeout(()=>h.remove(),2600)}
+ function hint(btn,text){document.querySelector('.ps-hint')?.remove();const h=document.createElement('div');h.className='ps-hint';h.textContent=text;document.body.append(h);const r=btn.getBoundingClientRect();h.style.top=Math.min(window.innerHeight-h.offsetHeight-8,r.bottom+6)+'px';h.style.left=Math.max(8,Math.min(window.innerWidth-h.offsetWidth-8,r.right-h.offsetWidth))+'px';setTimeout(()=>h.remove(),2600)}
  window.classroomPerfOrder=order;
  function run(){try{placeDesktop();placePhone()}catch(e){console.warn('Sortierung',e)}}window.classroomPerfSort=run;
  document.addEventListener('click',e=>{const b=e.target.closest?.('[data-psort]');if(!b)return;e.preventDefault();e.stopPropagation();if(b.classList.contains('ps-off')){hint(b,'Noch '+(b.closest('[data-open]')?.dataset.open||'')+' offen – erst möglich, wenn alle Noten da sind');return}if(b.dataset.psort===get())setRev(!rev());else{set(b.dataset.psort);setRev(false)}run()},true);
  const st=document.createElement('style');st.textContent='.ps-seg{margin:0 6px 0 0!important;align-self:center}.ps-seg button{min-width:0!important;padding:0 12px!important;white-space:nowrap}body .test-results-head>.ps-seg:not(#_){margin:0 6px 0 10px!important}body .test-results-head>.ps-seg+.hatch-seg.hs-results:not(#_):not(#__):not(#___){margin-left:0!important}.ps-seg button.ps-off{opacity:.4;cursor:not-allowed}'
   +'.pl-sort button{padding:0 9px!important}.pl-row2{flex-wrap:nowrap!important}.pl-row2 .pl-sort{flex:none;margin-left:auto}.pl-row2 .pl-sort+.pl-mean{margin-left:0!important}'
-  +'.ps-hint{position:absolute;z-index:9999;max-width:260px;background:#1f2937;color:#fff;font-size:14px;line-height:1.35;padding:8px 11px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:none}.pl-sort button.ps-off{opacity:.4}'
+  +'.ps-hint{position:fixed;z-index:9999;max-width:260px;background:#1f2937;color:#fff;font-size:14px;line-height:1.35;padding:8px 11px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:none}.pl-sort button.ps-off{opacity:.4}'
   +'.pl-stand.ps-stand{display:flex;align-items:center;justify-content:space-between;gap:8px}.pl-stand .pl-sort{flex:none}';
  document.head.append(st);
  /* nach dem Verlassen eines Feldes der Tabelle umsortieren */
