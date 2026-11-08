@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 08.11.2026 · Version 9.45
+Stand: 08.11.2026 · Version 9.46
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1222,3 +1222,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.43: Schuljahr einrichten – Liste springt nicht mehr nach oben, Fächer alphabetisch, Oberstufe nach Jg. 11/12/13 sortiert (Abiturjahr aus Kurskürzel), nichts vorausgewählt; Mündliche Mitarbeit wird je Lerngruppe angelegt; Fächer ohne Lerngruppe werden ausgeblendet
 9.44: „Sitzplan bearbeiten“-Knopf mit oranger Leiste (Tischanordnung, Fertig) statt Modus-Schalter; Bewertungsfenster mit Knöpfen „Abwesend“ und „Notiz“ (aufklappbares Textfeld)
 9.45: Pfad über dem Auswahlmenü als schlichter Text (aktuelle Stelle blau); iPhone-Schülerkarte: Notiz kompakt („＋ Notiz“ bzw. gelber Kasten)
+9.46: „Einpassen“ mit Rand rechts (Gruppen-Pillen); Dunkelmodus-CSS wieder wie 9.34 (iOS-Statusleiste), Hilfe am iPhone per Klasse ausgenommen
