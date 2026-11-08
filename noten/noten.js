@@ -11,13 +11,20 @@
    Schutz vor Endlosschleifen (vgl. 9.06): Ändern die Funktionen selbst über viele Bilder hinweg ständig das Dokument,
    wird auf ruhige 2-mal pro Sekunde gedrosselt und ein Eintrag ins Fehlerprotokoll geschrieben. */
 (()=>{if(window.classroomOnDomChange)return;const fns=[];let planned=false,busy=false,streak=0,slow=false,warned=false,obs=null;
- const note=()=>{if(warned)return;warned=true;try{const k='classroom-error-log-v1',l=JSON.parse(localStorage.getItem(k)||'[]');l.push({t:new Date().toISOString(),w:document.body?.dataset.module||'App',m:'Darstellung: Dauer-Änderungsschleife erkannt – gedrosselt',s:'device.js'});localStorage.setItem(k,JSON.stringify(l.slice(-50)))}catch{}};
- const run=()=>{planned=false;obs?.takeRecords();busy=true;for(const f of fns){try{f()}catch(e){console.error(e)}}busy=false;
-  const changed=(obs?.takeRecords()||[]).length>0;if(changed){streak++;if(streak>40&&!slow){slow=true;note()}schedule()}else{streak=0;slow=false}};
+ const note=()=>{if(warned)return;warned=true;try{const k='classroom-error-log-v1',l=JSON.parse(localStorage.getItem(k)||'[]');l.push({t:new Date().toISOString(),w:document.body?.dataset.module||'App',m:'Darstellung: Dauer-Änderungsschleife erkannt – gedrosselt ('+culprits.join(' | ').slice(0,300)+')',s:'device.js'});localStorage.setItem(k,JSON.stringify(l.slice(-50)))}catch{}};
+ /* 9.75: merkt sich, welche Funktion das Dokument bei jedem Lauf erneut ändert (für Fehlerprotokoll und Ruhe-Test) */
+ const name=f=>(f.name&&f.name!=='fn'?f.name+': ':'')+String(f).replace(/\s+/g,' ').slice(0,90);let culprits=[];
+ window.classroomDomChangeStats={runs:0,changes:0,get culprits(){return culprits.slice()}};
+ const ms=new Map();window.classroomDomChangeStats.time=()=>[...ms].map(([f,t])=>[name(f),Math.round(t)]).sort((a,b)=>b[1]-a[1]);
+ const run=()=>{planned=false;obs?.takeRecords();busy=true;const by=[];for(const f of fns){const t0=performance.now();try{f()}catch(e){console.error(e)}ms.set(f,(ms.get(f)||0)+performance.now()-t0);if(obs&&obs.takeRecords().length)by.push(f)}busy=false;
+  const stats=window.classroomDomChangeStats;stats.runs++;const changed=by.length>0;if(changed){stats.changes++;culprits=by.map(name);streak++;if(streak>40&&!slow){slow=true;note()}schedule()}else{streak=0;slow=false}};
  const schedule=()=>{if(planned)return;planned=true;if(slow)setTimeout(()=>requestAnimationFrame(run),500);else requestAnimationFrame(run)};
  const start=()=>{if(obs)return;obs=new MutationObserver(()=>{if(!busy)schedule()});obs.observe(document.documentElement,{childList:true,subtree:true,characterData:true})};
  window.classroomOnDomChange=fn=>{fns.push(fn);start();schedule()};
 })();
+/* 9.75: Zeilen einer (evtl. umsortierten) Tabelle in Datenreihenfolge – für Stellen, die Zeile i der Schüler:in i zuordnen.
+   Die Sortierung (perf-sort.js) merkt sich die ursprüngliche Position je Zeile in data-ps-idx. */
+window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parentElement?.dataset?.psSorted==='1'))return a;if(a.some(r=>r.dataset?.psIdx===undefined))return a;return a.sort((x,y)=>Number(x.dataset.psIdx)-Number(y.dataset.psIdx))};
 ;
 
 /* ==== ui-dialogs.js ==== */
@@ -158,7 +165,7 @@
    button.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="privacy-slash" d="M3 21L21 3"/></svg>';button.setAttribute('aria-label','Datenschutzmodus');
    button.onclick=()=>toggle();}
   if(actions&&button){const help=actions.querySelector('.classroom-help-button');if(help&&help.nextElementSibling!==button)help.after(button);else if(!help&&!button.isConnected)actions.prepend(button)}
-  if(button){button.setAttribute('aria-pressed',String(on));button.classList.toggle('is-on',on);const slash=button.querySelector('.privacy-slash');if(slash)slash.style.display=on?'':'none';button.title=on?'Datenschutzmodus ist aktiv – klicken zum Beenden':'Datenschutzmodus: Namen unscharf, Bewertungen unkenntlich (zum Vorführen)'}
+  if(button){/* 9.75: nur bei Änderung schreiben */if(button.getAttribute('aria-pressed')!==String(on))button.setAttribute('aria-pressed',String(on));button.classList.toggle('is-on',on);const slash=button.querySelector('.privacy-slash'),disp=on?'':'none';if(slash&&slash.style.display!==disp)slash.style.display=disp;const t=on?'Datenschutzmodus ist aktiv – klicken zum Beenden':'Datenschutzmodus: Namen unscharf, Bewertungen unkenntlich (zum Vorführen)';if(button.title!==t)button.title=t}
   if(on&&!banner){banner=document.createElement('div');banner.className='classroom-privacy-banner';banner.setAttribute('role','status');banner.textContent='Datenschutzmodus aktiv – Namen unscharf, Farben zufällig';document.body.append(banner)}
   if(!on&&banner){banner.remove();banner=null}
  }
@@ -1102,7 +1109,7 @@ if(window.parent!==window)parent.postMessage({type:'classroom:rosters',snapshot:
   }
   function recalculateNotenspiegel(subject,pageKey,{persist=true}={}){
     const data=taskPageData(subject,pageKey),section=document.querySelector(`[data-custom-panel="${pageKey}"]`);
-    for(const [taskIndex,task] of data.tasks.entries())if(task.basisPage){for(const student of data.students){const raw=student.rawScores?.[task.id];if(raw!==''&&raw!==undefined&&raw!==null)student.grades[task.id]=taskRawValue(subject,task,raw,data.calculationTendencies??data.tendencies)}const rows=section?.querySelectorAll('.task-table tbody tr');data.students.forEach((student,index)=>{const input=rows?.[index]?.querySelectorAll('.task-raw-score')[taskIndex];if(input&&student.grades[task.id]!==undefined)input.className=`task-raw-score${student.grades[task.id]===''?'':` ${taskGradeClass(student.grades[task.id],taskGradeSystem(subject,pageKey))}`}`})}
+    for(const [taskIndex,task] of data.tasks.entries())if(task.basisPage){for(const student of data.students){const raw=student.rawScores?.[task.id];if(raw!==''&&raw!==undefined&&raw!==null)student.grades[task.id]=taskRawValue(subject,task,raw,data.calculationTendencies??data.tendencies)}const rows=classroomDataOrder(section?.querySelectorAll('.task-table tbody tr'));data.students.forEach((student,index)=>{const input=rows?.[index]?.querySelectorAll('.task-raw-score')[taskIndex];if(input&&student.grades[task.id]!==undefined)input.className=`task-raw-score${student.grades[task.id]===''?'':` ${taskGradeClass(student.grades[task.id],taskGradeSystem(subject,pageKey))}`}`})}
     updateTaskResultsDisplay(subject,pageKey);if(persist)saveCurrentSubject();renderNotenspiegelTable(subject,pageKey);
   }
   $('notenspiegelBoundarySource').addEventListener('change',()=>{if(notenspiegelContext)renderNotenspiegelBoundaryList(notenspiegelContext.subject,notenspiegelContext.pageKey)});
@@ -1147,7 +1154,7 @@ if(window.parent!==window)parent.postMessage({type:'classroom:rosters',snapshot:
     if(!data.showPartialGrades)return;
     const insert=(anchor,tag,value,label,showTendencies=data.tendencies)=>{const cell=document.createElement(tag);cell.dataset.partialGradeCell='';cell.className='task-partial-grade-cell';if(tag==='th'){cell.textContent=label;cell.scope='col'}else{const chip=document.createElement('span');chip.className=anchor.closest('tfoot')?'task-partial-average':'task-partial-grade'+(value===null?'':' '+taskGradeClass(value,system));chip.textContent=value===null?'—':formatTaskScore(value,system,data.numericParticipation,showTendencies);cell.append(chip)}anchor.after(cell)};
     const headings=Array.from(table.tHead.rows[0].cells);data.tasks.forEach((task,index)=>insert(headings[index+1],'th',null,`Teilnote ${index+1}`));
-    Array.from(table.tBodies[0].rows).forEach((row,index)=>{const student=data.students[index];if(!student)return;const cells=Array.from(row.cells);data.tasks.forEach((task,i)=>{const value=student.grades[task.id],raw=student.rawScores[task.id],valid=raw!==''&&raw!==undefined&&raw!==null&&value!==''&&value!==undefined&&value!==null&&Number.isFinite(Number(value));insert(cells[i+1],'td',valid?Number(value):null,undefined,data.tendencies&&taskBasisConfig(subject,task.basisPage).tendencies)})});
+    classroomDataOrder(table.tBodies[0].rows).forEach((row,index)=>{const student=data.students[index];if(!student)return;const cells=Array.from(row.cells);data.tasks.forEach((task,i)=>{const value=student.grades[task.id],raw=student.rawScores[task.id],valid=raw!==''&&raw!==undefined&&raw!==null&&value!==''&&value!==undefined&&value!==null&&Number.isFinite(Number(value));insert(cells[i+1],'td',valid?Number(value):null,undefined,data.tendencies&&taskBasisConfig(subject,task.basisPage).tendencies)})});
     const footer=table.tFoot?.rows[0];if(footer){const cells=Array.from(footer.cells);data.tasks.forEach((task,index)=>{const values=data.students.filter(student=>{const raw=student.rawScores[task.id],value=student.grades[task.id];return raw!==''&&raw!==undefined&&raw!==null&&value!==''&&value!==undefined&&value!==null&&Number.isFinite(Number(value))}).map(student=>Number(student.grades[task.id]));insert(cells[index+1],'td',values.length?values.reduce((sum,value)=>sum+value,0)/values.length:null)})}
   }
   function updateTaskResultsDisplay(subject,pageKey){updateTaskResultsDisplayBase(subject,pageKey);quarterReviewCells(subject,pageKey);partialGradeCells(subject,pageKey);syncTaskAddColumn(subject,pageKey)}
@@ -1186,7 +1193,7 @@ if(window.parent!==window)parent.postMessage({type:'classroom:rosters',snapshot:
     if(system==='grades'){const match=String(formatTaskMean(value,system,{...data,meanDisplay:'tendency'})).trim().match(/^([1-6])([+−-])$/);if(match)return taskGradeClass(Number(match[1])+(match[2]==='+'?-1/3:1/3),system)}
     return taskGradeClass(system==='gradePoints'?Math.round(colorValue):system==='participation'?colorValue:roundSchoolGrade(colorValue),system);
   }
-  function updateTaskResultsDisplayBase(subject,pageKey){const data=taskPageData(subject,pageKey),section=document.querySelector(`[data-custom-panel="${pageKey}"]`);if(!section)return;const system=taskGradeSystem(subject,pageKey),rows=section.querySelectorAll('.task-table tbody tr');data.students.forEach((student,index)=>{const gradeChip=rows[index]?.querySelector('.task-end-grade');if(!gradeChip)return;const result=taskStudentResult(data,student,system==='participation');gradeChip.textContent=result===null?'—':formatTaskMean(result,system,data);gradeChip.className=`task-end-grade${result===null?'':` ${taskMeanClass(result,system,data)}`}`});const rawMode=taskBasisPages(subject,pageKey).length>0,averages=data.tasks.map(task=>{const values=data.students.map(student=>rawMode?student.rawScores?.[task.id]:student.grades[task.id]).filter(value=>value!==''&&value!==undefined&&value!==null&&Number.isFinite(Number(value))).map(Number);return values.length?values.reduce((sum,value)=>sum+value,0)/values.length:null}),endValues=data.students.map(student=>taskStudentResult(data,student,system==='participation')).filter(value=>value!==null),endAverage=endValues.length?endValues.reduce((sum,value)=>sum+value,0)/endValues.length:null,foot=section.querySelector('.task-table tfoot');if(foot)foot.innerHTML=`<tr><th scope="row">${system==='participation'?'Mittelwert':'Durchschnitt'}</th>${averages.map(value=>`<td>${value===null?'—':rawMode?formatTaskResult(value):String(formatTaskScore(value,system,data.numericParticipation,data.tendencies)).replace(/\s*Punkte$/,'')}</td>`).join('')}<td>${endAverage===null?'—':String(formatTaskScore(endAverage,system,data.numericParticipation,data.tendencies)).replace(/\s*Punkte$/,'')}</td></tr>`}
+  function updateTaskResultsDisplayBase(subject,pageKey){const data=taskPageData(subject,pageKey),section=document.querySelector(`[data-custom-panel="${pageKey}"]`);if(!section)return;const system=taskGradeSystem(subject,pageKey),rows=classroomDataOrder(section.querySelectorAll('.task-table tbody tr'));data.students.forEach((student,index)=>{const gradeChip=rows[index]?.querySelector('.task-end-grade');if(!gradeChip)return;const result=taskStudentResult(data,student,system==='participation');gradeChip.textContent=result===null?'—':formatTaskMean(result,system,data);gradeChip.className=`task-end-grade${result===null?'':` ${taskMeanClass(result,system,data)}`}`});const rawMode=taskBasisPages(subject,pageKey).length>0,averages=data.tasks.map(task=>{const values=data.students.map(student=>rawMode?student.rawScores?.[task.id]:student.grades[task.id]).filter(value=>value!==''&&value!==undefined&&value!==null&&Number.isFinite(Number(value))).map(Number);return values.length?values.reduce((sum,value)=>sum+value,0)/values.length:null}),endValues=data.students.map(student=>taskStudentResult(data,student,system==='participation')).filter(value=>value!==null),endAverage=endValues.length?endValues.reduce((sum,value)=>sum+value,0)/endValues.length:null,foot=section.querySelector('.task-table tfoot');if(foot)foot.innerHTML=`<tr><th scope="row">${system==='participation'?'Mittelwert':'Durchschnitt'}</th>${averages.map(value=>`<td>${value===null?'—':rawMode?formatTaskResult(value):String(formatTaskScore(value,system,data.numericParticipation,data.tendencies)).replace(/\s*Punkte$/,'')}</td>`).join('')}<td>${endAverage===null?'—':String(formatTaskScore(endAverage,system,data.numericParticipation,data.tendencies)).replace(/\s*Punkte$/,'')}</td></tr>`}
   // Platzhalter: die Halbjahresübersicht zeichnet quarter-summary.js (ersetzt diese Funktion beim Laden).
   function renderSemesterPage(){}
   function showSemesterNotenspiegel(subject,pageKey){
@@ -1681,7 +1688,7 @@ if(window.parent!==window)parent.postMessage({type:'classroom:rosters',snapshot:
       return docxCell(text,widths[index],{bold:header||index===3,align:index===0?'left':'center',size:header?18:22,color:color?.color||'202C2B',fill:header?'F5F8F5':color?.fill,badge:!!color});
     };
     const head=[...table.tHead.rows[0].cells].map((cell,index)=>docxCell(cell.textContent.trim(),widths[index],{bold:true,size:18,color:'687674',fill:'F5F8F5'})).join('');
-    const rows=[...table.tBodies[0].rows].map(row=>`<w:tr><w:trPr><w:trHeight w:val="420" w:hRule="atLeast"/><w:cantSplit/></w:trPr>${[...row.cells].map((cell,index)=>{const badge=cell.querySelector('span:not(.semester-missing)');return makeCell(docxCellText(cell),index,false,badge)}).join('')}</w:tr>`).join('');
+    const rows=classroomDataOrder(table.tBodies[0].rows).map(row=>`<w:tr><w:trPr><w:trHeight w:val="420" w:hRule="atLeast"/><w:cantSplit/></w:trPr>${[...row.cells].map((cell,index)=>{const badge=cell.querySelector('span:not(.semester-missing)');return makeCell(docxCellText(cell),index,false,badge)}).join('')}</w:tr>`).join('');
     const averages=[...(table.tFoot?.rows||[])].map(row=>`<w:tr><w:trPr><w:trHeight w:val="420" w:hRule="atLeast"/><w:cantSplit/></w:trPr>${[...row.cells].map((cell,index)=>makeCell(docxCellText(cell),index,true,cell.querySelector('span'))).join('')}</w:tr>`).join('');
     const caption=section.querySelector('.semester-status')?.textContent||'';
     return `<w:p><w:pPr><w:spacing w:after="90"/><w:keepNext/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="30"/></w:rPr><w:t>${xmlEscape(title)}</w:t></w:r></w:p>${caption?`<w:p><w:r><w:rPr><w:color w:val="687674"/></w:rPr><w:t>${xmlEscape(caption)}</w:t></w:r></w:p>`:''}<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="70" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="70" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tblCellMar><w:tblBorders><w:top w:val="single" w:sz="6" w:color="DCE3DF"/><w:left w:val="single" w:sz="6" w:color="DCE3DF"/><w:bottom w:val="single" w:sz="6" w:color="DCE3DF"/><w:right w:val="single" w:sz="6" w:color="DCE3DF"/><w:insideH w:val="single" w:sz="5" w:color="DCE3DF"/><w:insideV w:val="single" w:sz="4" w:color="DCE3DF"/></w:tblBorders></w:tblPr><w:tblGrid>${grid}</w:tblGrid><w:tr><w:trPr><w:trHeight w:val="480" w:hRule="exact"/><w:tblHeader/></w:trPr>${head}</w:tr>${rows}${averages}</w:tbl>`;
@@ -2677,7 +2684,8 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
  }
  window.addEventListener('afterprint',()=>{document.body.classList.remove('printing-single-page');document.getElementById('pagePrintRoot')?.remove()});
  function add(){for(const panel of document.querySelectorAll('.panel')){if(panel.matches('.exam-combined-page')){panel.querySelector(':scope > .section-title [data-page-print]')?.remove();continue}if(!panel.querySelector('table'))continue;const heading=panel.querySelector('.section-title');if(!heading)continue;let display=heading.querySelector('.oral-display-actions');if(!display){display=document.createElement('div');display.className='oral-display-actions';heading.append(display)}const existing=panel.querySelector('[data-page-print]');if(existing){if(display&&existing.parentElement!==display)display.append(existing);continue}const b=document.createElement('button');b.type='button';b.className='page-print-button';b.dataset.pagePrint='';b.textContent='Drucken';b.onclick=()=>printPage(panel);(heading.querySelector('.oral-display-actions')||heading.querySelector('.task-actions,.semester-table-tools')||heading).append(b)}}
- const observer=new MutationObserver(()=>{observer.disconnect();add();watch()});function watch(){observer.observe(document.querySelector('main')||document.body,{childList:true,subtree:true})}add();watch();
+ /* 9.75: über den gemeinsamen Beobachter (gebündelt einmal je Bild statt bei jeder Einzeländerung) */
+ if(typeof classroomOnDomChange==='function'){add();classroomOnDomChange(add)}else{const observer=new MutationObserver(()=>{observer.disconnect();add();watch()});function watch(){observer.observe(document.querySelector('main')||document.body,{childList:true,subtree:true})}add();watch()}
 })();
 ;
 
@@ -2905,7 +2913,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
    const table=panel.querySelector('table:not(.compact-entry-table)')||panel.querySelector('table');if(!table)continue;
    const omit=c=>c.matches('.task-add-column,.task-space-column'),text=c=>{if(c.tagName==='TH'){const date=c.querySelector('input[type=date]'),name=c.querySelector('.task-name-input'),weight=c.querySelector('.task-weight-control input');if(date||name)return [name?.value,date?.value?.split('-').reverse().join('.'),weight?weight.value+' %':''].filter(Boolean).join(' · ')}const field=c.querySelector('input:not([type=checkbox]):not([type=radio]),select,textarea');if(field)return field.tagName==='SELECT'?field.selectedOptions[0]?.textContent||'':field.value||'—';const clone=c.cloneNode(true);clone.querySelectorAll('button,.toggle,.task-weight-menu').forEach(n=>n.remove());return clone.textContent.trim().replace(/\s+/g,' ')};
    const title=docxPageTitle(key,panel.querySelector('h2')?.textContent||'Bewertungen'),rows=[{kind:'title',cells:[cell(title)]}],header=table.tHead?.rows[0];if(header)rows.push({kind:'header',cells:[...header.cells].filter(c=>!omit(c)).map(c=>cell(text(c)))});
-   for(const tr of table.tBodies[0]?.rows||[]){rows.push({kind:'data',cells:[...tr.cells].filter(c=>!omit(c)).map((c,i)=>{const value=text(c),number=value.replace(',','.'),g=[c,...c.querySelectorAll('*')].map(n=>[...n.classList].find(v=>/^g[1-6]$/.test(v))).find(Boolean);return cell(i>0&&/^-?\d+(?:[.,]\d+)?$/.test(value)?Number(number):value,g?Number(g.slice(1)):null)})})}
+   for(const tr of classroomDataOrder(table.tBodies[0]?.rows)){rows.push({kind:'data',cells:[...tr.cells].filter(c=>!omit(c)).map((c,i)=>{const value=text(c),number=value.replace(',','.'),g=[c,...c.querySelectorAll('*')].map(n=>[...n.classList].find(v=>/^g[1-6]$/.test(v))).find(Boolean);return cell(i>0&&/^-?\d+(?:[.,]\d+)?$/.test(value)?Number(number):value,g?Number(g.slice(1)):null)})})}
    let name=(panel.querySelector('h2')?.textContent||'Bewertungen').replace(/[\\/?*\[\]:]/g,' ').slice(0,31),base=name,n=2;while(used.has(name))name=base.slice(0,27)+' '+n++;used.add(name);sheets.push({name,rows,width:Math.max(...rows.map(r=>r.cells.length))});
   }
   if(!sheets.length){alert('Keine Tabelle zum Exportieren vorhanden.');return}
@@ -3287,7 +3295,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
   const mode=d.meanDisplay||(d.meanTendencies||d.resultTendencies?'tendency':'decimal');if(mode!=='tendency'&&mode!=='decimal')return;
   /* 8.50: Sind in den Notengrenzen aller Aufgaben die Tendenzen ausgeschaltet, gibt es nur ganze Noten – keine Feinwerte aus den Rohpunkten. */
   try{const basis=(d.tasks||[]).filter(t=>t.basisPage);if(basis.length&&basis.every(t=>!taskBasisConfig(currentSubject,t.basisPage).tendencies))return}catch{}
-  const rows=panel.querySelectorAll('.task-table tbody tr');
+  const rows=classroomDataOrder(panel.querySelectorAll('.task-table tbody tr'));
   (d.students||[]).forEach((st,i)=>{const chip=rows[i]?.querySelector('.task-end-grade');if(!chip)return;let v;try{v=fineValue(d,st)}catch{return}if(v===null)return;chip.textContent=formatTaskMean(v,'grades',d);chip.className='task-end-grade '+taskMeanClass(v,'grades',d)})}
  document.addEventListener('change',e=>{const p=e.target.closest?.('.exam-combined-results');if(p&&e.target.matches('input.task-raw-score,input.task-grade-input'))setTimeout(()=>fineChips(p),0)});
  document.addEventListener('click',e=>{const p=e.target.closest?.('.exam-combined-results');if(p&&e.target.closest('.mean-seg'))setTimeout(()=>fineChips(p),0)});
@@ -3402,8 +3410,18 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
  function terms(){const item=classesBySubject[currentSubject]?.find(c=>c.id===currentClassId),points=classGradingSystem(item)==='gradePoints';return {singular:points?'Klausur':'Klassenarbeit',plural:points?'Klausuren':'Klassenarbeiten'}}
  function updateGroups(){let changed=false;for(const items of Object.values(classesBySubject))for(const item of items){const noun=classGradingSystem(item)==='gradePoints'?'Klausur':'Klassenarbeit',exams=(item.examGroups||[]).filter(g=>!['halfYear','schoolYear','performance','tests','homework','semester','quarterSummary'].includes(g.type));for(const g of exams){const match=String(g.label||'').match(/^(?:(?:Klausur|Klassenarbeit)(?:\s+(\d+))?|(\d+)\. (?:Klassenarbeit|Klausur))$/);if(match){const siblings=exams.filter(e=>e.halfYearId===g.halfYearId),number=match[1]||match[2]||String(siblings.indexOf(g)+1),name=siblings.length===1?noun:number+'. '+noun;if(g.label!==name){g.label=name;changed=true}}}}if(changed)persistClasses()}
  function replaceText(text){const t=terms();return text.replace(/Klassenarbeiten|Klausuren/g,t.plural).replace(/Klassenarbeit|Klausur/g,t.singular).replace(/(Klassenarbeit|Klausur) (\d+)\b/g,'$2. $1')}
- function paint(){observer.disconnect();updateGroups();for(const element of document.querySelectorAll('button,h2,h3,p,legend,summary,th,label')){if(element.closest('.subject-grade-dialog'))continue;for(const node of element.childNodes){if(node.nodeType!==Node.TEXT_NODE)continue;const prev=originalText.get(node),source=prev&&node.textContent===prev.output?prev.source:node.textContent,output=replaceText(source);if(output!==node.textContent)node.textContent=output;originalText.set(node,{source,output})}for(const attr of ['title','aria-label']){const value=element.getAttribute(attr);if(value&&/Klausur|Klassenarbeit/.test(value))element.setAttribute(attr,replaceText(value))}}const add=document.getElementById('addExamQuick');if(add){const label='＋ '+terms().singular,title=terms().singular+' hinzufügen';/* Nur bei Änderung schreiben – sonst löst jede Zuweisung andere Beobachter aus (Endlosschleife mit der Kompaktansicht). */if(add.textContent!==label)add.textContent=label;if(add.title!==title)add.title=title}watch()}
- const observer=new MutationObserver(paint);function watch(){observer.observe(document.body,{childList:true,subtree:true,characterData:true})}
+ /* 9.75: Bei Änderungen nur die neu hinzugekommenen Teile prüfen statt jedes Mal das ganze Dokument (spürbar am iPhone). */
+ const SEL='button,h2,h3,p,legend,summary,th,label';
+ function fix(element){if(element.closest('.subject-grade-dialog'))return;for(const node of element.childNodes){if(node.nodeType!==Node.TEXT_NODE)continue;const prev=originalText.get(node),source=prev&&node.textContent===prev.output?prev.source:node.textContent;if(!prev&&!/Klausur|Klassenarbeit/.test(source))continue;const output=replaceText(source);if(output!==node.textContent)node.textContent=output;originalText.set(node,{source,output})}for(const attr of ['title','aria-label']){const value=element.getAttribute(attr);if(value&&/Klausur|Klassenarbeit/.test(value)){const v=replaceText(value);if(v!==value)element.setAttribute(attr,v)}}}
+ function addQuick(){const add=document.getElementById('addExamQuick');if(add){const label='＋ '+terms().singular,title=terms().singular+' hinzufügen';/* Nur bei Änderung schreiben – sonst löst jede Zuweisung andere Beobachter aus (Endlosschleife mit der Kompaktansicht). */if(add.textContent!==label)add.textContent=label;if(add.title!==title)add.title=title}}
+ let lastNoun='';
+ function paint(){observer.disconnect();updateGroups();try{lastNoun=terms().singular}catch{}for(const element of document.querySelectorAll(SEL))fix(element);addQuick();watch()}
+ function paintSome(records){let noun='';try{noun=terms().singular}catch{}if(noun!==lastNoun){paint();return}observer.disconnect();updateGroups();const seen=new Set();const visit=el=>{if(!el||seen.has(el))return;seen.add(el);fix(el)};
+  for(const r of records){const n=r.type==='characterData'?r.target.parentElement:r.target;const roots=r.type==='childList'?[...r.addedNodes].map(x=>x.nodeType===1?x:x.parentElement):[n];
+   for(const root of roots){if(!root||!root.isConnected)continue;visit(root.closest?.(SEL));if(root.querySelectorAll)for(const el of root.querySelectorAll(SEL))visit(el)}
+   if(r.type==='childList'){const c=r.target.closest?.(SEL);if(c)visit(c)}}
+  addQuick();watch()}
+ const observer=new MutationObserver(paintSome);function watch(){observer.observe(document.body,{childList:true,subtree:true,characterData:true})}
  classroomHooks.add('refreshExamNavigation','exam-terminology: Bezeichnungen',{before(){updateGroups()},after(){paint()}});
  paint();
 })();
@@ -3486,7 +3504,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
 /* ==== decimal-display.js ==== */
 // Localize plain displayed decimal values without changing stored numbers or inputs.
 (()=>{
- function scan(root){if(!root||root.nodeType!==1)return;const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(node.parentElement.closest('script,style,textarea,input,[contenteditable=true],[data-app-version],[data-app-version-copy]'))continue;const value=node.textContent;if(/^\s*[+−-]?\d+\.\d+\s*(?:%|Punkte)?\s*$/.test(value))node.textContent=value.replace(/(\d)\.(\d)/,'$1,$2')}}
+ function scan(root){if(!root||root.nodeType!==1)return;const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){/* 9.75: erst der schnelle Zahlentest, dann die teure Prüfung der Umgebung */const value=node.textContent;if(!/^\s*[+−-]?\d+\.\d+\s*(?:%|Punkte)?\s*$/.test(value))continue;if(node.parentElement.closest('script,style,textarea,input,[contenteditable=true],[data-app-version],[data-app-version-copy]'))continue;node.textContent=value.replace(/(\d)\.(\d)/,'$1,$2')}}
  const observer=new MutationObserver(records=>{observer.disconnect();for(const r of records){if(r.type==='characterData')scan(r.target.parentElement);else for(const node of r.addedNodes)scan(node.nodeType===1?node:node.parentElement)}watch()});function watch(){observer.observe(document.body,{childList:true,subtree:true,characterData:true})}scan(document.body);watch();
 })();
 ;
@@ -4569,7 +4587,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    if(!show){if(existing){existing.remove();table.querySelectorAll('.sr-td').forEach(x=>x.remove())}continue}
    const cells=[...head.cells],end=cells.findLastIndex(c=>c.classList.contains('task-result-heading')||c.querySelector('.mean-seg:not(.seg-toggle)')||/Ergebnis/i.test(c.textContent));if(end<0)continue;
    if(!existing){const th=document.createElement('th');th.className='sr-th';th.title='Bei schwerwiegenden und gehäuften Verstößen gegen die sprachliche Richtigkeit: ab 5 Fehlern je Seite −1, ab 7 Fehlern je Seite −2 Notenpunkte';th.innerHTML='Sprachr.<small>Fehler / Seiten</small>';head.insertBefore(th,cells[end])}
-   const rows=[...table.tBodies[0]?.rows||[]];
+   const rows=classroomDataOrder(table.tBodies[0]?.rows);
    rows.forEach((row,i)=>{const s=data.students[i];if(!s||row.cells.length<2)return;let td=row.querySelector(':scope>.sr-td');const endCell=row.cells[row.cells.length-1];
     if(!td){td=document.createElement('td');td.className='sr-td';row.insertBefore(td,endCell)}
     const d=deduction(s.sr),q=ratio(s.sr),sig=s.sr?`${s.sr.errors}|${s.sr.pages}`:'';
@@ -4902,17 +4920,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  /* 9.70: auch auf den Einzelseiten (Klassenarbeit/Klausur, Test, Tests, Mündliche Mitarbeit, Klassenarbeiten-Übersicht, Hausaufgaben/Material).
     Nach Note erst möglich, wenn alle begonnenen Zeilen ein Ergebnis haben; ganz leere Zeilen kommen ans Ende.
     Hausaufgaben/Material: nach Anzahl „Fehlend“ (x–0 bzw. 0–x). Während ein Feld der Tabelle aktiv ist, wird nicht umsortiert.
-    Die App greift an manchen Stellen über die Zeilennummer auf die Schüler:innen zu – deshalb liefern querySelectorAll/rows
-    bei umsortierten Tabellen die Zeilen weiterhin in der ursprünglichen Reihenfolge. */
- let active=false;
+    Stellen, die Zeile i der Schüler:in i zuordnen, holen die Zeilen über classroomDataOrder() (device.js) in Datenreihenfolge;
+    dafür merkt sich jede Zeile ihre ursprüngliche Position (data-ps-idx). (9.75: ersetzt den früheren Eingriff in querySelectorAll/rows.) */
  const idxOf=r=>Number(r.dataset.psIdx);
- function fix(list){if(!active||!list||!list.length)return list;let need=false;for(const el of list){if(el.tagName==='TR'&&el.parentElement?.dataset?.psSorted==='1'){need=true;break}}if(!need)return list;
-  const arr=[...list],groups=new Map();arr.forEach((el,i)=>{const p=el.tagName==='TR'?el.parentElement:null;if(!p||p.dataset.psSorted!=='1')return;if(el.dataset.psIdx===undefined){delete p.dataset.psSorted;return}if(!groups.has(p))groups.set(p,[]);groups.get(p).push(i)});
-  for(const [p,pos] of groups){if(p.dataset.psSorted!=='1')continue;const els=pos.map(i=>arr[i]).sort((x,y)=>idxOf(x)-idxOf(y));pos.forEach((i,k)=>arr[i]=els[k])}return arr}
- {const eq=Element.prototype.querySelectorAll,dq=Document.prototype.querySelectorAll;
-  Element.prototype.querySelectorAll=function(s){const r=eq.call(this,s);return active&&typeof s==='string'&&/tr/i.test(s)?fix(r):r};
-  Document.prototype.querySelectorAll=function(s){const r=dq.call(this,s);return active&&typeof s==='string'&&/tr/i.test(s)?fix(r):r};
-  for(const P of [HTMLTableSectionElement.prototype,HTMLTableElement.prototype]){const d=Object.getOwnPropertyDescriptor(P,'rows');if(d?.get)Object.defineProperty(P,'rows',{configurable:true,enumerable:d.enumerable,get(){return fix(d.get.call(this))}})}}
  const trs=body=>[...body.children].filter(r=>r.tagName==='TR');
  function ensureIdx(body){const rows=trs(body);if(rows.every(r=>r.dataset.psIdx!==undefined))return;if(rows.every(r=>r.dataset.psIdx===undefined)){delete body.dataset.psSorted;rows.forEach((r,i)=>r.dataset.psIdx=String(i));return}
   let m=Math.max(-1,...rows.filter(r=>r.dataset.psIdx!==undefined).map(idxOf));for(const r of rows)if(r.dataset.psIdx===undefined)r.dataset.psIdx=String(++m)}
@@ -4954,8 +4964,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   else{const P=pts();f=(a,b)=>{if(a.v===null&&b.v===null)return a.i-b.i;if(a.v===null)return 1;if(b.v===null)return -1;const d=P?a.v-b.v:b.v-a.v;return (rev()?-d:d)||a.i-b.i}}
   const sorted=[...items].sort(f);const cur=trs(body);
   const same=sorted.every((x,k)=>x.r===cur.filter(r=>r.cells.length>=2)[k]);
-  if(!same){active=true;const anchor=rows.at(-1).nextSibling;for(const x of sorted)body.insertBefore(x.r,anchor)}
-  const orig=sorted.every((x,k)=>k===0||x.i>sorted[k-1].i);if(orig)delete body.dataset.psSorted;else{body.dataset.psSorted='1';active=true}}
+  if(!same){const anchor=rows.at(-1).nextSibling;for(const x of sorted)body.insertBefore(x.r,anchor)}
+  const orig=sorted.every((x,k)=>k===0||x.i>sorted[k-1].i);if(orig)delete body.dataset.psSorted;else body.dataset.psSorted='1'}
  function anchorFor(panel,table){
   if(table.matches('.test-detail-results:not(.exam-overview-table)')){const h=panel.querySelector('.test-results-head');if(h)return {box:h,before:h.querySelector(':scope>.hatch-seg')||h.querySelector('.test-results-print')}}
   const hs=panel.querySelector('.section-title .hatch-seg:not(.hs-results)');if(hs)return {box:hs.parentElement,before:hs};
@@ -5645,7 +5655,7 @@ return}
    let vals=[];try{vals=data.students.map(st=>taskStudentResult(data,st,system==='participation')).filter(v=>v!==null&&v!==undefined&&Number.isFinite(Number(v)))}catch{continue}
    const f=d=>v=>{try{return String(formatTaskMean(v,system,{...data,...d}))}catch{return ''}};
    /* 8.47: Ergebnisspalte veraltet (z. B. nach dem Ausschalten der Tendenzen in den Notengrenzen)? Dann die Seite neu zeichnen. */
-   try{const rows=[...pn.querySelectorAll('.task-table tbody tr')];let stale=false;data.students.forEach((st,i)=>{if(stale)return;const chip=rows[i]?.querySelector('.task-end-grade');if(!chip)return;const r=taskStudentResult(data,st,system==='participation');const want=r===null?'—':String(formatTaskMean(r,system,data));if(chip.textContent.trim()!==want.trim())stale=true});
+   try{const rows=classroomDataOrder(pn.querySelectorAll('.task-table tbody tr'));let stale=false;data.students.forEach((st,i)=>{if(stale)return;const chip=rows[i]?.querySelector('.task-end-grade');if(!chip)return;const r=taskStudentResult(data,st,system==='participation');const want=r===null?'—':String(formatTaskMean(r,system,data));if(chip.textContent.trim()!==want.trim())stale=true});
     if(stale){const sig=currentSubject+'|'+JSON.stringify(vals)+'|'+(data.meanDisplay||'')+'|'+!!data.resultRounded;if(redrawn[key]!==sig&&typeof renderTasksPage==='function'){redrawn[key]=sig;setTimeout(()=>{try{renderTasksPage(currentSubject,key)}catch(e){console.error(e)}},0)}}}catch{}
    for(const seg of segs){const upper=!!seg.querySelector('[data-result-rounded]');const a=upper?f({resultRounded:false}):f({meanDisplay:'decimal'}),b=upper?f({resultRounded:true}):f({meanDisplay:'rounded'});
     const lock=vals.length>0&&vals.every(v=>a(v)===b(v));
@@ -5813,10 +5823,13 @@ return}
   for(const s of bars.querySelectorAll(':scope>.qs-sect')){const l=s.querySelector('.qs-sh-l span')?.textContent.trim();if(!l)continue;const ve=s.querySelector(':scope>.qs-sh .qs-val i')||s.querySelector(':scope>.qs-row>.qs-val i');/* 8.93: Wert steht seit 8.88 auch in der Kästchen-Zeile */const v=(ve?.textContent||'').trim()||'—';parts.push((short[l]||l)+' '+v)}
   for(const s of bars.querySelectorAll('.qs-sub .qs-sect')){if(!/Hausaufgaben/.test(s.querySelector('.qs-sh-l')?.textContent||''))continue;const vv=[...s.querySelectorAll('.qs-val')].find(e=>e.offsetParent||e.getClientRects().length);const n=((vv?.innerText||'').match(/\d+/g)||['0']).pop();parts.splice(parts.length?1:0,0,n==='0'?'HA ✓':'HA ✕'+n);break}
   return parts.join(' · ')}
- function apply(){for(const b of document.querySelectorAll('.pl-fold')){b.setAttribute('aria-pressed',String(on));b.title=on?'Karten wieder ganz zeigen':'Karten verkleinern';b.setAttribute('aria-label',b.title)}
-  for(const c of cards()){const folded=on?!open.has(nameOf(c)):quick()&&closed.has(nameOf(c));let sum=c.querySelector(':scope>.qs-sum');
+ function apply(){for(const b of document.querySelectorAll('.pl-fold')){const t=on?'Karten wieder ganz zeigen':'Karten verkleinern';if(b.getAttribute('aria-pressed')!==String(on))b.setAttribute('aria-pressed',String(on));if(b.title!==t)b.title=t;if(b.getAttribute('aria-label')!==t)b.setAttribute('aria-label',t)}
+  /* 9.75: Kurzzeilen aller eingeklappten Karten in einem Durchgang berechnen (einmal kurz aufklappen statt je Karte → nur ein Layout) */
+  const all=cards(),fold=new Map(all.map(c=>[c,on?!open.has(nameOf(c)):quick()&&closed.has(nameOf(c))])),texts=new Map();
+  if(on){const need=all.filter(c=>fold.get(c)),was=need.filter(c=>c.classList.contains('qs-folded'));for(const c of was)c.classList.remove('qs-folded');for(const c of need)texts.set(c,summary(c));for(const c of was)c.classList.add('qs-folded')}
+  for(const c of all){const folded=fold.get(c);let sum=c.querySelector(':scope>.qs-sum');
    if(on){if(!sum){sum=document.createElement('div');sum.className='qs-sum';sum.innerHTML='<span class="qs-sum-t"></span><span class="qs-sum-c" aria-hidden="true">›</span>';c.append(sum)}
-    if(folded){const was=c.classList.contains('qs-folded');if(was)c.classList.remove('qs-folded');const t=summary(c);if(was)c.classList.add('qs-folded');const st=sum.querySelector('.qs-sum-t');if(st.textContent!==t)st.textContent=t}}
+    if(folded){const t=texts.get(c)??'';const st=sum.querySelector('.qs-sum-t');if(st.textContent!==t)st.textContent=t}}
    /* 8.80: nur ändern, was sich ändert (keine Schleife mit den Beobachtern) */if(c.classList.contains('qs-folded')!==folded)c.classList.toggle('qs-folded',folded);const uf=(on||quick())&&!folded;if(c.classList.contains('qs-unfolded')!==uf)c.classList.toggle('qs-unfolded',uf)}}
  window.classroomCardsFold={get:()=>on,toggle(){on=!on;open.clear();closed.clear();try{localStorage.setItem(KEY,on?'1':'0')}catch{}apply()},apply};
  document.addEventListener('click',e=>{if(!on&&!quick())return;const c=e.target.closest('.qs-cards>.qs-card:not(.qd-card)');if(!c||e.target.closest('input,label,button,.qs-mail'))return;

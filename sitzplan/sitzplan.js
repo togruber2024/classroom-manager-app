@@ -11,13 +11,20 @@
    Schutz vor Endlosschleifen (vgl. 9.06): Ändern die Funktionen selbst über viele Bilder hinweg ständig das Dokument,
    wird auf ruhige 2-mal pro Sekunde gedrosselt und ein Eintrag ins Fehlerprotokoll geschrieben. */
 (()=>{if(window.classroomOnDomChange)return;const fns=[];let planned=false,busy=false,streak=0,slow=false,warned=false,obs=null;
- const note=()=>{if(warned)return;warned=true;try{const k='classroom-error-log-v1',l=JSON.parse(localStorage.getItem(k)||'[]');l.push({t:new Date().toISOString(),w:document.body?.dataset.module||'App',m:'Darstellung: Dauer-Änderungsschleife erkannt – gedrosselt',s:'device.js'});localStorage.setItem(k,JSON.stringify(l.slice(-50)))}catch{}};
- const run=()=>{planned=false;obs?.takeRecords();busy=true;for(const f of fns){try{f()}catch(e){console.error(e)}}busy=false;
-  const changed=(obs?.takeRecords()||[]).length>0;if(changed){streak++;if(streak>40&&!slow){slow=true;note()}schedule()}else{streak=0;slow=false}};
+ const note=()=>{if(warned)return;warned=true;try{const k='classroom-error-log-v1',l=JSON.parse(localStorage.getItem(k)||'[]');l.push({t:new Date().toISOString(),w:document.body?.dataset.module||'App',m:'Darstellung: Dauer-Änderungsschleife erkannt – gedrosselt ('+culprits.join(' | ').slice(0,300)+')',s:'device.js'});localStorage.setItem(k,JSON.stringify(l.slice(-50)))}catch{}};
+ /* 9.75: merkt sich, welche Funktion das Dokument bei jedem Lauf erneut ändert (für Fehlerprotokoll und Ruhe-Test) */
+ const name=f=>(f.name&&f.name!=='fn'?f.name+': ':'')+String(f).replace(/\s+/g,' ').slice(0,90);let culprits=[];
+ window.classroomDomChangeStats={runs:0,changes:0,get culprits(){return culprits.slice()}};
+ const ms=new Map();window.classroomDomChangeStats.time=()=>[...ms].map(([f,t])=>[name(f),Math.round(t)]).sort((a,b)=>b[1]-a[1]);
+ const run=()=>{planned=false;obs?.takeRecords();busy=true;const by=[];for(const f of fns){const t0=performance.now();try{f()}catch(e){console.error(e)}ms.set(f,(ms.get(f)||0)+performance.now()-t0);if(obs&&obs.takeRecords().length)by.push(f)}busy=false;
+  const stats=window.classroomDomChangeStats;stats.runs++;const changed=by.length>0;if(changed){stats.changes++;culprits=by.map(name);streak++;if(streak>40&&!slow){slow=true;note()}schedule()}else{streak=0;slow=false}};
  const schedule=()=>{if(planned)return;planned=true;if(slow)setTimeout(()=>requestAnimationFrame(run),500);else requestAnimationFrame(run)};
  const start=()=>{if(obs)return;obs=new MutationObserver(()=>{if(!busy)schedule()});obs.observe(document.documentElement,{childList:true,subtree:true,characterData:true})};
  window.classroomOnDomChange=fn=>{fns.push(fn);start();schedule()};
 })();
+/* 9.75: Zeilen einer (evtl. umsortierten) Tabelle in Datenreihenfolge – für Stellen, die Zeile i der Schüler:in i zuordnen.
+   Die Sortierung (perf-sort.js) merkt sich die ursprüngliche Position je Zeile in data-ps-idx. */
+window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parentElement?.dataset?.psSorted==='1'))return a;if(a.some(r=>r.dataset?.psIdx===undefined))return a;return a.sort((x,y)=>Number(x.dataset.psIdx)-Number(y.dataset.psIdx))};
 ;
 
 /* ==== ui-dialogs.js ==== */
@@ -158,7 +165,7 @@
    button.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="privacy-slash" d="M3 21L21 3"/></svg>';button.setAttribute('aria-label','Datenschutzmodus');
    button.onclick=()=>toggle();}
   if(actions&&button){const help=actions.querySelector('.classroom-help-button');if(help&&help.nextElementSibling!==button)help.after(button);else if(!help&&!button.isConnected)actions.prepend(button)}
-  if(button){button.setAttribute('aria-pressed',String(on));button.classList.toggle('is-on',on);const slash=button.querySelector('.privacy-slash');if(slash)slash.style.display=on?'':'none';button.title=on?'Datenschutzmodus ist aktiv – klicken zum Beenden':'Datenschutzmodus: Namen unscharf, Bewertungen unkenntlich (zum Vorführen)'}
+  if(button){/* 9.75: nur bei Änderung schreiben */if(button.getAttribute('aria-pressed')!==String(on))button.setAttribute('aria-pressed',String(on));button.classList.toggle('is-on',on);const slash=button.querySelector('.privacy-slash'),disp=on?'':'none';if(slash&&slash.style.display!==disp)slash.style.display=disp;const t=on?'Datenschutzmodus ist aktiv – klicken zum Beenden':'Datenschutzmodus: Namen unscharf, Bewertungen unkenntlich (zum Vorführen)';if(button.title!==t)button.title=t}
   if(on&&!banner){banner=document.createElement('div');banner.className='classroom-privacy-banner';banner.setAttribute('role','status');banner.textContent='Datenschutzmodus aktiv – Namen unscharf, Farben zufällig';document.body.append(banner)}
   if(!on&&banner){banner.remove();banner=null}
  }
@@ -1555,7 +1562,7 @@ function classroomEscapeAttribute(value){return String(value??'').replace(/&/g,'
         }
         const classroomNamePopup=document.createElement('div');classroomNamePopup.className='classroom-name-suggestions';classroomNamePopup.hidden=true;classroomNamePopup.setAttribute('role','listbox');document.body.append(classroomNamePopup);
         let classroomNameInput=null,classroomNameOptions=[],classroomNameIndex=-1;
-        function classroomHideNames(){classroomNamePopup.hidden=true;if(classroomNameInput)classroomNameInput.setAttribute('aria-expanded','false');classroomNameInput=null;classroomNameIndex=-1}
+        function classroomHideNames(){if(classroomNamePopup.hidden&&!classroomNameInput)return;classroomNamePopup.hidden=true;if(classroomNameInput)classroomNameInput.setAttribute('aria-expanded','false');classroomNameInput=null;classroomNameIndex=-1}
         function classroomChooseName(index){const input=classroomNameInput,person=classroomNameOptions[index];if(!input||!person)return;input.value=person.label;classroomHideNames();input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));classroomHideNames();input.blur()}
         function classroomShowNames(input){
             const query=input.value.normalize('NFC').trim().toLocaleLowerCase('de-DE');if(!query){classroomHideNames();return}
@@ -2215,7 +2222,7 @@ homeworkButton.onclick=()=>{if(performance.now()-classroomQuickOpenedAt<60||quic
 let quickPerson=null,quickPending=null,lessonGroup=null,quickCloseAfterSave=false;
 const lessonChoices=new Map();
 let classroomLastSavedGrade=null;
-function quickClose(){classroomQuick.hidden=true;quickPerson=null;if(typeof qeLayout==='function'){qeLayout();qeMarkCurrent()}}
+function quickClose(){/* 9.75: beim Scrollen nicht ständig erneut schließen */if(classroomQuick.hidden&&!quickPerson)return;classroomQuick.hidden=true;quickPerson=null;if(typeof qeLayout==='function'){qeLayout();qeMarkCurrent()}}
 
 function lessonSource(){return classroomLinkedSnapshot?.classes.find(s=>s.id===lessonSubject.value)}
 function fillLesson(select,items,preferred){select.replaceChildren();for(const item of items){const option=document.createElement('option');option.value=item.key??item.id;option.textContent=item.label??item.subject;select.append(option)}if([...select.options].some(o=>o.value===preferred))select.value=preferred;select.disabled=!items.length;if(!items.length){const option=document.createElement('option');option.textContent='Noch nicht angelegt';option.value='';select.append(option)}}
@@ -3030,9 +3037,11 @@ document.addEventListener('keydown',event=>{
  function rotated(){return document.getElementById('classroomRotateButton')?.getAttribute('aria-pressed')==='true'}
  function frontOnTopNow(){return frontIsLow()!==rotated()}
  // Links: nach unten rollen, rechts: nach oben – bezogen auf die Bildschirmdarstellung.
- function labels(){const top=frontOnTopNow(),downIs=top?'hinten':'vorn',upIs=top?'vorn':'hinten';button.textContent='↓';back.textContent='↑';
-  button.title='Alle Sitzreihen samt Tischen eine Reihe nach unten verschieben (nach '+downIs+'); die unterste Reihe kommt nach oben. Ankerplätze und Pult bleiben fest.';button.setAttribute('aria-label','Sitzreihen nach unten rollen');
-  back.title='Alle Sitzreihen samt Tischen eine Reihe nach oben verschieben (nach '+upIs+'); die oberste Reihe kommt nach unten. Ankerplätze und Pult bleiben fest.';back.setAttribute('aria-label','Sitzreihen nach oben rollen')}
+ /* 9.75: nur schreiben, was sich ändert – sonst stoßen sich die Beobachter gegenseitig endlos an */
+ const put=(el,k,v)=>{if(k==='text'){if(el.textContent!==v)el.textContent=v}else if(k==='title'){if(el.title!==v)el.title=v}else if(el.getAttribute(k)!==v)el.setAttribute(k,v)};
+ function labels(){const top=frontOnTopNow(),downIs=top?'hinten':'vorn',upIs=top?'vorn':'hinten';put(button,'text','↓');put(back,'text','↑');
+  put(button,'title','Alle Sitzreihen samt Tischen eine Reihe nach unten verschieben (nach '+downIs+'); die unterste Reihe kommt nach oben. Ankerplätze und Pult bleiben fest.');put(button,'aria-label','Sitzreihen nach unten rollen');
+  put(back,'title','Alle Sitzreihen samt Tischen eine Reihe nach oben verschieben (nach '+upIs+'); die oberste Reihe kommt nach unten. Ankerplätze und Pult bleiben fest.');put(back,'aria-label','Sitzreihen nach oben rollen')}
  function refresh(){const toolbar=document.querySelector('.classroom-plan-actions'),random=toolbar?.querySelector('#randomStudentButton');if(split.parentElement!==toolbar||!split.isConnected){if(random)random.after(split);else toolbar?.prepend(split)}const gm=groupMode(),off=gm||rows().length<2;button.disabled=off;back.disabled=off;if(off)split.title=gm?'Rollen ist im Gruppenmodus nicht verfügbar – die Gruppen würden auseinandergerissen.':'Rollen braucht mindestens zwei besetzte Reihen.';else split.removeAttribute('title');labels()}
  new MutationObserver(()=>labels()).observe(document.body,{subtree:true,attributes:true,attributeFilter:['aria-pressed']});
  const style=document.createElement('style');style.textContent=
@@ -3124,7 +3133,7 @@ document.addEventListener('keydown',event=>{
 /* ==== decimal-display.js ==== */
 // Localize plain displayed decimal values without changing stored numbers or inputs.
 (()=>{
- function scan(root){if(!root||root.nodeType!==1)return;const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(node.parentElement.closest('script,style,textarea,input,[contenteditable=true],[data-app-version],[data-app-version-copy]'))continue;const value=node.textContent;if(/^\s*[+−-]?\d+\.\d+\s*(?:%|Punkte)?\s*$/.test(value))node.textContent=value.replace(/(\d)\.(\d)/,'$1,$2')}}
+ function scan(root){if(!root||root.nodeType!==1)return;const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){/* 9.75: erst der schnelle Zahlentest, dann die teure Prüfung der Umgebung */const value=node.textContent;if(!/^\s*[+−-]?\d+\.\d+\s*(?:%|Punkte)?\s*$/.test(value))continue;if(node.parentElement.closest('script,style,textarea,input,[contenteditable=true],[data-app-version],[data-app-version-copy]'))continue;node.textContent=value.replace(/(\d)\.(\d)/,'$1,$2')}}
  const observer=new MutationObserver(records=>{observer.disconnect();for(const r of records){if(r.type==='characterData')scan(r.target.parentElement);else for(const node of r.addedNodes)scan(node.nodeType===1?node:node.parentElement)}watch()});function watch(){observer.observe(document.body,{childList:true,subtree:true,characterData:true})}scan(document.body);watch();
 })();
 ;
@@ -3348,7 +3357,7 @@ document.addEventListener('keydown',event=>{
  zoom.prepend(seg);
  const qv=()=>{try{return parent.localStorage.getItem('classroom-quickview-v1')==='1'}catch{return false}},isOpen=()=>tog.getAttribute('aria-expanded')!=='false';
  const cur=()=>!isOpen()?'off':qv()?'notes':'set';
- function sync(){const c=cur();for(const b of seg.querySelectorAll('[data-col]:not([data-col=swap])')){const k=b.dataset.col,on=k===c;b.setAttribute('aria-pressed',String(on));const t=on?(k==='set'?'Einstellungen ausblenden':'Noten ausblenden'):(k==='set'?'Einstellungen in der Spalte zeigen':'Noten der Klasse in der Spalte zeigen');b.title=t;b.setAttribute('aria-label',t)}
+ function sync(){const c=cur();for(const b of seg.querySelectorAll('[data-col]:not([data-col=swap])')){const k=b.dataset.col,on=k===c;if(b.getAttribute('aria-pressed')!==String(on))b.setAttribute('aria-pressed',String(on));const t=on?(k==='set'?'Einstellungen ausblenden':'Noten ausblenden'):(k==='set'?'Einstellungen in der Spalte zeigen':'Noten der Klasse in der Spalte zeigen');if(b.title!==t)b.title=t;if(b.getAttribute('aria-label')!==t)b.setAttribute('aria-label',t)}
   {const sw=seg.querySelector('.plan-col-swap');if(sw){const off=c==='off';if(sw.disabled!==off)sw.disabled=off;if(off){sw.title='Erst die Spalte einblenden';sw.setAttribute('aria-label',sw.title)}else if(sw.title==='Erst die Spalte einblenden'){const r=document.documentElement.classList.contains('cm-side-right');sw.title=r?'Spalte auf die linke Seite':'Spalte auf die rechte Seite';sw.setAttribute('aria-label',sw.title)}}}}
  seg.addEventListener('click',e=>{const b=e.target.closest('[data-col]');if(!b)return;const k=b.dataset.col,active=cur()===k;
   /* 8.91: zweiter Klick auf ☑ Noten holt die Einstellungen zurück; zweiter Klick auf ☰ klappt die Spalte zu */
@@ -3572,6 +3581,9 @@ document.addEventListener('keydown',event=>{
   if(finderEl&&!finderEl.__planWatch){finderEl.__planWatch=true;new MutationObserver(()=>{if(finderEl.dataset.open!=='true')forceFinder=false;scheduleFit()}).observe(finderEl,{attributes:true,attributeFilter:['data-open']})}
   if(assignEl&&!assignEl.__planWatch){assignEl.__planWatch=true;new MutationObserver(scheduleFit).observe(assignEl,{attributes:true,attributeFilter:['aria-pressed']})}
   const list=collapsibles(bar),beamer=document.documentElement.classList.contains('classroom-beamer');
+  /* 9.75: Hat sich nichts geändert, was die Aufteilung beeinflusst, nichts anfassen (Probe-Umschalten löste sonst Beobachter-Schleifen aus) */
+  const sig=[bar.clientWidth,innerWidth,document.documentElement.className,forceFinder,finderEl?.dataset.open,assignEl?.getAttribute('aria-pressed'),...[...bar.children].map(c=>(c.id||String(c.className).replace(/\s*plan-actions-collapsed/g,''))+':'+c.textContent.length+':'+(c.disabled?1:0)+(c.hidden?1:0))].join('#');
+  if(sig===lastSig)return;
   for(const el of [...list,finderEl,assignEl].filter(Boolean))el.classList.remove('plan-actions-collapsed');bar.classList.remove('plan-actions-wrap');
   const over=()=>bar.scrollWidth>bar.clientWidth+1,hidden=[];
   if(!beamer&&bar.clientWidth>0)for(const el of list){if(!over())break;el.classList.add('plan-actions-collapsed');hidden.push(el)}
@@ -3588,7 +3600,9 @@ document.addEventListener('keydown',event=>{
     for(const el of hidden){if(el.matches('.student-finder')){const b=proxy('Schüler finden',el);b.onclick=()=>{forceFinder=true;el.classList.remove('plan-actions-collapsed');el.querySelector('#studentSearchToggle')?.click();scheduleFit()};box.append(b);continue}if(el.matches('.classroom-roll-split')){for(const b of el.querySelectorAll(':scope > .btn')){const arrow=label(b);box.append(proxy('Rollen '+arrow+(arrow.includes('↓')?' (nach unten)':arrow.includes('↑')?' (nach oben)':''),b))}}else box.append(proxy(label(el),el))}
     const line=document.createElement('div');line.className='plan-actions-menu-sep';line.setAttribute('role','separator');menu.prepend(box,line)}
   }else for(const b of box.querySelectorAll('.plan-actions-proxy'))if(b.disabled!==!!b._target.disabled)b.disabled=!!b._target.disabled;
+  lastSig=sig;
  }
+ let lastSig='';
  function scheduleFit(){if(fitPlanned)return;fitPlanned=true;requestAnimationFrame(fit)}
  new ResizeObserver(scheduleFit).observe(grid);
  new MutationObserver(scheduleFit).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
@@ -3667,11 +3681,13 @@ document.addEventListener('keydown',event=>{
   else{b.textContent=label(el);b.onclick=()=>el.click()}
   return b;
  }
- function sync(menu){for(const b of menu.querySelectorAll('button')){const el=b._target;if(!el)continue;if(el.matches('.plan-assess-switch'))b.setAttribute('aria-checked',String(!!el.querySelector('input')?.checked));else if(el.matches('[data-zoom-fit]'))b.setAttribute('aria-pressed',el.getAttribute('aria-pressed')||'false');b.disabled=!!el.disabled}}
+ function sync(menu){const put=(b,k,v)=>{if(b.getAttribute(k)!==v)b.setAttribute(k,v)};for(const b of menu.querySelectorAll('button')){const el=b._target;if(!el)continue;if(el.matches('.plan-assess-switch'))put(b,'aria-checked',String(!!el.querySelector('input')?.checked));else if(el.matches('[data-zoom-fit]'))put(b,'aria-pressed',el.getAttribute('aria-pressed')||'false');if(b.disabled!==!!el.disabled)b.disabled=!!el.disabled}}
  function fit(){
   planned=false;const bar=document.querySelector('.classroom-plan-zoom');if(!bar)return;
   if(observed!==bar){observed=bar;new MutationObserver(list=>{if(list.some(m=>[...m.addedNodes,...m.removedNodes].some(n=>!n.closest?.('.zoom-more')&&!(n.matches?.('.zoom-more')))))schedule()}).observe(bar,{childList:true});new ResizeObserver(schedule).observe(bar);bar.addEventListener('change',()=>sync(bar.querySelector('.zoom-more-menu')||document.createElement('div')))}
   const more=ensureMore(bar),menu=more.querySelector('.zoom-more-menu'),list=items(bar),beamer=document.documentElement.classList.contains('classroom-beamer');
+  const sig=[bar.clientWidth,innerWidth,document.documentElement.className,...[...bar.children].map(c=>String(c.className).replace(/\s*zoom-collapsed/g,'')+':'+c.textContent.length+':'+(c.disabled?1:0))].join('#');
+  if(sig===zoomSig){sync(menu);return}
   for(const el of list)el.classList.remove('zoom-collapsed');more.hidden=false;bar.classList.add('zoom-fit-row');bar.classList.remove('zoom-fit-wrap');
   const over=()=>bar.scrollWidth>bar.clientWidth+1,hidden=[];
   if(!beamer&&bar.clientWidth>0)for(const el of list){if(!over())break;el.classList.add('zoom-collapsed');hidden.push(el)}
@@ -3680,8 +3696,9 @@ document.addEventListener('keydown',event=>{
   const kids=[...bar.children];hidden.sort((a,b)=>kids.indexOf(a)-kids.indexOf(b));
   const key=hidden.map(label).join('|');
   if(key!==lastKey){lastKey=key;menu.replaceChildren(...hidden.map(proxyFor))}
-  sync(menu);
+  sync(menu);zoomSig=sig;
  }
+ let zoomSig='';
  function schedule(){if(planned)return;planned=true;requestAnimationFrame(fit)}
  document.addEventListener('pointerdown',e=>{if(open&&!e.target.closest?.('.zoom-more'))close()},true);
  document.addEventListener('keydown',e=>{if(open&&e.key==='Escape')close()});
