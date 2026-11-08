@@ -4879,6 +4879,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const KEY='classroom-perf-sort-v1';
  const get=()=>{try{return localStorage.getItem(KEY)==='grade'?'grade':'name'}catch{return 'name'}};
  const set=v=>{try{localStorage.setItem(KEY,v)}catch{}};
+ /* 9.68: zweiter Tipp auf den aktiven Knopf dreht die Reihenfolge um (Z–A bzw. stärkste zuerst) */
+ const rev=()=>{try{return localStorage.getItem(KEY+'-rev')==='1'}catch{return false}};const setRev=v=>{try{localStorage.setItem(KEY+'-rev',v?'1':'0')}catch{}};
  const pts=()=>{try{return classUsesGradePoints()}catch{return false}};
  // „2,6“ · „11“ · „3−“ · „2+“ · „2-3“ → Zahl
  function parse(t){t=String(t??'').replace(/\s+/g,'').replace('−','-').replace('–','-');if(!t||t==='—'||t==='-')return null;
@@ -4887,6 +4889,10 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   m=t.match(/^([1-6])-([1-6])$/);if(m)return (Number(m[1])+Number(m[2]))/2;return null}
  const cmp=(points)=>(a,b)=>{if(a.v===null&&b.v===null)return a.n.localeCompare(b.n,'de');if(a.v===null)return 1;if(b.v===null)return -1;return (points?a.v-b.v:b.v-a.v)||a.n.localeCompare(b.n,'de')};
  const byName=(a,b)=>a.n.localeCompare(b.n,'de');
+ const flip=f=>(a,b)=>{if(a.v===null||b.v===null)return f(a,b);return -f(a,b)};
+ const sorter=(mode,base)=>{const f=mode==='grade'?cmp(pts()):base;return rev()?(mode==='grade'?flip(f):(a,b)=>-f(a,b)):f};
+ function paint(seg,mode){const r=rev();for(const b of seg.querySelectorAll('[data-psort]')){const on=b.dataset.psort===mode,txt=b.dataset.psort==='name'?(on&&r?'Z–A':'A–Z'):'Note'+(on?(r?' ↑':' ↓'):''),tip=b.dataset.psort==='name'?(on?(r?'Z–A · nochmal tippen: A–Z':'A–Z · nochmal tippen: Z–A'):'Alphabetisch'):(on?(r?'Stärkste zuerst · nochmal tippen: schwächste zuerst':'Schwächste zuerst · nochmal tippen: stärkste zuerst'):'Nach Note – schwächste zuerst');
+  if(b.textContent!==txt)b.textContent=txt;if(b.title!==tip)b.title=tip;if(b.getAttribute('aria-pressed')!==String(on)){b.setAttribute('aria-pressed',String(on));b.setAttribute('aria-checked',String(on))}}}
  const segHtml=(cls,m)=>`<span class="${cls}" role="radiogroup" aria-label="Sortierung"><button type="button" role="radio" data-psort="name" aria-pressed="${m==='name'}" aria-checked="${m==='name'}" title="Alphabetisch">A–Z</button><button type="button" role="radio" data-psort="grade" aria-pressed="${m==='grade'}" aria-checked="${m==='grade'}" title="Nach Note – schwächste zuerst">Note</button></span>`;
 
  // ---------- Tabellen (Mac/iPad)
@@ -4904,7 +4910,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const heads=[...(table.tHead?.rows[0]?.cells||[])].map(c=>c.textContent.replace(/\s+/g,' ').trim());
   const rows=[...body.rows].filter(r=>r.querySelector('th,td'));if(rows.length<2)return;
   const items=rows.map(r=>({r,n:(r.cells[0]?.querySelector('input')?.value||r.cells[0]?.textContent||'').trim(),v:mode==='grade'?rowKey(r,heads):null}));
-  const sorted=[...items].sort(mode==='grade'?cmp(pts()):byName);
+  const sorted=[...items].sort(sorter(mode,byName));
   if(sorted.every((x,i)=>x===items[i]))return;for(const x of sorted)body.append(x.r)}
  function placeDesktop(){
   if(document.documentElement.classList.contains('ph-lite'))return;
@@ -4914,7 +4920,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    if(!table){panel.querySelector('.ps-seg')?.remove();continue}
    const hs=panel.querySelector('.section-title .hatch-seg:not(.hs-results)');const box=hs?.parentElement||panel.querySelector('.section-title .oral-display-actions');
    let seg=panel.querySelector('.ps-seg');if(!seg&&box){const w=document.createElement('span');w.innerHTML=segHtml('mean-seg ps-seg',mode);seg=w.firstChild;hs?hs.before(seg):box.append(seg)}
-   if(seg){for(const b of seg.querySelectorAll('[data-psort]')){const on=String(b.dataset.psort===mode);if(b.getAttribute('aria-pressed')!==on){b.setAttribute('aria-pressed',on);b.setAttribute('aria-checked',on)}}}
+   if(seg)paint(seg,mode);
    for(const t of panel.querySelectorAll('table.quarter-summary-table, table.compact-entry-table'))sortTable(t,mode);if(!table.classList.contains('quarter-summary-table'))sortTable(table,mode);
    const last=[...(table.tHead?.rows[0]?.cells||[])];for(const th of last)th.classList.toggle('ps-key',false)}
  }
@@ -4924,17 +4930,17 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const mode=get(),bar=document.querySelector('.pl-bar');
   if(bar){let seg=bar.querySelector('.pl-sort');
    if(!seg){const w=document.createElement('span');w.innerHTML=segHtml('pl-seg pl-sort',mode);seg=w.firstChild;const r2=bar.querySelector('.pl-row2'),mean=r2?.querySelector('.pl-mean');if(r2){mean?mean.before(seg):r2.append(seg)}}
-   for(const b of seg.querySelectorAll('[data-psort]')){const on=String(b.dataset.psort===mode);if(b.getAttribute('aria-pressed')!==on){b.setAttribute('aria-pressed',on);b.setAttribute('aria-checked',on)}}
+   paint(seg,mode);
    /* passt die 2. Zeile nicht, wandert der Schalter rechts in die Hinweiszeile („Antippen zeigt …“) */
    const r2=bar.querySelector('.pl-row2'),stand=bar.querySelector('.pl-stand');const over=()=>{if(!r2)return false;const kids=[...r2.children].filter(k=>k.offsetParent&&getComputedStyle(k).display!=='none');const gap=parseFloat(getComputedStyle(r2).columnGap)||8;const need=kids.reduce((a,k)=>a+Math.max(k.scrollWidth,k.getBoundingClientRect().width),0)+gap*Math.max(0,kids.length-1);return need>r2.clientWidth+1};
    if(r2&&seg.parentElement===r2&&over()&&stand){stand.classList.add('ps-stand');stand.append(seg)}
    else if(r2&&seg.parentElement===stand){const mean=r2.querySelector('.pl-mean');mean?mean.before(seg):r2.append(seg);if(over())stand.append(seg);else stand.classList.remove('ps-stand')}}
   for(const box of document.querySelectorAll('.qs-cards')){const cards=[...box.children].filter(c=>c.matches('.qs-card:not(.qd-card)'));if(cards.length<2)continue;const sorted=order(cards);if(sorted.some((c,i)=>c!==cards[i])){const anchor=cards.at(-1).nextSibling;for(const c of sorted)box.insertBefore(c,anchor)}}}
- function order(cards){const mode=get();cards.forEach((c,i)=>{if(!c.dataset.idx)c.dataset.idx=String(i)});const items=cards.map(c=>({c,n:(c.querySelector('.qs-name')?.textContent||'').trim(),i:Number(c.dataset.idx),v:mode==='grade'?parse(c.querySelector('.qs-big')?.textContent):null}));return items.sort(mode==='grade'?cmp(pts()):(a,b)=>a.i-b.i).map(x=>x.c)}
+ function order(cards){const mode=get();cards.forEach((c,i)=>{if(!c.dataset.idx)c.dataset.idx=String(i)});const items=cards.map(c=>({c,n:(c.querySelector('.qs-name')?.textContent||'').trim(),i:Number(c.dataset.idx),v:mode==='grade'?parse(c.querySelector('.qs-big')?.textContent):null}));return items.sort(sorter(mode,(a,b)=>a.i-b.i)).map(x=>x.c)}
  window.classroomPerfOrder=order;
  function run(){try{placeDesktop();placePhone()}catch(e){console.warn('Sortierung',e)}}window.classroomPerfSort=run;
- document.addEventListener('click',e=>{const b=e.target.closest?.('[data-psort]');if(!b)return;e.preventDefault();e.stopPropagation();set(b.dataset.psort);run()},true);
- const st=document.createElement('style');st.textContent='.ps-seg{margin:0 6px 0 0!important;align-self:center}.ps-seg button{min-width:0!important;padding:0 12px!important}'
+ document.addEventListener('click',e=>{const b=e.target.closest?.('[data-psort]');if(!b)return;e.preventDefault();e.stopPropagation();if(b.dataset.psort===get())setRev(!rev());else{set(b.dataset.psort);setRev(false)}run()},true);
+ const st=document.createElement('style');st.textContent='.ps-seg{margin:0 6px 0 0!important;align-self:center}.ps-seg button{min-width:0!important;padding:0 12px!important;white-space:nowrap}'
   +'.pl-sort button{padding:0 9px!important}.pl-row2{flex-wrap:nowrap!important}.pl-row2 .pl-sort{flex:none;margin-left:auto}.pl-row2 .pl-sort+.pl-mean{margin-left:0!important}'
   +'.pl-stand.ps-stand{display:flex;align-items:center;justify-content:space-between;gap:8px}.pl-stand .pl-sort{flex:none}';
  document.head.append(st);
