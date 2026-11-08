@@ -4729,6 +4729,108 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
 })();
 ;
 
+/* ==== noten/reminders.js ==== */
+/* 9.63: Erinnerungen – fehlende Hausaufgaben bzw. fehlendes Material: ab dem 3. und erneut ab dem 5. Mal im Halbjahr.
+   Glocke mit rotem Punkt oben in der Kopfzeile (Hauptfenster); das Fenster „Erinnerungen“ listet alle Klassen und Fächer.
+   „Elternbrief verfassen“ füllt eine Vorlage aus (Hausaufgaben 3./5., Material 3./5.), „Erledigt“ merkt den Brief, „Später“ blendet bis morgen aus.
+   Es wird nichts verschickt; gespeichert wird nur lokal, welche Erinnerung erledigt bzw. verschoben ist. */
+(()=>{
+ const KEY='classroom-reminders-v1',LEVELS=[3,5];
+ const TOP=(()=>{try{return window.top.document}catch{return null}})();if(!TOP)return;
+ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const store=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}};
+ const save=s=>{try{localStorage.setItem(KEY,JSON.stringify(s))}catch{}};
+ const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+ const dm=d=>/^\d{4}-\d\d-\d\d$/.test(d)?d.slice(8,10)+'.'+d.slice(5,7)+'.':'';
+ const norm=n=>String(n||'').trim().toLocaleLowerCase('de-DE');
+ const WORD={1:'ersten',2:'zweiten',3:'dritten',4:'vierten',5:'fünften',6:'sechsten',7:'siebten',8:'achten',9:'neunten',10:'zehnten',11:'elften',12:'zwölften'};
+ const ord=n=>WORD[n]||n+'.';
+
+ // Alle Klassen aller Fächer: fehlende Einträge im aktuellen Halbjahr (bis heute)
+ function collect(){
+  const out=[],t=today();
+  for(const [subject,classes] of Object.entries(classesBySubject||{}))for(const cls of classes||[]){
+   const groups=(subject===currentSubject&&cls.id===currentClassId?subjectExamGroups(subject):cls.examGroups)||[];
+   const years=groups.filter(g=>g.type==='halfYear');if(!years.length)continue;
+   const hy=subject===currentSubject&&cls.id===currentClassId&&currentHalfYearId?currentHalfYearId:years.at(-1).id;
+   const scope=`${subject}::class::${cls.id}`,vals=subjectStates?.[scope]?.customValues||{};
+   for(const mat of [false,true]){const map=new Map();
+    for(const g of groups.filter(g=>g.type==='homework'&&g.halfYearId===hy&&!!g.material===mat))for(const page of g.pages||[]){const d=vals[page];if(!d)continue;
+     for(const st of d.students||[]){const nm=String(st.name||'').trim();if(!nm)continue;for(const a of d.assignments||[]){if(a.date&&a.date>t)continue;if(st.statuses?.[a.id]==='missing'){const k=norm(nm);if(!map.has(k))map.set(k,{name:nm,gender:st.gender||'',dates:[]});map.get(k).dates.push(a.date||'')}}}}
+    for(const p of map.values()){p.dates.sort();out.push({subject,classId:cls.id,classLabel:cls.label||'',hy,kind:mat?'mat':'ha',...p,count:p.dates.length})}}
+  }
+  return out}
+ const idOf=r=>[r.subject,r.classId,r.hy,r.kind,norm(r.name)].join('|');
+ function state(){const s=store(),t=today(),open=[],done=[];
+  for(const r of collect()){const a=s[idOf(r)]||{},lvl=[...LEVELS].reverse().find(l=>r.count>=l);if(!lvl)continue;
+   if((a.level||0)>=lvl){done.push({...r,ack:a});continue}
+   if(a.snooze&&a.snooze>t&&(a.snoozeLevel||0)>=lvl)continue;open.push({...r,level:lvl,ack:a})}
+  const sort=(x,y)=>x.classLabel.localeCompare(y.classLabel,'de',{numeric:true})||x.name.localeCompare(y.name,'de');open.sort(sort);done.sort(sort);return {open,done}}
+
+ // Brief
+ function letter(r){
+  let gender=r.gender;try{const g=classroomCentralGroup(`${r.subject}::${r.classId}`);const p=g?.students.find(s=>!s.deleted&&norm(s.name)===norm(r.name));if(p?.gender)gender=p.gender}catch{}
+  const parts=r.name.split(',').map(x=>x.trim()),first=parts.length>1?parts.slice(1).join(', '):parts[0].split(/\s+/)[0],last=parts.length>1?parts[0]:parts[0].split(/\s+/).slice(1).join(' ');
+  const w=gender==='w',m=gender==='m',child=w?'Ihre Tochter':m?'Ihr Sohn':'Ihr Kind',poss=w?'ihre':'seine',possN=w?'ihr':'sein',duties=w?'ihren':'seinen',pron=w?'sie':m?'er':'es';
+  const fach=subjects[r.subject]?.label||'[Fach]',dates=r.dates.map(dm).filter(Boolean).join(', '),hello=`Guten Tag Herr und Frau ${last||'[Nachname]'},`,bye='\n\nMit freundlichen Grüßen\nTorsten Gruber';
+  const before=(r.ack?.level||0)>=3&&r.ack?.letter;
+  if(r.kind==='ha'&&r.level<5)return `${hello}\n\n${child} ${first} hat zum ${ord(r.count)} Mal ${poss} Hausaufgaben im Fach ${fach} nicht oder nur unzureichend angefertigt${dates?' ('+dates+')':''}. Darunter leiden ${poss} mündliche Beteiligung sowie ${poss} methodischen und fachlichen Fähigkeiten. Bitte stellen Sie sicher, dass ${child} ${duties} Pflichten in Zukunft nachkommt.\n\nBitte bestätigen Sie mir kurz, dass Sie diese Nachricht erhalten haben.${bye}`;
+  if(r.kind==='ha')return `${hello}\n\n${before?'wie bereits angekündigt, hat':'leider hat'} ${first} im Fach ${fach} nun zum ${ord(r.count)} Mal in diesem Halbjahr ${poss} Hausaufgaben nicht oder nur unzureichend angefertigt${dates?' ('+dates+')':''}. Die Hausaufgaben dienen der Übung und Festigung des Unterrichtsstoffs; Lücken wirken sich daher auf die Leistungen und die Bewertung der sonstigen Mitarbeit aus.\n\nIch bitte Sie um ein kurzes Gespräch, um gemeinsam zu überlegen, wie wir ${first} unterstützen können. Bitte melden Sie sich bei mir.${bye}`;
+  if(r.level<5)return `${hello}\n\n${child} ${first} hatte im Fach ${fach} nun zum ${ord(r.count)} Mal ${possN} Arbeitsmaterial nicht dabei${dates?' ('+dates+')':''}. Ohne Buch, Heft oder andere Materialien kann ${pron} dem Unterricht nur eingeschränkt folgen und die Aufgaben nicht vollständig bearbeiten.\n\nIch möchte Sie bitten, gemeinsam mit ${first} darauf zu achten, dass die Schultasche am Vortag vollständig gepackt wird. Wenn es Gründe gibt, die ich kennen sollte, melden Sie sich gern bei mir.${bye}`;
+  return `${hello}\n\n${before?'leider muss ich mich erneut an Sie wenden: ':''}${first} hatte im Fach ${fach} inzwischen zum ${ord(r.count)} Mal in diesem Halbjahr ${possN} Material nicht dabei${dates?' ('+dates+')':''}. Das wirkt sich zunehmend auf die Mitarbeit aus und fließt in die Bewertung der sonstigen Mitarbeit ein.\n\nIch würde das gern in einem kurzen Gespräch mit Ihnen besprechen. Bitte teilen Sie mir mit, wann Sie erreichbar sind.${bye}`;
+ }
+ function ack(r,extra){const s=store();s[idOf(r)]={...(s[idOf(r)]||{}),level:r.level,date:today(),...extra};save(s);refresh()}
+ function snooze(r){const s=store(),d=new Date(Date.now()+864e5-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);s[idOf(r)]={...(s[idOf(r)]||{}),snooze:d,snoozeLevel:r.level};save(s);refresh()}
+
+ // Oberfläche im Hauptfenster
+ const BELL='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>';
+ let bell=TOP.getElementById('crBell');
+ if(!bell){bell=TOP.createElement('button');bell.type='button';bell.id='crBell';bell.className='cr-bell';bell.innerHTML=BELL+'<span class="cr-dot" hidden></span>';bell.title='Erinnerungen';bell.setAttribute('aria-label','Erinnerungen')}
+ const placeBell=()=>{const box=TOP.querySelector('.app-header .classroom-global-actions');if(box&&bell.parentElement!==box)box.prepend(bell)};
+ const dlg=TOP.getElementById('crDialog')||(()=>{const d=TOP.createElement('dialog');d.id='crDialog';d.className='cr-dialog';TOP.body.append(d);return d})();
+ function list(){const {open,done}=state();const kind=r=>r.kind==='ha'?'Hausaufgaben fehlend':'Material fehlend';
+  const item=(r,i)=>`<div class="cr-it"><div class="cr-top"><b>${esc(r.name)}</b><span>${esc(subjects[r.subject]?.label||'')} · ${esc(r.classLabel)}</span></div><div class="cr-why">${r.count}× ${kind(r)}<span class="cr-dates">${r.dates.map(d=>`<i>${esc(dm(d)||'—')}</i>`).join('')}</span></div><div class="cr-act"><button type="button" class="cr-pri" data-cr-letter="${i}">Elternbrief verfassen</button><button type="button" data-cr-done="${i}">Erledigt</button><button type="button" data-cr-later="${i}">Später</button></div></div>`;
+  const doneItem=r=>`<div class="cr-it is-done"><div class="cr-top"><b>${esc(r.name)}</b><span>${esc(subjects[r.subject]?.label||'')} · ${esc(r.classLabel)}</span></div><div class="cr-why"><span class="cr-ok">✓ ${r.ack.letter?'Elternbrief':'Erledigt'} am ${esc(dm(r.ack.date))}</span> · ${r.count}× ${kind(r)}${r.ack.level<5?' · nächste Erinnerung beim 5. Mal':''}</div></div>`;
+  dlg.innerHTML=`<div class="cr-head"><div><h2>Erinnerungen</h2><p>Fehlende Hausaufgaben bzw. Material im laufenden Halbjahr – Erinnerung beim 3. und 5. Mal.</p></div><button type="button" class="cr-close" data-cr-close>Schließen</button></div><div class="cr-body">${open.length?open.map(item).join(''):'<p class="cr-empty">Keine offenen Erinnerungen.</p>'}${done.length?'<h3>Erledigt</h3>'+done.map(doneItem).join(''):''}</div>`;
+  dlg.querySelector('[data-cr-close]').onclick=()=>dlg.close();
+  dlg.querySelectorAll('[data-cr-done]').forEach(b=>b.onclick=()=>{ack(open[+b.dataset.crDone]);list()});
+  dlg.querySelectorAll('[data-cr-later]').forEach(b=>b.onclick=()=>{snooze(open[+b.dataset.crLater]);list()});
+  dlg.querySelectorAll('[data-cr-letter]').forEach(b=>b.onclick=()=>compose(open[+b.dataset.crLetter]))}
+ function compose(r){const text=letter(r);
+  dlg.innerHTML=`<div class="cr-head"><div><h2>Elternbrief – ${esc(r.name)}</h2><p>${esc(subjects[r.subject]?.label||'')} · ${esc(r.classLabel)} · ${r.count}× ${r.kind==='ha'?'Hausaufgaben':'Material'} fehlend</p></div></div><textarea class="cr-text" rows="14">${esc(text)}</textarea><p class="cr-status" role="status"></p><div class="cr-row"><button type="button" data-cr-back>Zurück</button><button type="button" data-cr-mail>Als Mail öffnen</button><button type="button" class="cr-pri" data-cr-copy>Text kopieren · Erledigt</button></div>`;
+  const ta=dlg.querySelector('textarea'),st=dlg.querySelector('.cr-status');
+  dlg.querySelector('[data-cr-back]').onclick=list;
+  dlg.querySelector('[data-cr-mail]').onclick=()=>{const subj=`${subjects[r.subject]?.label||''}: ${r.kind==='ha'?'Hausaufgaben':'Arbeitsmaterial'} – ${r.name.split(',').slice(1).join(',').trim()||r.name}`;try{TOP.defaultView.location.href='mailto:?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(ta.value)}catch{}ack(r,{letter:true});st.textContent='Als erledigt markiert.'};
+  dlg.querySelector('[data-cr-copy]').onclick=async()=>{let ok=false;try{await TOP.defaultView.navigator.clipboard.writeText(ta.value);ok=true}catch{try{ta.select();ok=TOP.execCommand('copy')}catch{}}ack(r,{letter:true});st.textContent=ok?'Text kopiert und als erledigt markiert.':'Kopieren nicht möglich – bitte Text markieren und kopieren. Als erledigt markiert.';setTimeout(()=>{if(dlg.open)list()},1400)};
+  ta.focus({preventScroll:true})}
+ bell.onclick=()=>{list();if(!dlg.open)dlg.showModal()};
+ dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close()});
+ let last='';function refresh(){placeBell();let n=0;try{n=state().open.length}catch(e){console.warn('Erinnerungen',e)}const dot=bell.querySelector('.cr-dot'),sig=String(n);if(sig!==last){last=sig;dot.hidden=!n;dot.textContent=n>9?'9+':String(n);bell.classList.toggle('has-open',!!n);bell.title=n?`${n} offene Erinnerung${n===1?'':'en'}`:'Erinnerungen'}}
+ if(!TOP.getElementById('crStyle')){const st=TOP.createElement('style');st.id='crStyle';st.textContent=`
+ .cr-bell{position:relative;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:42px;height:42px;padding:0;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:#2f5f9b;cursor:pointer}
+ .cr-bell svg{width:20px;height:20px}.cr-dot{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 4px;box-sizing:border-box;border:2px solid #fff;border-radius:999px;background:#d64545;color:#fff;font:700 11.5px/16px system-ui,sans-serif;text-align:center}.cr-dot[hidden]{display:none}
+ html body .app-header .classroom-global-actions>.cr-bell:not(#_):not(#__):not(#___){display:inline-flex!important}
+ @media (max-width:540px),(max-height:500px) and (pointer:coarse){html body .app-header .classroom-global-actions>.cr-bell:not(.has-open):not(#_):not(#__):not(#___){display:none!important}html body .app-header .classroom-global-actions>.cr-bell:not(#_){width:40px;height:40px;border-radius:999px}.app-header .cr-bell svg{width:24px;height:24px}}
+ .cr-dialog{width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 40px);box-sizing:border-box;padding:0;border:1px solid #dbe3ef;border-radius:16px;color:#243247;font:16px/1.45 ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;overflow:auto}
+ .cr-dialog::backdrop{background:rgba(28,43,70,.38)}
+ .cr-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 18px 6px}.cr-head h2{margin:0;font-size:1.2rem}.cr-head p{margin:2px 0 0;color:#66758a;font-size:.86rem}
+ .cr-body{padding:6px 18px 18px}.cr-body h3{margin:16px 0 8px;font-size:.95rem;color:#66758a}
+ .cr-it{border:1px solid #e3e9f1;border-radius:12px;padding:11px 13px;margin-bottom:10px}.cr-it.is-done{opacity:.7}
+ .cr-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}.cr-top span{color:#66758a;font-size:.84rem;white-space:nowrap}
+ .cr-why{margin:5px 0 9px;font-size:.92rem;color:#4b5b70}.cr-it.is-done .cr-why{margin-bottom:0}.cr-dates{display:inline-flex;flex-wrap:wrap;gap:4px;margin-left:6px;vertical-align:middle}.cr-dates i{font-style:normal;background:#d64545;color:#fff;border-radius:5px;font-size:.72rem;padding:1px 5px}
+ .cr-ok{color:#2e7d4f;font-weight:600}
+ .cr-act,.cr-row{display:flex;gap:8px;flex-wrap:wrap}.cr-row{justify-content:flex-end;padding:0 18px 18px}
+ .cr-dialog button{box-sizing:border-box;height:38px;padding:0 14px;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:.92rem;cursor:pointer}
+ .cr-dialog button.cr-pri{background:#2f5f9b;border-color:#2f5f9b;color:#fff;font-weight:600}
+ .cr-text{display:block;box-sizing:border-box;width:calc(100% - 36px);margin:8px 18px 4px;padding:10px 12px;border:1px solid #dbe3ef;border-radius:10px;font:inherit;font-size:.92rem;line-height:1.45;color:#243247;resize:vertical}
+ .cr-status{min-height:1.2em;margin:0 18px 6px;font-size:.84rem;color:#2e7d4f}.cr-empty{color:#66758a}`;TOP.head.append(st)}
+ placeBell();refresh();
+ if(typeof classroomOnDomChange==='function'){let t=0;classroomOnDomChange(()=>{clearTimeout(t);t=setTimeout(refresh,600)})}
+ setInterval(refresh,60000);
+ window.classroomReminders={state,refresh};
+})();
+;
+
 /* ==== noten/design-extras.js ==== */
 /* Design 6.93 – Noten-Manager. Jede Rubrik ist eigenständig und lässt sich einzeln entfernen. */
 
