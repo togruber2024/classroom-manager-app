@@ -1,7 +1,3 @@
-/* ==== index.html (eingebettet) ==== */
-/* 9.38: iOS-Statusleiste der Home-Bildschirm-App – iOS liest sie nur beim Start: im dunklen Erscheinungsbild schwarz mit weißer Schrift */try{var a=localStorage.getItem("classroom-manager-appearance-v1")||"auto",d=a==="dark"||(a==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches);if(d)document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').setAttribute("content","black")}catch(e){}
-;
-
 /* ==== device.js ==== */
 /* 9.10: Gemeinsame Geräteerkennung für alle Bereiche (statt verstreuter Einzelprüfungen).
    touch(): Gerät mit Touch (iPhone, iPad, Android) – Mac und PC mit Maus: false.
@@ -2338,7 +2334,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
 (()=>{
  const KEY='classroom-manager-appearance-v1',mq=matchMedia('(prefers-color-scheme: dark)');
  const get=()=>{try{return localStorage.getItem(KEY)||'auto'}catch{return 'auto'}};
- const apply=()=>{const v=get(),dark=v==='dark'||(v==='auto'&&mq.matches);document.documentElement.classList.toggle('classroom-dark',dark);/* 9.34: Statusleiste/Browserrand mitfärben – der Farbfilter erreicht sie nicht */try{if(window===window.top){/* 9.37: vorhandene Angaben nur umfärben (iOS beobachtet Änderungen, aber keine ersetzten Elemente) */const c=dark?'#1c1d20':'#f6f8fc';let metas=[...document.querySelectorAll('meta[name="theme-color"]')];if(!metas.length){const m=document.createElement('meta');m.name='theme-color';document.head.append(m);metas=[m]}for(const m of metas)if(m.content!==c)m.setAttribute('content',c)}}catch{}for(const b of document.querySelectorAll('[data-appearance]'))b.setAttribute('aria-checked',String(b.dataset.appearance===v))};
+ const apply=()=>{const v=get(),dark=v==='dark'||(v==='auto'&&mq.matches);document.documentElement.classList.toggle('classroom-dark',dark);/* 9.34: Statusleiste/Browserrand mitfärben – der Farbfilter erreicht sie nicht */try{if(window===window.top){/* 9.39: wie in 9.34 – Angabe neu anlegen (so färbte iOS die Statusleiste dunkel) */const metas=[...document.querySelectorAll('meta[name="theme-color"]')];for(const m of metas)m.remove();const m=document.createElement('meta');m.name='theme-color';m.content=dark?'#1c1d20':'#f6f8fc';document.head.append(m)}}catch{}for(const b of document.querySelectorAll('[data-appearance]'))b.setAttribute('aria-checked',String(b.dataset.appearance===v))};
  mq.addEventListener?.('change',apply);window.addEventListener('storage',e=>{if(e.key===KEY)apply()});
  function inject(){const d=document.querySelector('.classroom-theme-dialog');if(!d||d.querySelector('.appearance-row'))return;
   const row=document.createElement('div');row.className='appearance-row';row.innerHTML='<span>Erscheinungsbild</span><div class="appearance-seg" role="radiogroup" aria-label="Erscheinungsbild"><button type="button" role="radio" data-appearance="light">Hell</button><button type="button" role="radio" data-appearance="auto" title="Wie in den Systemeinstellungen">Automatisch</button><button type="button" role="radio" data-appearance="dark">Dunkel</button></div>';
