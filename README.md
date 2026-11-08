@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 08.11.2026 · Version 9.37
+Stand: 08.11.2026 · Version 9.38
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1214,3 +1214,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.35: Dunkler Modus – Hilfe auf dem iPhone (nicht-modales Fenster) wurde doppelt umgefärbt und erschien hell; behoben
 9.36: Knopf „Ergebnisse“ heißt „Übersicht“; doppelter Spaltenabstand in der Übersicht; „Epochal (1. Hj.)“ / „Epochal (2. Hj.)“
 9.37: Klassen bearbeiten – Auswahlfelder nicht mehr abgeschnitten/übereinander; dunkler Modus: Statusleistenfarbe wird an bestehenden Angaben umgestellt
+9.38: iPhone-App – Statusleiste im dunklen Erscheinungsbild schwarz mit weißer Schrift (wird beim Start der App gelesen)

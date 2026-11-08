@@ -1,3 +1,7 @@
+/* ==== index.html (eingebettet) ==== */
+/* 9.38: iOS-Statusleiste der Home-Bildschirm-App – iOS liest sie nur beim Start: im dunklen Erscheinungsbild schwarz mit weißer Schrift */try{var a=localStorage.getItem("classroom-manager-appearance-v1")||"auto",d=a==="dark"||(a==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches);if(d)document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').setAttribute("content","black")}catch(e){}
+;
+
 /* ==== device.js ==== */
 /* 9.10: Gemeinsame Geräteerkennung für alle Bereiche (statt verstreuter Einzelprüfungen).
    touch(): Gerät mit Touch (iPhone, iPad, Android) – Mac und PC mit Maus: false.
