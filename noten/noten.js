@@ -4418,7 +4418,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const CSS=`@page{size:A4 portrait;margin:12mm}
  *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
  html,body{margin:0;background:#fff!important;color:#1f2a3d;font-family:Inter,-apple-system,"Helvetica Neue",Arial,sans-serif}
- .ep{position:relative;min-height:270mm;font-size:11.5px}
+ .ep{position:relative;min-height:258mm;font-size:11.5px;break-after:avoid;page-break-after:avoid}/* 9.55: 270 mm erzeugte auf iPad/iPhone eine leere 2. Seite (Fußzeile rutschte über den Rand) */
  .ep h1{font-size:20px;margin:0 0 2px;line-height:1.2}.ep h2{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:#6b7a90;margin:0 0 6px;font-weight:650}
  .ep-sub{color:#5b6b82;font-size:12px}.ep-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #2f5f9b;padding-bottom:9px;margin-bottom:12px}
  .ep-r{text-align:right;font-size:11px;color:#5b6b82;line-height:1.5;white-space:nowrap}
