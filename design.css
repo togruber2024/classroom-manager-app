@@ -1038,3 +1038,8 @@ dialog:has(.rename-row-field>select+select){width:min(720px,calc(100vw - 32px));
 
 /* 9.46: schräge Spaltenköpfe – zu lange Bezeichnungen enden an der Oberkante des Kopfbandes statt darüber hinauszuragen. */
 body[data-module=noten] .compact-slanted-heading:not(#_){overflow:hidden}
+
+/* 9.48: „Klausur erstellen“ – Bewertungsart mit Erklärzeile */
+#addExamUpperMode .exam-mode-opt{display:flex!important;align-items:flex-start;gap:10px}
+#addExamUpperMode .exam-mode-opt input{margin-top:4px;flex:none}
+#addExamUpperMode .exam-mode-opt small{display:block;margin-top:1px;color:#66758a;font-size:13px;line-height:1.35;font-weight:400}
