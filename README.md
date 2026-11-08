@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 08.11.2026 · Version 9.75
+Stand: 08.11.2026 · Version 9.76
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1252,3 +1252,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.73: PDF-Dateiname beim Drucken mit Klasse, Fach, KA-Nummer/Test und Datum
 9.74: Endlosschleife des Sortierschalters behoben (Ruckeln iPhone/iPad, träge Navigation Mac); Hinweis in der Seitenleiste sichtbar
 9.75: Optimierung: Beobachter-Schleifen im Unterrichts-Manager behoben, Begriffe/Dezimal/Drucken-Knopf effizienter, Sortier-Eingriff durch Datenreihenfolge ersetzt; Ruhe- und Zuordnungstest
+9.76: Halbjahreszeilen: SoMi · Halbjahr übernimmt eigene Q2-Note sofort, Klassenarbeit nach SoMi · Halbjahr, Halbjahr ∑ 100 %; keine KA-Spalte auf Quartalsseiten
