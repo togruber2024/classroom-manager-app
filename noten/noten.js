@@ -751,7 +751,7 @@ if(window.parent!==window)parent.postMessage({type:'classroom:rosters',snapshot:
     const examGroups=subjectExamGroups(currentSubject).filter(group=>group.halfYearId===currentHalfYearId&&!['halfYear','schoolYear','performance','semester','quarterSummary','tests','homework'].includes(group.type)),usedNames=new Set(examGroups.map(group=>String(group.label||'').trim().toLocaleLowerCase('de-DE')));let number=1;while(usedNames.has(`${number}. ${currentExamNoun()}`.toLocaleLowerCase('de-DE'))||(number===1&&usedNames.has(currentExamNoun().toLocaleLowerCase('de-DE'))))number++;$('addExamName').value=!examGroups.length?currentExamNoun():`${number}. ${currentExamNoun()}`;$('addExamError').textContent='';for(const id of ['addExamText','addExamPoints','addExamTasks','addExamGrades','addExamGradePoints'])$(id).checked=false;syncExamChoiceAvailability();
     document.querySelector('[name=upperExamMode][value=raw]').checked=true;syncExamChoiceAvailability();$('addExamDialog').showModal();
   }
-  function syncExamChoiceAvailability(){const upper=classGradingSystem(classesBySubject[currentSubject]?.find(c=>c.id===currentClassId))==='gradePoints';$('addExamFormat').classList.toggle('hide',upper);$('addExamTaskSystemGroup').classList.add('hide');$('addExamResults').classList.add('hide');$('addExamUpperMode').classList.toggle('hide',!upper);$('addExamGrades').checked=!upper;$('addExamGradePoints').checked=upper;$('addExamTasks').checked=true;if(upper){const raw=document.querySelector('[name=upperExamMode]:checked')?.value==='raw';$('addExamText').checked=false;$('addExamPoints').checked=raw}}
+  function syncExamChoiceAvailability(){const upper=classGradingSystem(classesBySubject[currentSubject]?.find(c=>c.id===currentClassId))==='gradePoints';$('addExamFormat').classList.toggle('hide',upper);$('addExamTaskSystemGroup').classList.add('hide');$('addExamResults').classList.add('hide');$('addExamUpperMode').classList.toggle('hide',!upper);$('addExamGrades').checked=!upper;$('addExamGradePoints').checked=upper;$('addExamTasks').checked=true;if(upper){const mode=document.querySelector('[name=upperExamMode]:checked')?.value||'raw';$('addExamText').checked=mode==='text';$('addExamPoints').checked=mode==='raw'}}
   function confirmAddExam(){
     const source=subjectPageSource(currentSubject)||(builtInExtraPages[currentSubject]={pages:[],pageNames:{},pageSystems:{},examGroups:[]});source.pages??=[];source.pageNames??={};source.pageSystems??={};source.examGroups??=[];
     const examGroups=subjectExamGroups(currentSubject);
@@ -4195,8 +4195,13 @@ const subjectSettingsStyle=document.createElement('style');subjectSettingsStyle.
 +'.subject-scale-hint{margin:4px 0 14px;padding:8px 12px;border-radius:9px;background:#eef4fb;color:#36557d;font-size:.9rem}';
 document.head.append(subjectSettingsStyle);
 /* 9.65: Fachvorgabe „Direkt“ – neue Klausuren starten mit „Notenpunkte direkt“; zweite Gewichtungszeile (bei 2 Klausuren) */
-(()=>{const dlgE=document.getElementById('addExamDialog');if(dlgE)new MutationObserver(()=>{if(!dlgE.open)return;try{const k=klausurSaved(currentSubject),want=k?.mode==='direct'?'direct':'raw';const radio=dlgE.querySelector('input[name="upperExamMode"][value="'+want+'"]');if(radio)radio.checked=true}catch{}}).observe(dlgE,{attributes:true,attributeFilter:['open']});
- const st=document.createElement('style');st.textContent='.subject-weight-controls .k-count{color:#66758a;font-size:.86rem;white-space:nowrap}.k-weight-2{margin-top:-4px}.k-weight-2>strong{display:none}.k-direct-hint{margin:6px 0 14px;padding:10px 14px;border:1px solid #d3e1f4;border-radius:12px;background:#eef4fc;color:#36557d;font-size:.92rem}.k-direct-hint[hidden],.k-scale-area[hidden]{display:none!important}';document.head.append(st)})();
+(()=>{const dlgE=document.getElementById('addExamDialog'),fs=document.getElementById('addExamUpperMode');
+ /* 9.67: Fachvorgabe „Direkt“ – Bewertung zugeklappt als Hinweis mit „ändern“; sonst drei Optionen (Rohpunkte, Fehler, direkt) */
+ let sum=null;if(fs){sum=document.createElement('p');sum.className='exam-mode-summary';sum.hidden=true;fs.before(sum)}
+ if(dlgE)new MutationObserver(()=>{if(!dlgE.open||!fs)return;try{const k=klausurSaved(currentSubject),direct=k?.mode==='direct',upper=!fs.classList.contains('hide');const radio=dlgE.querySelector('input[name="upperExamMode"][value="'+(direct?'direct':'raw')+'"]');if(radio){radio.checked=true;radio.dispatchEvent(new Event('change',{bubbles:true}))}
+  const collapse=upper&&direct;fs.classList.toggle('mode-collapsed',collapse);sum.hidden=!collapse;if(collapse){sum.innerHTML='Bewertung: <b>Notenpunkte direkt</b> (Fachvorgabe '+htmlEscape(subjects[currentSubject]?.label||'')+') · <button type="button" class="link-button">ändern</button>';sum.querySelector('button').onclick=()=>{fs.classList.remove('mode-collapsed');sum.hidden=true}}}catch(e){console.warn(e)}}).observe(dlgE,{attributes:true,attributeFilter:['open']});
+ document.addEventListener('change',e=>{if(e.target?.name==='upperExamMode'&&typeof syncExamChoiceAvailability==='function')syncExamChoiceAvailability()});
+ const st=document.createElement('style');st.textContent='.subject-weight-controls .k-count{color:#66758a;font-size:.86rem;white-space:nowrap}.k-weight-2{margin-top:-4px}.k-weight-2>strong{display:none}.k-direct-hint{margin:6px 0 14px;padding:10px 14px;border:1px solid #d3e1f4;border-radius:12px;background:#eef4fc;color:#36557d;font-size:.92rem}.k-direct-hint[hidden],.k-scale-area[hidden]{display:none!important}#addExamUpperMode.mode-collapsed{display:none!important}.exam-mode-summary{margin:4px 0 10px;padding:10px 14px;border:1px solid #d3e1f4;border-radius:12px;background:#eef4fc;color:#36557d;font-size:.92rem}.exam-mode-summary[hidden]{display:none}.exam-mode-summary .link-button{border:0;background:none;padding:0;color:#2f5f9b;text-decoration:underline;font:inherit;cursor:pointer}';document.head.append(st)})();
 ;
 
 /* ==== noten/navigation-bridge.js ==== */
@@ -4769,7 +4774,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const idOf=r=>[r.subject,r.classId,r.hy,r.kind,norm(r.name)].join('|');
  function state(){const s=store(),t=today(),open=[],done=[];
   for(const r of collect()){const a=s[idOf(r)]||{},lvl=[...LEVELS].reverse().find(l=>r.count>=l);if(!lvl)continue;
-   if((a.level||0)>=lvl){done.push({...r,ack:a});continue}
+   /* 9.67: „Nicht nötig“ – bis zum nächsten Fehlen ruhig */if(a.skip!=null&&r.count<=a.skip){done.push({...r,ack:a,skipped:true});continue}
+   if((a.level||0)>=lvl&&!(a.skip!=null&&(a.count??0)<=a.skip)){done.push({...r,ack:a});continue}
    if(a.snooze&&a.snooze>t&&(a.snoozeLevel||0)>=lvl)continue;open.push({...r,level:lvl,ack:a})}
   const sort=(x,y)=>x.classLabel.localeCompare(y.classLabel,'de',{numeric:true})||x.name.localeCompare(y.name,'de');open.sort(sort);done.sort(sort);return {open,done}}
 
@@ -4805,7 +4811,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   dlg.querySelector('[data-cr-cancel]').onclick=list;
   dlg.querySelector('[data-cr-save]').onclick=()=>{const out={};for(const [k] of TABS)if(draft[k]!==DEFAULTS[k])out[k]=draft[k];if(sig.value.trim()!==DEFAULTS.sig)out.sig=sig.value.trim();try{localStorage.setItem(TKEY,JSON.stringify(out))}catch{}list()};
   paint()}
- function ack(r,extra){const s=store();s[idOf(r)]={...(s[idOf(r)]||{}),level:r.level,date:today(),...extra};save(s);refresh()}
+ function ack(r,extra){const s=store();s[idOf(r)]={...(s[idOf(r)]||{}),level:r.level,count:r.count,date:today(),...extra};save(s);refresh()}
+ function skip(r){const s=store();s[idOf(r)]={skip:r.count,date:today()};save(s);refresh()}
  function snooze(r){const s=store(),d=new Date(Date.now()+864e5-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);s[idOf(r)]={...(s[idOf(r)]||{}),snooze:d,snoozeLevel:r.level};save(s);refresh()}
 
  // Oberfläche im Hauptfenster
@@ -4815,11 +4822,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const placeBell=()=>{const box=TOP.querySelector('.app-header .classroom-global-actions');if(box&&bell.parentElement!==box)box.prepend(bell)};
  const dlg=TOP.getElementById('crDialog')||(()=>{const d=TOP.createElement('dialog');d.id='crDialog';d.className='cr-dialog';TOP.body.append(d);return d})();
  function list(){const {open,done}=state();const kind=r=>r.kind==='ha'?'Hausaufgaben fehlend':'Material fehlend';
-  const item=(r,i)=>`<div class="cr-it"><div class="cr-top"><b>${esc(r.name)}</b><span>${esc(subjects[r.subject]?.label||'')} · ${esc(r.classLabel)}</span></div><div class="cr-why">${r.count}× ${kind(r)}<span class="cr-dates">${r.dates.map(d=>`<i>${esc(dm(d)||'—')}</i>`).join('')}</span></div><div class="cr-act"><button type="button" class="cr-pri" data-cr-letter="${i}">Elternbrief verfassen</button><button type="button" data-cr-done="${i}">Erledigt</button><button type="button" data-cr-later="${i}">Später</button></div></div>`;
-  const doneItem=r=>`<div class="cr-it is-done"><div class="cr-top"><b>${esc(r.name)}</b><span>${esc(subjects[r.subject]?.label||'')} · ${esc(r.classLabel)}</span></div><div class="cr-why"><span class="cr-ok">✓ ${r.ack.letter?'Elternbrief':'Erledigt'} am ${esc(dm(r.ack.date))}</span> · ${r.count}× ${kind(r)}${r.ack.level<5?' · nächste Erinnerung beim 5. Mal':''}</div></div>`;
+  const item=(r,i)=>`<div class="cr-it"><div class="cr-top"><b>${esc(r.name)}</b><span>${esc(subjects[r.subject]?.label||'')} · ${esc(r.classLabel)}</span></div><div class="cr-why">${r.count}× ${kind(r)}<span class="cr-dates">${r.dates.map(d=>`<i>${esc(dm(d)||'—')}</i>`).join('')}</span>${ago(r)}</div><div class="cr-act"><button type="button" class="cr-pri" data-cr-letter="${i}">Elternbrief verfassen</button><button type="button" data-cr-done="${i}">Erledigt</button><button type="button" data-cr-later="${i}">Später</button><button type="button" data-cr-skip="${i}" title="Kein Brief nötig – erst beim nächsten Fehlen wieder erinnern">Nicht nötig</button></div></div>`;
+  const ago=r=>{const l=r.dates.filter(Boolean).at(-1);if(!l)return '';const w=Math.floor((Date.parse(today())-Date.parse(l))/864e5/7);return w>=4?`<span class="cr-ago">letztes Fehlen vor ${w} Wochen</span>`:''};
+  const doneItem=r=>`<div class="cr-it is-done"><div class="cr-top"><b>${esc(r.name)}</b><span>${esc(subjects[r.subject]?.label||'')} · ${esc(r.classLabel)}</span></div><div class="cr-why"><span class="cr-ok">✓ ${r.skipped?'Nicht nötig':r.ack.letter?'Elternbrief':'Erledigt'} am ${esc(dm(r.ack.date))}</span> · ${r.count}× ${kind(r)}${r.skipped?' · nächste Erinnerung beim '+(r.count+1)+'. Mal':r.ack.level<5?' · nächste Erinnerung beim 5. Mal':''}</div></div>`;
   dlg.innerHTML=`<div class="cr-head"><div><h2>Erinnerungen</h2><p>Fehlende Hausaufgaben bzw. Material im laufenden Halbjahr – Erinnerung beim 3. und 5. Mal.</p></div><span class="cr-head-btns"><button type="button" data-cr-tpl>Vorlagen …</button><button type="button" class="cr-close" data-cr-close>Schließen</button></span></div><div class="cr-body">${open.length?open.map(item).join(''):'<p class="cr-empty">Keine offenen Erinnerungen.</p>'}${done.length?'<h3>Erledigt</h3>'+done.map(doneItem).join(''):''}</div>`;
   dlg.querySelector('[data-cr-close]').onclick=()=>dlg.close();dlg.querySelector('[data-cr-tpl]').onclick=editTemplates;
   dlg.querySelectorAll('[data-cr-done]').forEach(b=>b.onclick=()=>{ack(open[+b.dataset.crDone]);list()});
+  dlg.querySelectorAll('[data-cr-skip]').forEach(b=>b.onclick=()=>{skip(open[+b.dataset.crSkip]);list()});
   dlg.querySelectorAll('[data-cr-later]').forEach(b=>b.onclick=()=>{snooze(open[+b.dataset.crLater]);list()});
   dlg.querySelectorAll('[data-cr-letter]').forEach(b=>b.onclick=()=>compose(open[+b.dataset.crLetter]))}
  function compose(r){const text=letter(r);
@@ -4844,7 +4853,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .cr-it{border:1px solid #e3e9f1;border-radius:12px;padding:11px 13px;margin-bottom:10px}.cr-it.is-done{opacity:.7}
  .cr-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}.cr-top span{color:#66758a;font-size:.84rem;white-space:nowrap}
  .cr-why{margin:5px 0 9px;font-size:.92rem;color:#4b5b70}.cr-it.is-done .cr-why{margin-bottom:0}.cr-dates{display:inline-flex;flex-wrap:wrap;gap:4px;margin-left:6px;vertical-align:middle}.cr-dates i{font-style:normal;background:#d64545;color:#fff;border-radius:5px;font-size:.72rem;padding:1px 5px}
- .cr-ok{color:#2e7d4f;font-weight:600}
+ .cr-ago{display:block;margin-top:3px;font-size:.8rem;color:#8a97a9}.cr-ok{color:#2e7d4f;font-weight:600}
  .cr-act,.cr-row{display:flex;gap:8px;flex-wrap:wrap}.cr-row{justify-content:flex-end;padding:0 18px 18px}
  .cr-dialog button{box-sizing:border-box;height:38px;padding:0 14px;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:.92rem;cursor:pointer}
  .cr-dialog button.cr-pri{background:#2f5f9b;border-color:#2f5f9b;color:#fff;font-weight:600}
@@ -4858,6 +4867,78 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  if(typeof classroomOnDomChange==='function'){let t=0;classroomOnDomChange(()=>{clearTimeout(t);t=setTimeout(refresh,600)})}
  setInterval(refresh,60000);
  window.classroomReminders={state,refresh};
+})();
+;
+
+/* ==== noten/perf-sort.js ==== */
+/* 9.67: Sortierung „A–Z | Note“ – schwächste zuerst.
+   Mac/iPad: Quartals- und Halbjahresnoten (Schalter vor dem Markierungs-Schalter); iPhone: Noten-Karten (Schalter in der 2. Zeile,
+   reicht der Platz nicht, rechts in der Hinweiszeile darunter). Sortiert wird nur die Anzeige – an den Daten ändert sich nichts.
+   Die Wahl wird je Gerät gemerkt. */
+(()=>{
+ const KEY='classroom-perf-sort-v1';
+ const get=()=>{try{return localStorage.getItem(KEY)==='grade'?'grade':'name'}catch{return 'name'}};
+ const set=v=>{try{localStorage.setItem(KEY,v)}catch{}};
+ const pts=()=>{try{return classUsesGradePoints()}catch{return false}};
+ // „2,6“ · „11“ · „3−“ · „2+“ · „2-3“ → Zahl
+ function parse(t){t=String(t??'').replace(/\s+/g,'').replace('−','-').replace('–','-');if(!t||t==='—'||t==='-')return null;
+  let m=t.match(/^(\d+(?:,\d+)?)\*?$/);if(m)return Number(m[1].replace(',','.'));
+  m=t.match(/^([1-6])([+-])$/);if(m)return Number(m[1])+(m[2]==='+'?-1/3:1/3);
+  m=t.match(/^([1-6])-([1-6])$/);if(m)return (Number(m[1])+Number(m[2]))/2;return null}
+ const cmp=(points)=>(a,b)=>{if(a.v===null&&b.v===null)return a.n.localeCompare(b.n,'de');if(a.v===null)return 1;if(b.v===null)return -1;return (points?a.v-b.v:b.v-a.v)||a.n.localeCompare(b.n,'de')};
+ const byName=(a,b)=>a.n.localeCompare(b.n,'de');
+ const segHtml=(cls,m)=>`<span class="${cls}" role="radiogroup" aria-label="Sortierung"><button type="button" role="radio" data-psort="name" aria-pressed="${m==='name'}" aria-checked="${m==='name'}" title="Alphabetisch">A–Z</button><button type="button" role="radio" data-psort="grade" aria-pressed="${m==='grade'}" aria-checked="${m==='grade'}" title="Nach Note – schwächste zuerst">Note</button></span>`;
+
+ // ---------- Tabellen (Mac/iPad)
+ function rowKey(row,heads){
+  const fv=row.dataset.finalValue??row.dataset.computed;if(fv!==undefined&&fv!=='')return Number(fv);
+  const cells=[...row.cells];const at=re=>heads.findIndex(h=>re.test(h));
+  const inputOf=k=>{const i=cells[k]?.querySelector('input');return i&&i.value.trim()?parse(i.value):null};
+  const textOf=k=>k>=0&&cells[k]?parse(cells[k].textContent):null;
+  const order=[[/^Halbjahr\s*✎|^Halbjahr$/,'in'],[/^Halbjahr\s*∑/,'tx'],[/^Quartalsnote(?! · Q1)/,'in'],[/^Sonstige Mitarbeit$/,'tx']];
+  for(const [re,kind] of order){const k=at(re);if(k<0)continue;const v=kind==='in'?inputOf(k):textOf(k);if(v!==null&&Number.isFinite(v))return v}
+  if(row.dataset.other!==undefined&&row.dataset.other!=='')return Number(row.dataset.other);
+  return null}
+ function sortTable(table,mode){
+  const body=table.tBodies[0];if(!body||table.contains(document.activeElement))return;
+  const heads=[...(table.tHead?.rows[0]?.cells||[])].map(c=>c.textContent.replace(/\s+/g,' ').trim());
+  const rows=[...body.rows].filter(r=>r.querySelector('th,td'));if(rows.length<2)return;
+  const items=rows.map(r=>({r,n:(r.cells[0]?.querySelector('input')?.value||r.cells[0]?.textContent||'').trim(),v:mode==='grade'?rowKey(r,heads):null}));
+  const sorted=[...items].sort(mode==='grade'?cmp(pts()):byName);
+  if(sorted.every((x,i)=>x===items[i]))return;for(const x of sorted)body.append(x.r)}
+ function placeDesktop(){
+  if(document.documentElement.classList.contains('ph-lite'))return;
+  const mode=get();
+  for(const panel of document.querySelectorAll('[data-custom-panel]')){if(!panel.offsetParent)continue;
+   const table=panel.querySelector('table.quarter-summary-table')||[...panel.querySelectorAll('table')].find(t=>t.querySelector('tbody tr[data-final-value],tbody tr[data-computed]'));
+   if(!table){panel.querySelector('.ps-seg')?.remove();continue}
+   const hs=panel.querySelector('.section-title .hatch-seg:not(.hs-results)');const box=hs?.parentElement||panel.querySelector('.section-title .oral-display-actions');
+   let seg=panel.querySelector('.ps-seg');if(!seg&&box){const w=document.createElement('span');w.innerHTML=segHtml('mean-seg ps-seg',mode);seg=w.firstChild;hs?hs.before(seg):box.append(seg)}
+   if(seg){for(const b of seg.querySelectorAll('[data-psort]')){const on=String(b.dataset.psort===mode);if(b.getAttribute('aria-pressed')!==on){b.setAttribute('aria-pressed',on);b.setAttribute('aria-checked',on)}}}
+   for(const t of panel.querySelectorAll('table.quarter-summary-table, table.compact-entry-table'))sortTable(t,mode);if(!table.classList.contains('quarter-summary-table'))sortTable(table,mode);
+   const last=[...(table.tHead?.rows[0]?.cells||[])];for(const th of last)th.classList.toggle('ps-key',false)}
+ }
+ // ---------- Karten (iPhone)
+ function placePhone(){
+  if(!document.documentElement.classList.contains('ph-lite'))return;
+  const mode=get(),bar=document.querySelector('.pl-bar');
+  if(bar){let seg=bar.querySelector('.pl-sort');
+   if(!seg){const w=document.createElement('span');w.innerHTML=segHtml('pl-seg pl-sort',mode);seg=w.firstChild;const r2=bar.querySelector('.pl-row2'),mean=r2?.querySelector('.pl-mean');if(r2){mean?mean.before(seg):r2.append(seg)}}
+   for(const b of seg.querySelectorAll('[data-psort]')){const on=String(b.dataset.psort===mode);if(b.getAttribute('aria-pressed')!==on){b.setAttribute('aria-pressed',on);b.setAttribute('aria-checked',on)}}
+   /* passt die 2. Zeile nicht, wandert der Schalter rechts in die Hinweiszeile („Antippen zeigt …“) */
+   const r2=bar.querySelector('.pl-row2'),stand=bar.querySelector('.pl-stand');const over=()=>{if(!r2)return false;const kids=[...r2.children].filter(k=>k.offsetParent&&getComputedStyle(k).display!=='none');const gap=parseFloat(getComputedStyle(r2).columnGap)||8;const need=kids.reduce((a,k)=>a+Math.max(k.scrollWidth,k.getBoundingClientRect().width),0)+gap*Math.max(0,kids.length-1);return need>r2.clientWidth+1};
+   if(r2&&seg.parentElement===r2&&over()&&stand){stand.classList.add('ps-stand');stand.append(seg)}
+   else if(r2&&seg.parentElement===stand){const mean=r2.querySelector('.pl-mean');mean?mean.before(seg):r2.append(seg);if(over())stand.append(seg);else stand.classList.remove('ps-stand')}}
+  for(const box of document.querySelectorAll('.qs-cards')){const cards=[...box.children].filter(c=>c.matches('.qs-card:not(.qd-card)'));if(cards.length<2)continue;const sorted=order(cards);if(sorted.some((c,i)=>c!==cards[i])){const anchor=cards.at(-1).nextSibling;for(const c of sorted)box.insertBefore(c,anchor)}}}
+ function order(cards){const mode=get();cards.forEach((c,i)=>{if(!c.dataset.idx)c.dataset.idx=String(i)});const items=cards.map(c=>({c,n:(c.querySelector('.qs-name')?.textContent||'').trim(),i:Number(c.dataset.idx),v:mode==='grade'?parse(c.querySelector('.qs-big')?.textContent):null}));return items.sort(mode==='grade'?cmp(pts()):(a,b)=>a.i-b.i).map(x=>x.c)}
+ window.classroomPerfOrder=order;
+ function run(){try{placeDesktop();placePhone()}catch(e){console.warn('Sortierung',e)}}window.classroomPerfSort=run;
+ document.addEventListener('click',e=>{const b=e.target.closest?.('[data-psort]');if(!b)return;e.preventDefault();e.stopPropagation();set(b.dataset.psort);run()},true);
+ const st=document.createElement('style');st.textContent='.ps-seg{margin:0 6px 0 0!important;align-self:center}.ps-seg button{min-width:0!important;padding:0 12px!important}'
+  +'.pl-sort button{padding:0 9px!important}.pl-row2{flex-wrap:nowrap!important}.pl-row2 .pl-sort{flex:none;margin-left:auto}.pl-row2 .pl-sort+.pl-mean{margin-left:0!important}'
+  +'.pl-stand.ps-stand{display:flex;align-items:center;justify-content:space-between;gap:8px}.pl-stand .pl-sort{flex:none}';
+ document.head.append(st);
+ let t=0;if(typeof classroomOnDomChange==='function')classroomOnDomChange(()=>{clearTimeout(t);t=setTimeout(run,60)});run();
 })();
 ;
 
@@ -5223,7 +5304,7 @@ return}
     const ft=document.createElement('div');ft.className='qs-ft';ft.append(t);if(edits.childElementCount)ft.append(edits);card.append(ft)}
    else if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;if(document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch())return;/* 9.02/9.04: Schnellansicht am Mac ohne Noteneingabe-Seite (iPad wie iPhone) */openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card){if(document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch())card.click();else openDetail(panel,name)}};frag.append(card);
   }
-  box.replaceChildren(frag);fixUnstriped(box);/* Schraffur „Aus“ sofort anwenden, nicht erst über den Beobachter (8.15) */window.classroomUnstripe?.(box);
+  box.replaceChildren(frag);fixUnstriped(box);/* 9.67: Sortierung A–Z | Note */setTimeout(()=>window.classroomPerfSort?.(),0);/* Schraffur „Aus“ sofort anwenden, nicht erst über den Beobachter (8.15) */window.classroomUnstripe?.(box);
   if(detail?.panel===panel&&!sheet.hidden&&!sheet.contains(document.activeElement))renderDetail();
  }
  new MutationObserver(list=>{if(list.some(m=>!m.target.closest?.('.qs-cards,.qs-phone-bar,.qs-detail,.qs-wt')))schedule()}).observe(document.body,{subtree:true,childList:true,characterData:true});
@@ -5577,8 +5658,7 @@ return}
  const gradeOf=card=>{const t=(card.querySelector('.qs-big')?.textContent||'').trim().replace(/[−–—]/g,'-');let m=/^(\d+(?:,\d+)?)$/.exec(t);if(m)return Number(m[1].replace(',','.'));m=/^([1-6])\s*([+-])$/.exec(t);if(m)return Number(m[1])+(m[2]==='+'?-.33:.33);m=/^(\d)\s*-\s*(\d)$/.exec(t);if(m)return (Number(m[1])+Number(m[2]))/2;return 99};
  function sortCards(panel){const box=panel.querySelector('.qs-cards');if(!box)return;const cards=[...box.children];if(!cards.length)return;
   if(!box.dataset.order||cards.some(c=>!c.dataset.idx))cards.forEach((c,i)=>{if(!c.dataset.idx)c.dataset.idx=String(i)});
-  const byGrade=false;
-  const sorted=[...cards].sort((a,b)=>byGrade?(gradeOf(a)-gradeOf(b))||(a.dataset.idx-b.dataset.idx):a.dataset.idx-b.dataset.idx);
+  /* 9.67: „A–Z | Note“ (perf-sort.js) */const sorted=window.classroomPerfOrder?window.classroomPerfOrder(cards):[...cards].sort((a,b)=>a.dataset.idx-b.dataset.idx);
   if(sorted.some((c,i)=>c!==cards[i]))box.append(...sorted)}
  // Klasse ohne Quartalsübersicht
  let empty=null;

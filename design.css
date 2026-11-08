@@ -1048,3 +1048,5 @@ body[data-module=noten] .compact-slanted-heading:not(#_){overflow:hidden}
 body[data-module=noten] [data-gender-roster]:not(#_){display:none!important}
 /* 9.58: ohne „Geschlecht“ übernimmt „＋ Schüler:in“ den Abstand – Schülerübersicht und ＋ Schüler:in bleiben links */
 body[data-module=noten] .task-actions>:is([data-task-action="add-student"],[data-homework-action="add-student"]){margin-right:auto}
+/* 9.67: Bewertungsart als runde Auswahlknöpfe */
+#addExamUpperMode input[type=radio]:not(#_){border-radius:50%!important}
