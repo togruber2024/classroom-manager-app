@@ -1028,3 +1028,10 @@ body :is(.mean-seg,.qs-seg,.pl-seg,.rg-seg,.appearance-seg):not(#_):not(#__)>:is
 dialog:has(.rename-row-field>select+select){width:min(720px,calc(100vw - 32px));max-width:calc(100vw - 32px)}
 @media (max-width:600px){.rename-row-field:has(>select+select){grid-template-columns:38px minmax(0,1fr) minmax(0,1fr)}.rename-row-field:has(>select+select)>input{grid-column:2/-1}.rename-row-field>select:has(+select){grid-column:2;grid-row:2}.rename-row-field>select+select{grid-column:3;grid-row:2}}
 .rename-row-field>select:not(#_){height:40px;padding:0 24px 0 10px;line-height:1.2}
+
+/* 9.45: Pfad über dem Menü als schlichter Text – aktuelle Stelle blau (nur Computer/iPad; iPhone-Kopfzeile unverändert). */
+.compact-navigation:not(.app-header>.compact-navigation) .compact-navigation-trail:not(#_){padding:0;background:transparent;gap:0}
+.compact-navigation:not(.app-header>.compact-navigation) .compact-navigation-bar .compact-navigation-chip:not(#_){min-height:30px;padding:3px 4px;background:transparent;box-shadow:none;border-radius:6px;font-size:15.5px;font-weight:600!important;color:#243247}
+.compact-navigation:not(.app-header>.compact-navigation) .compact-navigation-bar .compact-navigation-chip:not(:has(~.compact-navigation-chip)):not(#_){-webkit-text-fill-color:#2f5f9b}
+.compact-navigation:not(.app-header>.compact-navigation) .compact-navigation-separator:not(#_){width:22px;height:30px}
+.compact-navigation:not(.app-header>.compact-navigation) .compact-navigation-separator:not(#_):after{width:7px;height:7px;top:11.5px;left:calc(50% - 5px);border-color:#b3bdca}

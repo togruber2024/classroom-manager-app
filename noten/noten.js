@@ -4865,7 +4865,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const edits=document.createElement('div');edits.className='qs-edits qd-edits';
   cells.forEach((cell,k)=>{if(!k||!cell.classList.contains('quarter-summary-edit-cell')||cell.classList.contains('previous-quarter-history-cell'))return;const orig=cell.querySelector('input');if(orig)edits.append(editProxy(orig,heads[k].replace(/ · Q\d$/,''),()=>{semAt=0;setTimeout(renderDetail,0)}))});
   const body=sheet.querySelector('.qd-body');body.replaceChildren();
-  if(window.classroomStudentNotes){const nb=document.createElement('label');nb.className='qd-note';const ns=document.createElement('span');ns.textContent='Notiz';const ta=document.createElement('textarea');ta.rows=2;ta.maxLength=500;ta.placeholder='z. B. Elterngespräch, Nachschreibtermin …';ta.value=classroomStudentNotes.get(detail.name);const who=detail.name;ta.onchange=()=>{classroomStudentNotes.set(who,ta.value);schedule()};nb.append(ns,ta);body.append(nb)}
+  /* 9.45: Notiz kompakt – leer nur „＋ Notiz“, sonst Text im gelben Kasten; Antippen öffnet das Textfeld */
+  if(window.classroomStudentNotes){const who=detail.name,nb=document.createElement('div');nb.className='qd-note';
+   const show=edit=>{const t=classroomStudentNotes.get(who)||'';nb.replaceChildren();
+    if(edit){const ns=document.createElement('span');ns.textContent='Notiz';const ta=document.createElement('textarea');ta.rows=2;ta.maxLength=500;ta.placeholder='z. B. Elterngespräch, Nachschreibtermin …';ta.value=t;const save=()=>{if(classroomStudentNotes.get(who)!==ta.value){classroomStudentNotes.set(who,ta.value);schedule();/* Karte wird neu aufgebaut – Detail danach frisch übernehmen (Q1/Q2-Chips) */setTimeout(()=>{if(detail&&detail.name===who&&document.activeElement!==ta)renderDetail()},350)}};ta.onchange=save;ta.onblur=()=>{save();show(false)};nb.append(ns,ta);setTimeout(()=>ta.focus(),0);return}
+    if(!t.trim()){const b=document.createElement('button');b.type='button';b.className='qd-note-add';b.textContent='＋ Notiz';b.onclick=()=>show(true);nb.append(b);return}
+    const v=document.createElement('button');v.type='button';v.className='qd-note-view';const l=document.createElement('b');l.textContent='Notiz';const tx=document.createElement('span');tx.textContent=t;const pen=document.createElement('i');pen.textContent='✎';pen.setAttribute('aria-hidden','true');v.append(l,tx,pen);v.title='Notiz bearbeiten';v.onclick=()=>show(true);nb.append(v)};
+   show(false);body.append(nb)}
   const card=[...detail.panel.querySelectorAll('.qs-cards>.qs-card')].find(c=>c.querySelector('.qs-name')?.textContent.trim()===detail.name);
   if(card){const wrap=document.createElement('div');wrap.className='qs-card q1-open qd-card';
    const top=card.querySelector('.qs-top')?.cloneNode(true);if(top){top.querySelector('.qs-name')?.remove();top.querySelector('.qs-qtag-name')?.remove();const lab=document.createElement('span');lab.className='qd-qn';const bg=top.querySelector('.qs-big');lab.textContent=top.querySelector('.qs-q1chip')&&bg&&!bg.classList.contains('qs-empty')?'Quartalsnoten':'Quartalsnote';top.prepend(lab);
@@ -5176,6 +5182,9 @@ return}
   ".qs-sq i.qs-x:not(#_){background:#e5484d;color:#fff;border:1px solid #d93c42;font-size:12px;font-weight:800}",
   ".qs-note{margin:4px 0 0;padding:5px 9px;border-radius:8px;background:#fff7e0;color:#7a5410;font-size:12.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
   ".qd-note{display:grid;gap:4px;margin:0 0 12px;font-size:12.5px;color:#66758a;font-weight:650}",
+  ".qd-note-add{display:flex;align-items:center;width:100%;height:40px;padding:0 12px;border:1.5px dashed #c3cfdf;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:15px;font-weight:500;text-align:left;cursor:pointer}",
+  ".qd-note-view{position:relative;display:block;width:100%;padding:8px 34px 9px 12px;border:1px solid #efcf9c;border-radius:10px;background:#fffaf0;color:#243247;font:inherit;font-size:15px;font-weight:400;line-height:1.35;text-align:left;white-space:pre-wrap;cursor:pointer}",
+  ".qd-note-view b{display:block;margin-bottom:2px;font-size:12px;font-weight:650;color:#8a5a12}.qd-note-view i{position:absolute;right:11px;top:8px;font-style:normal;color:#8a5a12}",
   ".qd-note textarea{box-sizing:border-box;width:100%;min-height:44px;padding:8px 10px;border:1px solid #cbd6e5;border-radius:10px;background:#fffdf6;color:#243247;font:inherit;font-size:16px;font-weight:400;resize:vertical}",
   ".qs-nm{display:none}",
   ".qd-card{border:0;box-shadow:none;padding:0!important;margin:0 0 6px!important;background:transparent!important}",
