@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 08.11.2026 · Version 9.32
+Stand: 08.11.2026 · Version 9.33
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1209,3 +1209,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.30: „Ergebnisse“ und A4-Druck folgen dem Dreifachschalter (Aus | Rahmen | Schraffur)
 9.31: Epochalfach (Klassen bearbeiten: Epoche 1./2. Hj.) – Halbjahresnote = Schuljahresnote, Spalten bei Q2/Q4, anderes Halbjahr ausgegraut; Test-Druck als A4-Seite (mit A-/B-Gruppen); Stift in Schreibrichtung
 9.32: Sprachrichtigkeit bei Klausuren (Notenpunkte) – Fehler/Seiten nur bei Betroffenen, ab 5 F/S −1, ab 7 F/S −2 Notenpunkte auf die Endnote
+9.33: Schieber im Notenspiegel-Fenster entfernt (doppelt – Notengrenzen nur noch auf der Seite); Stift in den Spaltenköpfen wie der Stift bei „Raum“, mitgeneigt
