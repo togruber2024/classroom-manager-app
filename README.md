@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 08.11.2026 · Version 9.52
+Stand: 08.11.2026 · Version 9.53
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1229,3 +1229,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.50: „Fertig“ übernimmt gewählte Tischanordnung, „Abbrechen“ daneben, „Anwenden“ unten entfällt; Zahnrad B; „＋ Aufgabe“ in der Knopfzeile repariert; Statusleisten-Änderungen (9.34–9.49) entfernt
 9.51: Vierfach-Schalter Markierungen: „Aus“ (alles weiß, auch 4 NP) · Nur Farbe · Rahmen · Schraffur – appweit, auch iPhone
 9.52: Sprachrichtigkeits-Spalte per „＋ Abzug“/„− Abzug“ (Rückfrage, wenn Abzüge eingetragen sind)
+9.53: „Aus“ (ohne Farben) auch in Übersicht und Druck; Hilfstext Sprachrichtigkeit („Bei schwerwiegenden und gehäuften Verstößen …“)

@@ -4297,7 +4297,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const mean=done.length?done.reduce((a,r)=>a+r.r,0)/done.length:null,withP=c.rows.filter(r=>r.p!==null),meanP=withP.length?withP.reduce((a,r)=>a+r.p,0)/withP.length:null;
   const passed=done.filter(r=>pts?Math.floor(r.r+0.5)>=5:Math.max(1,Math.min(6,Math.ceil(r.r-0.5-1e-10)))<=4).length;
   const iso=c.group.examDate||c.dateInput||'',date=/^\d{4}-\d\d-\d\d$/.test(iso)?iso.split('-').reverse().join('.'):'';
-  const ov=TOP.createElement('div');ov.className='cm-ro';/* 9.30: Darstellung wie im Dreifachschalter (Aus | Rahmen | Schraffur) */{const h=document.documentElement.classList;if(h.contains('hatch-frame'))ov.classList.add('hatch-frame');if(h.contains('hatching-off'))ov.classList.add('hatching-off')}ov.setAttribute('role','dialog');ov.setAttribute('aria-label','Übersicht');
+  const ov=TOP.createElement('div');ov.className='cm-ro';/* 9.30: Darstellung wie im Dreifachschalter (Aus | Rahmen | Schraffur) */{const h=document.documentElement.classList;if(h.contains('hatch-frame'))ov.classList.add('hatch-frame');if(h.contains('hatching-off'))ov.classList.add('hatching-off');/* 9.53: „Aus“ – ohne Farben */if(h.contains('colors-off'))ov.classList.add('colors-off')}ov.setAttribute('role','dialog');ov.setAttribute('aria-label','Übersicht');
   ov.innerHTML=`<div class="cm-ro-box"><div class="cm-ro-hd"><div><h1>${esc(c.group.label||c.heading||'Klassenarbeit')} · ${esc(c.cls)}</h1><small>${[c.topic,date,c.hasP&&c.maxP?'max. '+fmt(c.maxP)+' Punkte':''].filter(Boolean).map(esc).join(' · ')}</small></div><button type="button" class="cm-ro-x">Schließen</button></div>
    <div class="cm-ro-kpi">${mean!==null?`<span>Ø ${pts?'Notenpunkte':'Note'} <b>${fmt(mean,pts?1:2)}</b></span>`:''}${meanP!==null?`<span>Ø Punkte <b>${fmt(meanP,1)}</b></span>`:''}<span>${c.rows.length} Schüler:innen</span>${done.length?`<span>Bestanden <b>${passed}/${done.length}</b></span>`:''}</div>
    <div class="cm-ro-grid"></div></div>`;
@@ -4328,7 +4328,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   // Notenfarben aus der Noten-Seite übernehmen
   let gradeCss='';try{for(const sh of document.styleSheets){let rules;try{rules=sh.cssRules}catch{continue}for(const r of rules||[])if(r.selectorText&&/\.task-end-grade|\.g[0-9]|grade-|hatch|tendency|participation-(between|lean)/.test(r.selectorText)&&!/:hover|input/.test(r.selectorText))gradeCss+=r.cssText.replace(/html\.(hatch-frame|hatching-off)\s+body(\[[^\]]*\])?\s*/g,'.cm-ro.$1 ').replace(/html\.(hatch-frame|hatching-off)\s+/g,'.cm-ro.$1 ').replace(/body\[data-module(="?noten"?)?\]\s*/g,'')+'\n'}}catch{}
   st.textContent=gradeCss+`
- .cm-ro.hatching-off .task-end-grade:not(.grade-four-fail){background-image:none!important}.cm-ro{position:fixed;inset:0;z-index:99990;background:rgba(28,43,70,.38);display:flex;align-items:stretch;justify-content:center;padding:14px;font-family:inherit}
+ .cm-ro.hatching-off .task-end-grade:not(.grade-four-fail){background-image:none!important}.cm-ro.colors-off .task-end-grade:not(#_):not(#__){background:#fff!important;background-image:none!important;color:#243247!important;box-shadow:inset 0 0 0 1px #d5deea!important;border-color:#d5deea!important}.cm-ro{position:fixed;inset:0;z-index:99990;background:rgba(28,43,70,.38);display:flex;align-items:stretch;justify-content:center;padding:14px;font-family:inherit}
  .cm-ro-box{flex:1;max-width:1600px;background:#fff;border-radius:18px;box-shadow:0 20px 50px rgba(20,35,60,.25);padding:22px 26px 18px;display:flex;flex-direction:column;min-height:0;color:#1f2a3d}
  .cm-ro-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}.cm-ro-hd h1{margin:0;font-size:24px;line-height:1.2}.cm-ro-hd small{display:block;color:#5b6b82;font-size:14px;margin-top:4px}
  .cm-ro-x{flex:none;height:40px;padding:0 16px;border:1px solid #d5deea;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:14.4px;cursor:pointer}
@@ -4439,6 +4439,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .ep-note{min-height:64px;margin-top:4px}.ep-sig{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:30px}.ep-sig div{border-top:1px solid #8a97a9;padding-top:4px;font-size:10px;color:#5b6b82}
  .ep-foot{position:absolute;left:0;right:0;bottom:0;font-size:9px;color:#8a97a9}
  html.hatching-off .ep .task-end-grade:not(.grade-four-fail){background-image:none!important}
+ html.colors-off .ep :is(.ep-chip,.task-end-grade):not(#_):not(#__){background:#fff!important;background-image:none!important;color:#243247!important;box-shadow:inset 0 0 0 1px #d5deea!important;border-color:#d5deea!important}
  .ep-small td{height:18px;font-size:10.2px}.ep-small .ep-chip{height:15px;font-size:9.5px}`;
 
  // 9.31: Testseite – wie Klassenarbeit ohne Teilnoten (Variante C); bei A-/B-Gruppen Spalte „Gr.“ und Notengrenzen je Gruppe
@@ -4546,7 +4547,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    const show=!!data.srColumn||data.students.some(x=>x?.sr);toggleButton(table,key,show);
    if(!show){if(existing){existing.remove();table.querySelectorAll('.sr-td').forEach(x=>x.remove())}continue}
    const cells=[...head.cells],end=cells.findLastIndex(c=>c.classList.contains('task-result-heading')||c.querySelector('.mean-seg:not(.seg-toggle)')||/Ergebnis/i.test(c.textContent));if(end<0)continue;
-   if(!existing){const th=document.createElement('th');th.className='sr-th';th.title='Abzug für Verstöße gegen die Sprachrichtigkeit: ab 5 Fehlern je Seite −1, ab 7 Fehlern je Seite −2 Notenpunkte';th.innerHTML='Sprachr.<small>Fehler / Seiten</small>';head.insertBefore(th,cells[end])}
+   if(!existing){const th=document.createElement('th');th.className='sr-th';th.title='Bei schwerwiegenden und gehäuften Verstößen gegen die sprachliche Richtigkeit: ab 5 Fehlern je Seite −1, ab 7 Fehlern je Seite −2 Notenpunkte';th.innerHTML='Sprachr.<small>Fehler / Seiten</small>';head.insertBefore(th,cells[end])}
    const rows=[...table.tBodies[0]?.rows||[]];
    rows.forEach((row,i)=>{const s=data.students[i];if(!s||row.cells.length<2)return;let td=row.querySelector(':scope>.sr-td');const endCell=row.cells[row.cells.length-1];
     if(!td){td=document.createElement('td');td.className='sr-td';row.insertBefore(td,endCell)}
@@ -4560,7 +4561,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  }
  function toggleButton(table,key,show){const panel=table.closest('[data-custom-panel]');if(!panel)return;let b=panel.querySelector('.sr-toggle');
   if(!b){const anchor=panel.querySelector('[data-toggle-partial-grades]')||panel.querySelector('.exam-task-add-bar')||[...panel.querySelectorAll('button')].find(x=>/^Import/.test(x.textContent.trim()));if(!anchor)return;b=document.createElement('button');b.type='button';b.className='student-add-button sr-toggle';b.dataset.srToggle=key;anchor.after(b)}
-  const label=show?'− Abzug':'＋ Abzug';if(b.textContent!==label){b.textContent=label;b.title=show?'Spalte „Sprachrichtigkeit“ entfernen':'Spalte „Sprachrichtigkeit“ (Abzug für Fehler je Seite) hinzufügen';b.setAttribute('aria-pressed',String(show))}}
+  const label=show?'− Abzug':'＋ Abzug';if(b.textContent!==label){b.textContent=label;b.title=show?'Spalte „Sprachrichtigkeit“ entfernen':'Abzug bei schwerwiegenden und gehäuften Verstößen gegen die sprachliche Richtigkeit (Spalte hinzufügen)';b.setAttribute('aria-pressed',String(show))}}
  document.addEventListener('click',async e=>{const b=e.target.closest?.('.sr-toggle');if(!b)return;e.preventDefault();e.stopPropagation();const key=b.dataset.srToggle;let data;try{data=taskPageData(currentSubject,key)}catch{return}if(!data)return;
   const shown=!!data.srColumn||data.students.some(x=>x?.sr);
   if(!shown){data.srColumn=true}else{const n=data.students.filter(x=>x?.sr).length;if(n&&!await classroomConfirm('Spalte „Abzug“ entfernen?\n\nDie eingetragenen Abzüge (Fehler / Seiten) von '+n+' Schüler:'+(n===1?'in':'innen')+' werden gelöscht und die Ergebnisse neu berechnet.',{ok:'Entfernen',cancel:'Abbrechen',danger:true}))return;for(const x of data.students)if(x)delete x.sr;delete data.srColumn}
