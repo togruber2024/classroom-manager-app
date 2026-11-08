@@ -3895,13 +3895,17 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
  const PEN='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-4-4L4 16v4zM13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
  const btn=document.createElement('button');btn.type='button';btn.className='mode-edit-btn';btn.innerHTML=PEN+'<span>Sitzplan bearbeiten</span>';btn.title='Tische setzen oder entfernen, Pult festlegen, Tischanordnung wählen';
  const bar=document.createElement('div');bar.className='mode-edit-bar';bar.hidden=true;bar.setAttribute('role','status');
- bar.innerHTML='<span class="meb-text">'+PEN+' <b>Sitzplan bearbeiten</b> · Feld antippen setzt oder entfernt einen Tisch · Rechtsklick = Pult</span><span class="meb-actions"><button type="button" class="meb-layout">Tischanordnung …</button><button type="button" class="meb-done">Fertig</button></span>';
+ bar.innerHTML='<span class="meb-text">'+PEN+' <b>Sitzplan bearbeiten</b> · Feld antippen setzt oder entfernt einen Tisch · Rechtsklick = Pult</span><span class="meb-actions"><button type="button" class="meb-layout">Tischanordnung …</button><button type="button" class="meb-cancel" hidden>Abbrechen</button><button type="button" class="meb-done">Fertig</button></span>';
  const set=on=>{const e=edit();if(e.checked!==on){e.checked=on;e.dispatchEvent(new Event('change',{bubbles:true}))}sync()};
- btn.onclick=()=>set(true);bar.querySelector('.meb-done').onclick=()=>set(false);
- bar.querySelector('.meb-layout').onclick=()=>document.getElementById('layoutToggleButton')?.click();
+ btn.onclick=()=>set(true);
+ /* 9.50: Ist die Tischanordnungs-Auswahl offen, übernimmt „Fertig“ die gewählte Anordnung (früher „Anwenden“ ganz unten); „Abbrechen“ schließt sie ohne Änderung. */
+ const layoutOpen=()=>{const v=document.getElementById('layoutView');let m='layouts';try{m=layoutViewMode}catch{}return !!v&&!v.hidden&&m!=='groups'};
+ bar.querySelector('.meb-done').onclick=async()=>{if(layoutOpen()){const ap=document.getElementById('applyLayoutButton');if(ap&&!ap.disabled){await wendeTischanordnungAn();if(layoutOpen())return}else{try{zeigeSitzplan()}catch{}}}set(false)};
+ bar.querySelector('.meb-cancel').onclick=()=>{try{zeigeSitzplan()}catch{}sync()};
+ bar.querySelector('.meb-layout').onclick=()=>{document.getElementById('layoutToggleButton')?.click();setTimeout(sync,30)};
  function place(){const head=document.querySelector('.room-header'),box=head?.querySelector('.room-head-actions')||head;if(box&&btn.parentElement!==box)box.append(btn);
   const help=head?.nextElementSibling?.classList.contains('info-text')?head.nextElementSibling:head;if(help&&help.nextElementSibling!==bar)help.after(bar);sync()}
- function sync(){const on=!!edit()?.checked;if(bar.hidden===on)bar.hidden=!on;if(btn.hidden!==on)btn.hidden=on;document.documentElement.classList.toggle('mode-editing',on);
+ function sync(){const on=!!edit()?.checked;{const lo=on&&layoutOpen(),c=bar.querySelector('.meb-cancel');if(c.hidden===lo)c.hidden=!lo;document.documentElement.classList.toggle('meb-layout-open',lo)}if(bar.hidden===on)bar.hidden=!on;if(btn.hidden!==on)btn.hidden=on;document.documentElement.classList.toggle('mode-editing',on);
   const help=document.querySelector('.room-header+.info-text');const t='Namen antippen öffnet die Bewertung · Namen ziehen verschiebt oder tauscht Plätze. Tische setzt du über „Sitzplan bearbeiten“.';if(help&&!on&&help.textContent!==t&&/Bewertungsmodus|Sitzplanmodus/.test(help.textContent))help.textContent=t}
  document.addEventListener('change',e=>{if(e.target?.id==='classroomEditRoom')sync()});
  if(typeof classroomOnDomChange==='function')classroomOnDomChange(place);place();setTimeout(place,600);
@@ -3914,6 +3918,7 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
  .mode-edit-bar[hidden]{display:none}.mode-edit-bar .meb-text{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
  .mode-edit-bar .meb-actions{display:flex;gap:8px}.mode-edit-bar button{height:36px;padding:0 14px;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:14px;cursor:pointer}
  .mode-edit-bar .meb-done{background:#2f5f9b;border-color:#2f5f9b;color:#fff;font-weight:600}
+ html.meb-layout-open #applyLayoutButton{display:none!important}.mode-edit-bar .meb-cancel[hidden]{display:none}
  html.ph-lite .mode-edit-btn,html.ph-lite .mode-edit-bar{display:none!important}
  html.classroom-beamer .mode-edit-btn,html.classroom-beamer .mode-edit-bar{display:none!important}`;document.head.append(st);
 })();
