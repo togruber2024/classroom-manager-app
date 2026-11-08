@@ -4735,7 +4735,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    „Elternbrief verfassen“ füllt eine Vorlage aus (Hausaufgaben 3./5., Material 3./5.), „Erledigt“ merkt den Brief, „Später“ blendet bis morgen aus.
    Es wird nichts verschickt; gespeichert wird nur lokal, welche Erinnerung erledigt bzw. verschoben ist. */
 (()=>{
- const KEY='classroom-reminders-v1',LEVELS=[3,5];
+ const KEY='notenrechner-erinnerungen-v1',LEVELS=[3,5];try{const old=localStorage.getItem('classroom-reminders-v1');if(old&&!localStorage.getItem(KEY))localStorage.setItem(KEY,old)}catch{}
  const TOP=(()=>{try{return window.top.document}catch{return null}})();if(!TOP)return;
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
  const store=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}};
@@ -4768,17 +4768,37 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const sort=(x,y)=>x.classLabel.localeCompare(y.classLabel,'de',{numeric:true})||x.name.localeCompare(y.name,'de');open.sort(sort);done.sort(sort);return {open,done}}
 
  // Brief
+ /* 9.64: Vorlagen bearbeitbar (Fenster „Vorlagen …“), Platzhalter in geschweiften Klammern; gespeichert unter notenrechner-* (im Backup) */
+ const TKEY='notenrechner-elternbrief-vorlagen-v1';
+ const DEFAULTS={
+  ha3:'Guten Tag Herr und Frau {Nachname},\n\n{Kind} {Vorname} hat zum {Anzahl} Mal {ihre/seine} Hausaufgaben im Fach {Fach} nicht oder nur unzureichend angefertigt ({Daten}). Darunter leiden {ihre/seine} mündliche Beteiligung sowie {ihre/seine} methodischen und fachlichen Fähigkeiten. Bitte stellen Sie sicher, dass {Kind} {ihren/seinen} Pflichten in Zukunft nachkommt.\n\nBitte bestätigen Sie mir kurz, dass Sie diese Nachricht erhalten haben.',
+  ha5:'Guten Tag Herr und Frau {Nachname},\n\nleider hat {Vorname} im Fach {Fach} nun zum {Anzahl} Mal in diesem Halbjahr {ihre/seine} Hausaufgaben nicht oder nur unzureichend angefertigt ({Daten}). Die Hausaufgaben dienen der Übung und Festigung des Unterrichtsstoffs; Lücken wirken sich daher auf die Leistungen und die Bewertung der sonstigen Mitarbeit aus.\n\nIch bitte Sie um ein kurzes Gespräch, um gemeinsam zu überlegen, wie wir {Vorname} unterstützen können. Bitte melden Sie sich bei mir.',
+  mat3:'Guten Tag Herr und Frau {Nachname},\n\n{Kind} {Vorname} hatte im Fach {Fach} nun zum {Anzahl} Mal {ihr/sein} Arbeitsmaterial nicht dabei ({Daten}). Ohne Buch, Heft oder andere Materialien kann {sie/er} dem Unterricht nur eingeschränkt folgen und die Aufgaben nicht vollständig bearbeiten.\n\nIch möchte Sie bitten, gemeinsam mit {Vorname} darauf zu achten, dass die Schultasche am Vortag vollständig gepackt wird. Wenn es Gründe gibt, die ich kennen sollte, melden Sie sich gern bei mir.',
+  mat5:'Guten Tag Herr und Frau {Nachname},\n\n{Vorname} hatte im Fach {Fach} inzwischen zum {Anzahl} Mal in diesem Halbjahr {ihr/sein} Material nicht dabei ({Daten}). Das wirkt sich zunehmend auf die Mitarbeit aus und fließt in die Bewertung der sonstigen Mitarbeit ein.\n\nIch würde das gern in einem kurzen Gespräch mit Ihnen besprechen. Bitte teilen Sie mir mit, wann Sie erreichbar sind.',
+  sig:'Torsten Gruber'};
+ const TABS=[['ha3','Hausaufgaben · 3.'],['ha5','Hausaufgaben · 5.'],['mat3','Material · 3.'],['mat5','Material · 5.']];
+ const PH=['Nachname','Vorname','Kind','ihre/seine','ihr/sein','ihren/seinen','sie/er','Fach','Anzahl','Daten'];
+ const tpls=()=>{let t={};try{t=JSON.parse(localStorage.getItem(TKEY)||'{}')||{}}catch{}return {...DEFAULTS,...t}};
  function letter(r){
   let gender=r.gender;try{const g=classroomCentralGroup(`${r.subject}::${r.classId}`);const p=g?.students.find(s=>!s.deleted&&norm(s.name)===norm(r.name));if(p?.gender)gender=p.gender}catch{}
   const parts=r.name.split(',').map(x=>x.trim()),first=parts.length>1?parts.slice(1).join(', '):parts[0].split(/\s+/)[0],last=parts.length>1?parts[0]:parts[0].split(/\s+/).slice(1).join(' ');
-  const w=gender==='w',m=gender==='m',child=w?'Ihre Tochter':m?'Ihr Sohn':'Ihr Kind',poss=w?'ihre':'seine',possN=w?'ihr':'sein',duties=w?'ihren':'seinen',pron=w?'sie':m?'er':'es';
-  const fach=subjects[r.subject]?.label||'[Fach]',dates=r.dates.map(dm).filter(Boolean).join(', '),hello=`Guten Tag Herr und Frau ${last||'[Nachname]'},`,bye='\n\nMit freundlichen Grüßen\nTorsten Gruber';
-  const before=(r.ack?.level||0)>=3&&r.ack?.letter;
-  if(r.kind==='ha'&&r.level<5)return `${hello}\n\n${child} ${first} hat zum ${ord(r.count)} Mal ${poss} Hausaufgaben im Fach ${fach} nicht oder nur unzureichend angefertigt${dates?' ('+dates+')':''}. Darunter leiden ${poss} mündliche Beteiligung sowie ${poss} methodischen und fachlichen Fähigkeiten. Bitte stellen Sie sicher, dass ${child} ${duties} Pflichten in Zukunft nachkommt.\n\nBitte bestätigen Sie mir kurz, dass Sie diese Nachricht erhalten haben.${bye}`;
-  if(r.kind==='ha')return `${hello}\n\n${before?'wie bereits angekündigt, hat':'leider hat'} ${first} im Fach ${fach} nun zum ${ord(r.count)} Mal in diesem Halbjahr ${poss} Hausaufgaben nicht oder nur unzureichend angefertigt${dates?' ('+dates+')':''}. Die Hausaufgaben dienen der Übung und Festigung des Unterrichtsstoffs; Lücken wirken sich daher auf die Leistungen und die Bewertung der sonstigen Mitarbeit aus.\n\nIch bitte Sie um ein kurzes Gespräch, um gemeinsam zu überlegen, wie wir ${first} unterstützen können. Bitte melden Sie sich bei mir.${bye}`;
-  if(r.level<5)return `${hello}\n\n${child} ${first} hatte im Fach ${fach} nun zum ${ord(r.count)} Mal ${possN} Arbeitsmaterial nicht dabei${dates?' ('+dates+')':''}. Ohne Buch, Heft oder andere Materialien kann ${pron} dem Unterricht nur eingeschränkt folgen und die Aufgaben nicht vollständig bearbeiten.\n\nIch möchte Sie bitten, gemeinsam mit ${first} darauf zu achten, dass die Schultasche am Vortag vollständig gepackt wird. Wenn es Gründe gibt, die ich kennen sollte, melden Sie sich gern bei mir.${bye}`;
-  return `${hello}\n\n${before?'leider muss ich mich erneut an Sie wenden: ':''}${first} hatte im Fach ${fach} inzwischen zum ${ord(r.count)} Mal in diesem Halbjahr ${possN} Material nicht dabei${dates?' ('+dates+')':''}. Das wirkt sich zunehmend auf die Mitarbeit aus und fließt in die Bewertung der sonstigen Mitarbeit ein.\n\nIch würde das gern in einem kurzen Gespräch mit Ihnen besprechen. Bitte teilen Sie mir mit, wann Sie erreichbar sind.${bye}`;
+  const w=gender==='w',m=gender==='m',dates=r.dates.map(dm).filter(Boolean).join(', ');
+  const val={'Nachname':last||'[Nachname]','Vorname':first,'Kind':w?'Ihre Tochter':m?'Ihr Sohn':'Ihr Kind','ihre/seine':w?'ihre':'seine','ihr/sein':w?'ihr':'sein','ihren/seinen':w?'ihren':'seinen','sie/er':w?'sie':m?'er':'es','Fach':subjects[r.subject]?.label||'[Fach]','Anzahl':ord(r.count),'Daten':dates};
+  const t=tpls(),key=(r.kind==='ha'?'ha':'mat')+(r.level>=5?'5':'3');
+  let text=String(t[key]||DEFAULTS[key]).replace(/\{([^{}]+)\}/g,(all,k)=>val[k]!==undefined?val[k]:all).replace(/ \(\)/g,'');
+  return text+'\n\nMit freundlichen Grüßen\n'+(t.sig||'');
  }
+ function editTemplates(){const t=tpls();let cur='ha3';const draft={...t};
+  dlg.innerHTML=`<div class="cr-head"><div><h2>Elternbrief-Vorlagen</h2><p>Gelten für alle künftigen Briefe. Platzhalter setzt die App beim Verfassen automatisch ein.</p></div></div><div class="cr-body"><div class="cr-tabs" role="tablist">${TABS.map(([k,l])=>`<button type="button" role="tab" data-cr-tab="${k}">${l}<b class="cr-mod" hidden>geändert</b></button>`).join('')}</div><div class="cr-ph">Platzhalter: ${PH.map(p=>`<button type="button" data-cr-ph="${p}">{${esc(p)}}</button>`).join('')}</div><textarea class="cr-text cr-tpl" rows="12"></textarea><label class="cr-sig">Unterschrift <input type="text" value="${esc(t.sig||'')}"></label></div><div class="cr-row cr-row-split"><button type="button" data-cr-reset>Diese Vorlage zurücksetzen</button><span><button type="button" data-cr-cancel>Abbrechen</button><button type="button" class="cr-pri" data-cr-save>Speichern</button></span></div>`;
+  const ta=dlg.querySelector('.cr-tpl'),sig=dlg.querySelector('.cr-sig input');
+  const paint=()=>{for(const b of dlg.querySelectorAll('[data-cr-tab]')){const k=b.dataset.crTab;b.setAttribute('aria-selected',String(k===cur));b.querySelector('.cr-mod').hidden=draft[k]===DEFAULTS[k]}ta.value=draft[cur]};
+  ta.oninput=()=>{draft[cur]=ta.value;for(const b of dlg.querySelectorAll('[data-cr-tab]'))b.querySelector('.cr-mod').hidden=draft[b.dataset.crTab]===DEFAULTS[b.dataset.crTab]};
+  dlg.querySelectorAll('[data-cr-tab]').forEach(b=>b.onclick=()=>{cur=b.dataset.crTab;paint()});
+  dlg.querySelectorAll('[data-cr-ph]').forEach(b=>b.onclick=()=>{const ins='{'+b.dataset.crPh+'}',a=ta.selectionStart??ta.value.length,e=ta.selectionEnd??a;ta.value=ta.value.slice(0,a)+ins+ta.value.slice(e);draft[cur]=ta.value;ta.focus();ta.setSelectionRange(a+ins.length,a+ins.length);ta.oninput()});
+  dlg.querySelector('[data-cr-reset]').onclick=()=>{draft[cur]=DEFAULTS[cur];paint()};
+  dlg.querySelector('[data-cr-cancel]').onclick=list;
+  dlg.querySelector('[data-cr-save]').onclick=()=>{const out={};for(const [k] of TABS)if(draft[k]!==DEFAULTS[k])out[k]=draft[k];if(sig.value.trim()!==DEFAULTS.sig)out.sig=sig.value.trim();try{localStorage.setItem(TKEY,JSON.stringify(out))}catch{}list()};
+  paint()}
  function ack(r,extra){const s=store();s[idOf(r)]={...(s[idOf(r)]||{}),level:r.level,date:today(),...extra};save(s);refresh()}
  function snooze(r){const s=store(),d=new Date(Date.now()+864e5-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);s[idOf(r)]={...(s[idOf(r)]||{}),snooze:d,snoozeLevel:r.level};save(s);refresh()}
 
@@ -4791,8 +4811,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function list(){const {open,done}=state();const kind=r=>r.kind==='ha'?'Hausaufgaben fehlend':'Material fehlend';
   const item=(r,i)=>`<div class="cr-it"><div class="cr-top"><b>${esc(r.name)}</b><span>${esc(subjects[r.subject]?.label||'')} · ${esc(r.classLabel)}</span></div><div class="cr-why">${r.count}× ${kind(r)}<span class="cr-dates">${r.dates.map(d=>`<i>${esc(dm(d)||'—')}</i>`).join('')}</span></div><div class="cr-act"><button type="button" class="cr-pri" data-cr-letter="${i}">Elternbrief verfassen</button><button type="button" data-cr-done="${i}">Erledigt</button><button type="button" data-cr-later="${i}">Später</button></div></div>`;
   const doneItem=r=>`<div class="cr-it is-done"><div class="cr-top"><b>${esc(r.name)}</b><span>${esc(subjects[r.subject]?.label||'')} · ${esc(r.classLabel)}</span></div><div class="cr-why"><span class="cr-ok">✓ ${r.ack.letter?'Elternbrief':'Erledigt'} am ${esc(dm(r.ack.date))}</span> · ${r.count}× ${kind(r)}${r.ack.level<5?' · nächste Erinnerung beim 5. Mal':''}</div></div>`;
-  dlg.innerHTML=`<div class="cr-head"><div><h2>Erinnerungen</h2><p>Fehlende Hausaufgaben bzw. Material im laufenden Halbjahr – Erinnerung beim 3. und 5. Mal.</p></div><button type="button" class="cr-close" data-cr-close>Schließen</button></div><div class="cr-body">${open.length?open.map(item).join(''):'<p class="cr-empty">Keine offenen Erinnerungen.</p>'}${done.length?'<h3>Erledigt</h3>'+done.map(doneItem).join(''):''}</div>`;
-  dlg.querySelector('[data-cr-close]').onclick=()=>dlg.close();
+  dlg.innerHTML=`<div class="cr-head"><div><h2>Erinnerungen</h2><p>Fehlende Hausaufgaben bzw. Material im laufenden Halbjahr – Erinnerung beim 3. und 5. Mal.</p></div><span class="cr-head-btns"><button type="button" data-cr-tpl>Vorlagen …</button><button type="button" class="cr-close" data-cr-close>Schließen</button></span></div><div class="cr-body">${open.length?open.map(item).join(''):'<p class="cr-empty">Keine offenen Erinnerungen.</p>'}${done.length?'<h3>Erledigt</h3>'+done.map(doneItem).join(''):''}</div>`;
+  dlg.querySelector('[data-cr-close]').onclick=()=>dlg.close();dlg.querySelector('[data-cr-tpl]').onclick=editTemplates;
   dlg.querySelectorAll('[data-cr-done]').forEach(b=>b.onclick=()=>{ack(open[+b.dataset.crDone]);list()});
   dlg.querySelectorAll('[data-cr-later]').forEach(b=>b.onclick=()=>{snooze(open[+b.dataset.crLater]);list()});
   dlg.querySelectorAll('[data-cr-letter]').forEach(b=>b.onclick=()=>compose(open[+b.dataset.crLetter]))}
@@ -4823,6 +4843,10 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .cr-dialog button{box-sizing:border-box;height:38px;padding:0 14px;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:.92rem;cursor:pointer}
  .cr-dialog button.cr-pri{background:#2f5f9b;border-color:#2f5f9b;color:#fff;font-weight:600}
  .cr-text{display:block;box-sizing:border-box;width:calc(100% - 36px);margin:8px 18px 4px;padding:10px 12px;border:1px solid #dbe3ef;border-radius:10px;font:inherit;font-size:.92rem;line-height:1.45;color:#243247;resize:vertical}
+ .cr-head-btns{display:flex;gap:8px;flex:none}.cr-tabs{display:inline-flex;flex-wrap:wrap;gap:3px;padding:3px;border-radius:12px;background:#e7edf6;margin:4px 0 10px}.cr-dialog .cr-tabs button{height:34px;border:0;border-radius:9px;background:transparent;color:#66778f}.cr-dialog .cr-tabs button[aria-selected=true]{background:#fff;color:#243247;font-weight:650;box-shadow:0 1px 3px #25334914}.cr-mod{margin-left:6px;font-size:.7rem;font-weight:600;color:#9a6212;background:#fff4e2;border-radius:6px;padding:1px 5px}.cr-mod[hidden]{display:none}
+ .cr-ph{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px;font-size:.84rem;color:#66758a}.cr-dialog .cr-ph button{height:26px;padding:0 8px;border-color:#c9daf0;background:#eaf1fb;color:#1f4f8c;font-size:.8rem;border-radius:7px}
+ .cr-body .cr-text{width:100%;margin:0}.cr-sig{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:.92rem}.cr-sig input{width:260px;max-width:60%;height:38px;box-sizing:border-box;padding:0 12px;border:1px solid #dbe3ef;border-radius:10px;font:inherit}
+ .cr-row-split{justify-content:space-between}.cr-row-split>span{display:flex;gap:8px}
  .cr-status{min-height:1.2em;margin:0 18px 6px;font-size:.84rem;color:#2e7d4f}.cr-empty{color:#66758a}`;TOP.head.append(st)}
  placeBell();refresh();
  if(typeof classroomOnDomChange==='function'){let t=0;classroomOnDomChange(()=>{clearTimeout(t);t=setTimeout(refresh,600)})}

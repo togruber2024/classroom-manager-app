@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 08.11.2026 · Version 9.63
+Stand: 08.11.2026 · Version 9.64
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1240,3 +1240,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.61: Testmittel-Schalter 3 px tiefer
 9.62: Schülerkarte – Ø der Klassenarbeit folgt dem Darstellungs-Schalter
 9.63: Erinnerungen (Glocke) bei 3./5. fehlenden Hausaufgaben bzw. Material, Elternbrief-Vorlagen
+9.64: Elternbrief-Vorlagen bearbeitbar (Platzhalter, Unterschrift, zurücksetzen), „wie bereits angekündigt“ entfernt; Erinnerungs-Status im Backup
