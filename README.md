@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 08.11.2026 · Version 9.41
+Stand: 08.11.2026 · Version 9.42
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1218,3 +1218,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.39: Statusleiste wieder wie in 9.34 (theme-color wird neu angelegt); iOS-Statusleisten-Einstellung aus 9.38 entfernt
 9.40: Reihenfolge Fortschritt · Übersicht · Notenspiegel; Aufgaben in Übersicht/Druck als A1, A2 …; Aufgabenspalten mit fester Breite (lange Titel mit …)
 9.41: Aufgabenspalten der Klassenarbeit gleich breit (170 px), Eingabefelder fest 110 px
+9.42: Assistent „Schuljahr einrichten“ (Fächer, PDF-Listen, Lerngruppen mit Fach/Notensystem/Epochal); leere App zeigt nur die Startkarte; „＋ Aus Listen“

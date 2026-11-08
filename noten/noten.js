@@ -4569,6 +4569,104 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
 })();
 ;
 
+/* ==== noten/year-setup.js ==== */
+/* 9.42: Assistent „Schuljahr einrichten“ – bei leerer App die einzige Startkarte, sonst über „Lerngruppen importieren“ erreichbar.
+   1 Fächer wählen · 2 Klassen-/Kurslisten (PDF der Schule, mehrere auf einmal) · 3 Lerngruppen anhaken, Fach, Notensystem und
+   ganzjährig/Epochal festlegen · Anlegen. Oberstufe: nur Kurse, deren Fach (Name oder Kürzel wie „EK1e28“) zu den gewählten Fächern passt.
+   Alles bleibt auf dem Gerät. */
+(()=>{
+ const CATALOG=[['Biologie','BI'],['Chemie','CH'],['Deutsch','D'],['Englisch','E'],['Erdkunde','EK'],['Französisch','F'],['Geschichte','GE'],['Informatik','IF'],['Kunst','KU'],['Latein','L'],['Mathematik','M'],['Musik','MU'],['Pädagogik','PA'],['Philosophie','PL'],['Physik','PH'],['Politik','PK'],['Religion','RE'],['Sozialwissenschaften','SW'],['Spanisch','S'],['Sport','SP'],['Wirtschaft','WI']];
+ const ALIAS={EK:'Erdkunde',GE:'Geschichte',G:'Geschichte',L:'Latein',LA:'Latein',D:'Deutsch',E:'Englisch',EN:'Englisch',F:'Französisch',FR:'Französisch',M:'Mathematik',MA:'Mathematik',BI:'Biologie',CH:'Chemie',PH:'Physik',IF:'Informatik',INF:'Informatik',KU:'Kunst',MU:'Musik',PA:'Pädagogik',PL:'Philosophie',PK:'Politik',SW:'Sozialwissenschaften',KR:'Religion',ER:'Religion',RE:'Religion',S:'Spanisch',SN:'Spanisch',SP:'Sport',WI:'Wirtschaft'};
+ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const norm=s=>String(s||'').trim().toLocaleLowerCase('de-DE');
+ let state=null;
+ const dlg=document.createElement('dialog');dlg.className='ys-dialog';document.body.append(dlg);
+ const existingLabels=()=>Object.values(subjects).map(s=>s.label);
+ // Fach einer Lerngruppe: Kursbeschreibung („Erdkunde Kurs 1 …“) oder Kürzel („EK1e28“)
+ function subjectOf(g){if(g.kind==='course'){const d=norm(g.description);const hit=[...state.subjects].find(s=>d.startsWith(norm(s))||d.includes(norm(s)));if(hit)return hit;const code=(g.label.match(/^[A-Za-zÄÖÜ]+/)||[''])[0].toUpperCase();return ALIAS[code]||ALIAS[code.slice(0,2)]||''}return ''}
+ const level=g=>{const m=String(g.kind==='course'?(g.description+' '+g.label):g.label).match(/(?:^|\D)(1[0-3]|[5-9])(?:\D|$)/);return m?+m[1]:0};
+ const upper=g=>g.kind==='course'||g.upperSchool||level(g)>=11;
+ function groupInfo(g){if(g.kind!=='course')return '';const m=g.label.match(/^[A-Za-zÄÖÜ]+(\d+)([efg])(\d+)?/i);if(!m)return '';return (m[2].toLowerCase()==='e'?'Leistungskurs':'Grundkurs')}
+ function render(){const s=state;let body='';
+  const steps=['Fächer','Listen','Lerngruppen'];
+  const nav=`<ol class="ys-steps">${steps.map((t,i)=>`<li class="${i===s.step?'on':i<s.step?'done':''}">${i+1} · ${t}</li>`).join('')}</ol>`;
+  if(s.step===0){const all=[...new Set([...existingLabels(),...CATALOG.map(c=>c[0]),...s.extra])].sort((a,b)=>a.localeCompare(b,'de'));
+   body=`<p>Welche Fächer unterrichtest du in diesem Schuljahr?</p><div class="ys-chips">${all.map(l=>`<label class="ys-chip${s.subjects.has(l)?' on':''}"><input type="checkbox" data-subj="${esc(l)}"${s.subjects.has(l)?' checked':''}>${esc(l)}</label>`).join('')}</div><div class="ys-add"><input type="text" data-new placeholder="Weiteres Fach …" maxlength="40"><button type="button" data-addsubj>Hinzufügen</button></div>`}
+  if(s.step===1){body=`<p>Lade die Klassen- und Kurslisten der Schule als PDF – gern mehrere auf einmal (z. B. Sek. I, Jahrgang 11, Jahrgang 12/13). Die Listen werden nur auf diesem Gerät gelesen.</p><label class="ys-drop"><input type="file" accept="application/pdf,.pdf" multiple data-files><b>PDFs auswählen</b><span>oder hierher ziehen</span></label><div class="ys-files">${s.files.map(f=>`<div class="ys-file ${f.error?'err':''}"><b>${esc(f.name)}</b> · ${f.error?esc(f.error):f.busy?'wird gelesen …':`${f.groups.filter(g=>g.kind!=='course').length} Klassen, ${f.groups.filter(g=>g.kind==='course').length} Kurse, ${f.groups.reduce((a,g)=>a+g.students.length,0)} Schüler:innen`}</div>`).join('')}</div>`}
+  if(s.step===2){const groups=s.groups;
+   if(!groups.length)body='<p>Es wurden noch keine Lerngruppen gefunden. Bitte im Schritt „Listen“ PDFs laden.</p>';
+   else{const opts=v=>['',...s.subjects].map(l=>`<option value="${esc(l)}"${l===v?' selected':''}>${l?esc(l):'– Fach –'}</option>`).join('');
+    const row=(g,i)=>`<tr class="${g.use?'on':''}"><td><input type="checkbox" data-use="${i}"${g.use?' checked':''}></td><td><b>${esc(g.display)}</b><button type="button" class="ys-dup" data-dup="${i}" title="Diese Lerngruppe zusätzlich in einem weiteren Fach anlegen">＋ Fach</button><small>${esc(g.kind==='course'?g.description:'Klasse')}${groupInfo(g)?' · '+groupInfo(g):''} · ${g.students.length} SuS${g.matches===false?' · <em>Anzahl prüfen</em>':''}</small></td><td><select data-sub="${i}">${opts(g.subject)}</select></td><td><select data-sys="${i}"><option value="grades"${g.system==='grades'?' selected':''}>Noten</option><option value="gradePoints"${g.system==='gradePoints'?' selected':''}>Notenpunkte</option></select></td><td><select data-ep="${i}"><option value="year"${g.epoch==='year'?' selected':''}>ganzjährig</option><option value="h1"${g.epoch==='h1'?' selected':''}>Epochal (1. Hj.)</option><option value="h2"${g.epoch==='h2'?' selected':''}>Epochal (2. Hj.)</option></select></td></tr>`;
+    const sek=groups.map((g,i)=>[g,i]).filter(([g])=>!upper(g)),ob=groups.map((g,i)=>[g,i]).filter(([g])=>upper(g));
+    const n=groups.filter(g=>g.use).length;
+    body=`<p>Hake deine Lerngruppen an und ordne sie einem Fach zu. In der Oberstufe sind nur Kurse deiner Fächer aufgeführt.</p><div class="ys-tablewrap"><table class="ys-table"><thead><tr><th></th><th>Lerngruppe</th><th>Fach</th><th>Notensystem</th><th>Unterricht</th></tr></thead><tbody>${sek.length?`<tr class="ys-sec"><td colspan="5">Sekundarstufe I</td></tr>`+sek.map(([g,i])=>row(g,i)).join(''):''}${ob.length?`<tr class="ys-sec"><td colspan="5">Oberstufe</td></tr>`+ob.map(([g,i])=>row(g,i)).join(''):''}</tbody></table></div><p class="ys-sum">${n?`Es werden <b>${n}</b> Lerngruppen angelegt.`:'Noch keine Lerngruppe ausgewählt.'}</p>`}}
+  dlg.innerHTML=`<form method="dialog"><div class="ys-head"><h2>Schuljahr einrichten</h2>${nav}</div><div class="ys-body">${body}</div><p class="ys-err" role="status">${esc(s.error||'')}</p><div class="dialog-actions"><button type="button" data-cancel>Abbrechen</button>${s.step?'<button type="button" data-back>Zurück</button>':''}<button type="button" class="primary" data-next>${s.step===2?'Lerngruppen anlegen':'Weiter'}</button></div></form>`;
+  bind()}
+ function buildGroups(){const all=[];for(const f of state.files)for(const g of f.groups||[])all.push(g);
+  const seen=new Set(),out=[];for(const g of all){const display=g.kind==='course'?g.label:'Klasse '+classroomClassKey(g.label);const k=norm(display);if(seen.has(k))continue;seen.add(k);
+   const prev=state.groups.find(x=>norm(x.display)===k);const subject=prev?.subject??subjectOf(g);
+   if(upper(g)&&g.kind==='course'&&!state.subjects.has(subject))continue;// Oberstufe: nur Kurse der eigenen Fächer
+   out.push({...g,display,subject:state.subjects.has(subject)?subject:'',use:prev?.use??(g.kind==='course'),system:prev?.system??(upper(g)?'gradePoints':'grades'),epoch:prev?.epoch??'year'})}
+  state.groups=out}
+ async function readFiles(list){for(const file of list){const entry={name:file.name,busy:true,groups:[]};state.files.push(entry);render();try{entry.groups=await window.classroomReadSchoolPdf(file)}catch(e){entry.error=e.message||'Konnte nicht gelesen werden.'}entry.busy=false;render()}}
+ function bind(){const q=s=>dlg.querySelector(s),s=state;
+  q('[data-cancel]').onclick=()=>dlg.close();q('[data-back]')?.addEventListener('click',()=>{s.step--;s.error='';render()});
+  dlg.querySelectorAll('[data-subj]').forEach(i=>i.onchange=()=>{i.checked?s.subjects.add(i.dataset.subj):s.subjects.delete(i.dataset.subj);i.closest('label').classList.toggle('on',i.checked)});
+  q('[data-addsubj]')?.addEventListener('click',()=>{const v=q('[data-new]').value.trim();if(!v)return;s.extra.push(v);s.subjects.add(v);render()});
+  q('[data-new]')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();q('[data-addsubj]').click()}});
+  const fi=q('[data-files]');if(fi){fi.onchange=()=>readFiles([...fi.files]);const drop=q('.ys-drop');drop.ondragover=e=>{e.preventDefault();drop.classList.add('over')};drop.ondragleave=()=>drop.classList.remove('over');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('over');readFiles([...e.dataTransfer.files].filter(f=>/pdf$/i.test(f.name)))}}
+  dlg.querySelectorAll('[data-use]').forEach(i=>i.onchange=()=>{s.groups[+i.dataset.use].use=i.checked;render()});
+  dlg.querySelectorAll('[data-sub]').forEach(i=>i.onchange=()=>{const g=s.groups[+i.dataset.sub];g.subject=i.value;if(i.value)g.use=true;render()});
+  dlg.querySelectorAll('[data-dup]').forEach(b=>b.onclick=()=>{const i=+b.dataset.dup,g=s.groups[i];s.groups.splice(i+1,0,{...g,subject:'',use:true});render()});
+  dlg.querySelectorAll('[data-sys]').forEach(i=>i.onchange=()=>{s.groups[+i.dataset.sys].system=i.value});
+  dlg.querySelectorAll('[data-ep]').forEach(i=>i.onchange=()=>{s.groups[+i.dataset.ep].epoch=i.value});
+  q('[data-next]').onclick=async()=>{s.error='';
+   if(s.step===0){if(!s.subjects.size){s.error='Bitte mindestens ein Fach wählen.';render();return}s.step=1;render();return}
+   if(s.step===1){if(s.files.some(f=>f.busy)){s.error='Die Listen werden noch gelesen …';render();return}buildGroups();s.step=2;render();return}
+   const chosen=s.groups.filter(g=>g.use);if(!chosen.length){s.error='Bitte mindestens eine Lerngruppe anhaken.';render();return}
+   if(chosen.some(g=>!g.subject)){s.error='Bitte jeder angehakten Lerngruppe ein Fach zuordnen.';render();return}
+   q('[data-next]').disabled=true;q('[data-next]').textContent='Wird angelegt …';
+   try{const r=await create(chosen);dlg.close();window.classroomAlert?.(r)||alert(r)}catch(e){console.error(e);s.error='Beim Anlegen ist ein Fehler aufgetreten: '+e.message;render()}}}
+ // Fach (vorhanden oder neu) → Id
+ function ensureSubject(label){const hit=Object.entries(subjects).find(([,v])=>norm(v.label)===norm(label));if(hit)return hit[0];
+  $('newSubjectName').value=label;saveNewSubject();return Object.entries(subjects).find(([,v])=>norm(v.label)===norm(label))?.[0]}
+ async function create(groups){const orig=window.classroomCreateClassDialog;let made=0,skipped=[];
+  try{for(const g of groups){const id=ensureSubject(g.subject);if(!id){skipped.push(g.display);continue}setSubject(id);
+    if((classesBySubject[id]||[]).some(c=>norm(c.label)===norm(g.display))){skipped.push(g.display+' ('+g.subject+', schon vorhanden)');continue}
+    window.classroomCreateClassDialog=()=>Promise.resolve({label:g.display,people:g.students.map(p=>({name:p.name,gender:p.gender||''})),gradingSystem:g.system});
+    await addClass();const item=(classesBySubject[id]||[]).find(c=>norm(c.label)===norm(g.display));if(item){if(g.epoch!=='year')item.epoch=g.epoch;made++}}
+  }finally{window.classroomCreateClassDialog=orig;persistClasses();renderClassNavigation();renderAll?.()}
+  try{window.classroomEmptyStart?.()}catch{}
+  return `${made} Lerngruppe${made===1?'':'n'} angelegt.`+(skipped.length?' Übersprungen: '+skipped.join(', ')+'.':'')}
+ window.classroomYearSetup=()=>{const have=new Set(Object.entries(classesBySubject).filter(([,v])=>v?.length).map(([k])=>subjects[k]?.label).filter(Boolean));state={step:0,subjects:have,extra:[],files:[],groups:[],error:''};render();dlg.showModal()};
+ // Leere App: eine einzige Startkarte statt des alten Notenrechners
+ const card=document.createElement('section');card.className='ys-empty';card.hidden=true;card.innerHTML='<div class="ys-card"><h2>Willkommen!</h2><p>Lege dein Schuljahr an: Fächer wählen, Klassen- und Kurslisten der Schule (PDF) laden und deine Lerngruppen auswählen.</p><button type="button" class="ys-start">Schuljahr einrichten</button><button type="button" class="ys-restore">Stattdessen ein Backup laden</button></div>';
+ document.querySelector('main')?.prepend(card);
+ card.querySelector('.ys-start').onclick=()=>window.classroomYearSetup();
+ card.querySelector('.ys-restore').onclick=()=>{try{if(window.parent!==window)parent.document.querySelector('[data-backup-restore],#backupRestore,.backup-restore-button')?.click()}catch{}window.parent?.postMessage?.({type:'classroom:open-restore'},'*');(document.getElementById('settingsButton'))?.click()};
+ window.classroomEmptyStart=()=>{const empty=!Object.values(classesBySubject||{}).some(v=>v?.length);if(card.hidden!==!empty)card.hidden=!empty;document.documentElement.classList.toggle('ys-is-empty',empty)};
+ // Später im Jahr: Knopf neben „＋ Klasse“
+ {const add=document.getElementById('addClassQuick');if(add){const b=document.createElement('button');b.type='button';b.className='add-subject-button quick-add ys-quick';b.textContent='＋ Aus Listen';b.title='Weitere Lerngruppen aus den Klassen-/Kurslisten (PDF) anlegen';b.onclick=()=>window.classroomYearSetup();add.after(b)}}
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(()=>window.classroomEmptyStart());window.classroomEmptyStart();
+ const st=document.createElement('style');st.textContent=`
+ html.ys-is-empty main>:not(.ys-empty){display:none!important}html.ys-is-empty .ys-quick{display:none}
+ .ys-empty{display:flex;justify-content:center;padding:60px 16px}.ys-empty[hidden]{display:none!important}.ys-card{max-width:520px;background:#fff;border:1px solid #dce3ef;border-radius:18px;padding:28px 30px;text-align:center;box-shadow:0 6px 24px #233d6012}.ys-card h2{margin:0 0 8px}.ys-card p{color:#5b6b82;margin:0 0 20px}
+ .ys-start{height:44px;padding:0 22px;border:0;border-radius:10px;background:#2f5f9b;color:#fff;font:inherit;font-weight:650;cursor:pointer}.ys-restore{display:block;margin:14px auto 0;border:0;background:none;color:#2f5f9b;font:inherit;font-size:.9rem;cursor:pointer;text-decoration:underline}
+ .ys-dialog{width:min(860px,calc(100vw - 32px));max-height:calc(100dvh - 40px);padding:0;border:0;border-radius:18px}.ys-dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 40px);margin:0}
+ .ys-head{padding:20px 24px 8px}.ys-head h2{margin:0 0 10px}.ys-steps{display:flex;gap:6px;list-style:none;padding:0;margin:0}.ys-steps li{flex:1;text-align:center;padding:6px 8px;border-radius:9px;background:#f1f4f8;color:#8a97a9;font-size:.85rem;font-weight:650}.ys-steps li.on{background:#2f5f9b;color:#fff}.ys-steps li.done{background:#eaf1fb;color:#2f5f9b}
+ .ys-body{padding:6px 24px;overflow:auto;flex:1}.ys-body p{color:#4a5b73}
+ .ys-chips{display:flex;flex-wrap:wrap;gap:8px}.ys-chip{display:inline-flex;align-items:center;height:36px;padding:0 14px;border:1px solid #d5deea;border-radius:999px;cursor:pointer;color:#4a5b73}.ys-chip input{display:none}.ys-chip.on{background:#eaf1fb;border-color:#9fb8da;color:#2f5f9b;font-weight:650}
+ .ys-add{display:flex;gap:8px;margin-top:14px}.ys-add input{flex:1;max-width:280px;height:38px;border:1px solid #d5deea;border-radius:9px;padding:0 10px;font:inherit}.ys-add button{height:38px;padding:0 14px;border:1px solid #cbd6e5;border-radius:9px;background:#fff;color:#2f5f9b;font:inherit;cursor:pointer}
+ .ys-drop{display:flex;flex-direction:column;align-items:center;gap:4px;padding:26px;border:2px dashed #b9c6d8;border-radius:14px;cursor:pointer;color:#5b6b82}.ys-drop.over{background:#eaf1fb}.ys-drop input{display:none}.ys-drop b{color:#2f5f9b}
+ .ys-files{margin-top:12px;display:flex;flex-direction:column;gap:6px}.ys-file{padding:8px 12px;border:1px solid #e3e9f1;border-radius:10px;font-size:.9rem;color:#4a5b73}.ys-file.err{border-color:#e6c2bd;color:#b0453c}
+ .ys-tablewrap{border:1px solid #e3e9f1;border-radius:12px;overflow:hidden}.ys-table{width:100%;border-collapse:collapse;font-size:.9rem}.ys-table th{background:#f6f8fc;text-align:left;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:#7a889c;padding:8px}
+ .ys-table td,.ys-table th{text-align:left!important}.ys-dup{margin-left:8px;height:22px;padding:0 7px;border:1px dashed #b9c6d8;border-radius:6px;background:#fff;color:#2f5f9b;font:inherit;font-size:.72rem;cursor:pointer}.ys-table td{padding:6px 8px;border-top:1px solid #eef2f7;vertical-align:middle}.ys-table td small{display:block;color:#7a889c;font-size:.78rem}.ys-table tr:not(.on):not(.ys-sec) td{color:#8a97a9}.ys-table select{height:34px;border:1px solid #d5deea;border-radius:8px;font:inherit;font-size:.85rem;padding:0 6px;max-width:150px}
+ .ys-table tr.ys-sec td{background:#f6f8fc;font-weight:700;color:#2f5f9b;font-size:.8rem}.ys-sum{margin:10px 0 0}.ys-err{color:#b0453c;padding:0 24px;margin:6px 0 0;min-height:1.2em}
+ .ys-dialog .dialog-actions{display:flex;justify-content:flex-end;gap:10px;padding:12px 24px 20px}.ys-dialog .dialog-actions button{height:40px;padding:0 16px;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;cursor:pointer}.ys-dialog .dialog-actions .primary{background:#2f5f9b;color:#fff;border-color:#2f5f9b}
+ @media (max-width:640px){.ys-table th:nth-child(4),.ys-table td:nth-child(4){display:none}}`;document.head.append(st);
+})();
+;
+
 /* ==== noten/design-extras.js ==== */
 /* Design 6.93 – Noten-Manager. Jede Rubrik ist eigenständig und lässt sich einzeln entfernen. */
 
