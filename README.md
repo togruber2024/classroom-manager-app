@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 08.11.2026 · Version 9.43
+Stand: 08.11.2026 · Version 9.44
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1220,3 +1220,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.41: Aufgabenspalten der Klassenarbeit gleich breit (170 px), Eingabefelder fest 110 px
 9.42: Assistent „Schuljahr einrichten“ (Fächer, PDF-Listen, Lerngruppen mit Fach/Notensystem/Epochal); leere App zeigt nur die Startkarte; „＋ Aus Listen“
 9.43: Schuljahr einrichten – Liste springt nicht mehr nach oben, Fächer alphabetisch, Oberstufe nach Jg. 11/12/13 sortiert (Abiturjahr aus Kurskürzel), nichts vorausgewählt; Mündliche Mitarbeit wird je Lerngruppe angelegt; Fächer ohne Lerngruppe werden ausgeblendet
+9.44: „Sitzplan bearbeiten“-Knopf mit oranger Leiste (Tischanordnung, Fertig) statt Modus-Schalter; Bewertungsfenster mit Knöpfen „Abwesend“ und „Notiz“ (aufklappbares Textfeld)

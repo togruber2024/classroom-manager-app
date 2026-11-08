@@ -3847,6 +3847,78 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
 })();
 ;
 
+/* ==== sitzplan/quick-note.js ==== */
+/* 9.44: Bewertungsfenster – unten zwei Knöpfe wie „Hausaufgabe fehlt / Material fehlt“: „Abwesend“ (aktiv rot) und „Notiz“.
+   „Notiz“ klappt ein Textfeld auf (dieselbe Notiz wie auf dem iPhone unter „Noten“, je Fach und Klasse). Ist schon eine Notiz da,
+   zeigt der Knopf „Notiz •“ und das Feld ist gleich offen. Der frühere Haken „Abwesend“ bleibt unsichtbar und wird weiter ausgelöst. */
+(()=>{
+ const box=document.querySelector('.classroom-quick'),absent=document.getElementById('classroomQuickAbsent'),label=absent?.closest('label');if(!box||!absent||!label)return;
+ const notes=()=>{try{return parent.document.getElementById('view-noten')?.contentWindow?.classroomStudentNotes||null}catch{return null}};
+ const row=document.createElement('div');row.className='classroom-quick-top cq-bottom';
+ const ab=document.createElement('button');ab.type='button';ab.className='cq-abs';ab.textContent='Abwesend';ab.setAttribute('aria-pressed','false');
+ const nb=document.createElement('button');nb.type='button';nb.className='cq-note';nb.textContent='Notiz';nb.setAttribute('aria-expanded','false');
+ const ta=document.createElement('textarea');ta.className='cq-note-text';ta.rows=3;ta.maxLength=500;ta.placeholder='z. B. Elterngespräch, Nachschreibtermin …';ta.hidden=true;
+ row.append(ab,nb);label.after(row,ta);label.hidden=true;
+ const person=()=>box.title||document.getElementById('classroomQuickName')?.textContent||'';
+ let shownFor=null;
+ const syncAbs=()=>ab.setAttribute('aria-pressed',String(absent.checked));
+ const syncNote=open=>{const n=notes(),t=n?n.get(person()):'';nb.disabled=!n;nb.title=n?'Notiz zu dieser Person (wie auf dem iPhone unter „Noten“)':'Notizen sind verfügbar, sobald der Noten-Manager geladen ist.';
+  nb.textContent=t?'Notiz •':'Notiz';if(open!==undefined){ta.hidden=!open;nb.setAttribute('aria-expanded',String(open))}if(document.activeElement!==ta)ta.value=t};
+ ab.onclick=()=>{absent.click();syncAbs()};absent.addEventListener('change',syncAbs);
+ nb.onclick=()=>{const open=ta.hidden;syncNote(open);if(open)ta.focus()};
+ const save=()=>{const n=notes();if(!n)return;n.set(person(),ta.value);nb.textContent=ta.value.trim()?'Notiz •':'Notiz'};
+ ta.addEventListener('input',()=>{clearTimeout(ta._t);ta._t=setTimeout(save,400)});ta.addEventListener('change',save);ta.addEventListener('blur',save);
+ ta.addEventListener('keydown',e=>e.stopPropagation());
+ // Beim Öffnen des Fensters (neue Person) Zustand übernehmen
+ new MutationObserver(()=>{if(box.hidden){if(shownFor!==null&&!ta.hidden)save();shownFor=null;return}const p=person();if(p===shownFor)return;shownFor=p;syncAbs();const n=notes();syncNote(!!(n&&n.get(p)))}).observe(box,{attributes:true,attributeFilter:['hidden','title']});
+ const st=document.createElement('style');st.textContent=`
+ .classroom-quick .cq-bottom{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line,#dbe3ef)}
+ .classroom-quick .cq-bottom>button{flex:1 1 0;min-width:0;padding:9px 8px;font:inherit;font-size:15px;line-height:1.3;white-space:nowrap;text-align:center;border:1px solid #d5deea;border-radius:10px;background:#f6f8fc;color:#2f5f9b;cursor:pointer}
+ .classroom-quick .cq-abs[aria-pressed=true]{background:#fdecea;border-color:#e6a8a1;color:#b0453c;font-weight:650}
+ .classroom-quick .cq-note[aria-expanded=true]{background:#eaf1fb;border-color:#9fb8da}
+ .classroom-quick .cq-note:disabled{opacity:.5;cursor:default}
+ .classroom-quick .cq-note-text{display:block;box-sizing:border-box;width:100%;margin:10px 0 0;padding:8px 10px;border:1px solid #efcf9c;border-radius:10px;background:#fffdf6;font:inherit;font-size:14px;resize:vertical;color:#243247}
+ .classroom-quick .cq-note-text[hidden]{display:none}
+ body[data-module] .classroom-quick .classroom-quick-absence[hidden]:not(#_){display:none!important}
+ .classroom-quick:has(.cq-note-text:not([hidden])) .sn-quick{display:none}
+ .classroom-quick .cq-bottom{border-top:1px solid var(--line,#dbe3ef)}
+ .classroom-quick.is-sheet .cq-bottom{margin-top:6px;padding-top:8px}`;document.head.append(st);
+})();
+;
+
+/* ==== sitzplan/mode-edit.js ==== */
+/* 9.44: Bewerten ist der Normalzustand. Statt des Schalters „Bewertungs-/Sitzplanmodus“ gibt es den Knopf „Sitzplan bearbeiten“;
+   im Bearbeiten-Modus erscheint über dem Plan eine orange Leiste mit „Tischanordnung …“ und „Fertig“. Der bisherige Schalter
+   (#classroomEditRoom) bleibt unsichtbar im Dokument und wird weiter ausgelöst – alle anderen Teile reagieren wie bisher. */
+(()=>{
+ const edit=()=>document.getElementById('classroomEditRoom');if(!edit())return;
+ const PEN='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-4-4L4 16v4zM13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+ const btn=document.createElement('button');btn.type='button';btn.className='mode-edit-btn';btn.innerHTML=PEN+'<span>Sitzplan bearbeiten</span>';btn.title='Tische setzen oder entfernen, Pult festlegen, Tischanordnung wählen';
+ const bar=document.createElement('div');bar.className='mode-edit-bar';bar.hidden=true;bar.setAttribute('role','status');
+ bar.innerHTML='<span class="meb-text">'+PEN+' <b>Sitzplan bearbeiten</b> · Feld antippen setzt oder entfernt einen Tisch · Rechtsklick = Pult</span><span class="meb-actions"><button type="button" class="meb-layout">Tischanordnung …</button><button type="button" class="meb-done">Fertig</button></span>';
+ const set=on=>{const e=edit();if(e.checked!==on){e.checked=on;e.dispatchEvent(new Event('change',{bubbles:true}))}sync()};
+ btn.onclick=()=>set(true);bar.querySelector('.meb-done').onclick=()=>set(false);
+ bar.querySelector('.meb-layout').onclick=()=>document.getElementById('layoutToggleButton')?.click();
+ function place(){const head=document.querySelector('.room-header'),box=head?.querySelector('.room-head-actions')||head;if(box&&btn.parentElement!==box)box.append(btn);
+  const help=head?.nextElementSibling?.classList.contains('info-text')?head.nextElementSibling:head;if(help&&help.nextElementSibling!==bar)help.after(bar);sync()}
+ function sync(){const on=!!edit()?.checked;if(bar.hidden===on)bar.hidden=!on;if(btn.hidden!==on)btn.hidden=on;document.documentElement.classList.toggle('mode-editing',on);
+  const help=document.querySelector('.room-header+.info-text');const t='Namen antippen öffnet die Bewertung · Namen ziehen verschiebt oder tauscht Plätze. Tische setzt du über „Sitzplan bearbeiten“.';if(help&&!on&&help.textContent!==t&&/Bewertungsmodus|Sitzplanmodus/.test(help.textContent))help.textContent=t}
+ document.addEventListener('change',e=>{if(e.target?.id==='classroomEditRoom')sync()});
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(place);place();setTimeout(place,600);
+ const st=document.createElement('style');st.textContent=`
+ body[data-module=sitzplan] .room-header .classroom-mode-toggle:not(#_){display:none!important}
+ body[data-module=sitzplan] .room-head-actions>.room-head-layout:not(#_){display:none!important}
+ .mode-edit-btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:14.4px;cursor:pointer;white-space:nowrap}
+ .mode-edit-btn[hidden]{display:none}.mode-edit-btn svg,.mode-edit-bar svg{width:17px;height:17px}
+ .mode-edit-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 12px;padding:8px 10px 8px 14px;border:1px solid #efcf9c;border-radius:12px;background:#fff7e8;color:#8a5a12;font-size:14px}
+ .mode-edit-bar[hidden]{display:none}.mode-edit-bar .meb-text{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+ .mode-edit-bar .meb-actions{display:flex;gap:8px}.mode-edit-bar button{height:36px;padding:0 14px;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:14px;cursor:pointer}
+ .mode-edit-bar .meb-done{background:#2f5f9b;border-color:#2f5f9b;color:#fff;font-weight:600}
+ html.ph-lite .mode-edit-btn,html.ph-lite .mode-edit-bar{display:none!important}
+ html.classroom-beamer .mode-edit-btn,html.classroom-beamer .mode-edit-bar{display:none!important}`;document.head.append(st);
+})();
+;
+
 /* ==== no-contacts.js ==== */
 /* Safari/iOS soll bei Schülernamen keine Einträge aus den eigenen Kontakten vorschlagen (Datenschutz, z. B. am Beamer).
    Namensfelder erhalten autocomplete="off" und ein name-Attribut, das Safari nicht als Kontaktfeld erkennt. */
