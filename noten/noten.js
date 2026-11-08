@@ -4672,6 +4672,35 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
 })();
 ;
 
+/* ==== noten/exam-defaults-hint.js ==== */
+/* 9.49: Beim ersten Anlegen einer Klassenarbeit/Klausur in einer Klasse kurz an die Fachvorgaben erinnern
+   (Gewichtung im Halbjahr, Grenze für ausreichend) – „Passt“ oder „Anpassen …“ (öffnet die Fachvorgaben). Je Fach und Klasse nur einmal. */
+(()=>{
+ const KEY='classroom-exam-defaults-hint-v1';
+ const seen=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}};
+ const mark=k=>{const s=seen();s[k]=1;try{localStorage.setItem(KEY,JSON.stringify(s))}catch{}};
+ const fmt=v=>String(Math.round(Number(v)*10)/10).replace('.',',');
+ function facts(subject){
+  const upper=typeof classUsesGradePoints==='function'&&classUsesGradePoints(subject);
+  if(upper){const k=klausurSettings(subject),w=k.weightMode==='ratio'?`Sonstige Mitarbeit : Klausur = ${fmt(k.ratioOther)} : ${fmt(k.ratioExams)}`:`Sonstige Mitarbeit ${fmt(k.other)} % · Klausur ${fmt(k.exams)} %`;return {what:'Klausur',w,pass:`5 Notenpunkte ab ${fmt(k.points['5'])} %`}}
+  const c=subjectGradeSettings(subject)||{other:50,exams:50,weightMode:'percent',ratioOther:1,ratioExams:1};
+  const w=c.weightMode==='ratio'?`Sonstige Mitarbeit : Klassenarbeit = ${fmt(c.ratioOther)} : ${fmt(c.ratioExams)}`:`Sonstige Mitarbeit ${fmt(c.other)} % · Klassenarbeit ${fmt(c.exams??100-c.other)} %`;
+  const p=subjectScaleActive(subject)?subjectPassFraction(subject,false)*100:subjectDefaultPass().points*100;
+  return {what:'Klassenarbeit',w,pass:`ausreichend ab ${fmt(p)} % der Rohpunkte`}}
+ function show(subject){
+  let f;try{f=facts(subject)}catch(e){console.warn('Fachvorgaben-Hinweis',e);return}
+  const d=document.createElement('dialog');d.className='rename-row-dialog exam-defaults-hint';
+  d.innerHTML=`<form method="dialog"><h2>Fachvorgaben ${htmlEscape(subjects[subject]?.label||'')}</h2><p>Für diese ${f.what} gelten die Vorgaben des Fachs:</p><ul class="edh-list"><li><span>Gewichtung im Halbjahr</span><b>${htmlEscape(f.w)}</b></li><li><span>Notengrenzen</span><b>${htmlEscape(f.pass)}</b></li></ul><p class="edh-note">Du kannst sie jederzeit über das Zahnrad beim Fach ändern. Dieser Hinweis erscheint je Klasse nur einmal.</p><div class="dialog-actions"><button type="button" class="edh-edit">Anpassen …</button><button value="ok" class="primary-button">Passt</button></div></form>`;
+  document.body.append(d);d.addEventListener('close',()=>d.remove());
+  d.querySelector('.edh-edit').onclick=()=>{d.close();try{openSubjectGradeSettings(subject)}catch(e){console.warn(e)}};
+  d.showModal();d.querySelector('.primary-button').focus()}
+ /* confirmAddExam wird global aufgerufen (quarter-navigation.js) – hier umhüllen */
+ if(typeof confirmAddExam==='function'){const orig=confirmAddExam;confirmAddExam=function(...args){let b=null;try{b={subject:currentSubject,cls:currentClassId,n:subjectExamGroups(currentSubject).length}}catch{}const r=orig.apply(this,args);
+  if(b)setTimeout(()=>{let n=0;try{n=subjectExamGroups(b.subject).length}catch{}if(n<=b.n)return;const k=b.subject+'::'+b.cls;if(seen()[k])return;mark(k);show(b.subject)},300);return r}}
+ const st=document.createElement('style');st.textContent='.exam-defaults-hint{max-width:460px}.exam-defaults-hint h2{margin:0 0 6px}.exam-defaults-hint .edh-list{list-style:none;margin:12px 0;padding:0;border:1px solid #dbe3ef;border-radius:12px;overflow:hidden}.exam-defaults-hint .edh-list li{display:block;padding:9px 14px;border-top:1px solid #edf1f6}.exam-defaults-hint .edh-list li:first-child{border-top:0}.exam-defaults-hint .edh-list span{display:block;color:#66758a;font-size:13px}.exam-defaults-hint .edh-list b{display:block;font-weight:600}.exam-defaults-hint .edh-note{font-size:13px;color:#66758a;margin:0 0 14px}.exam-defaults-hint .dialog-actions{display:flex;justify-content:flex-end;gap:10px}.exam-defaults-hint .dialog-actions button{height:40px;padding:0 16px;border-radius:10px;font:inherit;cursor:pointer;border:1px solid #cbd6e5;background:#fff;color:#2f5f9b}.exam-defaults-hint .dialog-actions .primary-button{background:#2f5f9b;border-color:#2f5f9b;color:#fff;font-weight:600}';document.head.append(st);
+})();
+;
+
 /* ==== noten/design-extras.js ==== */
 /* Design 6.93 – Noten-Manager. Jede Rubrik ist eigenständig und lässt sich einzeln entfernen. */
 
