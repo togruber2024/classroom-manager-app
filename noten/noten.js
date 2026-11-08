@@ -3141,6 +3141,10 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
 // 8.98: Testseite – Dreifachschalter (Aus | Rahmen | Schraffur) in der Zeile „Ergebnisse“ links neben „Drucken“ (Platzierung in exam-overview.js);
 // oben bleibt der verborgene Schraffur-Schalter, „Zurückgegeben“ rückt ganz nach rechts.
 (()=>{const st=document.createElement('style');st.textContent='body .test-results-head>.hatch-seg.hs-results:not(#_){margin-left:auto!important;margin-right:0!important}.test-detail-panel:has(.test-results-head>.hatch-seg) .test-detail-head [data-hatching-toggle]{display:none!important}';document.head.append(st)})();
+/* 9.57: Test – „Kompaktansicht“ aus der Kopfzeile in die Zeile „Ergebnisse“, links neben den Markierungs-Schalter (wie bei Klassenarbeiten) */
+(()=>{function place(){for(const panel of document.querySelectorAll('.test-detail-panel')){const cv=panel.querySelector('.test-detail-head label.compact-view-toggle');const head=panel.querySelector('.test-results-head');if(!cv||!head)continue;const seg=head.querySelector('.hatch-seg')||head.querySelector('.test-results-print');if(!seg)continue;if(cv.nextElementSibling!==seg){cv.classList.add('cv-in-results');seg.before(cv)}}}
+ const st=document.createElement('style');st.textContent='body .test-results-head>label.compact-view-toggle.cv-in-results:not(#_):not(#__){margin:0 0 0 auto!important;align-self:center}body .test-results-head>.cv-in-results+.hatch-seg.hs-results:not(#_):not(#__){margin-left:10px!important}.test-results-head [data-hatching-toggle]:not(#_){display:none!important}';document.head.append(st);
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(place);place()})();
 ;
 
 /* ==== noten/test-create.js ==== */
@@ -4262,7 +4266,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
  const num=v=>{const n=Number(String(v??'').replace(',','.'));return Number.isFinite(n)&&String(v??'').trim()!==''?n:null};
  const fmt=(v,d=1)=>Number(v).toLocaleString('de-DE',{maximumFractionDigits:d,minimumFractionDigits:0});
+ /* 9.57: auch für Tests – Daten aus der Testseite (classroomTestPrintData) */
+ function testContext(){const panel=[...document.querySelectorAll('.test-detail-panel')].find(p=>p.offsetParent);if(!panel)return null;const key=panel.dataset.customPanel||panel.closest('[data-custom-panel]')?.dataset.customPanel;const t=key&&window.classroomTestPrintData?.(key);if(!t)return null;
+  const system=t.system==='gradePoints'?'gradePoints':'grades';const rows=t.rows.map(r=>({name:r.name,gr:r.group,p:r.raw,f:null,parts:[],rparts:[],r:r.value,text:r.text,cls:r.cls}));
+  const cls=(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId)?.label||'';const maxP=t.ab?0:Number(t.scales[0]?.total)||0;
+  return {key,dateInput:t.date||'',heading:'Test',group:{label:'Test',examDate:t.date||''},data:{},system,rows,maxP,gTasks:[],rTasks:[],hasP:true,hasF:false,cls,topic:t.topic,isTest:true,ab:t.ab,maxTxt:t.ab?t.scales.map(s=>'Gr. '+s.group+': max. '+fmt(s.total)+' P').join(' · '):''}}
  function context(){
+  const tc=testContext();if(tc)return tc;
   const panel=[...document.querySelectorAll('.exam-combined-page')].find(p=>p.offsetParent);if(!panel)return null;
   // ältere Klassenarbeiten haben noch keinen Typ gespeichert – jede Gruppe mit dieser Seite zählt, außer den bekannten anderen Arten
   const other=new Set(['tests','semester','halfYear','performance','homework','quarterSummary','schoolYear']);
@@ -4298,7 +4308,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const passed=done.filter(r=>pts?Math.floor(r.r+0.5)>=5:Math.max(1,Math.min(6,Math.ceil(r.r-0.5-1e-10)))<=4).length;
   const iso=c.group.examDate||c.dateInput||'',date=/^\d{4}-\d\d-\d\d$/.test(iso)?iso.split('-').reverse().join('.'):'';
   const ov=TOP.createElement('div');ov.className='cm-ro';/* 9.30: Darstellung wie im Dreifachschalter (Aus | Rahmen | Schraffur) */{const h=document.documentElement.classList;if(h.contains('hatch-frame'))ov.classList.add('hatch-frame');if(h.contains('hatching-off'))ov.classList.add('hatching-off');/* 9.53: „Aus“ – ohne Farben */if(h.contains('colors-off'))ov.classList.add('colors-off')}ov.setAttribute('role','dialog');ov.setAttribute('aria-label','Übersicht');
-  ov.innerHTML=`<div class="cm-ro-box"><div class="cm-ro-hd"><div><h1>${esc(c.group.label||c.heading||'Klassenarbeit')} · ${esc(c.cls)}</h1><small>${[c.topic,date,c.hasP&&c.maxP?'max. '+fmt(c.maxP)+' Punkte':''].filter(Boolean).map(esc).join(' · ')}</small></div><button type="button" class="cm-ro-x">Schließen</button></div>
+  ov.innerHTML=`<div class="cm-ro-box"><div class="cm-ro-hd"><div><h1>${esc(c.group.label||c.heading||'Klassenarbeit')} · ${esc(c.cls)}</h1><small>${[c.topic,date,c.hasP&&c.maxP?'max. '+fmt(c.maxP)+' Punkte':c.maxTxt||''].filter(Boolean).map(esc).join(' · ')}</small></div><button type="button" class="cm-ro-x">Schließen</button></div>
    <div class="cm-ro-kpi">${mean!==null?`<span>Ø ${pts?'Notenpunkte':'Note'} <b>${fmt(mean,pts?1:2)}</b></span>`:''}${meanP!==null?`<span>Ø Punkte <b>${fmt(meanP,1)}</b></span>`:''}<span>${c.rows.length} Schüler:innen</span>${done.length?`<span>Bestanden <b>${passed}/${done.length}</b></span>`:''}</div>
    <div class="cm-ro-grid"></div></div>`;
   TOP.body.append(ov);
@@ -4307,7 +4317,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const perTask=c.rTasks.length>0,partChip=v=>v===null?'—':`<span class="task-end-grade cm-ro-chip cm-ro-part ${esc(taskGradeClass(v,c.system))}">${esc(part(v,c.system))}</span>`;
   const headR=`<thead><tr><th>Name</th>${c.rTasks.map((t,i)=>`<th class="n" title="${esc(t.name||'')}">${t.kind==='F'?'Fehler':'Punkte'}</th><th class="t" title="Teilnote ${esc(t.name||'')}">A${i+1}</th>`).join('')}<th class="g">Note</th></tr></thead>`;
   const rowR=r=>`<tr><td>${esc(r.name)}</td>${r.rparts.map(x=>`<td class="n">${x.raw===null?'—':fmt(x.raw)}</td><td class="t">${partChip(x.g)}</td>`).join('')}<td class="g"><span class="task-end-grade cm-ro-chip ${esc(r.cls)}">${esc(r.text)}</span></td></tr>`;
-  const row=r=>`<tr><td>${esc(r.name)}</td>${c.hasF?`<td class="n">${r.f===null?'—':fmt(r.f)}</td>`:''}${r.parts.map(v=>`<td class="t">${v===null?'—':`<span class="task-end-grade cm-ro-chip cm-ro-part ${esc(taskGradeClass(v,c.system))}">${esc(part(v,c.system))}</span>`}</td>`).join('')}${c.hasP?`<td class="n">${r.p===null?'—':fmt(r.p)}</td>${c.maxP?`<td class="b"><span class="cm-ro-bar"><i style="width:${r.p===null?0:Math.max(0,Math.min(100,r.p/c.maxP*100))}%"></i></span></td>`:''}`:''}<td class="g"><span class="task-end-grade cm-ro-chip ${esc(r.cls)}">${esc(r.text)}</span></td></tr>`;
+  const row=r=>`<tr><td>${esc(r.name)}${r.gr?` <small class="cm-ro-gr">${esc(r.gr)}</small>`:''}</td>${c.hasF?`<td class="n">${r.f===null?'—':fmt(r.f)}</td>`:''}${r.parts.map(v=>`<td class="t">${v===null?'—':`<span class="task-end-grade cm-ro-chip cm-ro-part ${esc(taskGradeClass(v,c.system))}">${esc(part(v,c.system))}</span>`}</td>`).join('')}${c.hasP?`<td class="n">${r.p===null?'—':fmt(r.p)}</td>${c.maxP?`<td class="b"><span class="cm-ro-bar"><i style="width:${r.p===null?0:Math.max(0,Math.min(100,r.p/c.maxP*100))}%"></i></span></td>`:''}`:''}<td class="g"><span class="task-end-grade cm-ro-chip ${esc(r.cls)}">${esc(r.text)}</span></td></tr>`;
   // Spalten: auf breiten Fenstern bis zu 3–4 nebeneinander (je ≥ 380 px, ab 8 Namen pro Spalte), mindestens so viele, dass nichts gescrollt werden muss
   const avail=Math.max(200,TOP.defaultView.innerHeight-ov.querySelector('.cm-ro-grid').getBoundingClientRect().top-40),fit=Math.max(6,Math.floor(avail/44));
   const byWidth=Math.floor(grid.clientWidth/380),cols=Math.max(1,Math.min(perTask?2:4,Math.max(Math.ceil(c.rows.length/fit),Math.min(byWidth,Math.ceil(c.rows.length/8))))),per=Math.ceil(c.rows.length/cols)||1;
@@ -4320,7 +4330,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const key=e=>{if(e.key==='Escape'&&TOP.querySelector('.cm-ro')){e.preventDefault();close()}};document.addEventListener('keydown',key);try{if(TOP!==document)TOP.addEventListener('keydown',key)}catch{}
  window.classroomResultOverview=open;window.classroomExamContext=context;
  // Knopf in der Werkzeugleiste der Klassenarbeit (vor „Notenspiegel“)
- function place(){for(const panel of document.querySelectorAll('.exam-combined-page')){const ns=panel.querySelector('.notenspiegel-button');const ex=panel.querySelector('.cm-ro-open');/* 9.40: Reihenfolge Fortschritt · Übersicht · Notenspiegel */if(ex){if(ns&&ex.nextElementSibling!==ns)ns.before(ex);continue}if(!ns)continue;
+ function place(){for(const panel of document.querySelectorAll('.exam-combined-page,.test-detail-panel')){const ns=panel.querySelector('.notenspiegel-button');const ex=panel.querySelector('.cm-ro-open');/* 9.40: Reihenfolge Fortschritt · Übersicht · Notenspiegel */if(ex){if(ns&&ex.nextElementSibling!==ns)ns.before(ex);continue}if(!ns)continue;
   const b=document.createElement('button');b.type='button';b.className='cm-ro-open student-add-button is-plain';b.textContent='Übersicht';b.title='Alle Ergebnisse bildschirmfüllend anzeigen (nur Ansicht)';b.onclick=open;ns.before(b)}}
  classroomOnDomChange(place);place();
  // Stile im Hauptfenster (die Übersicht liegt über der ganzen App)
@@ -4328,7 +4338,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   // Notenfarben aus der Noten-Seite übernehmen
   let gradeCss='';try{for(const sh of document.styleSheets){let rules;try{rules=sh.cssRules}catch{continue}for(const r of rules||[])if(r.selectorText&&/\.task-end-grade|\.g[0-9]|grade-|hatch|tendency|participation-(between|lean)/.test(r.selectorText)&&!/:hover|input/.test(r.selectorText))gradeCss+=r.cssText.replace(/html\.(hatch-frame|hatching-off)\s+body(\[[^\]]*\])?\s*/g,'.cm-ro.$1 ').replace(/html\.(hatch-frame|hatching-off)\s+/g,'.cm-ro.$1 ').replace(/body\[data-module(="?noten"?)?\]\s*/g,'')+'\n'}}catch{}
   st.textContent=gradeCss+`
- .cm-ro.hatching-off .task-end-grade:not(.grade-four-fail){background-image:none!important}.cm-ro.colors-off .task-end-grade:not(#_):not(#__){background:#fff!important;background-image:none!important;color:#243247!important;box-shadow:inset 0 0 0 1px #d5deea!important;border-color:#d5deea!important}.cm-ro{position:fixed;inset:0;z-index:99990;background:rgba(28,43,70,.38);display:flex;align-items:stretch;justify-content:center;padding:14px;font-family:inherit}
+ .cm-ro.hatching-off .task-end-grade:not(.grade-four-fail){background-image:none!important}.cm-ro .cm-ro-gr{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:#eef2f8;color:#5b6b82;font-size:.75em;font-weight:650}.cm-ro.colors-off .task-end-grade:not(#_):not(#__){background:#fff!important;background-image:none!important;color:#243247!important;box-shadow:inset 0 0 0 1px #d5deea!important;border-color:#d5deea!important}.cm-ro{position:fixed;inset:0;z-index:99990;background:rgba(28,43,70,.38);display:flex;align-items:stretch;justify-content:center;padding:14px;font-family:inherit}
  .cm-ro-box{flex:1;max-width:1600px;background:#fff;border-radius:18px;box-shadow:0 20px 50px rgba(20,35,60,.25);padding:22px 26px 18px;display:flex;flex-direction:column;min-height:0;color:#1f2a3d}
  .cm-ro-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}.cm-ro-hd h1{margin:0;font-size:24px;line-height:1.2}.cm-ro-hd small{display:block;color:#5b6b82;font-size:14px;margin-top:4px}
  .cm-ro-x{flex:none;height:40px;padding:0 16px;border:1px solid #d5deea;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:14.4px;cursor:pointer}
@@ -4498,7 +4508,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   +'.mm-add-big .seg-toggle:has(+label.task-participation-display),.mm-add-big label.task-participation-display{display:none!important}'
   +'body .mm-add-big table thead th.task-add-column:not(#_){padding:8px!important;vertical-align:middle;width:160px!important;min-width:160px!important;max-width:none!important}body .mm-add-big table td.task-add-column:not(#_){width:160px!important;min-width:160px!important}'
   +'body .mm-add-big thead th.task-add-column .task-add-button:not(#_){box-sizing:border-box;display:flex!important;align-items:center;justify-content:center;width:140px!important;min-width:140px!important;height:auto!important;min-height:var(--addh,120px);margin:0 auto;padding:0 12px!important;border:1.5px dashed #b9c6d8!important;border-radius:12px!important;background:#fff!important;color:#2f5f9b!important;font:inherit!important;font-size:15px!important;font-weight:600!important;line-height:1.2}';
- st.textContent+='.task-head-label{display:block;max-width:150px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+ st.textContent+='th.mh-pq .mh-top{gap:1px}th.mh-pq .mh-top>.previous-quarter-label{font-size:.78rem!important;font-weight:500!important;text-transform:none!important;letter-spacing:0!important;color:#66758a!important;margin:0!important}th.mh-pq>.mh-stack{justify-content:space-between;padding:6px 0 10px}'+'.task-head-label{display:block;max-width:150px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
   /* 9.41: alle Aufgabenspalten gleich breit, Eingabefelder fest */
   +'body .exam-combined-page table.task-table thead th.task-assessment-column:not(#_){width:170px;min-width:170px;max-width:170px;box-sizing:border-box}'
   +'body .exam-combined-page table.task-table td:has(>:is(input.task-raw-score,input.task-grade-input,select)):not(#_){width:170px;max-width:170px}'
@@ -4507,11 +4517,11 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function stack(th,top,bottom){if(th.querySelector(':scope>.mh-stack'))return;const s=document.createElement('div');s.className='mh-stack';const t=document.createElement('div');t.className='mh-top';for(const n of top)if(n)t.append(n);s.append(t);if(bottom)s.append(bottom);th.append(s);th.classList.add('mh-host')}
  function layout(){
   // Quartalsmittel / Testmittel (aktuelle Spalte)
-  for(const th of document.querySelectorAll('th.task-result-heading:not(.mh-host)')){const seg=th.querySelector(':scope>.mean-seg:not(.seg-toggle)'),label=th.querySelector(':scope>span');if(!seg||!label)continue;stack(th,[label],seg)}
+  for(const th of document.querySelectorAll('th.task-result-heading:not(.mh-host):not(.pq-mean-col)')){const seg=th.querySelector(':scope>.mean-seg:not(.seg-toggle)'),label=th.querySelector(':scope>span');if(!seg||!label)continue;stack(th,[label],seg)}
   // Durchschnitt (Klassenarbeiten-Übersicht)
   for(const seg of document.querySelectorAll('.ov-mean-seg')){const th=seg.closest('th');if(!th||th.classList.contains('mh-host'))continue;const top=th.querySelector(':scope>.exam-ov-top'),row=th.querySelector(':scope>.exam-ov-segrow');if(!top||!row)continue;stack(th,[top],row)}
   // Vergleichsspalte 1. Quartal (Schalter wird von previous-quarter.js angehängt)
-  for(const th of document.querySelectorAll('th.pq-mean-col:not(.mh-host)')){const seg=th.querySelector(':scope>.pq-mean-seg');if(!seg)continue;stack(th,[th.querySelector(':scope>.previous-quarter-label'),th.querySelector(':scope>span')],seg)}
+  for(const th of document.querySelectorAll('th.pq-mean-col:not(.mh-host)')){const seg=th.querySelector(':scope>.pq-mean-seg');if(!seg)continue;/* 9.57: „Testmittel“ oben, „1. Quartal“ direkt darunter als Untertitel */stack(th,[th.querySelector(':scope>span'),th.querySelector(':scope>.previous-quarter-label')],seg);th.classList.add('mh-pq')}
   // 9.40: Aufgaben-Spalten der Klassenarbeit/Klausur mit fester Breite – lange Aufgabentitel werden abgeschnitten (…)
   for(const th of document.querySelectorAll('.exam-combined-page table.task-table thead th.task-assessment-column')){const tn=[...th.childNodes].find(x=>x.nodeType===3&&x.textContent.trim());if(!tn)continue;const sp=document.createElement('span');sp.className='task-head-label';sp.textContent=tn.textContent.trim();th.title=sp.textContent;tn.replaceWith(sp)}
   // Mündliche Mitarbeit: großer „＋ Termin“-Kasten

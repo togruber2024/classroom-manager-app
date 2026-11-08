@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 08.11.2026 · Version 9.56
+Stand: 08.11.2026 · Version 9.57
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1233,3 +1233,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.54: „＋ Abzug“ blau gestrichelt, „− Abzug“ rot gestrichelt
 9.55: A4-Druck ohne leere zweite Seite (Seitenhöhe 258 mm)
 9.56: Geschlecht in der Schülerübersicht (Knopf im Kopf, m | w je Zeile); Knopf „Geschlecht“ auf den Bewertungsseiten entfällt
+9.57: Übersicht bei Tests, Kompaktansicht in der Ergebnis-Zeile, Kopf „Testmittel / 1. Quartal“; Einpassen bis zum Ende der Schalterzeile (+20 px links); Geschlecht-Vorschläge in der Schülerübersicht
