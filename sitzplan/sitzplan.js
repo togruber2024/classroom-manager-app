@@ -3136,10 +3136,17 @@ document.addEventListener('keydown',event=>{
  /* auch von den iPhone-Karten direkt aufrufbar (8.15) */
  function unstripe(root){for(const el of root.querySelectorAll(SEL)){const fill=getComputedStyle(el).backgroundImage;if(!fill.includes('gradient')||el.classList.contains('grade-four-fail'))continue;/* 4 Notenpunkte bleiben immer schraffiert. */el.classList.remove('classroom-unstriped');const base=getComputedStyle(el).backgroundColor,color=base&&!/rgba\(0, 0, 0, 0\)|transparent/.test(base)?base:fill.match(/rgba?\([^)]+\)|#[\da-f]{3,8}/i)?.[0];/* Ohne Schraffur gilt die Grundfarbe der Note (z. B. 2+ grün-gelb wie 2). */if(color){if(el.style.getPropertyValue('--unstriped-color')!==color)el.style.setProperty('--unstriped-color',color);if(!el.classList.contains('classroom-unstriped'))el.classList.add('classroom-unstriped')}}}
  window.classroomUnstripe=root=>{if(!enabled)unstripe(root||document)};
+ /* 9.51: „Aus“ (weißer Kasten) – alle Bewertungsfelder ohne Farbe, für die ganze App (alle Rahmen). Gilt auch für 4 Notenpunkte. */
+ const CKEY='classroom-manager-colors-off-v1';let colorsOff=localStorage.getItem(CKEY)==='on';
+ const colored=el=>{const cs=getComputedStyle(el);if(cs.backgroundImage.includes('gradient'))return true;const m=cs.backgroundColor.match(/[\d.]+/g);if(!m||m.length<3||(m.length>3&&Number(m[3])===0))return false;const [r,g,b]=m.map(Number);return Math.max(r,g,b)-Math.min(r,g,b)>=20};
+ function decolor(root){for(const el of root.querySelectorAll(SEL)){if(el.classList.contains('classroom-colorless')||el.classList.contains('classroom-rating-choice'))continue;if(el.classList.contains('cell')&&!el.classList.contains('classroom-seat-assessed'))continue;if(colored(el))el.classList.add('classroom-colorless')}}
+ window.classroomColorsOff={get:()=>colorsOff,set:v=>{v=!!v;try{localStorage.setItem(CKEY,v?'on':'off')}catch{}if(colorsOff!==v){colorsOff=v;apply()}}};
+ style.textContent+='html.colors-off body .classroom-colorless:not(#_):not(#__){background:#fff!important;background-image:none!important;color:#243247!important;box-shadow:inset 0 0 0 1px #d5deea!important}html.colors-off body .room-grid .cell.classroom-seat-assessed.classroom-colorless:not(#_):not(#__){box-shadow:none!important}';
  function apply(){
   observer.disconnect();try{
   if(!enabled)unstripe(document);
   document.documentElement.classList.toggle('hatching-off',!enabled);
+  document.documentElement.classList.toggle('colors-off',colorsOff);if(colorsOff)decolor(document);
   // Schraffuren-Schalter: neben „Kompaktansicht“, auf Übersichtsseiten ohne Kompaktansicht vor „Drucken“.
   const anchors=[...document.querySelectorAll('.compact-view-toggle')];
   for(const print of document.querySelectorAll('.section-title .page-print-button')){const title=print.closest('.section-title');if(!title.querySelector('.compact-view-toggle'))anchors.push(print)}
@@ -3159,12 +3166,12 @@ document.addEventListener('keydown',event=>{
    let hw=!!scope.querySelector('[data-homework-status]');try{const k=scope.dataset?.customPanel;if(k&&typeof customPagesFor==='function'&&typeof currentSubject!=='undefined'&&customPagesFor(currentSubject).some(pg=>pg.key===k&&pg.system==='homework'))hw=true}catch{}const gradePage=!hw;const hide=!gradePage;if(label.hidden!==hide)label.hidden=hide;
    const none=gradePage&&!any;if((label.dataset.hatchNone==='1')!==none){if(none)label.dataset.hatchNone='1';else delete label.dataset.hatchNone}}
   try{window.classroomHatchSegPlace?.()}catch(e){console.error(e)}
-  for(const label of document.querySelectorAll('[data-hatching-toggle]')){const seg=label.previousElementSibling;if(!seg?.classList.contains('hatch-seg'))continue;const none=label.dataset.hatchNone==='1';
-   for(const b of seg.querySelectorAll('[data-hatch]')){if(b.disabled!==none){b.disabled=none;if(none){b.dataset.tipOrig=b.title;b.title='Erst möglich, wenn es Tendenzen oder eine 4 gibt'}else if(b.dataset.tipOrig!==undefined){b.title=b.dataset.tipOrig;delete b.dataset.tipOrig}}}}
+  for(const label of document.querySelectorAll('[data-hatching-toggle]')){const seg=label.previousElementSibling;if(!seg?.classList.contains('hatch-seg'))continue;const none=label.dataset.hatchNone==='1'&&!colorsOff;
+   for(const b of seg.querySelectorAll('[data-hatch]:not([data-hatch="white"])')){if(b.disabled!==none){b.disabled=none;if(none){b.dataset.tipOrig=b.title;b.title='Erst möglich, wenn es Tendenzen oder eine 4 gibt'}else if(b.dataset.tipOrig!==undefined){b.title=b.dataset.tipOrig;delete b.dataset.tipOrig}}}}
   }catch(e){console.error(e)}finally{observer.observe(document.body,{childList:true,subtree:true})}
  }
  const observer=new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;apply()})});
- window.addEventListener('storage',e=>{if(e.key===key){enabled=e.newValue!=='off';apply()}});apply();
+ window.addEventListener('storage',e=>{if(e.key===key){enabled=e.newValue!=='off';apply()}});window.addEventListener('storage',e=>{if(e.key===CKEY){colorsOff=e.newValue==='on';apply();window.classroomHatchSync?.()}});apply();
 })();
 ;
 

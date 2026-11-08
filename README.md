@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 08.11.2026 · Version 9.50
+Stand: 08.11.2026 · Version 9.51
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1227,3 +1227,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.48: Dialog „Klausur erstellen“: „Rohpunkte → Notenpunkte“ / „Notenpunkte direkt“ mit Erklärzeilen
 9.49: Hinweis auf Fachvorgaben beim ersten Anlegen einer Klassenarbeit/Klausur je Klasse; iOS-Statusleiste black-translucent mit Streifen im hellen Modus
 9.50: „Fertig“ übernimmt gewählte Tischanordnung, „Abbrechen“ daneben, „Anwenden“ unten entfällt; Zahnrad B; „＋ Aufgabe“ in der Knopfzeile repariert; Statusleisten-Änderungen (9.34–9.49) entfernt
+9.51: Vierfach-Schalter Markierungen: „Aus“ (alles weiß, auch 4 NP) · Nur Farbe · Rahmen · Schraffur – appweit, auch iPhone
