@@ -1022,3 +1022,9 @@ body[data-module=sitzplan] .room-header .classroom-mode-toggle:not(#_){flex:none
 /* 8.41: Alle Auswahlschalter (Segmentschalter) in Pillenform – passend zu den Ansichts-Pillen wie „Kompaktansicht“ */
 body :is(.mean-seg,.qs-seg,.pl-seg,.rg-seg,.appearance-seg):not(#_):not(#__){border-radius:999px!important}
 body :is(.mean-seg,.qs-seg,.pl-seg,.rg-seg,.appearance-seg):not(#_):not(#__)>:is(button,label,a){border-radius:999px!important}
+/* 9.37: Klassen bearbeiten – zwei Auswahlfelder (Notensystem, Epochal) nebeneinander statt übereinander gelegt */
+.rename-row-field:has(>select+select){grid-template-columns:38px minmax(0,1fr) 17ch 17ch}
+.rename-row-field>select+select{grid-column:4;grid-row:1}
+dialog:has(.rename-row-field>select+select){width:min(720px,calc(100vw - 32px));max-width:calc(100vw - 32px)}
+@media (max-width:600px){.rename-row-field:has(>select+select){grid-template-columns:38px minmax(0,1fr) minmax(0,1fr)}.rename-row-field:has(>select+select)>input{grid-column:2/-1}.rename-row-field>select:has(+select){grid-column:2;grid-row:2}.rename-row-field>select+select{grid-column:3;grid-row:2}}
+.rename-row-field>select:not(#_){height:40px;padding:0 24px 0 10px;line-height:1.2}
