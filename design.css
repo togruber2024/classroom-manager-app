@@ -1035,3 +1035,6 @@ dialog:has(.rename-row-field>select+select){width:min(720px,calc(100vw - 32px));
 .compact-navigation:not(.app-header>.compact-navigation) .compact-navigation-bar .compact-navigation-chip:not(:has(~.compact-navigation-chip)):not(#_){-webkit-text-fill-color:#2f5f9b}
 .compact-navigation:not(.app-header>.compact-navigation) .compact-navigation-separator:not(#_){width:22px;height:30px}
 .compact-navigation:not(.app-header>.compact-navigation) .compact-navigation-separator:not(#_):after{width:7px;height:7px;top:11.5px;left:calc(50% - 5px);border-color:#b3bdca}
+
+/* 9.46: schräge Spaltenköpfe – zu lange Bezeichnungen enden an der Oberkante des Kopfbandes statt darüber hinauszuragen. */
+body[data-module=noten] .compact-slanted-heading:not(#_){overflow:hidden}
