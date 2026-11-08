@@ -4542,6 +4542,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    const existing=head.querySelector('.sr-th');
    if(!pts){if(existing){existing.remove();table.querySelectorAll('.sr-td').forEach(x=>x.remove())}continue}
    let data;try{data=taskPageData(currentSubject,key)}catch{continue}if(!data?.tasks?.length)continue;
+   /* 9.52: Spalte nur nach „＋ Abzug“ (oder wenn schon Abzüge eingetragen sind) */
+   const show=!!data.srColumn||data.students.some(x=>x?.sr);toggleButton(table,key,show);
+   if(!show){if(existing){existing.remove();table.querySelectorAll('.sr-td').forEach(x=>x.remove())}continue}
    const cells=[...head.cells],end=cells.findLastIndex(c=>c.classList.contains('task-result-heading')||c.querySelector('.mean-seg:not(.seg-toggle)')||/Ergebnis/i.test(c.textContent));if(end<0)continue;
    if(!existing){const th=document.createElement('th');th.className='sr-th';th.title='Abzug für Verstöße gegen die Sprachrichtigkeit: ab 5 Fehlern je Seite −1, ab 7 Fehlern je Seite −2 Notenpunkte';th.innerHTML='Sprachr.<small>Fehler / Seiten</small>';head.insertBefore(th,cells[end])}
    const rows=[...table.tBodies[0]?.rows||[]];
@@ -4555,6 +4558,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    const foot=table.tFoot?.rows[0];if(foot&&!foot.querySelector('.sr-td')){const td=document.createElement('td');td.className='sr-td';foot.insertBefore(td,foot.cells[foot.cells.length-1])}
   }
  }
+ function toggleButton(table,key,show){const panel=table.closest('[data-custom-panel]');if(!panel)return;let b=panel.querySelector('.sr-toggle');
+  if(!b){const anchor=panel.querySelector('[data-toggle-partial-grades]')||panel.querySelector('.exam-task-add-bar')||[...panel.querySelectorAll('button')].find(x=>/^Import/.test(x.textContent.trim()));if(!anchor)return;b=document.createElement('button');b.type='button';b.className='student-add-button sr-toggle';b.dataset.srToggle=key;anchor.after(b)}
+  const label=show?'− Abzug':'＋ Abzug';if(b.textContent!==label){b.textContent=label;b.title=show?'Spalte „Sprachrichtigkeit“ entfernen':'Spalte „Sprachrichtigkeit“ (Abzug für Fehler je Seite) hinzufügen';b.setAttribute('aria-pressed',String(show))}}
+ document.addEventListener('click',async e=>{const b=e.target.closest?.('.sr-toggle');if(!b)return;e.preventDefault();e.stopPropagation();const key=b.dataset.srToggle;let data;try{data=taskPageData(currentSubject,key)}catch{return}if(!data)return;
+  const shown=!!data.srColumn||data.students.some(x=>x?.sr);
+  if(!shown){data.srColumn=true}else{const n=data.students.filter(x=>x?.sr).length;if(n&&!await classroomConfirm('Spalte „Abzug“ entfernen?\n\nDie eingetragenen Abzüge (Fehler / Seiten) von '+n+' Schüler:'+(n===1?'in':'innen')+' werden gelöscht und die Ergebnisse neu berechnet.',{ok:'Entfernen',cancel:'Abbrechen',danger:true}))return;for(const x of data.students)if(x)delete x.sr;delete data.srColumn}
+  saveCurrentSubject();try{updateTaskResultsDisplay(currentSubject,key)}catch{}decorate()},true);
  function closePop(){document.querySelector('.sr-pop')?.remove()}
  document.addEventListener('click',e=>{const b=e.target.closest?.('[data-sr]');if(!b){if(!e.target.closest?.('.sr-pop'))closePop();return}
   e.preventDefault();e.stopPropagation();closePop();const key=b.closest('[data-custom-panel]').dataset.customPanel,data=taskPageData(currentSubject,key),s=data.students[Number(b.dataset.sr)];if(!s)return;
