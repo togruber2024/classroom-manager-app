@@ -2212,7 +2212,11 @@ document.addEventListener('keydown',event=>{
  function remember(index){const h=holder();if(!h)return;h.sharedQuarterSelection??={};h.sharedQuarterSelection[currentHalfYearId]=index;if(currentClassId)persistClasses()}
  window.classroomQuarterGroupVisible=function(group,index=selection()){
   if(['halfYear','schoolYear'].includes(group.type))return true;
-  if(group.type==='semester')return index===1;
+  /* 9.79: Im 2. Quartal ersetzt die Quartalsnoten-Seite (mit Q1, SoMi · Halbjahr, Klassenarbeit, Halbjahr ∑, Halbjahr ✎) die eigene Seite „Halbjahresnoten“ –
+     die Halbjahresnote wird weiter genauso berechnet, nur die doppelte Seite fällt aus der Navigation. */
+  const same=t=>subjectExamGroups(currentSubject).find(g=>g.type===t&&g.halfYearId===group.halfYearId);
+  if(group.type==='semester')return index===1&&!same('quarterSummary');
+  if(group.type==='quarterSummary'&&index===1&&same('semester'))return true;
   if(halfYearExam(group))return true;
   if(Array.isArray(group.enabledQuarters))return group.enabledQuarters.includes(index);
   if(quarterly(group.type)){const key=group.pages[index];if(!key)return false;if(index===0)return true;const data=customPageValues(currentSubject,key);return (data.tasks||data.assignments||[]).some(t=>t.date||t.name&&!/^(?:Test|Aufgabe|Hausaufgabe)\s*\d*$/i.test(t.name))||(data.students||[]).some(s=>Object.values(s.grades||{}).some(v=>v!==''&&v!=null)||Object.values(s.rawScores||{}).some(v=>v!==''&&v!=null)||Object.keys(s.statuses||{}).length||s.quarterReview?.teacher!==undefined&&s.quarterReview.teacher!=='')}
@@ -2242,6 +2246,8 @@ document.addEventListener('keydown',event=>{
   for(const names of Object.values(h?.sharedQuarterNames||{}))for(const key of Object.keys(names)){const name=rename(names[key]);if(name!==names[key]){names[key]=name;changed=true}}
   if(changed){const record=customSubjects.find(s=>s.id===currentSubject);if(record){record.pageNames={...source.pageNames};persistCustomSubjects()}else localStorage.setItem(builtInExtraPagesKey,JSON.stringify(builtInExtraPages));persistClasses()}
 },after(){
+  /* 9.79: stand man auf der (jetzt ausgeblendeten) Seite „Halbjahresnoten“, zur Quartalsnoten-Seite wechseln */
+  {const gs=subjectExamGroups(currentSubject),sem=gs.find(g=>g.type==='semester'&&g.pages.includes(activePage)),qs=sem&&gs.find(g=>g.type==='quarterSummary'&&g.halfYearId===sem.halfYearId);if(qs?.pages?.[0]&&!window.__cmSemRedirect){window.__cmSemRedirect=true;try{setPage(qs.pages[0])}finally{window.__cmSemRedirect=false}}}
   if(selection()!==1)document.getElementById('addSemesterQuick').classList.add('hide');
   const groups=subjectExamGroups(currentSubject),active=groups.find(g=>g.pages.includes(activePage)),hasYear=groups.some(g=>g.type==='halfYear'&&g.id===currentHalfYearId),school=active?.type==='schoolYear';
   quarterRow.classList.toggle('hide',!hasYear||school);halfActions.classList.toggle('hide',!hasYear||school);
@@ -2600,7 +2606,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
    cols.push({label:'Schuljahr '+SUM,title:'Schuljahresnote – berechnet ('+w.first+' % / '+w.second+' %)',sum:1,get:(d,nm)=>markup(yearValue(nm),P)});cols.push({label:'Schuljahr '+PEN,title:'Schuljahresnote – deine Note',own:{store:yStore,label:'Deine Schuljahresnote'}})}
   addCols(panel,cols,cur,P,subject,key,()=>semesterRows(subject,semKey))}
  /* 9.76: Klassenarbeit(en) des Halbjahres als Spalte nach „SoMi · Halbjahr“ */
- function examCols(cur){return (cur.examLabels||[]).map((label,i)=>({label,title:label+' (Halbjahr)',exam:1,get:d=>d?.exams?.[i]??'—'}))}
+ function examCols(cur){const ls=cur.examLabels||[];/* 9.79: noch keine Klassenarbeit angelegt – Spalte trotzdem zeigen (leer) */if(!ls.length)return [{label:'Klassenarbeit',title:'Klassenarbeit (Halbjahr) – noch nicht angelegt',exam:1,get:()=>'—'}];return ls.map((label,i)=>({label,title:label+' (Halbjahr)',exam:1,get:d=>d?.exams?.[i]??'—'}))}
  function addCols(panel,cols,cur,P,subject,key,fresh){
   const table=panel.querySelector('table'),head=table.tHead.rows[0];
   for(const c of cols){const th=document.createElement('th');th.className=c.own?'quarter-summary-edit-heading qa-edit':'quarter-summary-average qa-col'+(c.sum?' qa-strong':'')+(c.exam?' quarter-exam-column':'');th.title=c.title;th.innerHTML='<div class="compact-slanted-heading"><span class="compact-heading-label">'+c.label+'</span></div>';head.append(th)}
@@ -5358,7 +5364,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    /* 8.88: Sonstige Mitarbeit wie die übrigen Zeilen – links Q1- und Q2-Quartalsnote (Q2 blass, solange nur Vorschlag), rechts Ø des Halbjahres */
    {const so=sect(/^Sonstige Mitarbeit/);if(so&&!so.querySelector('.qs-row')){const get=re=>{const hh=heads,k=hh.findIndex(h=>re.test(h));if(k<0)return null;const row=[...table.tBodies[0].rows].find(r=>r.cells[0]?.textContent.trim()===name),c=row?.cells[k];if(!c)return null;const i=c.querySelector('input');if(i)return i.value.trim()?{text:i.value.trim(),cls:i.className.replace(/\bquarter-summary-input\b/,'').trim()}:null;const sp=c.querySelector('span'),tx=(sp||c).textContent.trim();return tx&&tx!=='—'?{text:tx,cls:(sp?.className||'').replace(/\bprevious-quarter-value\b/,'').trim()}:null};
     const q1=get(/^Q1 · Quartalsnote/)||get(/^Q1 · Sonstige Mitarbeit/),q2set=get(/^Quartalsnote · Q\d/),q2=q2set||get(/^Sonstige Mitarbeit$/);
-    const chip=(v,lab,soft)=>{const sq=document.createElement('span');sq.className='qs-sq qs-qn-chip'+(soft?' qs-qn-soft':'');const i=document.createElement('i');if(v){const f=fmtMean(v.text,v.cls);i.textContent=f.text;i.className=f.cls||''}else{i.textContent='—';i.className='qs-abs'}const sm=document.createElement('small');sm.textContent=lab;sq.append(i,sm);return sq};
+    const colorOf=v=>{if(!v||/\bg\d|participation-|grade-/.test(v.cls||''))return v;try{const pr=parseReviewGrade(v.text);if(pr&&!pr.absence){const n=pts?participationPoints(pr.value):Number(pr.value);return {...v,cls:taskGradeClass(n,pts?'gradePoints':'grades')}}}catch{}return v};
+    const chip=(v,lab,soft)=>{v=colorOf(v);/* 9.79: Q1-Note mit Farbkästchen wie Q2 */const sq=document.createElement('span');sq.className='qs-sq qs-qn-chip'+(soft?' qs-qn-soft':'');const i=document.createElement('i');if(v){const f=fmtMean(v.text,v.cls);i.textContent=f.text;i.className=f.cls||''}else{i.textContent='—';i.className='qs-abs'}const sm=document.createElement('small');sm.textContent=lab;sq.append(i,sm);return sq};
     const val=so.querySelector(':scope>.qs-sh .qs-val');if(val){const row=document.createElement('div');row.className='qs-row';const seq=document.createElement('div');seq.className='qs-seq';const sep=document.createElement('span');sep.className='qs-sep';seq.append(chip(q1,'Q1',false),sep,chip(q2,'Q2',!q2set));
      if(!val.querySelector('small')&&(val.querySelector('i')?.textContent.trim()||'—')!=='—'){const o=document.createElement('small');o.textContent='Ø';val.prepend(o)}row.append(seq,val);so.append(row)}}}
    /* Ø Q1 und Ø Q2 je zur Hälfte – nur Anzeige */
@@ -5434,7 +5441,7 @@ return}
     // Variante A: Notenwerte als Balken (je länger, desto besser); Zählwerte (fehlend) bleiben kleine Marken
     if(!/fehl/i.test(heads[i]))items.push({head:heads[i],th:headCells[i],text:text||'—',cls:src?.className||'',click:chip.classList.contains('qs-mail')?chip.onclick:null});else if(!(missingInfo&&/^(HA|MA|Material)\b/i.test(heads[i])))chips.append(chip);
    });
-   if(!bigText){const cands=cells.filter(c=>!c.classList.contains('previous-quarter-history-cell')&&c.classList.contains('quarter-summary-average')&&!/fehl/i.test(heads[cells.indexOf(c)])&&/\d/.test(c.textContent)),pick=re=>cands.find(c=>re.test(heads[cells.indexOf(c)])),avg=pick(/^Halbjahresnote/)||pick(/^Sonstige Mitarbeit/)||cands.at(-1);if(avg){bigText=avg.textContent.trim();bigCls=(avg.querySelector('span')?.className||'')+' qs-soft'}}
+   if(!bigText){/* 9.79: nie auf Q1- oder Halbjahresspalten (qa-col) ausweichen – fehlt die Note dieses Quartals, steht „—“ */const cands=cells.filter(c=>!c.classList.contains('previous-quarter-history-cell')&&!c.classList.contains('qa-col')&&c.classList.contains('quarter-summary-average')&&!/fehl/i.test(heads[cells.indexOf(c)])&&/\d/.test(c.textContent)),pick=re=>cands.find(c=>re.test(heads[cells.indexOf(c)])),hasSo=heads.some(h=>/^(Sonstige Mitarbeit|Halbjahresnote)/.test(h)),avg=pick(/^Halbjahresnote/)||pick(/^Sonstige Mitarbeit/)||(hasSo?null:cands.at(-1));if(avg){bigText=avg.textContent.trim();bigCls=(avg.querySelector('span')?.className||'')+' qs-soft'}}
    if(bigText&&/qs-soft/.test(bigCls)){const f=fmtMean(bigText,bigCls.replace(' qs-soft',''));bigText=f.text;bigCls=f.cls+' qs-soft'}big.textContent=bigText||'—';big.className='qs-big '+(bigCls||'qs-empty');
    const tail=[],semester=!!panel.querySelector('[data-final-mix]');tree(bars,items,panel,mmList,testList,examDates,semester?{}:{mm:prevMm,tests:prevTests},tail);
    const split=!semester&&!!missingInfo&&missingInfo.sel>0;
