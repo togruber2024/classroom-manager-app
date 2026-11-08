@@ -4932,7 +4932,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function colPos(cells,cell){let p=0;for(const c of cells){if(c===cell)return p;p+=c.colSpan||1}return -1}
  function cellAt(row,pos){let p=0;for(const c of row.cells){const n=c.colSpan||1;if(pos>=p&&pos<p+n)return c;p+=n}return null}
  const cellText=c=>{if(!c)return '';const sym=c.querySelector('.test-rating-symbol[aria-label]');if(sym)return sym.getAttribute('aria-label');return (c.querySelector('.task-end-grade')||c).textContent.trim()};
- const hasEntry=(row,skip)=>[...row.cells].slice(1).some(c=>c!==skip&&([...c.querySelectorAll('input:not([type=checkbox]):not([type=radio]),select')].some(i=>String(i.value||'').trim()!=='')||/\d/.test(c.querySelector('.exam-ov-chip,.task-end-grade,[class*="chip"]')?.textContent||'')));
+ /* zählt als Eintrag: Note/Zeichen/Zahl – nicht „A“ (abwesend) o. ä. und nicht die eingeblendete Spalte des Vorquartals */
+ const realVal=v=>{v=String(v||'').trim();return v!==''&&!(/^[a-zäöüß.]+$/i.test(v)&&!/^o$/i.test(v))};
+ const hasEntry=(row,skip)=>[...row.cells].slice(1).some(c=>c!==skip&&!c.matches('.pq-mean-col,.previous-quarter-history-cell,.mh-pq,.task-add-column,.task-space-column')&&([...c.querySelectorAll('input:not([type=checkbox]):not([type=radio]),select')].some(i=>realVal(i.value))||/\d/.test(c.querySelector('.exam-ov-chip,.task-end-grade,[class*="chip"]')?.textContent||'')));
  /* Was wird wie sortiert? */
  function spec(table){
   if(table.matches('.ng-plain')||!table.tBodies[0])return null;
@@ -4962,7 +4964,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   let seg=panel.querySelector('.ps-seg');const a=anchorFor(panel,table);if(!a)return seg;
   if(seg&&seg.dataset.kind!==kind){seg.remove();seg=null}
   if(!seg){const w=document.createElement('span');w.innerHTML=segHtml('mean-seg ps-seg',mode);seg=w.firstChild;seg.dataset.kind=kind}
-  if(seg.parentElement!==a.box||(a.before&&seg.nextElementSibling!==a.before&&seg!==a.before)){a.before?a.before.before(seg):a.box.append(seg)}
+  if(seg.parentElement!==a.box){a.before?a.before.before(seg):a.box.append(seg)}
   return seg}
  function placeDesktop(){
   if(document.documentElement.classList.contains('ph-lite'))return;
