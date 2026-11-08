@@ -4891,11 +4891,31 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const byName=(a,b)=>a.n.localeCompare(b.n,'de');
  const flip=f=>(a,b)=>{if(a.v===null||b.v===null)return f(a,b);return -f(a,b)};
  const sorter=(mode,base)=>{const f=mode==='grade'?cmp(pts()):base;return rev()?(mode==='grade'?flip(f):(a,b)=>-f(a,b)):f};
- function paint(seg,mode){const r=rev();for(const b of seg.querySelectorAll('[data-psort]')){const on=b.dataset.psort===mode,P=pts(),txt=b.dataset.psort==='name'?(on&&r?'Z–A':'A–Z'):(P?(on&&r?'15–0':'0–15'):(on&&r?'1–6':'6–1')),tip=b.dataset.psort==='name'?(on?(r?'Z–A · nochmal tippen: A–Z':'A–Z · nochmal tippen: Z–A'):'Alphabetisch'):(on?(r?'Nach Note, stärkste zuerst · nochmal tippen: schwächste zuerst':'Nach Note, schwächste zuerst · nochmal tippen: stärkste zuerst'):'Nach Note – schwächste zuerst');
+ function paint(seg,mode){const r=rev(),cnt=seg.dataset?.kind==='count',x=seg.dataset?.max||'x',open=Number(seg.dataset?.open||0);for(const b of seg.querySelectorAll('[data-psort]')){const on=b.dataset.psort===mode,P=pts(),g=b.dataset.psort==='grade';
+  const txt=!g?(on&&r?'Z–A':'A–Z'):cnt?(on&&r?'0–'+x:x+'–0'):(P?(on&&r?'15–0':'0–15'):(on&&r?'1–6':'6–1'));
+  let tip=!g?(on?(r?'Z–A · nochmal tippen: A–Z':'A–Z · nochmal tippen: Z–A'):'Alphabetisch'):cnt?(on?(r?'Wenigste Fehlende zuerst · nochmal tippen: meiste zuerst':'Meiste Fehlende zuerst · nochmal tippen: wenigste zuerst'):'Nach Anzahl fehlend – meiste zuerst'):(on?(r?'Nach Note, stärkste zuerst · nochmal tippen: schwächste zuerst':'Nach Note, schwächste zuerst · nochmal tippen: stärkste zuerst'):'Nach Note – schwächste zuerst');
+  const off=g&&!cnt&&open>0;if(off)tip='Erst möglich, wenn alle Ergebnisse eingetragen sind (noch '+open+' offen)';b.classList.toggle('ps-off',off);if(off)b.setAttribute('aria-disabled','true');else b.removeAttribute('aria-disabled');
   if(b.textContent!==txt)b.textContent=txt;if(b.title!==tip)b.title=tip;if(b.getAttribute('aria-pressed')!==String(on)){b.setAttribute('aria-pressed',String(on));b.setAttribute('aria-checked',String(on))}}}
  const segHtml=(cls,m)=>`<span class="${cls}" role="radiogroup" aria-label="Sortierung"><button type="button" role="radio" data-psort="name" aria-pressed="${m==='name'}" aria-checked="${m==='name'}" title="Alphabetisch">A–Z</button><button type="button" role="radio" data-psort="grade" aria-pressed="${m==='grade'}" aria-checked="${m==='grade'}" title="Nach Note – schwächste zuerst">${pts()?'0–15':'6–1'}</button></span>`;
 
  // ---------- Tabellen (Mac/iPad)
+ /* 9.70: auch auf den Einzelseiten (Klassenarbeit/Klausur, Test, Tests, Mündliche Mitarbeit, Klassenarbeiten-Übersicht, Hausaufgaben/Material).
+    Nach Note erst möglich, wenn alle begonnenen Zeilen ein Ergebnis haben; ganz leere Zeilen kommen ans Ende.
+    Hausaufgaben/Material: nach Anzahl „Fehlend“ (x–0 bzw. 0–x). Während ein Feld der Tabelle aktiv ist, wird nicht umsortiert.
+    Die App greift an manchen Stellen über die Zeilennummer auf die Schüler:innen zu – deshalb liefern querySelectorAll/rows
+    bei umsortierten Tabellen die Zeilen weiterhin in der ursprünglichen Reihenfolge. */
+ let active=false;
+ const idxOf=r=>Number(r.dataset.psIdx);
+ function fix(list){if(!active||!list||!list.length)return list;let need=false;for(const el of list){if(el.tagName==='TR'&&el.parentElement?.dataset?.psSorted==='1'){need=true;break}}if(!need)return list;
+  const arr=[...list],groups=new Map();arr.forEach((el,i)=>{const p=el.tagName==='TR'?el.parentElement:null;if(!p||p.dataset.psSorted!=='1')return;if(el.dataset.psIdx===undefined){delete p.dataset.psSorted;return}if(!groups.has(p))groups.set(p,[]);groups.get(p).push(i)});
+  for(const [p,pos] of groups){if(p.dataset.psSorted!=='1')continue;const els=pos.map(i=>arr[i]).sort((x,y)=>idxOf(x)-idxOf(y));pos.forEach((i,k)=>arr[i]=els[k])}return arr}
+ {const eq=Element.prototype.querySelectorAll,dq=Document.prototype.querySelectorAll;
+  Element.prototype.querySelectorAll=function(s){const r=eq.call(this,s);return active&&typeof s==='string'&&/tr/i.test(s)?fix(r):r};
+  Document.prototype.querySelectorAll=function(s){const r=dq.call(this,s);return active&&typeof s==='string'&&/tr/i.test(s)?fix(r):r};
+  for(const P of [HTMLTableSectionElement.prototype,HTMLTableElement.prototype]){const d=Object.getOwnPropertyDescriptor(P,'rows');if(d?.get)Object.defineProperty(P,'rows',{configurable:true,enumerable:d.enumerable,get(){return fix(d.get.call(this))}})}}
+ const trs=body=>[...body.children].filter(r=>r.tagName==='TR');
+ function ensureIdx(body){const rows=trs(body);if(rows.every(r=>r.dataset.psIdx!==undefined))return;if(rows.every(r=>r.dataset.psIdx===undefined)){delete body.dataset.psSorted;rows.forEach((r,i)=>r.dataset.psIdx=String(i));return}
+  let m=Math.max(-1,...rows.filter(r=>r.dataset.psIdx!==undefined).map(idxOf));for(const r of rows)if(r.dataset.psIdx===undefined)r.dataset.psIdx=String(++m)}
  function rowKey(row,heads){
   const fv=row.dataset.finalValue??row.dataset.computed;if(fv!==undefined&&fv!=='')return Number(fv);
   const cells=[...row.cells];const at=re=>heads.findIndex(h=>re.test(h));
@@ -4905,24 +4925,63 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   for(const [re,kind] of order){const k=at(re);if(k<0)continue;const v=kind==='in'?inputOf(k):textOf(k);if(v!==null&&Number.isFinite(v))return v}
   if(row.dataset.other!==undefined&&row.dataset.other!=='')return Number(row.dataset.other);
   return null}
- function sortTable(table,mode){
+ // ++ + o - -- ---  (auch „o/-“) → 1…6
+ const SIGN={'++':1,'+':2,'o':3,'-':4,'--':5,'---':6};
+ function parseSign(t){t=String(t??'').replace(/\s+/g,'').replace(/[−–]/g,'-').replace(/0/g,'o').toLowerCase();if(!t||t==='—')return null;if(/\d/.test(t))return parse(t);const xs=t.split('/').map(x=>SIGN[x]);return xs.length&&xs.every(x=>x!==undefined)?xs.reduce((a,b)=>a+b,0)/xs.length:null}
+ // Spalte (mit colspan) → Zelle
+ function colPos(cells,cell){let p=0;for(const c of cells){if(c===cell)return p;p+=c.colSpan||1}return -1}
+ function cellAt(row,pos){let p=0;for(const c of row.cells){const n=c.colSpan||1;if(pos>=p&&pos<p+n)return c;p+=n}return null}
+ const cellText=c=>{if(!c)return '';const sym=c.querySelector('.test-rating-symbol[aria-label]');if(sym)return sym.getAttribute('aria-label');return (c.querySelector('.task-end-grade')||c).textContent.trim()};
+ const hasEntry=(row,skip)=>[...row.cells].slice(1).some(c=>c!==skip&&([...c.querySelectorAll('input:not([type=checkbox]):not([type=radio]),select')].some(i=>String(i.value||'').trim()!=='')||/\d/.test(c.querySelector('.exam-ov-chip,.task-end-grade,[class*="chip"]')?.textContent||'')));
+ /* Was wird wie sortiert? */
+ function spec(table){
+  if(table.matches('.ng-plain')||!table.tBodies[0])return null;
+  const hrow=table.tHead?.rows[0];const hcells=[...(hrow?.cells||[])];
+  if(table.matches('.homework-table'))return {kind:'count',key:r=>{const m=(r.cells[r.cells.length-1]?.textContent||'').match(/\d+/);return m?Number(m[0]):0}};
+  if(table.matches('.test-detail-results'))return {kind:'grade',key:r=>parseSign(cellText(r.cells[r.cells.length-1])),entry:r=>hasEntry(r,r.cells[r.cells.length-1])};
+  if(table.matches('.task-table')){const th=hcells.filter(c=>c.matches('.task-result-heading')&&!c.matches('.mh-pq,.pq-mean-col,.previous-quarter-history-cell,.task-add-column,.task-space-column')).at(-1);if(!th)return null;
+   const pos=colPos(hcells,th),part=table.matches('.participation-task-table');
+   return {kind:'grade',key:r=>{const c=cellAt(r,pos);const t=cellText(c);return part?parseSign(t):parse(t)},entry:r=>hasEntry(r,cellAt(r,pos))}}
+  return null}
+ function sortRows(table,mode,keyFn,kind){
   const body=table.tBodies[0];if(!body||table.contains(document.activeElement))return;
-  const heads=[...(table.tHead?.rows[0]?.cells||[])].map(c=>c.textContent.replace(/\s+/g,' ').trim());
-  const rows=[...body.rows].filter(r=>r.querySelector('th,td'));if(rows.length<2)return;
-  const items=rows.map(r=>({r,n:(r.cells[0]?.querySelector('input')?.value||r.cells[0]?.textContent||'').trim(),v:mode==='grade'?rowKey(r,heads):null}));
-  const sorted=[...items].sort(sorter(mode,byName));
-  if(sorted.every((x,i)=>x===items[i]))return;for(const x of sorted)body.append(x.r)}
+  const rows=trs(body).filter(r=>r.cells.length>=2);if(rows.length<2)return;ensureIdx(body);
+  const items=rows.map(r=>({r,i:idxOf(r),n:(r.cells[0]?.querySelector('input')?.value||r.cells[0]?.textContent||'').trim(),v:mode==='grade'?keyFn(r):null}));
+  let f;if(mode!=='grade')f=rev()?(a,b)=>b.i-a.i:(a,b)=>a.i-b.i;
+  else if(kind==='count')f=rev()?(a,b)=>a.v-b.v||a.i-b.i:(a,b)=>b.v-a.v||a.i-b.i;
+  else{const P=pts();f=(a,b)=>{if(a.v===null&&b.v===null)return a.i-b.i;if(a.v===null)return 1;if(b.v===null)return -1;const d=P?a.v-b.v:b.v-a.v;return (rev()?-d:d)||a.i-b.i}}
+  const sorted=[...items].sort(f);const cur=trs(body);
+  const same=sorted.every((x,k)=>x.r===cur.filter(r=>r.cells.length>=2)[k]);
+  if(!same){active=true;const anchor=rows.at(-1).nextSibling;for(const x of sorted)body.insertBefore(x.r,anchor)}
+  const orig=sorted.every((x,k)=>k===0||x.i>sorted[k-1].i);if(orig)delete body.dataset.psSorted;else{body.dataset.psSorted='1';active=true}}
+ function anchorFor(panel,table){
+  if(table.matches('.test-detail-results:not(.exam-overview-table)')){const h=panel.querySelector('.test-results-head');if(h)return {box:h,before:h.querySelector(':scope>.hatch-seg')||h.querySelector('.test-results-print')}}
+  const hs=panel.querySelector('.section-title .hatch-seg:not(.hs-results)');if(hs)return {box:hs.parentElement,before:hs};
+  const box=panel.querySelector('.section-title .oral-display-actions')||panel.querySelector('.exam-overview-actions');return box?{box,before:box.firstElementChild}:null}
+ function ensureSeg(panel,table,mode,kind){
+  let seg=panel.querySelector('.ps-seg');const a=anchorFor(panel,table);if(!a)return seg;
+  if(seg&&seg.dataset.kind!==kind){seg.remove();seg=null}
+  if(!seg){const w=document.createElement('span');w.innerHTML=segHtml('mean-seg ps-seg',mode);seg=w.firstChild;seg.dataset.kind=kind}
+  if(seg.parentElement!==a.box||(a.before&&seg.nextElementSibling!==a.before&&seg!==a.before)){a.before?a.before.before(seg):a.box.append(seg)}
+  return seg}
  function placeDesktop(){
   if(document.documentElement.classList.contains('ph-lite'))return;
-  const mode=get();
-  for(const panel of document.querySelectorAll('[data-custom-panel]')){if(!panel.offsetParent)continue;
+  const mode=get();const done=new Set();
+  for(const panel of document.querySelectorAll('[data-custom-panel],.test-detail-panel,.exam-overview-page')){if(!panel.offsetParent||done.has(panel))continue;
    const table=panel.querySelector('table.quarter-summary-table')||[...panel.querySelectorAll('table')].find(t=>t.querySelector('tbody tr[data-final-value],tbody tr[data-computed]'));
-   if(!table){panel.querySelector('.ps-seg')?.remove();continue}
-   const hs=panel.querySelector('.section-title .hatch-seg:not(.hs-results)');const box=hs?.parentElement||panel.querySelector('.section-title .oral-display-actions');
-   let seg=panel.querySelector('.ps-seg');if(!seg&&box){const w=document.createElement('span');w.innerHTML=segHtml('mean-seg ps-seg',mode);seg=w.firstChild;hs?hs.before(seg):box.append(seg)}
-   if(seg)paint(seg,mode);
-   for(const t of panel.querySelectorAll('table.quarter-summary-table, table.compact-entry-table'))sortTable(t,mode);if(!table.classList.contains('quarter-summary-table'))sortTable(table,mode);
-   const last=[...(table.tHead?.rows[0]?.cells||[])];for(const th of last)th.classList.toggle('ps-key',false)}
+   if(table){done.add(panel);const heads=[...(table.tHead?.rows[0]?.cells||[])].map(c=>c.textContent.replace(/\s+/g,' ').trim());
+    const seg=ensureSeg(panel,table,mode,'grade');if(seg)paint(seg,mode);
+    for(const t of new Set([...panel.querySelectorAll('table.quarter-summary-table, table.compact-entry-table'),table])){const h=[...(t.tHead?.rows[0]?.cells||[])].map(c=>c.textContent.replace(/\s+/g,' ').trim());sortRows(t,mode,r=>rowKey(r,h),'grade')}
+    continue}
+   /* Einzelseiten: die innerste Tafel mit Ergebnisspalte */
+   let found=null;for(const t of panel.querySelectorAll('table')){if(!t.offsetParent)continue;const own=t.closest('[data-custom-panel],.test-detail-panel,.exam-overview-page');if(own!==panel)continue;const sp=spec(t);if(sp){found={t,sp};break}}
+   if(!found){if(!panel.querySelector('.test-detail-panel,.exam-overview-page'))panel.querySelector('.ps-seg')?.remove();continue}
+   done.add(panel);const {t,sp}=found;
+   let open=0;if(sp.kind==='grade'){for(const r of trs(t.tBodies[0]).filter(r=>r.cells.length>=2)){if(sp.key(r)===null&&sp.entry(r))open++}}
+   let max=0;if(sp.kind==='count')for(const r of trs(t.tBodies[0]).filter(r=>r.cells.length>=2))max=Math.max(max,sp.key(r)||0);
+   const eff=mode==='grade'&&open?'name':mode;
+   const seg=ensureSeg(panel,t,mode,sp.kind);if(seg){seg.dataset.open=String(open);seg.dataset.max=String(max);paint(seg,eff)}
+   sortRows(t,eff,sp.key,sp.kind)}
  }
  // ---------- Karten (iPhone)
  function placePhone(){
@@ -4939,11 +4998,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function order(cards){const mode=get();cards.forEach((c,i)=>{if(!c.dataset.idx)c.dataset.idx=String(i)});const items=cards.map(c=>({c,n:(c.querySelector('.qs-name')?.textContent||'').trim(),i:Number(c.dataset.idx),v:mode==='grade'?parse(c.querySelector('.qs-big')?.textContent):null}));return items.sort(sorter(mode,(a,b)=>a.i-b.i)).map(x=>x.c)}
  window.classroomPerfOrder=order;
  function run(){try{placeDesktop();placePhone()}catch(e){console.warn('Sortierung',e)}}window.classroomPerfSort=run;
- document.addEventListener('click',e=>{const b=e.target.closest?.('[data-psort]');if(!b)return;e.preventDefault();e.stopPropagation();if(b.dataset.psort===get())setRev(!rev());else{set(b.dataset.psort);setRev(false)}run()},true);
- const st=document.createElement('style');st.textContent='.ps-seg{margin:0 6px 0 0!important;align-self:center}.ps-seg button{min-width:0!important;padding:0 12px!important;white-space:nowrap}'
+ document.addEventListener('click',e=>{const b=e.target.closest?.('[data-psort]');if(!b)return;e.preventDefault();e.stopPropagation();if(b.classList.contains('ps-off'))return;if(b.dataset.psort===get())setRev(!rev());else{set(b.dataset.psort);setRev(false)}run()},true);
+ const st=document.createElement('style');st.textContent='.ps-seg{margin:0 6px 0 0!important;align-self:center}.ps-seg button{min-width:0!important;padding:0 12px!important;white-space:nowrap}body .test-results-head>.ps-seg:not(#_){margin:0 6px 0 10px!important}body .test-results-head>.ps-seg+.hatch-seg.hs-results:not(#_):not(#__):not(#___){margin-left:0!important}.ps-seg button.ps-off{opacity:.4;cursor:not-allowed}'
   +'.pl-sort button{padding:0 9px!important}.pl-row2{flex-wrap:nowrap!important}.pl-row2 .pl-sort{flex:none;margin-left:auto}.pl-row2 .pl-sort+.pl-mean{margin-left:0!important}'
   +'.pl-stand.ps-stand{display:flex;align-items:center;justify-content:space-between;gap:8px}.pl-stand .pl-sort{flex:none}';
  document.head.append(st);
+ /* nach dem Verlassen eines Feldes der Tabelle umsortieren */
+ document.addEventListener('focusout',e=>{const t=e.target.closest?.('table');if(!t||t.contains(e.relatedTarget))return;setTimeout(run,0)},true);
  let t=0;if(typeof classroomOnDomChange==='function')classroomOnDomChange(()=>{clearTimeout(t);t=setTimeout(run,60)});run();
 })();
 ;
