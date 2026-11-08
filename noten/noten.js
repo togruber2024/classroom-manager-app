@@ -4794,7 +4794,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   if(/^Sonstige Mitarbeit/i.test(t))return 'Sonst.';if(/^Selbsteinsch/i.test(t))return 'Selbsteinschätzung';if(/^Quartalsnote/i.test(t))return 'Quartalsnote';
   if(/^Klassenarbeit/i.test(t))return 'KA';if(/^Klausur/i.test(t))return 'Klausur';if(/^Tests?\b/i.test(t))return 'Tests';
   return t.length>14?t.slice(0,13)+'…':t};
- const longLabel=t=>{t=String(t||'').replace(/\s+/g,' ').trim();if(/^MM · Mittelwert/i.test(t))return 'MM Ø';if(/^Sonstige Mitarbeit/i.test(t))return 'Sonstige Mitarbeit';if(/^Tests · Mittelwert/i.test(t))return 'Tests';return t.replace(/ · Mittelwert$/,' Ø').replace(/^Quartalsnote · /,'Quartalsnote ')};
+ const longLabel=t=>{t=String(t||'').replace(/\s+/g,' ').trim();if(/^MM · Mittelwert/i.test(t))return 'MM Ø';if(/^Sonstige Mitarbeit/i.test(t))return 'Sonstige Mitarbeit';if(/^Tests · Mittelwert/i.test(t))return 'Tests';/* 9.60: ausgeschrieben wie oben in der Karte */t=t.replace(/^SoMi\b/,'Sonstige Mitarbeit');return t.replace(/ · Mittelwert$/,' Ø').replace(/^Quartalsnote · /,'Quartalsnote ')};
  // Variante C: Balken als Baum mit Gewichtung (Prozente aus den Eingabefeldern der Seite)
  /* 7.92: keine Balken mehr – jede Zeile: Bezeichnung links, Note rechts in einem farbigen Kasten */
  function barRow(it,pct,lvl){return sect(it.label||longLabel(it.head),pct,it,null,lvl)}
@@ -5078,7 +5078,7 @@ return}
    const split=!semester&&!!missingInfo&&missingInfo.sel>0;
    /* für die Hinweise oben (phone-lite): HA fehlend im Halbjahr, mündliche Noten im aktuellen Quartal */card.dataset.haHalf=String(missingInfo?(missingInfo(name).ha||[]).length:0);card.dataset.mmNow=String(mmList.length);
    if(missingInfo){const mi=missingInfo(name);for(const [label,list] of [['Hausaufgaben',mi.ha],['Material',mi.mat]]){if(list===null)continue;(bars.querySelector(':scope>.qs-sub')||bars).append(missingRow(label,list,missingInfo.sel,split))/* 7.98: HA/Material gehören zur Sonstigen Mitarbeit → eingerückt */}}
-   for(const t of tail)bars.append(t);if(bars.childElementCount)card.append(bars);if(chips.childElementCount)card.append(chips);
+   /* 9.60: Klassenarbeit vor „Sonstige Mitarbeit · Halbjahr“ bzw. „Halbjahr ∑“ (Q2), sonst ganz unten */{const anchor=[...bars.children].find(x=>/Halbjahr/.test(x.querySelector?.('.qs-sh-l')?.textContent||''));for(const t of tail)if(anchor)anchor.before(t);else bars.append(t)}if(bars.childElementCount)card.append(bars);if(chips.childElementCount)card.append(chips);
    /* 7.93: „1. Quartal“ blendet die Noten des 1. Quartals blass vor denen des 2. Quartals ein (gestrichelter Trennstrich);
       die Quartalsnote des 1. Quartals erscheint blau umrandet neben der aktuellen Note. */
    const hasPrev=!semester&&(prevMm.length||prevTests.length||prevQn||split);
