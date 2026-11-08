@@ -1046,3 +1046,5 @@ body[data-module=noten] .compact-slanted-heading:not(#_){overflow:hidden}
 
 /* 9.56: „Geschlecht“ steckt jetzt in der Schülerübersicht (Knopf im Kopf) – nicht mehr in der Knopfzeile der Bewertungsseiten. */
 body[data-module=noten] [data-gender-roster]:not(#_){display:none!important}
+/* 9.58: ohne „Geschlecht“ übernimmt „＋ Schüler:in“ den Abstand – Schülerübersicht und ＋ Schüler:in bleiben links */
+body[data-module=noten] .task-actions>:is([data-task-action="add-student"],[data-homework-action="add-student"]){margin-right:auto}
