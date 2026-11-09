@@ -1050,3 +1050,5 @@ body[data-module=noten] [data-gender-roster]:not(#_){display:none!important}
 body[data-module=noten] .task-actions>:is([data-task-action="add-student"],[data-homework-action="add-student"]){margin-right:auto}
 /* 9.67: Bewertungsart als runde Auswahlknöpfe */
 #addExamUpperMode input[type=radio]:not(#_){border-radius:50%!important}
+/* 9.87: iPad/iPhone – Seite positionsfest: kein seitliches Verschieben der ganzen Seite (breite Tabellen scrollen in ihrem eigenen Rahmen) und kein Gummiband-Nachfedern; normales Scrollen nach unten bleibt. */
+@media (pointer:coarse){html{overflow-x:clip;overscroll-behavior:none}body{overflow-x:clip;overscroll-behavior:none}.table-wrap{max-width:100%;overscroll-behavior-x:contain}}
