@@ -260,7 +260,8 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
  window.classroomSeatRenameFix=()=>{try{const group=typeof classroomCurrentGroup==='function'&&classroomCurrentGroup();if(!group)return;const P=prep(group);
   if(typeof gridData!=='undefined'&&fixGrid(gridData,P)){try{localStorage.setItem(prefix(aktuelleKlasse)+'grid',JSON.stringify(gridData))}catch{}}
   if(typeof schuelerPaare!=='undefined')fixPairs(schuelerPaare,P);if(typeof tabuPaare!=='undefined')fixPairs(tabuPaare,P)}catch{}};
- window.classroomSeatRenameStorage=()=>{try{return fixStorage(readJ('classroom-manager-common-v2',null))}catch{return 0}};
+ /* 9.92: nur wenn sich die gemeinsame Klassenliste geändert hat (Umbenennungen kommen nur von dort) */let lastModel=null;
+ window.classroomSeatRenameStorage=()=>{try{const raw=localStorage.getItem('classroom-manager-common-v2');if(raw===lastModel)return 0;lastModel=raw;return fixStorage(raw?JSON.parse(raw):null)}catch{return 0}};
  addEventListener('DOMContentLoaded',()=>{try{classroomHooks.add('initGrid','seat-rename: Namen nachziehen',{before(){window.classroomSeatRenameFix()}})}catch{}});
 })();
 ;
@@ -1132,23 +1133,30 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
             }
         }
 
+        /* 9.92: Namensliste je Durchgang nur einmal aufbauen (vorher für jeden Tisch neu) */
         function sitzplatzKurzname(name) {
             const normalize = value => String(value || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('de-DE');
-            const group = typeof classroomCurrentGroup === 'function' ? classroomCurrentGroup() : null;
-            const names = [...(group?.students.filter(person => !person.deleted).map(person => person.name) || []), ...schuelerEinzel.map(person => person.name), ...schuelerPaare.flatMap(pair => [pair.s1, pair.s2]), ...gridData.flat()];
-            const people = new Map();
-            for (const value of names) {
-                const full = String(value || '').trim(), key = normalize(full);
-                if (!key || ['X', 'PULT'].includes(full) || people.has(key)) continue;
-                const comma = full.indexOf(',');
-                const parts = full.split(/\s+/);
-                const first = comma >= 0 ? full.slice(comma + 1).trim() || full.slice(0, comma).trim() : parts.shift();
-                const last = comma >= 0 ? full.slice(0, comma).trim() : parts.join(' ');
-                people.set(key, {first, last});
+            let kurznameCache = sitzplatzKurzname.cache;
+            if (!kurznameCache) {
+                const group = typeof classroomCurrentGroup === 'function' ? classroomCurrentGroup() : null;
+                const names = [...(group?.students.filter(person => !person.deleted).map(person => person.name) || []), ...schuelerEinzel.map(person => person.name), ...schuelerPaare.flatMap(pair => [pair.s1, pair.s2]), ...gridData.flat()];
+                const people = new Map(), firstCount = new Map();
+                for (const value of names) {
+                    const full = String(value || '').trim(), key = normalize(full);
+                    if (!key || ['X', 'PULT'].includes(full) || people.has(key)) continue;
+                    const comma = full.indexOf(',');
+                    const parts = full.split(/\s+/);
+                    const first = comma >= 0 ? full.slice(comma + 1).trim() || full.slice(0, comma).trim() : parts.shift();
+                    const last = comma >= 0 ? full.slice(0, comma).trim() : parts.join(' ');
+                    people.set(key, {first, last});
+                    const fk = normalize(first); firstCount.set(fk, (firstCount.get(fk) || 0) + 1);
+                }
+                kurznameCache = sitzplatzKurzname.cache = {people, firstCount};
+                Promise.resolve().then(() => { sitzplatzKurzname.cache = null; });
             }
-            const person = people.get(normalize(name));
+            const person = kurznameCache.people.get(normalize(name));
             if (!person) return String(name || '');
-            const duplicate = [...people.values()].filter(other => normalize(other.first) === normalize(person.first)).length > 1;
+            const duplicate = (kurznameCache.firstCount.get(normalize(person.first)) || 0) > 1;
             return person.first + (duplicate && person.last ? ' ' + Array.from(person.last)[0].toLocaleUpperCase('de-DE') + '.' : '');
         }
 
@@ -1718,7 +1726,7 @@ function classroomEscapeAttribute(value){return String(value??'').replace(/&/g,'
 
 /* ==== model.js ==== */
 (function(root){
-const normalize=value=>String(value||'').normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase('de-DE');
+/* 9.92: gemerkt – wird beim Abgleich der Klassenlisten sehr oft mit denselben Namen aufgerufen */const normalizeCache=new Map();const normalize=value=>{const k=String(value||'');let r=normalizeCache.get(k);if(r===undefined){r=k.normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase('de-DE');if(normalizeCache.size>50000)normalizeCache.clear();normalizeCache.set(k,r)}return r};
 const uuid=()=>globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
 function newModel(){return {version:1,classes:[],sourceClasses:{},studentAliases:{}}}
 const classNameKey=value=>normalize(value).replace(/^klasse\s+/, '');
@@ -1913,7 +1921,7 @@ const api={normalize,newModel,repairRosterDuplicates,ingest,solveSeating,seatNam
 const classroomLinkMapKey='classroom-manager-linked-classes-v1';
 function classroomReadLinks(){try{return JSON.parse(localStorage.getItem(classroomLinkMapKey)||'{}')}catch{return {}}}
 function classroomStoragePrefix(name){return 'sitzplan_'+name.replace(/\s+/g,'_')+'_'}
-function classroomNormalizeName(name){return String(name||'').normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase('de-DE')}
+const classroomNameCache=new Map();function classroomNormalizeName(name){const k=String(name||'');let r=classroomNameCache.get(k);if(r===undefined){r=k.normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase('de-DE');if(classroomNameCache.size>50000)classroomNameCache.clear();classroomNameCache.set(k,r)}return r}
 function classroomReadArray(key){const value=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(value)?value:[]}
 const classroomOriginalClassDropdown=aktualisiereKlassenDropdown;
 aktualisiereKlassenDropdown=function(){

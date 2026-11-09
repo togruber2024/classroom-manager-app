@@ -2085,7 +2085,7 @@ function classroomRecordValue(payload){
    if(!task){task={id:makeTaskId('homework-item'),name:'',date:payload.date};data.assignments.push(task);if(payload.initializeHomework&&value==='missing'){for(const pupil of data.students){pupil.statuses??={};pupil.statuses[task.id]=group.attendance?.[payload.date]?.[pupil.id]?'absent':'done'}}}student.statuses[task.id]=value;delete student.classroomAbsenceHomework?.[task.id];
   }
  }
- localStorage.setItem(storageKey,JSON.stringify({...subjectStates,[scope]:sourceState}));subjectStates[scope]=sourceState;if(payload.action==='undo')history.pop();else{history.push(before);if(history.length>50)history.shift()}classroomRecordHistory.set(historyKey,history);if(subject===currentSubject&&classId===currentClassId){if(structureChanged){buildCustomSubjectPanels(subject);buildCustomSettingRows()}renderAll();setPage(activePage)}return {canUndo:history.length>0,historyContext:{sourceClass:payload.sourceClass,date:payload.date,gradePage:payload.gradePage,homeworkPage:payload.homeworkPage,materialPage:payload.materialPage}};
+ localStorage.setItem(storageKey,JSON.stringify({...subjectStates,[scope]:sourceState}));subjectStates[scope]=sourceState;if(payload.action==='undo')history.pop();else{history.push(before);if(history.length>50)history.shift()}classroomRecordHistory.set(historyKey,history);if(subject===currentSubject&&classId===currentClassId){if(classroomNotenHidden()){/* 9.92: Noten-Manager nicht sichtbar (Eintrag aus dem Unterrichts-Manager) – Neuzeichnen erst beim Wechsel */classroomDeferredRender.structure||=structureChanged;classroomDeferredRender.pending=true}else{if(structureChanged){buildCustomSubjectPanels(subject);buildCustomSettingRows()}renderAll();setPage(activePage)}}return {canUndo:history.length>0,historyContext:{sourceClass:payload.sourceClass,date:payload.date,gradePage:payload.gradePage,homeworkPage:payload.homeworkPage,materialPage:payload.materialPage}};
 }
 function classroomStorageDump(){if(subjects[currentSubject])saveCurrentSubject();const result={};for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key.startsWith('notenrechner-'))result[key]=localStorage.getItem(key)}return result}
 function classroomRestoreStorage(values){window.classroomStorageReplaced=true;const before=classroomStorageDump();try{for(const key of Object.keys(before))localStorage.removeItem(key);for(const [key,value] of Object.entries(values))localStorage.setItem(key,value)}catch(error){for(const key of Object.keys(values))localStorage.removeItem(key);for(const [key,value] of Object.entries(before))localStorage.setItem(key,value);throw error}}
@@ -2147,6 +2147,13 @@ document.addEventListener('change',event=>{
  let changed=false;for(const state of Object.values(subjectStates||{}))for(const data of Object.values(state?.customValues||{})){if(!Array.isArray(data?.students)||!data.students.some(s=>String(s?.name||'').trim()))continue;if(dropEmptyStudents(data))changed=true}
  try{if(changed)localStorage.setItem(storageKey,JSON.stringify(subjectStates));localStorage.setItem(key,'1')}catch{}
  if(changed&&typeof renderAll==='function')try{renderAll()}catch{}})();
+
+/* 9.92: Eintragungen aus dem Unterrichts-Manager zeichnen den (verborgenen) Noten-Manager erst neu, wenn er wieder sichtbar wird. */
+const classroomDeferredRender={pending:false,structure:false};
+function classroomNotenHidden(){try{const f=window.frameElement;if(!f)return false;return f.hidden||getComputedStyle(f).display==='none'||(f.getClientRects().length===0)}catch{return false}}
+function classroomFlushDeferredRender(){if(!classroomDeferredRender.pending||classroomNotenHidden())return;const st=classroomDeferredRender.structure;classroomDeferredRender.pending=false;classroomDeferredRender.structure=false;try{if(st){buildCustomSubjectPanels(currentSubject);buildCustomSettingRows()}renderAll();setPage(activePage)}catch(e){console.error(e)}}
+try{const f=window.frameElement;if(f)new MutationObserver(()=>setTimeout(classroomFlushDeferredRender,0)).observe(f,{attributes:true,attributeFilter:['hidden','class','style']});const pd=window.parent?.document;if(pd)new MutationObserver(()=>{if(classroomDeferredRender.pending)setTimeout(classroomFlushDeferredRender,0)}).observe(pd.documentElement,{attributes:true,attributeFilter:['class']})}catch{}
+window.addEventListener('resize',()=>{if(classroomDeferredRender.pending)setTimeout(classroomFlushDeferredRender,0)});
 ;
 
 /* ==== table-navigation.js ==== */
