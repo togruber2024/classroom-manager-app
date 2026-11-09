@@ -3572,6 +3572,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
   const clone=table.cloneNode(true);
   clone.querySelectorAll('th .mean-seg:not(.seg-toggle)').forEach(seg=>seg.closest('th')?.classList.add('pq-mean-col'));/* 9.27: Mittelwert-Spalte merken – sie bekommt einen eigenen Schalter */
   clone.querySelectorAll('button,.toggle,.test-mean-slider,.mean-seg,.task-weight-toggle').forEach(e=>e.remove());
+  clone.querySelectorAll('input.tov-hidden,input[type=hidden],input[hidden]').forEach(e=>e.remove());/* 10.01: ausgeblendete Felder (gesperrter Test) nicht als Kästen zeigen */
   clone.querySelectorAll('input,select,textarea').forEach(input=>{
    const span=document.createElement('span');span.className=input.className;
    if(input.closest('tbody td')&&!input.closest('.task-student-cell'))span.classList.add('previous-quarter-value');
@@ -3731,6 +3732,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
   const clone=table.cloneNode(true);
   clone.querySelectorAll('th .mean-seg:not(.seg-toggle)').forEach(seg=>seg.closest('th')?.classList.add('pq-mean-col'));/* 9.27: Mittelwert-Spalte merken – sie bekommt einen eigenen Schalter */
   clone.querySelectorAll('button,.toggle,.test-mean-slider,.mean-seg,.task-weight-toggle').forEach(e=>e.remove());
+  clone.querySelectorAll('input.tov-hidden,input[type=hidden],input[hidden]').forEach(e=>e.remove());/* 10.01: ausgeblendete Felder (gesperrter Test) nicht als Kästen zeigen */
   clone.querySelectorAll('input,select,textarea').forEach(input=>{
    const span=document.createElement('span');span.className=input.className;
    if(input.closest('tbody td')&&!input.closest('.task-student-cell'))span.classList.add('previous-quarter-value');
