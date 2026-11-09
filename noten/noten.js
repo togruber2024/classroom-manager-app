@@ -4347,7 +4347,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function part(v,system){if(system==='gradePoints')return String(Math.round(v));const o=taskGradeOptions(true).reduce((b,x)=>Math.abs(x.value-v)<Math.abs(b.value-v)?x:b);return o.label}
  function open(){
   const c=context();if(!c){alert('Für diese Seite lässt sich keine Ergebnisse anzeigen.');return}
-  close();const pts=c.system==='gradePoints',done=c.rows.filter(r=>r.r!==null);
+  close();/* 9.83: Reihenfolge wie auf der Seite sortiert */{const o=window.classroomVisibleOrder?.(c.rows);if(o&&o.length===c.rows.length)c.rows=o}const pts=c.system==='gradePoints',done=c.rows.filter(r=>r.r!==null);
   const mean=done.length?done.reduce((a,r)=>a+r.r,0)/done.length:null,withP=c.rows.filter(r=>r.p!==null),meanP=withP.length?withP.reduce((a,r)=>a+r.p,0)/withP.length:null;
   const passed=done.filter(r=>pts?Math.floor(r.r+0.5)>=5:Math.max(1,Math.min(6,Math.ceil(r.r-0.5-1e-10)))<=4).length;
   const iso=c.group.examDate||c.dateInput||'',date=/^\d{4}-\d\d-\d\d$/.test(iso)?iso.split('-').reverse().join('.'):'';
@@ -4426,6 +4426,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const c=window.classroomExamContext?.();if(!c)return null;
   const pts=c.system==='gradePoints',data=c.data,tasks=data.tasks||[],multi=tasks.length>1;
   const rows=c.rows.map((r,i)=>({...r,s:(data.students||[]).filter(s=>String(s.name||'').trim())[i],end:r.r===null?null:(pts?Math.max(0,Math.min(15,Math.floor(r.r+.5+1e-9))):roundSchoolGrade(r.r))}));
+  /* 9.83: Reihenfolge wie gerade auf der Seite sortiert (A–Z, nach Note …) */{const o=window.classroomVisibleOrder?.(rows);if(o&&o.length===rows.length)rows.splice(0,rows.length,...o)}
   const done=rows.filter(r=>r.end!==null),n=done.length,mean=n?done.reduce((a,r)=>a+r.r,0)/n:null;
   const withP=rows.filter(r=>r.p!==null),meanP=withP.length?withP.reduce((a,r)=>a+r.p,0)/withP.length:null;
   const withF=rows.filter(r=>r.f!==null),meanF=withF.length?withF.reduce((a,r)=>a+r.f,0)/withF.length:null;
@@ -5041,6 +5042,10 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  /* kein Tooltip am iPhone: Antippen des blassen Knopfs zeigt kurz den Hinweis */
  function hint(btn,text){document.querySelector('.ps-hint')?.remove();const h=document.createElement('div');h.className='ps-hint';h.textContent=text;document.body.append(h);const r=btn.getBoundingClientRect();h.style.top=Math.min(window.innerHeight-h.offsetHeight-8,r.bottom+6)+'px';h.style.left=Math.max(8,Math.min(window.innerWidth-h.offsetWidth-8,r.right-h.offsetWidth))+'px';setTimeout(()=>h.remove(),2600)}
  window.classroomPerfOrder=order;
+ /* 9.83: Für Druck/Übersicht – Zeilen (mit .name) in der Reihenfolge der sichtbaren Ergebnistabelle */
+ window.classroomVisibleOrder=rows=>{if(get()==='name'&&!rev())return rows;const t=[...document.querySelectorAll('.test-detail-panel table.test-detail-results, .exam-combined-results table.task-table')].find(x=>x.offsetParent);if(!t?.tBodies[0])return rows;
+  const nm=r=>String(r.cells[0]?.querySelector('input')?.value||r.cells[0]?.textContent||'').trim(),list=[...t.tBodies[0].children].filter(r=>r.cells?.length>1).map(nm),pos=new Map(list.map((n,i)=>[n,i]));
+  return rows.map((r,i)=>({r,i,k:pos.has(String(r.name||'').trim())?pos.get(String(r.name||'').trim()):1e6+i})).sort((a,b)=>a.k-b.k).map(x=>x.r)};
  function run(){try{placeDesktop();placePhone()}catch(e){console.warn('Sortierung',e)}}window.classroomPerfSort=run;
  document.addEventListener('click',e=>{const b=e.target.closest?.('[data-psort]');if(!b)return;e.preventDefault();e.stopPropagation();if(b.classList.contains('ps-off')){hint(b,'Noch '+(b.closest('[data-open]')?.dataset.open||'')+' offen – erst möglich, wenn alle Noten da sind');return}if(b.dataset.psort===get())setRev(!rev());else{set(b.dataset.psort);setRev(false)}run()},true);
  const st=document.createElement('style');st.textContent='.ps-seg{margin:0 6px 0 0!important;align-self:center}.ps-seg button{min-width:0!important;padding:0 12px!important;white-space:nowrap}body .test-results-head>.ps-seg:not(#_){margin:0 6px 0 10px!important}body .test-results-head>.ps-seg+.hatch-seg.hs-results:not(#_):not(#__):not(#___){margin-left:0!important}.ps-seg button.ps-off{opacity:.4;cursor:not-allowed}'
@@ -5309,7 +5314,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   if(edits.childElementCount)body.append(edits);try{talk(body,edits,heads,cells)}catch(e){console.warn('Quartalsgespräch',e)}fixUnstriped(body);window.classroomUnstripe?.(body);
  }
  /* 8.83: Detailblatt = Quartalsgespräch. Schritt 1: nur das aktuelle Quartal (ohne Q1-Einträge, Halbjahresnote, Klassenarbeit),
-    oben der Vorschlag für die Quartalsnote. Schritt 2 (Selbsteinschätzung und Quartalsnote eingetragen): Kasten „Für das Halbjahr“
+    oben der Vorschlag für die Quartalsnote. Schritt 2 (Selbsteinschätzung und Quartalsnote eingetragen): Kasten „Halbjahr im Überblick“
     mit Klassenarbeit(en) und – ab dem 2. Quartal – Halbjahresnote: links Vorschlag der App, rechts das eigene Feld (dasselbe wie am Mac). */
  function talk(body,edits,heads,cells){
   const wrap=body.querySelector('.qd-card');if(!wrap)return;const cellOfHead=re=>{const k=heads.findIndex(h=>re.test(h));if(k<0)return null;const c=cells[k],sp=c?.querySelector('span'),tx=(sp||c)?.textContent.trim();return tx&&tx!=='—'?{text:tx,cls:(sp?.className||'').replace(/\bprevious-quarter-value\b/,'')}:null};
@@ -5324,15 +5329,16 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   {const s=sect(/^Mündliche Mitarbeit/);if(s)setv([...s.querySelectorAll('.qs-val i')].pop(),cellOfHead(/^MM · Mittelwert/))}
   {const s=sect(/^Tests/);if(s)setv([...s.querySelectorAll('.qs-val i')].pop(),cellOfHead(/^Tests · Mittelwert/))}
   /* 9.81: Notenbesprechung in zwei Schritten – zuerst nur die mündliche Seite (Sonstige Mitarbeit mit Mündlich, Tests, HA/Material)
-     und die Felder Selbsteinschätzung / Quartalsnote. Sind beide eingetragen, erscheint darunter „Für das Halbjahr“:
+     und die Felder Selbsteinschätzung / Quartalsnote. Sind beide eingetragen, erscheint darunter „Halbjahr im Überblick“:
      Sonstige Mitarbeit · Halbjahr, Klassenarbeit/Klausur, Halbjahr ∑ und das Feld für die eigene Halbjahresnote. */
   const lab=x=>(x.querySelector('.qs-sh-l')?.textContent||'').replace(/\s+/g,' ').trim(),allS=[...wrap.querySelectorAll('.qs-sect')];
   const hjSo=allS.find(x=>/^Sonstige Mitarbeit · Halbjahr/.test(lab(x))),hjSum=allS.find(x=>/^Halbjahr( 2)? ∑/.test(lab(x)));
   const exams=allS.filter(x=>/^(Klassenarbeit|Klausur)/.test(lab(x)));[hjSo,...exams,hjSum].forEach(x=>x?.remove());
   const fields=[...edits.children],hjField=fields.find(f=>/^Halbjahr/.test((f.querySelector('.qs-edit-t')?.textContent||f.textContent||'').trim()));
   const ins=fields.filter(f=>f!==hjField).flatMap(f=>[...f.querySelectorAll('input')]);
-  if(ins.length<2||ins.some(i=>!i.value.trim())){hjField?.remove();return}
-  const box=document.createElement('div');box.className='qd-hjbox';const cap=document.createElement('div');cap.className='qd-hjcap';cap.textContent='Für das Halbjahr';box.append(cap);
+  /* 9.83: Es reicht deine Quartalsnote – die Selbsteinschätzung kann fehlen (z. B. wenn jemand krank ist) */const tl=f=>(f.querySelector('.qs-edit-t')?.textContent||f.textContent||'').trim(),qnF=fields.find(f=>f!==hjField&&/^Quartalsnote/.test(tl(f))),qnIn=qnF?.querySelector('input');
+  if(qnIn?!qnIn.value.trim():(ins.length<2||ins.some(i=>!i.value.trim()))){hjField?.remove();return}
+  const box=document.createElement('div');box.className='qd-hjbox';const cap=document.createElement('div');cap.className='qd-hjcap';cap.textContent='Halbjahr im Überblick';box.append(cap);
   if(hjSum){box.append(...[hjSo,...exams,hjSum].filter(Boolean));if(hjField){const line=document.createElement('div');line.className='qs-edits qd-edits qd-hjline';line.append(hjField);box.append(line)}edits.after(box);return}
   hjField?.remove();box.append(...exams);
   if(sel>=1){const t=semTable();if(t){const name=detail.name,hh=[...t.tHead.rows[0].cells].map(c=>c.textContent.replace(/\s+/g,' ').trim()),row=[...t.tBodies[0].rows].find(r=>r.cells[0]?.textContent.trim()===name);

@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 09.11.2026 · Version 9.82
+Stand: 09.11.2026 · Version 9.83
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1259,3 +1259,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.80: Hilfe überarbeitet (Mac, iPad, iPhone) – aktueller Stand aller Kapitel
 9.81: Notenbesprechung zweistufig (erst mündlich, dann Halbjahr); Halbjahresnote wird bei Bedarf still angelegt (Klausur in der Karte, Ø korrekt)
 9.82: Notenpunkte – Zeichen ++/+ (12,5 P.) wird nicht mehr als ++ angezeigt
+9.83: „Halbjahr im Überblick“ (auch ohne Selbsteinschätzung); Druck/Übersicht von KA/Klausur/Test in Seitensortierung
