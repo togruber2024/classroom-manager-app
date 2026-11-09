@@ -3924,6 +3924,38 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
 })();
 ;
 
+/* ==== sitzplan/orga-seat.js ==== */
+/* 9.99: Organisation am Sitzplatz – solange in einer Liste der Klasse (Noten-Manager › Organisation) noch etwas offen ist,
+   zeigt das Bewertungsfenster je Liste einen Knopf („Exkursion Köln: offen“ / „✓ 15 €“). Antippen hakt ab bzw. nimmt zurück. */
+(()=>{
+ const KEY='notenrechner-organisation-v1';
+ const load=()=>{try{const s=JSON.parse(localStorage.getItem(KEY)||'{}');s.classes??={};return s}catch{return {classes:{}}}};
+ const store=s=>{try{localStorage.setItem(KEY,JSON.stringify(s))}catch{}};
+ const eur=v=>(Math.round(Number(v)*100)/100).toLocaleString('de-DE',{maximumFractionDigits:2})+' €';
+ const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ function cell(l,e){if(e?.s==='ex')return 'ex';if(l.type==='money'){const v=Number(e?.v)||0;return v<=0?'open':v+1e-9>=Number(l.amount||0)?'ok':'part'}return e?.s==='ok'?'ok':'open'}
+ const quick=document.querySelector('.classroom-quick');if(!quick)return;
+ const box=document.createElement('div');box.className='qe-orga';box.hidden=true;
+ (document.getElementById('classroomQuickGrade')||quick.lastElementChild)?.after(box);
+ function draw(){let g=null,p=null;try{g=classroomCurrentGroup();p=typeof quickPerson!=='undefined'?quickPerson:null}catch{}
+  const c=g&&load().classes[g.id];const people=g?.students?.filter(s=>!s.deleted)||[];
+  const lists=(c?.lists||[]).filter(l=>people.some(x=>{const st=cell(l,c.entries?.[l.id]?.[x.id]);return st==='open'||st==='part'})||c.entries?.[l.id]?.[p?.id]);
+  if(!p||!lists.length){box.hidden=true;box.innerHTML='';return}
+  box.hidden=false;box.innerHTML=lists.map(l=>{const e=c.entries?.[l.id]?.[p.id],st=cell(l,e),txt=st==='ok'?'✓ '+(l.type==='money'?eur(e.v):'erledigt'):st==='part'?eur(e.v)+' von '+eur(l.amount):st==='ex'?'befreit':'offen';
+   return `<button type="button" class="qe-orga-b qe-orga-${st}" data-l="${esc(l.id)}" ${st==='ex'||st==='part'?'title="Im Noten-Manager › Organisation ändern"':''}><span>${esc(l.name)}</span><b>${txt}</b></button>`}).join('');
+  box.querySelectorAll('[data-l]').forEach(b=>b.onclick=e=>{e.stopPropagation();const s=load(),cc=s.classes[g.id],l=cc?.lists.find(x=>x.id===b.dataset.l);if(!l)return;cc.entries??={};cc.entries[l.id]??={};const cur=cc.entries[l.id][p.id],st=cell(l,cur);
+   if(st==='ex'||st==='part')return;if(st==='ok'){if(cur?.note)cc.entries[l.id][p.id]={note:cur.note};else delete cc.entries[l.id][p.id]}else cc.entries[l.id][p.id]={...(cur||{}),s:'ok',...(l.type==='money'?{v:Number(l.amount)||0}:{})};store(s);draw()})}
+ if(typeof qeAfterOpen==='function'){const orig=qeAfterOpen;qeAfterOpen=function(...a){try{draw()}catch(e){console.warn(e)}return orig.apply(this,a)}}
+ new MutationObserver(()=>{if(!quick.hidden)try{draw()}catch{}}).observe(quick,{attributes:true,attributeFilter:['hidden']});
+ const st=document.createElement('style');st.textContent=`
+ .qe-orga{display:flex;flex-direction:column;gap:6px;margin:8px 0 2px}.qe-orga[hidden]{display:none}
+ .qe-orga-b{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:38px;padding:0 12px;border-radius:10px;border:1px dashed #c6d1df;background:#f6f8fb;color:#4a5a70;font:inherit;font-size:13.5px;cursor:pointer;text-align:left}
+ .qe-orga-b span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.qe-orga-b b{flex:none}
+ .qe-orga-ok{border-style:solid;border-color:#bfe0c9;background:#e7f6ed;color:#1d6b3a}.qe-orga-part{border-style:solid;border-color:#f0d9a8;background:#fff8e2;color:#8a5a12}.qe-orga-ex{opacity:.6}
+ html.classroom-beamer .qe-orga{display:none!important}`;document.head.append(st);
+})();
+;
+
 /* ==== sitzplan/mode-edit.js ==== */
 /* 9.44: Bewerten ist der Normalzustand. Statt des Schalters „Bewertungs-/Sitzplanmodus“ gibt es den Knopf „Sitzplan bearbeiten“;
    im Bearbeiten-Modus erscheint über dem Plan eine orange Leiste mit „Tischanordnung …“ und „Fertig“. Der bisherige Schalter

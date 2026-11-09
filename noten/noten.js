@@ -4901,13 +4901,17 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const item=(r,i)=>`<div class="cr-it"><div class="cr-top"><b>${esc(r.name)}</b><span>${esc(subjects[r.subject]?.label||'')} · ${esc(r.classLabel)}</span></div><div class="cr-why">${r.count}× ${kind(r)}<span class="cr-dates">${r.dates.map(d=>`<i>${esc(dm(d)||'—')}</i>`).join('')}</span>${ago(r)}</div><div class="cr-act"><button type="button" class="cr-pri" data-cr-letter="${i}">Elternbrief verfassen</button><button type="button" data-cr-done="${i}">Erledigt</button><button type="button" data-cr-later="${i}">Später</button><button type="button" data-cr-skip="${i}" title="Kein Brief nötig – erst beim nächsten Fehlen wieder erinnern">Nicht nötig</button></div></div>`;
   const ago=r=>{const l=r.dates.filter(Boolean).at(-1);if(!l)return '';const w=Math.floor((Date.parse(today())-Date.parse(l))/864e5/7);return w>=4?`<span class="cr-ago">letztes Fehlen vor ${w} Wochen</span>`:''};
   const doneItem=r=>`<div class="cr-it is-done"><div class="cr-top"><b>${esc(r.name)}</b><span>${esc(subjects[r.subject]?.label||'')} · ${esc(r.classLabel)}</span></div><div class="cr-why"><span class="cr-ok">✓ ${r.skipped?'Nicht nötig':r.ack.letter?'Elternbrief':'Erledigt'} am ${esc(dm(r.ack.date))}</span> · ${r.count}× ${kind(r)}${r.skipped?' · nächste Erinnerung beim '+(r.count+1)+'. Mal':r.ack.level<5?' · nächste Erinnerung beim 5. Mal':''}</div></div>`;
-  dlg.innerHTML=`<div class="cr-head"><div><h2>Erinnerungen</h2><p>Fehlende Hausaufgaben bzw. Material im laufenden Halbjahr – Erinnerung beim 3. und 5. Mal.</p></div><span class="cr-head-btns"><button type="button" data-cr-tpl>Vorlagen …</button><button type="button" class="cr-close" data-cr-close>Schließen</button></span></div><div class="cr-body">${open.length?open.map(item).join(''):'<p class="cr-empty">Keine offenen Erinnerungen.</p>'}${done.length?`<details class="cr-done"${doneOpen()?' open':''}><summary>Erledigt <span class="cr-n">${done.length}</span></summary>${done.map(doneItem).join('')}</details>`:''}</div>`;
+  const orga=(()=>{try{return window.classroomOrgaDue?.()||[]}catch{return []}})();
+  const orgaHtml=orga.map((o,i)=>`<div class="cr-it cr-orga"><div class="cr-top"><b>${esc(o.name)}</b><span>Organisation · ${esc(o.classLabel)}</span></div><div class="cr-why">${o.open} noch offen · Frist ${esc(dm(o.due))}${o.late?' · überschritten':''}</div><div class="cr-act"><button type="button" class="cr-pri" data-orga-open="${i}">Liste öffnen</button><button type="button" data-orga-later="${i}">Später</button></div></div>`).join('');
+  dlg.innerHTML=`<div class="cr-head"><div><h2>Erinnerungen</h2><p>Fehlende Hausaufgaben bzw. Material im laufenden Halbjahr – Erinnerung beim 3. und 5. Mal.</p></div><span class="cr-head-btns"><button type="button" data-cr-tpl>Vorlagen …</button><button type="button" class="cr-close" data-cr-close>Schließen</button></span></div><div class="cr-body">${orgaHtml}${open.length?open.map(item).join(''):orga.length?'':'<p class="cr-empty">Keine offenen Erinnerungen.</p>'}${done.length?`<details class="cr-done"${doneOpen()?' open':''}><summary>Erledigt <span class="cr-n">${done.length}</span></summary>${done.map(doneItem).join('')}</details>`:''}</div>`;
   dlg.querySelector('[data-cr-close]').onclick=()=>dlg.close();dlg.querySelector('[data-cr-tpl]').onclick=editTemplates;
   dlg.querySelector('.cr-done')?.addEventListener('toggle',e=>{try{localStorage.setItem('notenrechner-erinnerungen-erledigt-offen-v1',e.target.open?'1':'0')}catch{}});
   dlg.querySelectorAll('[data-cr-done]').forEach(b=>b.onclick=()=>{ack(open[+b.dataset.crDone]);list()});
   dlg.querySelectorAll('[data-cr-skip]').forEach(b=>b.onclick=()=>{skip(open[+b.dataset.crSkip]);list()});
   dlg.querySelectorAll('[data-cr-later]').forEach(b=>b.onclick=()=>{snooze(open[+b.dataset.crLater]);list()});
-  dlg.querySelectorAll('[data-cr-letter]').forEach(b=>b.onclick=()=>compose(open[+b.dataset.crLetter]))}
+  dlg.querySelectorAll('[data-cr-letter]').forEach(b=>b.onclick=()=>compose(open[+b.dataset.crLetter]));
+  dlg.querySelectorAll('[data-orga-open]').forEach(b=>b.onclick=()=>{const o=orga[+b.dataset.orgaOpen];dlg.close();try{TOP.defaultView.selectView?.('noten')}catch{}window.classroomOrgaOpenFor?.(o.classKey)});
+  dlg.querySelectorAll('[data-orga-later]').forEach(b=>b.onclick=()=>{window.classroomOrgaSnooze?.(orga[+b.dataset.orgaLater].id);refresh();list()})}
  function compose(r){const text=letter(r);
   dlg.innerHTML=`<div class="cr-head"><div><h2>Elternbrief – ${esc(r.name)}</h2><p>${esc(subjects[r.subject]?.label||'')} · ${esc(r.classLabel)} · ${r.count}× ${r.kind==='ha'?'Hausaufgaben':'Material'} fehlend</p></div></div><textarea class="cr-text" rows="14">${esc(text)}</textarea><p class="cr-status" role="status"></p><div class="cr-row"><button type="button" data-cr-back>Zurück</button><button type="button" data-cr-mail>Als Mail öffnen</button><button type="button" class="cr-pri" data-cr-copy>Text kopieren · Erledigt</button></div>`;
   const ta=dlg.querySelector('textarea'),st=dlg.querySelector('.cr-status');
@@ -4922,7 +4926,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  dlg.addEventListener('pointerdown',e=>{downOut=e.target===dlg&&outside(e)});
  dlg.addEventListener('click',e=>{const ok=downOut&&e.target===dlg&&outside(e);downOut=false;if(ok&&!dlg.querySelector('.cr-tpl'))dlg.close()});
  dlg.addEventListener('cancel',e=>{if(dlg.querySelector('.cr-tpl'))e.preventDefault()});
- let last='';function refresh(){placeBell();let n=0;try{n=state().open.length}catch(e){console.warn('Erinnerungen',e)}const dot=bell.querySelector('.cr-dot'),sig=String(n);if(sig!==last){last=sig;dot.hidden=!n;dot.textContent=n>9?'9+':String(n);bell.classList.toggle('has-open',!!n);bell.title=n?`${n} offene Erinnerung${n===1?'':'en'}`:'Erinnerungen'}}
+ let last='';function refresh(){placeBell();let n=0;try{n=state().open.length}catch(e){console.warn('Erinnerungen',e)}/* 9.99: Fristen aus „Organisation“ */try{n+=(window.classroomOrgaDue?.()||[]).length}catch{}const dot=bell.querySelector('.cr-dot'),sig=String(n);if(sig!==last){last=sig;dot.hidden=!n;dot.textContent=n>9?'9+':String(n);bell.classList.toggle('has-open',!!n);bell.title=n?`${n} offene Erinnerung${n===1?'':'en'}`:'Erinnerungen'}}
  if(!TOP.getElementById('crStyle')){const st=TOP.createElement('style');st.id='crStyle';st.textContent=`
  .cr-bell{position:relative;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:42px;height:42px;padding:0;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:#2f5f9b;cursor:pointer}
  .cr-bell svg{width:20px;height:20px}.cr-dot{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 4px;box-sizing:border-box;border:2px solid #fff;border-radius:999px;background:#d64545;color:#fff;font:700 11.5px/16px system-ui,sans-serif;text-align:center}.cr-dot[hidden]{display:none}
@@ -5071,7 +5075,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    const r2=bar.querySelector('.pl-row2'),stand=bar.querySelector('.pl-stand');const over=()=>{if(!r2)return false;const kids=[...r2.children].filter(k=>k.offsetParent&&getComputedStyle(k).display!=='none');const gap=parseFloat(getComputedStyle(r2).columnGap)||8;const need=kids.reduce((a,k)=>a+Math.max(k.scrollWidth,k.getBoundingClientRect().width),0)+gap*Math.max(0,kids.length-1);return need>r2.clientWidth+1};
    /* 9.74: ohne Hin- und Herschieben prüfen, ob der Schalter in die 2. Zeile passt (sonst Endlosschleife mit anderen Beobachtern) */
    const fits=()=>{if(!r2)return false;const kids=[...r2.children].filter(k=>k!==seg&&k.offsetParent&&getComputedStyle(k).display!=='none');const gap=parseFloat(getComputedStyle(r2).columnGap)||8;const need=kids.reduce((a,k)=>a+Math.max(k.scrollWidth,k.getBoundingClientRect().width),0)+seg.getBoundingClientRect().width+gap*kids.length;return need<=r2.clientWidth+1};
-   if(r2&&seg.parentElement===r2&&over()&&stand){stand.classList.add('ps-stand');stand.append(seg)}
+   /* 9.99: neu geordnete Leiste (Notenspiegel/Karten verkleinern) – Sortierschalter immer in der Hinweiszeile */
+   if(r2&&stand&&r2.classList.contains('plx2')){if(seg.parentElement!==stand){stand.classList.add('ps-stand');stand.append(seg)}}
+   else if(r2&&seg.parentElement===r2&&over()&&stand){stand.classList.add('ps-stand');stand.append(seg)}
    else if(r2&&stand&&seg.parentElement===stand&&fits()){const mean=r2.querySelector('.pl-mean');mean?mean.before(seg):r2.append(seg);stand.classList.remove('ps-stand')}}
   for(const box of document.querySelectorAll('.qs-cards')){const cards=[...box.children].filter(c=>c.matches('.qs-card:not(.qd-card)'));if(cards.length<2)continue;const sorted=order(cards);if(sorted.some((c,i)=>c!==cards[i])){const anchor=cards.at(-1).nextSibling;for(const c of sorted)box.insertBefore(c,anchor)}}}
  /* 9.72: auch am iPhone erst nach Note, wenn jede begonnene Karte eine Note hat; ganz leere Karten unten */
@@ -5320,7 +5326,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .nsv-col span{font-size:11.5px;color:#7a889c;line-height:1.2}.nsv-col b{font-size:11.5px;line-height:1.3}.nsv-col b.z{color:#b8c3d2}
  .nsv-kpi{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.nsv-kpi span{border:1px solid #dfe6ef;border-radius:9px;padding:3px 9px;font-size:12.5px;background:#fff;color:#33445c}
  .nsv-kpi .nsv-d{font-weight:650}.nsv-kpi .up{background:#eaf7ef;border-color:#bfe0c9;color:#1d6b3a}.nsv-kpi .dn{background:#fdeeee;border-color:#efc4c0;color:#9b2f2a}
- .nsv-dialog[open]{margin:auto}@media (max-width:560px){.nsv-cols.p .nsv-col b,.nsv-cols.p .nsv-col span{font-size:9px}.nsv-b{height:90px}.nsv-cmp{padding:12px!important;width:100vw!important;max-width:100vw!important;height:100dvh;max-height:100dvh!important;margin:0!important;border-radius:0!important}.nsv-top{gap:6px!important}.nsv-top h2{font-size:18px;flex:1 1 100%!important}.nsv-top button:not(#_):not(#__){min-height:34px!important;padding:0 10px!important;font-size:13.5px!important}.nsv-top .nsv-seg{order:-0}.nsv-top [data-x]{margin-left:auto}.nsv-top [data-print]{display:none!important}.nsv-top h2{flex:1 1 auto!important}.nsv-top [data-x]:not(#_):not(#__){order:-1;width:34px;padding:0!important;font-size:0!important;border-radius:50%!important;background:#fff!important;color:#2f5f9b!important;border-color:#cfd9e6!important}.nsv-top [data-x]::after{content:'✕';font-size:15px}.nsv-top h2{order:-2}}@media (max-width:760px){.nsv-grid{grid-template-columns:1fr!important}.nsv-row{grid-template-columns:24px 1fr 80px;padding:8px 10px}.nsv-dialog{padding:18px 14px}}`;
+ .nsv-dialog[open]{margin:auto}@media (max-width:560px){.nsv-cols.p .nsv-col b,.nsv-cols.p .nsv-col span{font-size:9px}.nsv-b{height:90px}.nsv-cmp{padding:12px!important;width:100vw!important;max-width:100vw!important;height:100dvh;max-height:100dvh!important;margin:0!important;border-radius:0!important}.nsv-top{gap:6px!important}.nsv-top h2{font-size:18px;flex:1 1 100%!important}.nsv-top button:not(#_):not(#__){min-height:34px!important;padding:0 10px!important;font-size:13.5px!important}.nsv-top .nsv-seg{order:-0}.nsv-top [data-x]{margin-left:auto}.nsv-top [data-print]{display:none!important}.nsv-top h2{flex:1 1 auto!important}.nsv-top [data-x]:not(#_):not(#__){order:-1;box-sizing:border-box;width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;flex:none;display:inline-grid!important;place-items:center;line-height:1;padding:0!important;font-size:0!important;border-radius:50%!important;background:#fff!important;color:#2f5f9b!important;border-color:#cfd9e6!important}.nsv-top [data-x]::after{content:'✕';font-size:15px}.nsv-top h2{order:-2}}@media (max-width:760px){.nsv-grid{grid-template-columns:1fr!important}.nsv-row{grid-template-columns:24px 1fr 80px;padding:8px 10px}.nsv-dialog{padding:18px 14px}}`;
  document.head.append(st);
 })();
 ;
@@ -5375,12 +5381,40 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  window.classroomPhoneNotenspiegel=openList;
 
  /* ---------- Knopf in der Kartenleiste ---------- */
- function place(){for(const row of document.querySelectorAll('.pl-bar .pl-row2')){if(row.querySelector('.pl-ns'))continue;const b=document.createElement('button');b.type='button';b.className='pl-ns';b.title='Notenspiegel der Klasse';b.setAttribute('aria-label','Notenspiegel der Klasse');b.innerHTML=ICON;b.onclick=e=>{e.stopPropagation();openList()};row.append(b)}}
+ /* 9.99: Leiste neu geordnet – Zeile 1: Halbjahr|Q2 · Notenspiegel · Markierungen; Zeile 2: Hinweis · Karten verkleinern · Ø-Schalter.
+    Der Notenspiegel-Knopf steht in einer mittleren Spalte (mittig, wenn Platz ist). „Karten verkleinern“ beginnt bündig mit dem
+    linken Rand des Markierungsschalters, wenn Knopf und Ø-Schalter in dessen Breite passen (Sek. II), sonst unter dem Notenspiegel-Knopf. */
+ const GAP=8,BTN=40;
+ function arrange(bar){const r1=bar.querySelector('.pl-row:not(.pl-row2)'),r2=bar.querySelector('.pl-row2'),fold=bar.querySelector('.pl-fold'),hatch=bar.querySelector('.pl-hatch'),mean=bar.querySelector('.pl-mean'),flags=bar.querySelector('.pl-flags');if(!r1||!r2||!fold||!hatch||!mean||!flags)return;
+  let ns=bar.querySelector('.pl-ns');if(!ns){ns=document.createElement('button');ns.type='button';ns.className='pl-ns';ns.title='Notenspiegel der Klasse';ns.setAttribute('aria-label','Notenspiegel der Klasse');ns.innerHTML=ICON;ns.onclick=e=>{e.stopPropagation();openList()}}
+  if(ns.parentElement!==r1||hatch.previousElementSibling!==ns){r1.insertBefore(ns,hatch)}
+  if(fold.parentElement!==r2||fold.nextElementSibling!==mean){r2.insertBefore(fold,mean)}
+  if(flags.nextElementSibling!==fold)r2.insertBefore(flags,fold);
+  if(!r1.classList.contains('plx1'))r1.classList.add('plx','plx1');if(!r2.classList.contains('plx2'))r2.classList.add('plx','plx2');
+  const W=r1.clientWidth;if(!W)return;const hw=hatch.getBoundingClientRect().width,mw=mean.getBoundingClientRect().width;
+  let c1=(W-BTN-2*GAP)/2;if(c1+BTN+2*GAP+hw>W)c1=W-BTN-2*GAP-hw;c1=Math.max(60,Math.floor(c1));
+  const fits=BTN+GAP+mw<=hw+0.5,p=fits?Math.floor(W-hw-GAP):c1;
+  if(bar.style.getPropertyValue('--plx-c1')!==c1+'px')bar.style.setProperty('--plx-c1',c1+'px');
+  if(bar.style.getPropertyValue('--plx-p')!==p+'px')bar.style.setProperty('--plx-p',p+'px');
+  if(r2.classList.contains('plx-fit')!==fits)r2.classList.toggle('plx-fit',fits)}
+ function place(){for(const bar of document.querySelectorAll('.pl-bar'))try{arrange(bar)}catch(e){console.warn(e)}}
+ addEventListener('resize',()=>requestAnimationFrame(place));
  if(typeof classroomOnDomChange==='function')classroomOnDomChange(place);place();
 
  const st=document.createElement('style');st.textContent=`
- .pl-bar .pl-row2 .pl-mean button:not(#_){min-width:0;padding:0 10px}
- .pl-ns{flex:none;width:40px;height:40px;margin-left:8px;border-radius:50%;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;display:inline-grid;place-items:center;padding:0;cursor:pointer}
+ .pl-bar .pl-row.plx:not(#_){display:grid!important;align-items:center;column-gap:8px;flex-wrap:nowrap}
+ .pl-bar .plx1:not(#_){grid-template-columns:var(--plx-c1,130px) 40px minmax(0,1fr)}
+ .pl-bar .plx2:not(#_){grid-template-columns:var(--plx-p,130px) 40px minmax(0,1fr)}
+ .pl-bar .plx>*:not(#_){margin:0!important}
+ .pl-bar .plx1>.pl-half,.pl-bar .plx1>.pl-view{grid-column:1;grid-row:1;justify-self:start}
+ .pl-bar .plx1>.pl-ns,.pl-bar .plx2>.pl-fold{grid-column:2;grid-row:1;justify-self:center}
+ .pl-bar .plx1>.pl-hatch,.pl-bar .plx2>.pl-mean{grid-column:3;grid-row:1;justify-self:end}
+ .pl-bar .plx2>.pl-flags{grid-column:1;grid-row:1;min-width:0;max-width:100%;overflow:hidden;justify-content:flex-start}
+ .pl-bar .plx2>.pl-flags>*{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .pl-bar .plx2 .pl-mean:not(#_){width:auto!important;flex:none}
+ .pl-bar .plx2 .pl-mean button:not(#_){min-width:0!important;width:auto!important;flex:none!important;padding:0 11px!important}
+ .pl-bar .pl-fold:not(#_),.pl-ns:not(#_){width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;padding:0!important;border-radius:50%!important;display:inline-grid!important;place-items:center}
+ .pl-ns{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;display:inline-grid;place-items:center;padding:0;cursor:pointer}
  .pl-ns:active{background:#eaf0fa}
  .nsv-sheet{width:min(560px,100vw);max-width:100vw;height:min(100dvh,900px);max-height:100dvh;padding:0!important;display:flex;flex-direction:column;overflow:hidden}
  .nsv-sheet[open]{display:flex}
@@ -5389,7 +5423,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .nsv-shead h2{flex:1;margin:0!important;font-size:18px!important;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
  .nsv-sbody{flex:1;overflow:auto;padding:12px;background:#f6f8fc;-webkit-overflow-scrolling:touch}
  .nsv-sbtn{height:36px;padding:0 12px;border-radius:10px;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;font:inherit;font-weight:650;font-size:14px;cursor:pointer}
- .nsv-x{width:36px;height:36px;border-radius:50%;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;font-size:16px;padding:0;cursor:pointer}
+ .nsv-x:not(#_):not(#__){flex:none;box-sizing:border-box;width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;padding:0!important;margin:0!important;border-radius:50%!important;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;font-size:16px;line-height:1;display:inline-grid!important;place-items:center;text-align:center;cursor:pointer}
  .nsv-center{display:flex;justify-content:center;margin:2px 0 10px}
  .nsv-sec{display:flex;justify-content:space-between;font-size:12px;font-weight:750;color:#7a889c;text-transform:uppercase;letter-spacing:.05em;margin:10px 4px 8px}
  .nsv-sheet .nsv-card{background:#fff;margin-bottom:10px}
@@ -5397,6 +5431,148 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .nsv-prow.dis{opacity:.45;cursor:default}.nsv-prow .nsv-sp{height:26px}
  .nsv-hint{font-size:12px;color:#7a889c;text-align:center;margin:6px 8px 4px}
  .nsv-sfoot{flex:none;display:flex;align-items:center;gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #e3e9f1;background:#fff}.nsv-sfoot span{flex:1;color:#66758a;font-size:13.5px}`;
+ document.head.append(st);
+})();
+;
+
+/* ==== noten/organisation.js ==== */
+/* 9.99: „Organisation“ – Listen je Klasse (für alle Fächer der Klasse): Geld einsammeln (Betrag) oder Abhaken (Zettel u. Ä.).
+   Antippen: erledigt ↔ offen; lange drücken (bzw. Rechtsklick): Teilbetrag, befreit, Notiz. Unten der Stand je Liste, „Offene drucken“.
+   Fristen: in den Erinnerungen (Glocke) ab 3 Tagen vorher, solange noch etwas offen ist. Im Unterrichts-Manager am Sitzplatz abhakbar.
+   Gespeichert unter notenrechner-organisation-v1 (im Backup); Schlüssel = gemeinsame Klasse (Klassenliste) bzw. Klassenname. */
+(()=>{
+ const KEY='notenrechner-organisation-v1';
+ const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const norm=t=>String(t||'').normalize('NFC').trim().toLocaleLowerCase('de-DE').replace(/\s+/g,' ');
+ const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+ const dm=d=>/^\d{4}-\d\d-\d\d$/.test(d||'')?d.slice(8,10)+'.'+d.slice(5,7)+'.':'';
+ const eur=v=>(Math.round(Number(v)*100)/100).toLocaleString('de-DE',{minimumFractionDigits:Number(v)%1?2:0,maximumFractionDigits:2})+' €';
+ const load=()=>{try{const s=JSON.parse(localStorage.getItem(KEY)||'{}');s.classes??={};s.snooze??={};return s}catch{return {classes:{},snooze:{}}}};
+ const store=s=>{try{localStorage.setItem(KEY,JSON.stringify(s))}catch{(window.classroomAlert||alert)('Speichern nicht möglich: Der Browser-Speicher ist voll.')}};
+ const uid=()=>'orga-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+ // Klasse und Personen (gemeinsame Klassenliste, sonst Namen aus den Bewertungsseiten)
+ function ctx(){let label='';try{label=(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId)?.label||''}catch{}
+  let group=null;try{group=classroomCentralGroup(classroomSourceKey())}catch{}
+  if(group)return {key:group.id,label:label||group.name,people:group.students.filter(s=>!s.deleted).map(s=>({id:s.id,name:s.name}))};
+  const seen=new Map();try{for(const d of Object.values(subjectStates[`${currentSubject}::class::${currentClassId}`]?.customValues||{}))for(const s of d?.students||[]){const n=String(s.name||'').trim();if(n&&!seen.has(norm(n)))seen.set(norm(n),{id:'n:'+norm(n),name:n})}}catch{}
+  return {key:'label:'+norm(label),label,people:[...seen.values()].sort((a,b)=>a.name.localeCompare(b.name,'de'))}}
+ const cls=(s,k,label)=>{s.classes[k]??={label,lists:[],entries:{}};if(label)s.classes[k].label=label;return s.classes[k]};
+ // Zustand einer Zelle: open | ok | part | ex
+ function cell(list,e){if(e?.s==='ex')return 'ex';if(list.type==='money'){const v=Number(e?.v)||0;if(v<=0)return 'open';return v+1e-9>=Number(list.amount||0)?'ok':'part'}return e?.s==='ok'?'ok':'open'}
+ function standOf(list,c,people){let ok=0,ex=0,sum=0,open=0;for(const p of people){const e=c.entries[list.id]?.[p.id],st=cell(list,e);if(st==='ex')ex++;else if(st==='ok')ok++;else open++;if(list.type==='money')sum+=Number(e?.v)||0}
+  const need=people.length-ex;return {ok,ex,open,need,sum,target:list.type==='money'?need*Number(list.amount||0):0}}
+
+ /* ---------- Hauptfenster ---------- */
+ let dlg=null;
+ function open(){const c0=ctx();if(!c0.label){(window.classroomAlert||alert)('Bitte zuerst eine Klasse auswählen.');return}
+  dlg?.close();dlg=document.createElement('dialog');dlg.className='nsv-dialog nsv-sheet orga-dialog';document.body.append(dlg);dlg.addEventListener('close',()=>{dlg.remove();dlg=null});render();dlg.showModal()}
+ function render(){if(!dlg)return;const c0=ctx(),s=load(),c=cls(s,c0.key,c0.label),people=c0.people,t=today();
+  const head=c.lists.map(l=>{const due=l.due?(l.due<t?' orga-late':l.due<=addDays(t,3)?' orga-soon':''):'';return `<th><button type="button" class="orga-th" data-edit="${esc(l.id)}" title="Liste bearbeiten"><b>${esc(l.name)}</b><small class="${due}">${l.type==='money'?eur(l.amount):'Abhaken'}${l.due?' · bis '+dm(l.due):''}</small></button></th>`}).join('');
+  const rows=people.map(p=>`<tr><td class="orga-n">${esc(p.name)}</td>${c.lists.map(l=>{const e=c.entries[l.id]?.[p.id],st=cell(l,e),txt=st==='ex'?'befreit':st==='open'?'offen':l.type==='money'?eur(e.v):'✓';return `<td><button type="button" class="orga-c orga-${st}" data-l="${esc(l.id)}" data-p="${esc(p.id)}" title="${esc(e?.note||'')}">${txt}${e?.note?'<i>•</i>':''}</button></td>`}).join('')}</tr>`).join('');
+  const foot=c.lists.map(l=>{const x=standOf(l,c,people);return `<td>${l.type==='money'?`${eur(x.sum)} von ${eur(x.target)}`:`${x.ok} von ${x.need}`}${x.open?` · <span class="orga-openn">${x.open} offen</span>`:' ✓'}</td>`}).join('');
+  dlg.innerHTML=`<div class="nsv-shead"><h2>Organisation · ${esc(c0.label)}</h2><button type="button" class="nsv-sbtn" data-print ${c.lists.length?'':'disabled'}>Offene drucken</button><button type="button" class="nsv-sbtn orga-pri" data-new>＋ Liste</button><button type="button" class="nsv-x" data-x aria-label="Schließen">✕</button></div>
+  <div class="nsv-sbody"><p class="orga-sub">Für die ganze Klasse – in allen Fächern sichtbar. Antippen: erledigt ↔ offen · lange drücken: Betrag, befreit oder Notiz · Spaltenkopf: Liste bearbeiten.</p>
+  ${c.lists.length?`<div class="table-wrap orga-wrap"><table class="orga-t"><thead><tr><th class="orga-n">Schüler:in</th>${head}</tr></thead><tbody>${rows||`<tr><td colspan="${c.lists.length+1}">Keine Schüler:innen in der Klassenliste.</td></tr>`}</tbody><tfoot><tr><td class="orga-n">Stand</td>${foot}</tr></tfoot></table></div>`:`<div class="orga-empty"><p>Noch keine Liste. Lege z. B. „Exkursion Köln“ (Geld, 15 €) oder „Einverständniserklärung“ (Abhaken) an.</p><button type="button" class="nsv-sbtn orga-pri" data-new>＋ Liste anlegen</button></div>`}
+  <div class="orga-legend"><span><i class="orga-c orga-ok">✓</i> erledigt</span><span><i class="orga-c orga-part">10 €</i> Teilbetrag</span><span><i class="orga-c orga-ex">befreit</i> nicht nötig</span><span><i class="orga-c orga-open">offen</i></span></div></div>`;
+  dlg.querySelector('[data-x]').onclick=()=>dlg.close();dlg.querySelectorAll('[data-new]').forEach(b=>b.onclick=()=>editList(null));
+  dlg.querySelector('[data-print]').onclick=printOpen;
+  dlg.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editList(b.dataset.edit));
+  dlg.querySelectorAll('.orga-c[data-l]').forEach(b=>{let timer=0,long=false;const start=()=>{long=false;clearTimeout(timer);timer=setTimeout(()=>{long=true;detail(b.dataset.l,b.dataset.p)},520)},stop=()=>clearTimeout(timer);
+   b.addEventListener('pointerdown',start);b.addEventListener('pointerup',stop);b.addEventListener('pointerleave',stop);b.addEventListener('pointercancel',stop);
+   b.addEventListener('contextmenu',e=>{e.preventDefault();stop();long=true;detail(b.dataset.l,b.dataset.p)});
+   b.addEventListener('click',()=>{if(long){long=false;return}toggle(b.dataset.l,b.dataset.p)})})}
+ const addDays=(d,n)=>new Date(Date.parse(d)+n*864e5).toISOString().slice(0,10);
+ function toggle(lid,pid,key,label){const c0=key?{key,label}:ctx(),s=load(),c=cls(s,c0.key,c0.label),l=c.lists.find(x=>x.id===lid);if(!l)return null;c.entries[lid]??={};const e=c.entries[lid][pid],st=cell(l,e);
+  if(st==='ok'||st==='ex'){if(e?.note)c.entries[lid][pid]={note:e.note};else delete c.entries[lid][pid]}
+  else c.entries[lid][pid]={...(e||{}),s:'ok',...(l.type==='money'?{v:Number(l.amount)||0}:{})};
+  store(s);if(dlg)render();return cell(l,c.entries[lid][pid])}
+ window.classroomOrgaToggle=toggle;
+
+ /* ---------- Einzelne Zelle (lange drücken) ---------- */
+ function detail(lid,pid){const c0=ctx(),s=load(),c=cls(s,c0.key,c0.label),l=c.lists.find(x=>x.id===lid),p=c0.people.find(x=>x.id===pid);if(!l||!p)return;const e=c.entries[lid]?.[pid]||{},st=cell(l,e);
+  const d=document.createElement('dialog');d.className='nsv-dialog orga-small';document.body.append(d);d.addEventListener('close',()=>d.remove());
+  d.innerHTML=`<h2>${esc(p.name)}</h2><p class="orga-sub">${esc(l.name)}${l.type==='money'?' · '+eur(l.amount):''}</p>
+  <div class="mean-seg nsv-seg orga-seg" role="radiogroup"><button type="button" role="radio" data-s="open" aria-checked="${st==='open'}">Offen</button><button type="button" role="radio" data-s="ok" aria-checked="${st==='ok'||st==='part'}">${l.type==='money'?'Bezahlt':'Erledigt'}</button><button type="button" role="radio" data-s="ex" aria-checked="${st==='ex'}">Befreit</button></div>
+  ${l.type==='money'?`<label class="orga-f">Betrag<input type="text" inputmode="decimal" data-v value="${e.v!=null&&st!=='ex'?String(e.v).replace('.',','):''}" placeholder="${String(l.amount).replace('.',',')}"> €</label>`:''}
+  <label class="orga-f">Notiz<input type="text" data-note maxlength="80" value="${esc(e.note||'')}" placeholder="z. B. bringt es Montag"></label>
+  <div class="nsv-actions"><span class="nsv-cnt"></span><button type="button" data-x>Abbrechen</button><button type="button" class="nsv-pri" data-ok>Speichern</button></div>`;
+  let sel=st==='part'?'ok':st;const seg=[...d.querySelectorAll('[data-s]')];seg.forEach(b=>b.onclick=()=>{sel=b.dataset.s;seg.forEach(x=>x.setAttribute('aria-checked',String(x===b)));const v=d.querySelector('[data-v]');if(v){if(sel==='ok'&&!v.value)v.value=String(l.amount).replace('.',',');if(sel!=='ok')v.value=''}});
+  d.querySelector('[data-v]')?.addEventListener('input',e=>{const v=Number(e.target.value.replace(',','.'));if(e.target.value.trim()&&v>0){sel='ok';seg.forEach(x=>x.setAttribute('aria-checked',String(x.dataset.s==='ok')))}});
+  d.querySelector('[data-x]').onclick=()=>d.close();
+  d.querySelector('[data-ok]').onclick=()=>{const s2=load(),c2=cls(s2,c0.key,c0.label);c2.entries[lid]??={};const note=d.querySelector('[data-note]').value.trim(),vRaw=d.querySelector('[data-v]')?.value.trim().replace(',','.'),v=Number(vRaw);
+   let ent={};if(sel==='ex')ent={s:'ex'};else if(sel==='ok')ent=l.type==='money'?{s:'ok',v:vRaw&&v>=0?v:Number(l.amount)||0}:{s:'ok'};if(note)ent.note=note;
+   if(Object.keys(ent).length)c2.entries[lid][pid]=ent;else delete c2.entries[lid][pid];store(s2);d.close();render()};
+  d.showModal()}
+
+ /* ---------- Liste anlegen / bearbeiten ---------- */
+ function editList(id){const c0=ctx(),s=load(),c=cls(s,c0.key,c0.label),l=id?c.lists.find(x=>x.id===id):null;
+  const d=document.createElement('dialog');d.className='nsv-dialog orga-small';document.body.append(d);d.addEventListener('close',()=>d.remove());let type=l?.type||'money';
+  d.innerHTML=`<h2>${l?'Liste bearbeiten':'Neue Liste'}</h2><p class="orga-sub">${esc(c0.label)}</p>
+  <label class="orga-f orga-wide">Name<input type="text" data-name maxlength="40" value="${esc(l?.name||'')}" placeholder="z. B. Exkursion Köln"></label>
+  <div class="mean-seg nsv-seg orga-seg" role="radiogroup" aria-label="Art"><button type="button" role="radio" data-t="money" aria-checked="${type==='money'}">Geld</button><button type="button" role="radio" data-t="check" aria-checked="${type==='check'}">Abhaken</button></div>
+  <label class="orga-f" data-amount-row>Betrag je Person<input type="text" inputmode="decimal" data-amount value="${l?.amount!=null?String(l.amount).replace('.',','):''}" placeholder="15"> €</label>
+  <label class="orga-f">Frist (optional)<input type="date" data-due value="${esc(l?.due||'')}"></label>
+  <p class="form-error" role="alert"></p>
+  <div class="nsv-actions">${l?'<button type="button" class="orga-del" data-del>Liste löschen</button>':''}<span class="nsv-cnt"></span><button type="button" data-x>Abbrechen</button><button type="button" class="nsv-pri" data-ok>${l?'Speichern':'Anlegen'}</button></div>`;
+  const sync=()=>{d.querySelectorAll('[data-t]').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.t===type)));d.querySelector('[data-amount-row]').hidden=type!=='money'};sync();
+  d.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{type=b.dataset.t;sync()});
+  d.querySelector('[data-x]').onclick=()=>d.close();
+  d.querySelector('[data-del]')?.addEventListener('click',async()=>{if(!await (window.classroomConfirm||(t=>Promise.resolve(confirm(t))))(`Liste „${l.name}“ mit allen Einträgen löschen?`,{ok:'Löschen'}))return;const s2=load(),c2=cls(s2,c0.key,c0.label);c2.lists=c2.lists.filter(x=>x.id!==l.id);delete c2.entries[l.id];store(s2);d.close();render()});
+  d.querySelector('[data-ok]').onclick=()=>{const name=d.querySelector('[data-name]').value.trim(),amount=Number(d.querySelector('[data-amount]').value.trim().replace(',','.')),due=d.querySelector('[data-due]').value,err=d.querySelector('[role=alert]');
+   if(!name){err.textContent='Bitte einen Namen eingeben.';return}if(type==='money'&&!(amount>0)){err.textContent='Bitte einen Betrag eingeben (z. B. 15).';return}
+   const s2=load(),c2=cls(s2,c0.key,c0.label),item={id:l?.id||uid(),name,type,amount:type==='money'?amount:null,due:due||'',created:l?.created||today()};
+   if(l)c2.lists=c2.lists.map(x=>x.id===l.id?item:x);else c2.lists.push(item);store(s2);d.close();render()};
+  d.showModal();setTimeout(()=>d.querySelector('[data-name]').focus(),50)}
+
+ /* ---------- Offene drucken ---------- */
+ function printOpen(){const c0=ctx(),s=load(),c=cls(s,c0.key,c0.label);
+  const blocks=c.lists.map(l=>{const op=c0.people.filter(p=>{const st=cell(l,c.entries[l.id]?.[p.id]);return st==='open'||st==='part'});if(!op.length)return '';
+   return `<section><h2>${esc(l.name)}<small>${l.type==='money'?eur(l.amount)+' je Person':'abhaken'}${l.due?' · bis '+dm(l.due):''}</small></h2><table><thead><tr><th>Name</th>${l.type==='money'?'<th>bezahlt</th><th>fehlt</th>':''}<th>Notiz</th><th class="ck">✓</th></tr></thead><tbody>${op.map(p=>{const e=c.entries[l.id]?.[p.id]||{},v=Number(e.v)||0;return `<tr><td>${esc(p.name)}</td>${l.type==='money'?`<td>${v?eur(v):''}</td><td>${eur(Number(l.amount)-v)}</td>`:''}<td>${esc(e.note||'')}</td><td class="ck"></td></tr>`}).join('')}</tbody></table></section>`}).join('')||'<p>Alles erledigt – keine offenen Einträge.</p>';
+  const title=`${c0.label} Organisation offen ${today()}`;
+  const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.append(f);
+  f.contentDocument.open();f.contentDocument.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>@page{size:A4;margin:14mm}body{font:12.5px/1.4 -apple-system,system-ui,sans-serif;color:#1f2a3d}h1{font-size:18px;margin:0 0 10px}h2{font-size:15px;margin:16px 0 6px}h2 small{font-weight:400;color:#66758a;margin-left:8px;font-size:12px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #c9d3e0;padding:5px 8px;text-align:left}th{background:#f1f4f8}td.ck,th.ck{width:28px;text-align:center}section{break-inside:avoid}p.f{color:#7a889c;font-size:10.5px;margin-top:14px}</style></head><body><h1>Organisation · ${esc(c0.label)} – noch offen</h1>${blocks}<p class="f">Classroom-Manager · gedruckt am ${new Date().toLocaleDateString('de-DE')}</p></body></html>`);f.contentDocument.close();
+  setTimeout(()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){console.error(e)}setTimeout(()=>f.remove(),60000)},300)}
+
+ /* ---------- Erinnerungen (Glocke): Frist in ≤ 3 Tagen oder überschritten, noch offen ---------- */
+ window.classroomOrgaDue=()=>{const s=load(),t=today(),out=[];
+  for(const [key,c] of Object.entries(s.classes||{}))for(const l of c.lists||[]){if(!l.due||l.due>addDays(t,3))continue;if(s.snooze?.[l.id]&&s.snooze[l.id]>t)continue;
+   const ids=new Set(Object.keys(c.entries?.[l.id]||{}));let people=null;try{const g=(window.classroomCanonical||classroomCanonical)?.classes?.find(g=>g.id===key);if(g)people=g.students.filter(x=>!x.deleted)}catch{}
+   const st=people?people.map(p=>cell(l,c.entries?.[l.id]?.[p.id])):[...ids].map(id=>cell(l,c.entries[l.id][id]));const openN=st.filter(x=>x==='open'||x==='part').length;if(!openN)continue;
+   out.push({id:l.id,classKey:key,classLabel:c.label||'',name:l.name,due:l.due,late:l.due<t,open:openN})}
+  return out};
+ window.classroomOrgaSnooze=id=>{const s=load(),d=addDays(today(),1);s.snooze[id]=d;store(s)};
+ window.classroomOrgaOpenFor=classKey=>{try{parent.selectView?.('noten')}catch{}try{for(const [subject,list] of Object.entries(classesBySubject))for(const item of list){const g=classroomCentralGroup(`${subject}::${item.id}`);if((g&&g.id===classKey)||('label:'+norm(item.label))===classKey){if(subject!==currentSubject)setSubject(subject);if(item.id!==currentClassId)selectClass(item.id);open();return true}}}catch(e){console.warn(e)}open();return false};
+ window.classroomOrganisation=open;
+
+ /* ---------- Einstieg: Knopf „Organisation“ neben „＋ Test“ ---------- */
+ function placeBtn(){const ref=document.getElementById('addExamQuick');if(!ref||document.getElementById('orgaQuick'))return;const b=document.createElement('button');b.type='button';b.id='orgaQuick';b.className='add-subject-button quick-add orga-quick';b.textContent='Organisation';b.title='Geld einsammeln, Zettel abhaken – Listen für die ganze Klasse';b.onclick=open;ref.after(b);
+  const sync=()=>{b.hidden=ref.classList.contains('hide')&&!currentClassId};new MutationObserver(sync).observe(ref,{attributes:true,attributeFilter:['class']});sync()}
+ placeBtn();if(typeof classroomOnDomChange==='function')classroomOnDomChange(placeBtn);
+
+ const st=document.createElement('style');st.textContent=`
+ .orga-dialog{width:min(1040px,calc(100vw - 24px))}
+ @media (max-width:560px){.orga-dialog{width:100vw}}
+ .orga-sub{color:#66758a;font-size:13px;margin:0 0 12px}
+ .nsv-sbtn.orga-pri:not(#_){background:#2f5f9b;border-color:#2f5f9b;color:#fff}
+ .nsv-sbtn:disabled{opacity:.45;cursor:default}
+ .orga-wrap{max-width:100%;overflow:auto;border:1px solid #e3e9f1;border-radius:14px;background:#fff}
+ .orga-t{border-collapse:separate;border-spacing:0;width:100%;min-width:max-content}
+ .orga-t th{background:#f6f8fb;font-size:12.5px;color:#5b6b82;text-align:center;padding:8px 6px;border-bottom:1px solid #e3e9f1;font-weight:650;vertical-align:bottom}
+ .orga-t th.orga-n,.orga-t td.orga-n{text-align:left;padding-left:14px;position:sticky;left:0;background:#fff;z-index:1;white-space:nowrap}.orga-t th.orga-n{background:#f6f8fb}
+ .orga-th{border:0;background:none;font:inherit;color:inherit;cursor:pointer;padding:2px 6px;border-radius:8px}.orga-th:hover{background:#eaf0fa}.orga-th b{display:block;font-size:14px;color:#243247}.orga-th small{display:block;color:#7a889c;font-weight:500}
+ .orga-th small.orga-soon{color:#b26a00;font-weight:650}.orga-th small.orga-late{color:#b23a3a;font-weight:650}
+ .orga-t td{text-align:center;padding:5px 6px;border-bottom:1px solid #eef2f7}
+ .orga-t tfoot td{background:#f6f8fb;font-size:12.5px;color:#33445c;font-weight:650;border:0;padding:9px 8px}.orga-openn{color:#b23a3a}
+ .orga-c{display:inline-flex;align-items:center;justify-content:center;gap:3px;min-width:74px;height:32px;padding:0 10px;border-radius:9px;font:inherit;font-weight:650;font-size:14px;border:1px solid transparent;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;font-style:normal}
+ .orga-c i{font-style:normal;color:#2f5f9b}
+ .orga-ok{background:#d9f2e2;color:#1d6b3a}.orga-open{background:#f1f4f8;color:#8794a7;border:1px dashed #c6d1df}.orga-part{background:#fff3c4;color:#8a5a12}.orga-ex{background:#eef1f5;color:#66758a;font-weight:500}
+ .orga-legend{display:flex;gap:14px;font-size:12.5px;color:#66758a;margin-top:12px;flex-wrap:wrap;align-items:center}.orga-legend .orga-c{min-width:0;height:24px;padding:0 8px;cursor:default;font-size:12.5px}
+ .orga-empty{text-align:center;padding:30px 10px;color:#66758a}
+ .orga-small{width:min(420px,calc(100vw - 24px))}.orga-small h2{margin:0 0 2px;font-size:19px}
+ .orga-seg{margin:6px 0 12px!important;display:inline-flex!important}
+ .orga-f{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:14px;color:#4a5a70}.orga-f input{flex:1;min-width:0;height:38px;padding:0 10px;border:1px solid #cfd9e6;border-radius:9px;font:inherit}.orga-f[hidden]{display:none}
+ .orga-del:not(#_){min-height:40px;border-radius:10px;padding:0 14px;border:1px solid #efc4c0;background:#fdeeee;color:#b23a3a;font:inherit;font-weight:600;cursor:pointer}
+ .orga-quick{white-space:nowrap}`;
  document.head.append(st);
 })();
 ;
