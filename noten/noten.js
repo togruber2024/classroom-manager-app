@@ -5128,6 +5128,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const get=()=>{try{return localStorage.getItem(KEY)==='grade'?'grade':'name'}catch{return 'name'}};
  const set=v=>{try{localStorage.setItem(KEY,v)}catch{}};
  /* 9.68: zweiter Tipp auf den aktiven Knopf dreht die Reihenfolge um (Z–A bzw. stärkste zuerst) */
+ try{if(!localStorage.getItem(KEY+'-best')){localStorage.setItem(KEY+'-best','1');localStorage.removeItem(KEY+'-rev')}}catch{}/* 10.02: Umstellung auf „beste zuerst“ */
  const rev=()=>{try{return localStorage.getItem(KEY+'-rev')==='1'}catch{return false}};const setRev=v=>{try{localStorage.setItem(KEY+'-rev',v?'1':'0')}catch{}};
  const pts=()=>{try{return classUsesGradePoints()}catch{return false}};
  // „2,6“ · „11“ · „3−“ · „2+“ · „2-3“ → Zahl
@@ -5139,13 +5140,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const cmp=(points)=>(a,b)=>{if(a.v===null&&b.v===null)return a.n.localeCompare(b.n,'de');if(a.v===null)return -1;if(b.v===null)return 1;return (points?a.v-b.v:b.v-a.v)||a.n.localeCompare(b.n,'de')};
  const byName=(a,b)=>a.n.localeCompare(b.n,'de');
  const flip=f=>(a,b)=>-f(a,b);
- const sorter=(mode,base)=>{const f=mode==='grade'?cmp(pts()):base;return rev()?(mode==='grade'?flip(f):(a,b)=>-f(a,b)):f};
+ const sorter=(mode,base)=>{const f=mode==='grade'?cmp(pts()):base;return mode==='grade'?(rev()?f:flip(f)):(rev()?(a,b)=>-f(a,b):f)};
  function paint(seg,mode){const r=rev(),cnt=seg.dataset?.kind==='count',x=seg.dataset?.max||'x',open=Number(seg.dataset?.open||0);for(const b of seg.querySelectorAll('[data-psort]')){const on=b.dataset.psort===mode,P=pts(),g=b.dataset.psort==='grade';
-  const txt=!g?(on&&r?'Z–A':'A–Z'):cnt?(on&&r?'0–'+x:x+'–0'):(P?(on&&r?'15–0':'0–15'):(on&&r?'1–6':'6–1'));
-  let tip=!g?(on?(r?'Z–A · nochmal tippen: A–Z':'A–Z · nochmal tippen: Z–A'):'Alphabetisch'):cnt?(on?(r?'Wenigste Fehlende zuerst · nochmal tippen: meiste zuerst':'Meiste Fehlende zuerst · nochmal tippen: wenigste zuerst'):'Nach Anzahl fehlend – meiste zuerst'):(on?(r?'Nach Note: stärkste zuerst, ohne Note zuletzt · nochmal tippen: ohne Note und schwächste zuerst':'Nach Note: ohne Note zuerst, dann schwächste · nochmal tippen: stärkste zuerst'):'Nach Note – ohne Note und schwächste zuerst');
+  const txt=!g?(on&&r?'Z–A':'A–Z'):cnt?(on&&r?'0–'+x:x+'–0'):(P?(on&&r?'0–15':'15–0'):(on&&r?'6–1':'1–6'));/* 10.02: beste Note zuerst ist Standard */
+  let tip=!g?(on?(r?'Z–A · nochmal tippen: A–Z':'A–Z · nochmal tippen: Z–A'):'Alphabetisch'):cnt?(on?(r?'Wenigste Fehlende zuerst · nochmal tippen: meiste zuerst':'Meiste Fehlende zuerst · nochmal tippen: wenigste zuerst'):'Nach Anzahl fehlend – meiste zuerst'):(on?(r?'Nach Note: ohne Note zuerst, dann schwächste · nochmal tippen: stärkste zuerst':'Nach Note: stärkste zuerst, ohne Note zuletzt · nochmal tippen: ohne Note und schwächste zuerst'):'Nach Note – stärkste zuerst');
   const off=g&&!cnt&&open>0;if(off)tip='Erst möglich, wenn alle Ergebnisse eingetragen sind (noch '+open+' offen)';b.classList.toggle('ps-off',off);if(off)b.setAttribute('aria-disabled','true');else b.removeAttribute('aria-disabled');
   if(b.textContent!==txt)b.textContent=txt;if(b.title!==tip)b.title=tip;if(b.getAttribute('aria-pressed')!==String(on)){b.setAttribute('aria-pressed',String(on));b.setAttribute('aria-checked',String(on))}}}
- const segHtml=(cls,m)=>`<span class="${cls}" role="radiogroup" aria-label="Sortierung"><button type="button" role="radio" data-psort="name" aria-pressed="${m==='name'}" aria-checked="${m==='name'}" title="Alphabetisch">A–Z</button><button type="button" role="radio" data-psort="grade" aria-pressed="${m==='grade'}" aria-checked="${m==='grade'}" title="Nach Note – schwächste zuerst">${pts()?'0–15':'6–1'}</button></span>`;
+ const segHtml=(cls,m)=>`<span class="${cls}" role="radiogroup" aria-label="Sortierung"><button type="button" role="radio" data-psort="name" aria-pressed="${m==='name'}" aria-checked="${m==='name'}" title="Alphabetisch">A–Z</button><button type="button" role="radio" data-psort="grade" aria-pressed="${m==='grade'}" aria-checked="${m==='grade'}" title="Nach Note – stärkste zuerst">${pts()?'15–0':'1–6'}</button></span>`;
 
  // ---------- Tabellen (Mac/iPad)
  /* 9.70: auch auf den Einzelseiten (Klassenarbeit/Klausur, Test, Tests, Mündliche Mitarbeit, Klassenarbeiten-Übersicht, Hausaufgaben/Material).
@@ -5192,7 +5193,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const items=rows.map(r=>({r,i:idxOf(r),n:(r.cells[0]?.querySelector('input')?.value||r.cells[0]?.textContent||'').trim(),v:mode==='grade'?keyFn(r):null}));
   let f;if(mode!=='grade')f=rev()?(a,b)=>b.i-a.i:(a,b)=>a.i-b.i;
   else if(kind==='count')f=rev()?(a,b)=>a.v-b.v||a.i-b.i:(a,b)=>b.v-a.v||a.i-b.i;
-  else{const P=pts(),r=rev();f=(a,b)=>{if(a.v===null&&b.v===null)return a.i-b.i;if(a.v===null)return r?1:-1;if(b.v===null)return r?-1:1;const d=P?a.v-b.v:b.v-a.v;return (r?-d:d)||a.i-b.i}}
+  else{const P=pts(),r=!rev();f=(a,b)=>{if(a.v===null&&b.v===null)return a.i-b.i;if(a.v===null)return r?1:-1;if(b.v===null)return r?-1:1;const d=P?a.v-b.v:b.v-a.v;return (r?-d:d)||a.i-b.i}}
   const sorted=[...items].sort(f);const cur=trs(body);
   const same=sorted.every((x,k)=>x.r===cur.filter(r=>r.cells.length>=2)[k]);
   if(!same){const anchor=rows.at(-1).nextSibling;for(const x of sorted)body.insertBefore(x.r,anchor)}
@@ -5238,7 +5239,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    /* 9.74: ohne Hin- und Herschieben prüfen, ob der Schalter in die 2. Zeile passt (sonst Endlosschleife mit anderen Beobachtern) */
    const fits=()=>{if(!r2)return false;const kids=[...r2.children].filter(k=>k!==seg&&k.offsetParent&&getComputedStyle(k).display!=='none');const gap=parseFloat(getComputedStyle(r2).columnGap)||8;const need=kids.reduce((a,k)=>a+Math.max(k.scrollWidth,k.getBoundingClientRect().width),0)+seg.getBoundingClientRect().width+gap*kids.length;return need<=r2.clientWidth+1};
    /* 9.99: neu geordnete Leiste (Notenspiegel/Karten verkleinern) – Sortierschalter immer in der Hinweiszeile */
-   if(r2&&stand&&r2.classList.contains('plx2')){if(seg.parentElement!==stand){stand.classList.add('ps-stand');stand.append(seg)}}
+   /* 10.02: drei Zeilen – Sortierschalter immer rechts in der 2. Zeile (nach dem Ø-Schalter) */if(r2&&r2.classList.contains('plx2')){if(seg.parentElement!==r2||seg.nextElementSibling)r2.append(seg);if(stand?.classList.contains('ps-stand'))stand.classList.remove('ps-stand')}
    else if(r2&&seg.parentElement===r2&&over()&&stand){stand.classList.add('ps-stand');stand.append(seg)}
    else if(r2&&stand&&seg.parentElement===stand&&fits()){const mean=r2.querySelector('.pl-mean');mean?mean.before(seg):r2.append(seg);stand.classList.remove('ps-stand')}}
   for(const box of document.querySelectorAll('.qs-cards')){const cards=[...box.children].filter(c=>c.matches('.qs-card:not(.qd-card)'));if(cards.length<2)continue;const sorted=order(cards);if(sorted.some((c,i)=>c!==cards[i])){const anchor=cards.at(-1).nextSibling;for(const c of sorted)box.insertBefore(c,anchor)}}}
@@ -5550,34 +5551,47 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
     Der Notenspiegel-Knopf steht in einer mittleren Spalte (mittig, wenn Platz ist). „Karten verkleinern“ beginnt bündig mit dem
     linken Rand des Markierungsschalters, wenn Knopf und Ø-Schalter in dessen Breite passen (Sek. II), sonst unter dem Notenspiegel-Knopf. */
  const GAP=8,BTN=40;
- function arrange(bar){const r1=bar.querySelector('.pl-row:not(.pl-row2)'),r2=bar.querySelector('.pl-row2'),fold=bar.querySelector('.pl-fold'),hatch=bar.querySelector('.pl-hatch'),mean=bar.querySelector('.pl-mean'),flags=bar.querySelector('.pl-flags');if(!r1||!r2||!fold||!hatch||!mean||!flags)return;
+ /* 10.02: Leiste in drei logischen Zeilen – 1: Q1|Q2|Halbjahr · Notenspiegel · Karten verkleinern · Zufall,
+    2: Markierung · Ø-Schalter · Sortierung, 3: Hinweise (teilen sich die Breite). Überall derselbe Abstand. */
+ const DICE='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.5" cy="8.5" r="1.25" fill="currentColor"/><circle cx="12" cy="12" r="1.25" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.25" fill="currentColor"/></svg>';
+ function order(parent,kids){kids=kids.filter(Boolean);for(let i=0;i<kids.length;i++){if(parent.children[i]!==kids[i])parent.insertBefore(kids[i],parent.children[i]||null)}}
+ function arrange(bar){const r1=bar.querySelector('.pl-row:not(.pl-row2):not(.pl-row3)'),r2=bar.querySelector('.pl-row2'),fold=bar.querySelector('.pl-fold'),hatch=bar.querySelector('.pl-hatch'),mean=bar.querySelector('.pl-mean'),flags=bar.querySelector('.pl-flags'),view=bar.querySelector('.pl-view');if(!r1||!r2||!fold||!hatch||!mean||!flags||!view)return;
   let ns=bar.querySelector('.pl-ns');if(!ns){ns=document.createElement('button');ns.type='button';ns.className='pl-ns';ns.title='Notenspiegel der Klasse';ns.setAttribute('aria-label','Notenspiegel der Klasse');ns.innerHTML=ICON;ns.onclick=e=>{e.stopPropagation();openList()}}
-  if(ns.parentElement!==r1||hatch.previousElementSibling!==ns){r1.insertBefore(ns,hatch)}
-  if(fold.parentElement!==r2||fold.nextElementSibling!==mean){r2.insertBefore(fold,mean)}
-  if(flags.nextElementSibling!==fold)r2.insertBefore(flags,fold);
-  if(!r1.classList.contains('plx1'))r1.classList.add('plx','plx1');if(!r2.classList.contains('plx2'))r2.classList.add('plx','plx2');
-  const W=r1.clientWidth;if(!W)return;const hw=hatch.getBoundingClientRect().width,mw=mean.getBoundingClientRect().width;
-  let c1=(W-BTN-2*GAP)/2;if(c1+BTN+2*GAP+hw>W)c1=W-BTN-2*GAP-hw;c1=Math.max(60,Math.floor(c1));
-  /* 9.100: „Karten verkleinern“ immer mittig unter dem Notenspiegel-Knopf; Ø-Schalter so breit wie der Sortierschalter */const sort=bar.querySelector('.pl-sort'),sw=sort?Math.round(sort.getBoundingClientRect().width):0;if(sw&&mean.dataset.plxW!==String(sw)){mean.dataset.plxW=String(sw);mean.style.setProperty('min-width',sw+'px','important')}const fits=false,p=c1;
-  if(bar.style.getPropertyValue('--plx-c1')!==c1+'px')bar.style.setProperty('--plx-c1',c1+'px');
-  if(bar.style.getPropertyValue('--plx-p')!==p+'px')bar.style.setProperty('--plx-p',p+'px');
-  {const nb=bar.querySelector('.plx1>.pl-ns')?.getBoundingClientRect(),hb=hatch.getBoundingClientRect(),g=nb&&hb.width?Math.max(8,Math.round(hb.left-nb.right)):12;if(bar.style.getPropertyValue('--plx-g2')!==g+'px')bar.style.setProperty('--plx-g2',g+'px')}if(r2.classList.contains('plx-fit')!==fits)r2.classList.toggle('plx-fit',fits)}
+  let dice=bar.querySelector('.pl-dice');if(!dice){dice=document.createElement('button');dice.type='button';dice.className='pl-ns pl-dice';dice.title='Zufällig jemanden auswählen';dice.setAttribute('aria-label','Zufällig jemanden auswählen');dice.innerHTML=DICE;dice.onclick=e=>{e.stopPropagation();pickRandom(bar)}}
+  let r3=bar.querySelector('.pl-row3');if(!r3){r3=document.createElement('div');r3.className='pl-row pl-row3';r2.after(r3)}
+  const half=bar.querySelector('.pl-half');if(half&&half.parentElement!==bar)r1.before(half);/* zweites Halbjahr: eigene Zeile darüber */
+  order(r1,[view,ns,fold,dice]);order(r2,[hatch,mean,bar.querySelector('.pl-sort')]);order(r3,[bar.querySelector('.q1open'),flags]);
+  for(const [r,c] of [[r1,'plx1'],[r2,'plx2'],[r3,'plx3']])if(!r.classList.contains(c))r.classList.add('plx',c);
+  /* weiße Auswahl mindestens kreisrund */const bh=Math.round(view.querySelector('button')?.getBoundingClientRect().height||0);if(bh&&bar.style.getPropertyValue('--plx-bh')!==bh+'px')bar.style.setProperty('--plx-bh',bh+'px');
+  const hasHint=!!r3.querySelector('.q1open')||!flags.hidden;if(r3.hidden===hasHint)r3.hidden=!hasHint}
+ /* Zufall: jede Person einmal, dann von vorn (je Klasse, bis die App geschlossen wird) */
+ const bag=new Map();let last='';
+ function pickRandom(bar){const cards=[...document.querySelectorAll('.qs-cards>.qs-card:not(.qd-card)')].filter(c=>c.offsetParent);if(!cards.length)return;
+  const key=(typeof currentSubject!=='undefined'?currentSubject:'')+':'+(typeof currentClassId!=='undefined'?currentClassId:''),nameOf=c=>c.querySelector('.qs-name')?.textContent.trim()||'';
+  const names=cards.map(nameOf);let left=(bag.get(key)||[]).filter(n=>names.includes(n));if(!left.length){left=names.filter(n=>n!==last);if(!left.length)left=names}
+  const n=left[Math.floor(Math.random()*left.length)];bag.set(key,left.filter(x=>x!==n));last=n;
+  const card=cards[names.indexOf(n)];document.querySelectorAll('.qs-card.qs-pick').forEach(c=>c.classList.remove('qs-flash','qs-pick'));void card.offsetWidth;card.classList.add('qs-flash','qs-pick');card.scrollIntoView({block:card.offsetHeight>innerHeight*.6?'start':'center',behavior:'smooth'});setTimeout(()=>card.classList.remove('qs-flash','qs-pick'),1800);
+  let live=bar.querySelector('.pl-live');if(!live){live=document.createElement('span');live.className='pl-live';live.setAttribute('aria-live','polite');bar.append(live)}live.textContent='Ausgewählt: '+n}
  function place(){for(const bar of document.querySelectorAll('.pl-bar'))try{arrange(bar)}catch(e){console.warn(e)}}
  addEventListener('resize',()=>requestAnimationFrame(place));
  if(typeof classroomOnDomChange==='function')classroomOnDomChange(place);place();
 
  const st=document.createElement('style');st.textContent=`
- .pl-bar .pl-row.plx:not(#_){display:grid!important;align-items:center;column-gap:8px;flex-wrap:nowrap}
- .pl-bar .plx1:not(#_){grid-template-columns:var(--plx-c1,130px) 40px minmax(0,1fr)}
- .pl-bar .plx2:not(#_){grid-template-columns:minmax(0,1fr) 40px auto;column-gap:var(--plx-g2,12px)}/* 9.101: Info-Feld füllt die Breite, Abstände gleich */
+ .pl-bar .pl-row.plx:not(#_){display:grid!important;align-items:center;column-gap:var(--plx-g,8px);flex-wrap:nowrap;margin-top:8px;justify-content:stretch}
+ .pl-bar .pl-row.plx1:not(#_){grid-template-columns:minmax(0,1fr) 40px 40px 40px;margin-top:0}
+ .pl-bar .pl-row.plx2:not(#_){grid-template-columns:minmax(0,1fr) auto auto}
+ .pl-bar .pl-row.plx3:not(#_){display:flex!important;gap:var(--plx-g,8px)}.pl-bar .pl-row.plx3[hidden]{display:none!important}
  .pl-bar .plx>*:not(#_){margin:0!important}
- .pl-bar .plx1>.pl-half,.pl-bar .plx1>.pl-view{grid-column:1;grid-row:1;justify-self:start}
- .pl-bar .plx1>.pl-ns,.pl-bar .plx2>.pl-fold{grid-column:2;grid-row:1;justify-self:center}
- .pl-bar .plx1>.pl-hatch,.pl-bar .plx2>.pl-mean{grid-column:3;grid-row:1;justify-self:end}
- .pl-bar .plx2>.pl-flags{grid-column:1;grid-row:1;min-width:0;max-width:100%;width:100%;overflow:hidden;justify-content:flex-start;flex-wrap:nowrap!important;margin-left:0!important}
- .pl-bar .plx2>.pl-flags>*{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto;justify-content:flex-start}.pl-bar .plx2>.pl-flags>*>b{flex:none}
- .pl-bar .plx2 .pl-mean:not(#_){width:auto!important;flex:none}
- .pl-bar .plx2 .pl-mean button:not(#_){min-width:0!important;width:auto!important;flex:1 1 0!important;padding:0 11px!important}
+ .pl-bar>.pl-half:not([hidden]){display:flex;margin:0 0 8px}
+ .pl-bar .plx1>.pl-view:not(#_){display:flex!important;width:100%;min-width:0}.pl-bar .plx1>.pl-view button:not(#_){flex:1 1 auto;min-width:var(--plx-bh,34px)!important;padding:0 10px!important;white-space:nowrap}
+ .pl-bar .plx2>.pl-hatch:not(#_){display:flex!important;width:100%;min-width:0;overflow:hidden}.pl-bar .plx2>.pl-hatch button:not(#_){flex:1 1 0;min-width:var(--plx-bh,34px)!important;padding:0 4px!important}
+ .pl-bar .plx2>.pl-mean:not(#_),.pl-bar .plx2>.pl-sort:not(#_){width:auto!important;min-width:0!important;flex:none;display:flex}
+ .pl-bar .plx2>.pl-mean button:not(#_),.pl-bar .plx2>.pl-sort button:not(#_){min-width:var(--plx-bh,34px)!important;width:auto!important;flex:none!important;padding:0 6px!important}
+ .pl-bar .plx3>.q1open:not(#_){flex:1 1 auto;min-width:0;margin:0!important;height:38px;box-sizing:border-box;padding:0 3px 0 14px}.pl-bar .plx3 .q1o-t{flex-direction:row;align-items:baseline;gap:6px;white-space:nowrap}
+ .pl-bar .plx3>.pl-flags:not(#_){flex:1 1 auto;min-width:0;display:flex;flex-wrap:nowrap!important;gap:var(--plx-g,8px);margin:0!important;justify-content:flex-start}.pl-bar .plx3>.pl-flags[hidden]{display:none!important}
+ .pl-bar .plx3>.pl-flags>*{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;justify-content:flex-start}.pl-bar .plx3>.pl-flags>*>b{flex:none}
+ .pl-bar .pl-stand:not(#_){display:block}.pl-live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+ .qs-card.qs-pick{scroll-margin:12px}
  .pl-bar .pl-fold:not(#_),.pl-ns:not(#_){width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;padding:0!important;border-radius:50%!important;display:inline-grid!important;place-items:center}
  .pl-ns{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;display:inline-grid;place-items:center;padding:0;cursor:pointer}
  .pl-ns:active{background:#eaf0fa}
@@ -6393,7 +6407,9 @@ return}
  function q1Transition(){if(dateQuarter()!==1)return null;try{if(localStorage.getItem(skipKey())==='1')return null}catch{}
   const y=years().find(g=>g.id===currentHalfYearId),b=typeof classroomQuarterBoundary==='function'?classroomQuarterBoundary(y):null;if(!b)return null;
   const days=(new Date(today())-new Date(b))/864e5;if(days<0||days>28)return null;const st=q1Status();return st&&st.done<st.total?st:null}
- function wantedQuarter(){const q=dateQuarter();return q===1&&q1Transition()?0:q}
+ /* 10.02: Q1 | Q2 | Halbjahr – gewähltes Quartal gilt, bis die App geschlossen wird */
+ const qk=()=>'classroom-lite-quarter:'+currentSubject+':'+currentClassId+':'+currentHalfYearId;
+ function wantedQuarter(){const o=ss.get(qk());if(o==='0'||o==='1')return Number(o);const q=dateQuarter();return q===1&&q1Transition()?0:q}
  function ensure(){
   const on=isPhone();document.documentElement.classList.toggle('ph-lite',on);if(!on||busy||!currentClassId)return;
   busy=true;let acted=false;try{
@@ -6426,9 +6442,10 @@ return}
  const EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>',EYE_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path d="M3 21L21 3"/></svg>';
  /* 1. Quartal bei allen Karten ein-/ausblenden (nur im 2. Quartal sichtbar) */
  /* 8.77: Ansicht „Halbjahr | Q2“ (ersetzt „1. Quartal“): Halbjahr = beide Quartale, Noten fürs ganze Halbjahr; nur ab dem 2. Quartal */
- function syncQ1(bar){const seg=bar.querySelector('.pl-view');if(!seg)return;const sel=Number(bar.dataset.sel||0),has=sel>=1;seg.hidden=!has;const v=has&&window.classroomCardsHalf?.on()?'hj':'q';
-  const qb=seg.querySelector('[data-view="q"]');if(qb)qb.textContent='Q'+(sel+1);for(const b of seg.querySelectorAll('[data-view]')){b.setAttribute('aria-pressed',String(b.dataset.view===v));b.setAttribute('role','radio');b.setAttribute('aria-checked',String(b.dataset.view===v))}
-  const want=v==='hj';if(window.classroomCardsQ1&&window.classroomCardsQ1.get()!==want)window.classroomCardsQ1.set(want)}
+ function syncQ1(bar){const seg=bar.querySelector('.pl-view');if(!seg)return;const sel=Number(bar.dataset.sel||0);if(seg.hidden)seg.hidden=false;
+  const hj=sel>=1&&window.classroomCardsHalf?.on(),v=sel===0?'q1':hj?'hj':'q2';
+  for(const b of seg.querySelectorAll('[data-view]')){const on=b.dataset.view===v;if(b.getAttribute('aria-pressed')!==String(on)){b.setAttribute('aria-pressed',String(on));b.setAttribute('aria-checked',String(on))}if(b.getAttribute('role')!=='radio')b.setAttribute('role','radio')}
+  if(window.classroomCardsQ1&&window.classroomCardsQ1.get()!==hj)window.classroomCardsQ1.set(!!hj)}
  /* Dezimal / Tendenz / Gerundet (Notenpunkte: Dezimal / Ganze Punkte) – wie der Schalter „Durchschnitt darstellen“ am Mac */
  function syncMean(bar){const seg=bar.querySelector('.pl-mean');if(!seg)return;const pts=typeof classUsesGradePoints==='function'&&classUsesGradePoints();const opts=pts?[['rounded','Ganze Notenpunkte','11'],['decimal','Dezimal','10,6']]:[['rounded','Gerundet','2'],['tendency','Tendenz','2−'],['decimal','Dezimal','2,3']];
   let m=window.classroomCardsMean?.get()||'decimal';if(!opts.some(o=>o[0]===m))m='decimal';const lock=!!window.classroomCardsMeanLocked;if(lock)m='rounded';const sig=opts.map(o=>o[0]).join()+'|'+m+'|'+lock;if(seg.dataset.sig===sig)return;seg.dataset.sig=sig;
@@ -6436,19 +6453,15 @@ return}
  /* 8.36: nach dem Aufbau der Karten Sperre neu prüfen */ document.addEventListener('classroom-cards-mean-lock',()=>{const bar=document.querySelector('.pl-bar');if(bar)syncMean(bar)});
  function syncHatch(bar){const m=hatchMode();for(const b of bar.querySelectorAll('[data-ph-hatch]')){b.setAttribute('aria-pressed',String(b.dataset.phHatch===m));b.setAttribute('role','radio');b.setAttribute('aria-checked',String(b.dataset.phHatch===m))}}
  /* 8.87: Leiste ohne „Halbjahr | Q2“ (1. Quartal): Zeile 1 Hinweis „Q1 offen“ + runder Knopf, Zeile 2 beide Dreifachschalter, Hinweise darunter */
- function arrange(bar,compact){const r1=bar.querySelector('.pl-row:not(.pl-row2):not(.pl-row3)'),r2=bar.querySelector('.pl-row2');if(!r1||!r2)return;let r3=bar.querySelector('.pl-row3');if(!r3){r3=document.createElement('div');r3.className='pl-row pl-row3';r2.after(r3)}
-  const hint=bar.querySelector('.q1open'),fold=bar.querySelector('.pl-fold'),hatch=bar.querySelector('.pl-hatch'),flags=bar.querySelector('.pl-flags'),mean=bar.querySelector('.pl-mean');
-  bar.classList.toggle('pl-compact1',compact);
-  if(compact){if(hint&&hint.parentElement!==r1)r1.prepend(hint);if(fold&&fold.parentElement!==r1)r1.append(fold);if(hatch&&hatch.parentElement!==r2)r2.prepend(hatch);if(flags&&flags.parentElement!==r3)r3.append(flags)}
-  else{if(hatch&&hatch.parentElement!==r1)r1.append(hatch);if(flags&&flags.parentElement!==r2)r2.prepend(flags);if(mean&&mean.parentElement===r2)r2.append(mean)}
-  r3.hidden=!compact}
+ /* 10.02: Anordnung übernimmt phone-notenspiegel.js (drei Zeilen) */
+ function arrange(bar){if(bar.classList.contains('pl-compact1'))bar.classList.remove('pl-compact1')}
  function topBar(panel,sel){
   let bar=panel.querySelector(':scope>.pl-bar');
-  if(!bar){bar=document.createElement('div');bar.className='pl-bar';bar.innerHTML='<div class="pl-head"></div><div class="pl-row"><span class="pl-seg pl-half"></span><span class="pl-seg pl-view" role="radiogroup" aria-label="Ansicht" hidden><button type="button" data-view="hj">Halbjahr</button><button type="button" data-view="q">Q2</button></span><button type="button" class="pl-fold" aria-pressed="false" title="Karten verkleinern" aria-label="Karten verkleinern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5l4 4 4-4"/><path d="M4 10.5h16M4 13.5h16"/><path d="M8 20.5l4-4 4 4"/></svg></button><span class="pl-seg pl-hatch" role="radiogroup" aria-label="Tendenzen"><button type="button" data-ph-hatch="white" title="Aus" aria-label="Markierung: Aus"><i class="hs-sw hs-white" aria-hidden="true"></i></button><button type="button" data-ph-hatch="off" title="Nur Farbe" aria-label="Markierung: Nur Farbe"><i class="hs-sw hs-off" aria-hidden="true"></i></button><button type="button" data-ph-hatch="frame" title="Rahmen" aria-label="Markierung: Rahmen"><i class="hs-sw hs-frame" aria-hidden="true"></i></button><button type="button" data-ph-hatch="hatch" title="Schraffur" aria-label="Markierung: Schraffur"><i class="hs-sw hs-hatch" aria-hidden="true"></i></button></span></div><div class="pl-row pl-row2"><div class="pl-flags"></div><span class="pl-seg pl-mean" role="radiogroup" aria-label="Durchschnitt darstellen"></span></div><div class="pl-stand"></div>';
+  if(!bar){bar=document.createElement('div');bar.className='pl-bar';bar.innerHTML='<div class="pl-head"></div><div class="pl-row"><span class="pl-seg pl-half"></span><span class="pl-seg pl-view" role="radiogroup" aria-label="Ansicht" hidden><button type="button" data-view="q1">Q1</button><button type="button" data-view="q2">Q2</button><button type="button" data-view="hj">Halbjahr</button></span><button type="button" class="pl-fold" aria-pressed="false" title="Karten verkleinern" aria-label="Karten verkleinern"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5l4 4 4-4"/><path d="M4 10.5h16M4 13.5h16"/><path d="M8 20.5l4-4 4 4"/></svg></button><span class="pl-seg pl-hatch" role="radiogroup" aria-label="Tendenzen"><button type="button" data-ph-hatch="white" title="Aus" aria-label="Markierung: Aus"><i class="hs-sw hs-white" aria-hidden="true"></i></button><button type="button" data-ph-hatch="off" title="Nur Farbe" aria-label="Markierung: Nur Farbe"><i class="hs-sw hs-off" aria-hidden="true"></i></button><button type="button" data-ph-hatch="frame" title="Rahmen" aria-label="Markierung: Rahmen"><i class="hs-sw hs-frame" aria-hidden="true"></i></button><button type="button" data-ph-hatch="hatch" title="Schraffur" aria-label="Markierung: Schraffur"><i class="hs-sw hs-hatch" aria-hidden="true"></i></button></span></div><div class="pl-row pl-row2"><div class="pl-flags"></div><span class="pl-seg pl-mean" role="radiogroup" aria-label="Durchschnitt darstellen"></span></div><div class="pl-stand"></div>';
    bar.addEventListener('click',e=>{const h=e.target.closest('[data-half]'),s=e.target.closest('[data-ph-hatch]'),fl=e.target.closest('[data-flag]'),qa=e.target.closest('.pl-q1all'),mn=e.target.closest('[data-mean]'),nt=e.target.closest('[data-notes]');
     if(nt){window.classroomStudentNotes?.openList();return}
     if(mn){window.classroomCardsMean?.set(mn.dataset.mean);syncMean(bar)}
-    {const v=e.target.closest('[data-view]');if(v){try{localStorage.setItem('classroom-cards-view-v1',v.dataset.view)}catch{}syncQ1(bar);window.classroomCardsHalf?.refresh();schedule()}}if(e.target.closest('.pl-fold')){window.classroomCardsFold?.toggle()}
+    {const v=e.target.closest('[data-view]');if(v){const w=v.dataset.view;ss.set(qk(),w==='q1'?'0':'1');try{localStorage.setItem('classroom-cards-view-v1',w==='hj'?'hj':'q')}catch{}done.clear();tries=0;syncQ1(bar);window.classroomCardsHalf?.refresh();schedule()}}if(e.target.closest('.pl-fold')){window.classroomCardsFold?.toggle()}
     if(fl){panel.dataset.plFilter=panel.dataset.plFilter===fl.dataset.flag?'':fl.dataset.flag;flags(panel);if(panel.dataset.plFilter)bar.scrollIntoView({block:'start'})}
     if(h){ss.set(sk(),h.dataset.half);done.clear();schedule()}
     if(s){setHatch(s.dataset.phHatch);setTimeout(()=>syncHatch(bar),0)}});
@@ -6465,8 +6478,8 @@ return}
  function flags(panel){const bar=panel.querySelector(':scope>.pl-bar'),box=bar?.querySelector('.pl-flags');if(!box)return;syncQ1(bar);const cards=[...panel.querySelectorAll('.qs-cards>.qs-card')];
   let f=panel.dataset.plFilter||'';const html=[];
   /* 8.20: kurze Beschriftungen, damit die Hinweise neben „1. Quartal“ in eine Zeile passen (bei mehreren noch kürzer) */
-  const nl0=window.classroomStudentNotes?.list?.().length||0,shown=FLAGS.filter(([k,,test])=>{const n=cards.filter(test).length;return n&&n<cards.length});const tight=shown.length+(nl0?1:0)>1;
-  for(const [k,label,test] of FLAGS){const n=cards.filter(test).length;if(!n||n===cards.length){if(f===k)f='';continue}const lab=tight?(k==='ha'?'3× HA':'ohne MM'):label;html.push(`<button type="button" data-flag="${k}" aria-pressed="${f===k}" title="${k==='ha'?'3× oder öfter Hausaufgaben fehlend (im Halbjahr)':'Noch keine mündliche Note im Quartal'}"><b>${n}</b> ${lab}</button>`)}
+  const nl0=window.classroomStudentNotes?.list?.().length||0,shown=FLAGS.filter(([k,,test])=>{const n=cards.filter(test).length;return n&&n<cards.length});const n2=shown.length+(nl0?1:0),tight=n2>2;/* 10.02: eigene Zeile – zwei Hinweise passen ausgeschrieben */
+  for(const [k,label,test] of FLAGS){const n=cards.filter(test).length;if(!n||n===cards.length){if(f===k)f='';continue}const lab=tight?(k==='ha'?'3× HA':'ohne MM'):n2>1&&k==='mm'?'Ohne mündl. Note':label;html.push(`<button type="button" data-flag="${k}" aria-pressed="${f===k}" title="${k==='ha'?'3× oder öfter Hausaufgaben fehlend (im Halbjahr)':'Noch keine mündliche Note im Quartal'}"><b>${n}</b> ${lab}</button>`)}
   /* 8.17: Notizen der Klasse als Hinweis – antippen öffnet die Liste */const nl=window.classroomStudentNotes?.list?.().length||0;if(nl)html.unshift(`<button type="button" data-notes="1" title="Notizen in dieser Klasse"><b>${nl}</b> ${tight?'📝':(nl===1?'Notiz':'Notizen')}</button>`);
   box.classList.toggle('is-tight',tight);panel.dataset.plFilter=f;const sig=html.join('');if(box.dataset.sig!==sig){box.dataset.sig=sig;box.innerHTML=sig}box.hidden=!html.length;
   const test=FLAGS.find(x=>x[0]===f)?.[2];for(const c of cards){const hit=!test||test(c);if(c.classList.contains('pl-hit')!==hit)c.classList.toggle('pl-hit',hit)}}
