@@ -2706,6 +2706,39 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
 })();
 ;
 
+/* ==== noten/quarter-labels.js ==== */
+/* 10.07: Kompaktansicht und Quartalsübersicht – einheitliche Spaltenköpfe „Q1 · …“ / „Q2 · …“ für alles, was zu einem Quartal gehört
+   (Mündlich, Tests, Hausaufgaben, Quartalsnote …). Halbjahresspalten (Klassenarbeit, SoMi · Halbjahr, Halbjahr ∑) bleiben ohne Vorsatz.
+   Nur Anzeige: der Text im Kopf bleibt gleich (die iPhone-Karten lesen ihn), der Vorsatz kommt per CSS, „ · Q1“ am Ende wird ausgeblendet.
+   Dazu bleibt der Tabellenkopf der Kompaktansicht beim Scrollen nach unten sichtbar. */
+(()=>{
+ const QUARTERLY=new Set(['performance','homework','material','tests','quarterSummary']);
+ const HALF=/Halbjahr|Klassenarbeit|Klausur|Schuljahr|∑|Zeugnis/i;
+ function kindOf(key){try{const g=subjectExamGroups(currentSubject).find(g=>(g.pages||[]).includes(key));return g?(g.material?'material':g.type):null}catch{return null}}
+ function quarterOf(key,kind){try{if(kind==='quarterSummary'){const h=(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId);return Number(h?.sharedQuarterSelection?.[currentHalfYearId])||0}const g=subjectExamGroups(currentSubject).find(g=>(g.pages||[]).includes(key));const i=g.pages.indexOf(key);return i>=0?i%2:0}catch{return 0}}
+ function apply(){
+  if(document.documentElement.classList.contains('ph-lite'))return;
+  for(const t of document.querySelectorAll('table.compact-entry-table')){const panel=t.closest('[data-custom-panel]');if(!panel)continue;const key=panel.dataset.customPanel,kind=kindOf(key);
+   const sig=key+'|'+kind;
+   for(const lab of t.querySelectorAll('thead th .compact-heading-label')){if(lab.dataset.qpSig===sig+'|'+lab.textContent)continue;
+    const th=lab.closest('th');let txt=lab.textContent.trim(),qp='';
+    if(!th||th.cellIndex===0||!QUARTERLY.has(kind)){delete lab.dataset.qp}
+    else if(/^Q\d · /.test(txt)){delete lab.dataset.qp;const m2=/^(Q\d · .*?) · Q(\d)$/.exec(txt);if(m2&&!lab.querySelector('.qp-hide')){lab.textContent=m2[1];const h=document.createElement('span');h.className='qp-hide';h.textContent=' · Q'+m2[2];lab.append(h)}}
+    else{const m=/^(.*?) · Q(\d)$/.exec(txt);
+     if(m){qp='Q'+m[2]+' · ';if(!lab.querySelector('.qp-hide')){lab.textContent=m[1];const h=document.createElement('span');h.className='qp-hide';h.textContent=' · Q'+m[2];lab.append(h)}}
+     else if(!HALF.test(txt)&&!th.classList.contains('qa-col')&&!th.classList.contains('tests-half-cell'))qp='Q'+(quarterOf(key,kind)+1)+' · ';
+     if(qp)lab.dataset.qp=qp;else delete lab.dataset.qp}
+    lab.dataset.qpSig=sig+'|'+lab.textContent}}}
+ let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{apply()}catch(e){console.warn(e)}})};
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(run);else new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});run();
+ const st=document.createElement('style');st.textContent=`
+ .compact-heading-label[data-qp]::before{content:attr(data-qp)}.compact-heading-label .qp-hide{display:none}
+ html:not(.ph-lite) body[data-module=noten] .table-wrap:has(>table.compact-entry-table){max-height:calc(100dvh - 120px);overflow:auto;overscroll-behavior:contain;padding-top:0!important;border-top:0!important}
+ html:not(.ph-lite) body[data-module=noten] table.compact-entry-table>thead{position:sticky;top:0;z-index:4}
+ html:not(.ph-lite) body[data-module=noten] table.compact-entry-table>thead>tr{background:#fff}`;document.head.append(st);
+})();
+;
+
 /* ==== noten/page-print.js ==== */
 // Print the visible page directly, including its current compact display.
 (()=>{
@@ -3721,7 +3754,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
   const fr=target.tFoot?.rows[0];if(fr){const td=mk('td');if(all.length){const sp=document.createElement('span');sp.dataset.v=String(all.reduce((a,b)=>a+b,0)/all.length);td.append(sp)}else td.textContent='—';fr.append(td)}
   paintHalf(target);
  }catch(e){console.warn('Testmittel Q1+Q2',e)}};
- if(!document.getElementById('tests-half-style')){const st=document.createElement('style');st.id='tests-half-style';st.textContent='body[data-module=noten] table th.tests-half-cell,body[data-module=noten] table td.tests-half-cell{border-left:3px solid #9fb3ce;background:#f7f9fd;min-width:120px;text-align:center}body[data-module=noten] table th.tests-half-cell .previous-quarter-label{display:block;margin:4px 0 0}';document.head.append(st)}
+ if(!document.getElementById('tests-half-style')){const st=document.createElement('style');st.id='tests-half-style';st.textContent='body[data-module=noten] table th.tests-half-cell,body[data-module=noten] table td.tests-half-cell{border-left:3px solid #9fb3ce;background:#f7f9fd;min-width:120px;text-align:center}body[data-module=noten] table th.tests-half-cell .previous-quarter-label{display:block;margin:4px 0 10px}';document.head.append(st)}
  function show(c,button,open){
   const input=button.querySelector('input');if(input)input.checked=open;button.setAttribute('aria-expanded',String(open));
   c.root.querySelector('[data-previous-quarter-box]')?.remove();clearInline(c.root);
