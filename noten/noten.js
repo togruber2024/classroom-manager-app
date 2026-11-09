@@ -37,7 +37,7 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
    „1. Quartal“ oder Notengrenzen-Aufklappen ihren Zustand im Arbeitsspeicher, statt still zu scheitern. Noten und andere Daten sind
    ausdrücklich NICHT betroffen – dort bleibt die Fehlermeldung bestehen, damit nichts unbemerkt verloren geht. */
 (()=>{try{const P=Storage.prototype;if(P.__classroomGuard)return;P.__classroomGuard=true;const set=P.setItem,get=P.getItem,rem=P.removeItem,mem=new Map();
- const ui=k=>/^classroom-(previous-quarter:|progress-v1$|ng-open-v1$|ov-mean-v1$|hatch-style-v1$|manager-hatching-v1$|manager-theme-v1$|mm-last-v1$)/.test(String(k));
+ const ui=k=>/^classroom-(previous-quarter:|next-quarter:|progress-v1$|ng-open-v1$|ov-mean-v1$|hatch-style-v1$|manager-hatching-v1$|manager-theme-v1$|mm-last-v1$)/.test(String(k));
  P.setItem=function(k,v){try{set.call(this,k,v);if(this===window.localStorage)mem.delete(String(k))}catch(e){if(this===window.localStorage&&ui(k)){mem.set(String(k),String(v));return}throw e}};
  P.getItem=function(k){if(this===window.localStorage&&mem.has(String(k)))return mem.get(String(k));return get.call(this,k)};
  P.removeItem=function(k){if(this===window.localStorage)mem.delete(String(k));return rem.call(this,k)}}catch{}})();
@@ -3706,6 +3706,166 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
 })();
 ;
 
+/* ==== noten/next-quarter.js ==== */
+/* 9.102: Gegenstück zu previous-quarter.js – im 1. Quartal blendet „2. Quartal“ die Eintragungen des 2. Quartals rechts ein (nur Anzeige).
+   Erzeugt aus previous-quarter.js; Klassen für Aussehen/Sortierung werden geteilt, Aufräum-Merkmale sind eigene (data-next-quarter-…). */
+(()=>{
+ const quarterly=new Set(['performance','homework','tests']);
+ let refreshing=false,pending=false;
+ const originalTableStyles=new WeakMap();
+ function clearInline(root=document){root.querySelectorAll('[data-next-quarter-cell]').forEach(e=>e.remove());root.querySelectorAll('.next-quarter-inline').forEach(table=>{table.classList.remove('next-quarter-inline');const old=originalTableStyles.get(table);if(old===null)table.removeAttribute('style');else if(old!==undefined)table.setAttribute('style',old);originalTableStyles.delete(table)})}
+
+ function context(){
+  if(document.documentElement.matches('.ph-lite,.cm-quick'))return null;/* Karten (iPhone, Seitenleiste) nutzen die Verlaufsspalten als „1. Quartal“ */
+  const holder=(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId)||subjectPageSource(currentSubject);
+  if(Number(holder?.sharedQuarterSelection?.[currentHalfYearId])!==0)return null;
+  const groups=subjectExamGroups(currentSubject),group=groups.find(g=>g.pages.includes(activePage));
+  if(!group||['halfYear','schoolYear','semester'].includes(group.type))return null;
+  /* 9.85: Klassenarbeiten und Klausuren gelten fürs ganze Halbjahr – „1. Quartal“ würde nur dieselben Werte noch einmal zeigen */if(!quarterly.has(group.type)&&group.type!=='quarterSummary')return null;/* Halbjahresnote enthält Q1 und Q2 bereits – kein Vergleichsschalter. */
+  const panel=document.querySelector(`[data-custom-panel="${CSS.escape(activePage)}"]`);
+  const root=panel?.closest('[data-exam-combined]')||panel;
+  if(!root||root.classList.contains('hide'))return null;
+  return {holder,groups,group,root,key:['classroom-next-quarter',currentSubject,currentClassId,currentHalfYearId,group.type,!!group.material].join(':')};
+ }
+ function readonlyTable(table){
+  const clone=table.cloneNode(true);
+  clone.querySelectorAll('th .mean-seg:not(.seg-toggle)').forEach(seg=>seg.closest('th')?.classList.add('pq-mean-col'));/* 9.27: Mittelwert-Spalte merken – sie bekommt einen eigenen Schalter */
+  clone.querySelectorAll('button,.toggle,.test-mean-slider,.mean-seg,.task-weight-toggle').forEach(e=>e.remove());
+  clone.querySelectorAll('input,select,textarea').forEach(input=>{
+   const span=document.createElement('span');span.className=input.className;
+   if(input.closest('tbody td')&&!input.closest('.task-student-cell'))span.classList.add('previous-quarter-value');
+   span.textContent=input.tagName==='SELECT'?input.selectedOptions[0]?.textContent||'—':input.value||'—';
+   if(input.closest('.task-weight-control')&&input.value!==''&&Number.isFinite(Number(input.value)))span.textContent=(Math.trunc((Number(input.value)+1e-10)*100)/100).toLocaleString('de-DE',{maximumFractionDigits:2});
+   if(input.type==='date'&&/^\d{4}-\d{2}-\d{2}$/.test(input.value))span.textContent=input.value.split('-').reverse().join('.');
+   if(input.classList.contains('task-label-input'))span.textContent=input.value.trim();
+   input.replaceWith(span);
+  });
+  clone.querySelectorAll('*').forEach(e=>{e.removeAttribute('id');for(const a of [...e.attributes])if(a.name.startsWith('data-')||a.name.startsWith('on')||['tabindex','contenteditable'].includes(a.name))e.removeAttribute(a.name)});
+  clone.removeAttribute('id');
+  clone.querySelectorAll('colgroup,.task-add-column,.task-spacer-column,.task-space-column').forEach(e=>e.remove());
+  clone.querySelectorAll('tbody td').forEach(cell=>{if(cell.cellIndex>0&&!cell.querySelector('.previous-quarter-value')){const value=cell.querySelector('.task-end-grade, .compact-cell-value, span');if(value)value.classList.add('previous-quarter-value')}});
+  const columns=clone.querySelector('tr')?.children.length||1;
+  const widths=document.createElement('colgroup');for(let i=0;i<columns;i++){const col=document.createElement('col');col.style.width=(i===0?230:160)+'px';widths.append(col)}clone.prepend(widths);
+  clone.style.setProperty('width',(230+(columns-1)*160)+'px','important');
+  return clone;
+ }
+ function fill(box,c){
+  box.replaceChildren();
+  const title=document.createElement('h3');title.textContent='2. Quartal – Eintragungen';box.append(title);
+  const matching=quarterly.has(c.group.type)?c.groups.filter(g=>g.id===c.group.id):c.group.type==='quarterSummary'||c.group.type==='semester'?c.groups.filter(g=>g.halfYearId===currentHalfYearId&&!['halfYear','schoolYear','semester','quarterSummary'].includes(g.type)&&classroomQuarterGroupVisible(g,1)):c.groups.filter(g=>g.halfYearId===currentHalfYearId&&!['halfYear','schoolYear','semester','quarterSummary','performance','homework','tests'].includes(g.type)&&classroomQuarterGroupVisible(g,1));
+  const old=c.holder.sharedQuarterSelection[currentHalfYearId];
+  try{
+   c.holder.sharedQuarterSelection[currentHalfYearId]=1;
+   if(['quarterSummary','semester'].includes(c.group.type)){
+    const summary=c.groups.find(g=>g.type==='quarterSummary'&&g.halfYearId===currentHalfYearId);
+    if(summary){const key=summary.pages[0];renderTasksPage(currentSubject,key);const table=document.querySelector(`[data-custom-panel="${CSS.escape(key)}"] table`);if(table)box.append(readonlyTable(table));return;}
+   }
+   for(const g of matching){
+    const keys=quarterly.has(g.type)?[g.pages[1]]:g.pages;
+    for(const key of keys){
+     if(!key)continue;
+     const definition=customPagesFor(currentSubject).find(p=>p.key===key);
+     if(g.type==='homework')renderHomeworkPage(currentSubject,key);
+     else if(definition?.system==='tasks')renderTasksPage(currentSubject,key);
+     else continue;
+     const source=document.querySelector(`[data-custom-panel="${CSS.escape(key)}"]`);if(!source)continue;
+     const heading=document.createElement('h4');heading.textContent=g.label;box.append(heading);
+     for(const table of source.querySelectorAll('table')){const wrap=document.createElement('div');wrap.className='previous-quarter-table';const ro=readonlyTable(table);ro._pqKey=key;wrap.append(ro);box.append(wrap)}
+     if(g.type==='performance'&&['quarterSummary','semester'].includes(c.group.type)){
+      const students=customPageValues(currentSubject,key).students||[];
+      const reviews=document.createElement('table');reviews.className='task-table';
+      reviews.innerHTML='<thead><tr><th>Schüler:in</th><th>Selbsteinschätzung · Q2</th><th>Quartalsnote · Q2</th></tr></thead>';
+      const body=document.createElement('tbody');
+      for(const student of students){const row=document.createElement('tr');for(const value of [student.name,student.quarterReview?.self,student.quarterReview?.teacher]){const cell=document.createElement('td');cell.textContent=value===undefined||value===null||value===''?'—':(value===student.name?String(value):classUsesGradePoints()?formatTaskResult(participationPoints(Number(value))):formatTaskScore(Number(value),'grades',false,true));row.append(cell)}body.append(row)}
+      reviews.append(body);const wrap=document.createElement('div');wrap.className='previous-quarter-table';wrap.append(reviews);box.append(wrap);
+     }
+
+    }
+   }
+  }finally{
+   c.holder.sharedQuarterSelection[currentHalfYearId]=old;
+   if(c.group.type==='quarterSummary')renderTasksPage(currentSubject,c.group.pages[0]);
+
+  }
+  if(!box.querySelector('table')){const empty=document.createElement('p');empty.textContent='Für diese Rubrik liegen im 2. Quartal noch keine Eintragungen vor.';box.append(empty)}
+ }
+ // Schalter „1. Quartal“ in der oberen Zeile bei den Anzeige-Schaltern (vor „Drucken“; hatching.js ordnet ihn vor „Schraffuren“ ein).
+ // 9.27: Schalter der Vergleichsspalte stellt die Darstellung des 1. Quartals um (nur Anzeige)
+ document.addEventListener('click',e=>{const b=e.target.closest?.('.pq-mean-seg [data-pq-mean],.pq-mean-seg [data-pq-rounded]');if(!b)return;e.preventDefault();e.stopPropagation();const key=b.closest('.pq-mean-seg').dataset.pqKey,d=taskPageData(currentSubject,key);if(b.dataset.pqMean!==undefined)d.meanDisplay=b.dataset.pqMean;else d.resultRounded=b.dataset.pqRounded==='1';saveCurrentSubject();const c=context();if(c)merge(c)},true);
+ function placeButton(c,button){
+  const print=c.root.querySelector('.section-title .page-print-button');
+  if(print)print.before(button);else (c.root.querySelector('.section-title')||c.root).append(button);
+ }
+ function refresh(){
+  if(refreshing)return;refreshing=true;
+  try{
+   const c=context();
+   document.querySelectorAll('[data-next-quarter-button]').forEach(b=>{if(!c||b.dataset.nextQuarterButton!==c.key)b.remove()});
+   document.querySelectorAll('[data-next-quarter-box]').forEach(b=>{if(!c||b.dataset.nextQuarterBox!==c.key)b.remove()});
+   if(!c){clearInline();return;}
+   const heading=c.root.querySelector('.section-title')||c.root;
+   let button=c.root.querySelector('[data-next-quarter-button]');
+   if(!button){button=document.createElement('label');button.className='toggle previous-quarter-toggle';button.dataset.nextQuarterButton=c.key;button.title='Eintragungen aus dem 2. Quartal rechts ein- oder ausblenden. Die Berechnungen des 1. Quartals bleiben unverändert.';
+    const input=document.createElement('input');input.type='checkbox';input.setAttribute('role','switch');const caption=document.createElement('span');caption.textContent='2. Quartal';button.append(input,caption);
+    placeButton(c,button);
+    input.addEventListener('change',()=>{const open=input.checked;localStorage.setItem(c.key,String(open));show(c,button,open)});
+    show(c,button,localStorage.getItem(c.key)==='true');
+   }else if(button.getAttribute('aria-expanded')==='true'&&!c.root.querySelector('[data-next-quarter-cell]')){merge(c);}
+  }finally{refreshing=false}
+ }
+ function merge(c){
+  clearInline(c.root);
+  let target=c.root.querySelector('table');if(!target)return;
+  const reference=target.querySelector('tbody td:not(:first-child) .compact-cell-value,tbody td:not(:first-child)>span')||target.querySelector('tbody .task-grade-input,tbody select,tbody .task-end-grade');
+  const referenceStyle=reference?getComputedStyle(reference):null;
+  const fieldStyle=referenceStyle?Object.fromEntries(['width','min-width','max-width','height','min-height','font-size','font-family','font-weight','border-radius','line-height','padding','margin','border','display','align-items','justify-content','box-sizing'].map(name=>[name,referenceStyle.getPropertyValue(name)])):{};
+  const referenceCell=reference?.closest('td');
+  const cellStyle=referenceCell?Object.fromEntries(['width','min-width','max-width','padding','border-left','border-right'].map(name=>[name,getComputedStyle(referenceCell).getPropertyValue(name)])):null;
+  const comparisonButton=c.root.querySelector('[data-next-quarter-button]');
+  const history=document.createElement('div');fill(history,c);
+  if(comparisonButton&&!comparisonButton.isConnected)placeButton(c,comparisonButton);
+  target=c.root.querySelector('table');if(!target)return;
+  const tables=[...history.querySelectorAll('table')];
+  const normalize=value=>String(value||'').trim().toLocaleLowerCase('de-DE');
+  const nameOf=row=>normalize(row.cells[0]?.querySelector('input')?.value||row.cells[0]?.textContent);
+  const sources=tables.map(table=>({key:table._pqKey,head:table.tHead?.rows[0],rows:new Map([...table.tBodies[0]?.rows||[]].map(row=>[nameOf(row),row]))})).filter(item=>item.head);
+  const count=sources.reduce((n,item)=>n+[...item.head.cells].slice(1).filter(c=>!c.classList.contains('quarter-exam-column')).length,0);if(!count){const note=document.createElement('p');note.className='task-score-note previous-quarter-empty';note.dataset.nextQuarterCell='';note.textContent=history.querySelector('p')?.textContent||'Für diese Rubrik liegen im 2. Quartal noch keine Eintragungen vor.';(target.closest('.table-wrap')||target).before(note);return}
+  originalTableStyles.set(target,target.getAttribute('style'));target.classList.add('next-quarter-inline');
+  const colgroup=target.querySelector('colgroup');if(colgroup){const before=null;for(let i=0;i<count;i++){const col=document.createElement('col');col.dataset.nextQuarterCell='';col.style.width=cellStyle?.width||'46px';colgroup.insertBefore(col,before)}}
+  const add=(row,isHead=false)=>{
+   const before=null,name=nameOf(row);/* rechts anhängen */
+   for(const source of sources){const from=isHead?source.head:source.rows.get(name);
+    for(let i=1;i<source.head.cells.length;i++){
+     if(source.head.cells[i]?.classList.contains('quarter-exam-column'))continue;/* Klassenarbeiten/Klausuren gehören zum Halbjahr, nie zu einem Quartal – nicht als „Q1 · …“ wiederholen. */
+     const cell=from?.cells[i]?.cloneNode(true)||document.createElement(isHead?'th':'td');
+     cell.dataset.nextQuarterCell='';cell.classList.add('previous-quarter-history-cell');
+     if(cellStyle)for(const property of isHead?['width','min-width','max-width']:['width','min-width','max-width','padding','border-left','border-right'])cell.style.setProperty(property,cellStyle[property],'important');/* Kopfzellen erhalten keine Seitenränder, sonst erscheint eine zusätzliche senkrechte Linie. */
+     for(const field of cell.querySelectorAll('.previous-quarter-value'))for(const [name,value] of Object.entries(fieldStyle)){field.style.setProperty(name,value,'important');if(name==='height')field.style.setProperty('min-height',value,'important')}
+     if(target.matches('.compact-entry-table,.quarter-summary-table'))for(const field of cell.querySelectorAll('.previous-quarter-value'))field.style.setProperty('width','auto','important');
+     if(!from)cell.textContent='—';
+     if(isHead){const caption=cell.querySelector('.compact-heading-label');if(caption)caption.textContent='Q2 · '+caption.textContent;else{const label=document.createElement('small');label.className='previous-quarter-label';label.textContent='2. Quartal';cell.prepend(label)}}
+     if(isHead&&source.key&&cell.classList.contains('pq-mean-col'))try{const d=taskPageData(currentSubject,source.key),sys=taskGradeSystem(currentSubject,source.key),w=document.createElement('div');w.innerHTML=taskMeanControl(sys,d).replace(/data-mean-display=/g,'data-pq-mean=').replace(/data-result-rounded=/g,'data-pq-rounded=');const seg=w.firstElementChild;if(seg){seg.classList.add('pq-mean-seg');seg.dataset.pqKey=source.key;cell.append(seg)}}catch(e){console.error(e)}
+     row.insertBefore(cell,before);
+    }
+   }
+  };
+  if(target.tHead?.rows[0])add(target.tHead.rows[0],true);
+  for(const row of [...target.tBodies[0]?.rows||[]])add(row);
+  const currentColumns=target.tHead?.rows[0]?.cells.length||count+1;
+  target.style.setProperty('min-width',target.matches('.compact-entry-table,.quarter-summary-table')?'0px':(230+count*130+(currentColumns-count-1)*160)+'px','important');
+ }
+ function show(c,button,open){
+  const input=button.querySelector('input');if(input)input.checked=open;button.setAttribute('aria-expanded',String(open));
+  c.root.querySelector('[data-next-quarter-box]')?.remove();clearInline(c.root);
+  if(open)merge(c);
+ }
+ classroomHooks.add('setPage','next-quarter: Schalter 2. Quartal',{after(){refresh()}});
+ new MutationObserver(()=>{if(pending||refreshing)return;pending=true;requestAnimationFrame(()=>{pending=false;refresh()})}).observe(document.body,{childList:true,subtree:true});
+ refresh();
+ {const st=document.createElement('style');st.textContent='body[data-module=noten] table.next-quarter-inline .previous-quarter-history-cell{width:160px!important;min-width:160px!important;max-width:160px!important;padding:10px 8px!important;box-sizing:border-box;vertical-align:middle;background:#fff}\nbody[data-module=noten] table.next-quarter-inline th.previous-quarter-history-cell{background:#f5f7fc;white-space:normal}\nbody[data-module=noten] table.next-quarter-inline .previous-quarter-history-cell .previous-quarter-value{display:inline-flex!important;align-items:center;justify-content:center;box-sizing:border-box;width:136px!important;min-width:0!important;max-width:100%!important;height:38px!important;min-height:38px!important;margin:0!important;padding:4px 8px!important;border:1px solid #dbe3ef;border-radius:9px;font-size:19px!important;font-weight:700;line-height:1!important;vertical-align:middle}\nbody[data-module=noten] table.next-quarter-inline .previous-quarter-history-cell .task-date-input{display:inline-flex!important;align-items:center;justify-content:center;width:140px!important;max-width:100%!important;height:34px!important;min-height:0!important;font-size:15px!important;padding:4px!important;white-space:nowrap;box-sizing:border-box}\nbody[data-module=noten] table.next-quarter-inline :not(.previous-quarter-history-cell)+.previous-quarter-history-cell{border-left:3px solid #9fb3ce}\nbody[data-module=noten] table.next-quarter-inline .previous-quarter-history-cell{width:130px!important;min-width:130px!important;max-width:130px!important;padding:8px 8px!important}\nbody[data-module=noten] table.next-quarter-inline .previous-quarter-history-cell .previous-quarter-value{width:110px!important}\nbody[data-module=noten] table.next-quarter-inline .previous-quarter-history-cell .task-date-input{width:114px!important;font-size:14px!important}\nbody[data-module=noten] table.compact-entry-table.next-quarter-inline th.previous-quarter-history-cell{background:transparent!important;border:0!important;border-bottom:1px solid var(--line,#dbe3ef)!important;padding:0!important;overflow:visible}';document.head.append(st)}
+})();
+;
+
 /* ==== noten/quarter-dates.js ==== */
 // Explicit school-wide period dates; legacy second-quarter boundaries are retained.
 function classroomPeriodSettings(){try{return JSON.parse(localStorage.getItem('notenrechner-period-dates')||'{}')}catch{return {}}}
@@ -6343,6 +6503,9 @@ return}
  const short={'Sonstige Mitarbeit':'Mitarbeit','Klassenarbeit':'KA','Klassenarbeiten':'KA','Klausur':'Klausur','Klausuren':'Klausur','Tests':'Tests','Test':'Tests'};
  const nameOf=c=>c.querySelector('.qs-name')?.textContent.trim()||'';
  const cards=()=>[...document.querySelectorAll('.qs-cards>.qs-card:not(.qd-card)')];
+ /* 9.102: Safari verschob beim kurzen Aufklappen (Kurzzeilen) bzw. beim Auf-/Zuklappen die Liste ans Ende – Scrollstand sichern und die angetippte Karte an ihrer Stelle halten */
+ const scrollers=()=>{const out=[document.scrollingElement];let e=document.querySelector('.qs-cards');while(e&&e!==document.body){if(e.scrollHeight>e.clientHeight+1&&/(auto|scroll)/.test(getComputedStyle(e).overflowY))out.push(e);e=e.parentElement}return out.filter(Boolean)};
+ const keepScroll=(fn,card)=>{const sc=scrollers(),tops=sc.map(e=>e.scrollTop),y=card?.getBoundingClientRect().top;try{fn()}finally{sc.forEach((e,i)=>{if(e.scrollTop!==tops[i])e.scrollTop=tops[i]});if(card&&y!=null){const d=card.getBoundingClientRect().top-y;if(Math.abs(d)>1){const s=sc.slice(1).find(e=>e.scrollHeight>e.clientHeight+1)||sc[0];s.scrollTop+=d}}}};
  function summary(c){const bars=c.querySelector('.qs-bars');if(!bars)return '';const parts=[];
   for(const s of bars.querySelectorAll(':scope>.qs-sect')){const l=s.querySelector('.qs-sh-l span')?.textContent.trim();if(!l)continue;const ve=s.querySelector(':scope>.qs-sh .qs-val i')||s.querySelector(':scope>.qs-row>.qs-val i');/* 8.93: Wert steht seit 8.88 auch in der Kästchen-Zeile */const v=(ve?.textContent||'').trim()||'—';parts.push((short[l]||l)+' '+v)}
   for(const s of bars.querySelectorAll('.qs-sub .qs-sect')){if(!/Hausaufgaben/.test(s.querySelector('.qs-sh-l')?.textContent||''))continue;const vv=[...s.querySelectorAll('.qs-val')].find(e=>e.offsetParent||e.getClientRects().length);const n=((vv?.innerText||'').match(/\d+/g)||['0']).pop();parts.splice(parts.length?1:0,0,n==='0'?'HA ✓':'HA ✕'+n);break}
@@ -6350,7 +6513,7 @@ return}
  function apply(){for(const b of document.querySelectorAll('.pl-fold')){const t=on?'Karten wieder ganz zeigen':'Karten verkleinern';if(b.getAttribute('aria-pressed')!==String(on))b.setAttribute('aria-pressed',String(on));if(b.title!==t)b.title=t;if(b.getAttribute('aria-label')!==t)b.setAttribute('aria-label',t)}
   /* 9.75: Kurzzeilen aller eingeklappten Karten in einem Durchgang berechnen (einmal kurz aufklappen statt je Karte → nur ein Layout) */
   const all=cards(),fold=new Map(all.map(c=>[c,on?!open.has(nameOf(c)):quick()&&closed.has(nameOf(c))])),texts=new Map();
-  if(on){const need=all.filter(c=>fold.get(c)),was=need.filter(c=>c.classList.contains('qs-folded'));for(const c of was)c.classList.remove('qs-folded');for(const c of need)texts.set(c,summary(c));for(const c of was)c.classList.add('qs-folded')}
+  if(on)keepScroll(()=>{const need=all.filter(c=>fold.get(c)),was=need.filter(c=>c.classList.contains('qs-folded'));for(const c of was)c.classList.remove('qs-folded');for(const c of need)texts.set(c,summary(c));for(const c of was)c.classList.add('qs-folded')})
   for(const c of all){const folded=fold.get(c);let sum=c.querySelector(':scope>.qs-sum');
    if(on){if(!sum){sum=document.createElement('div');sum.className='qs-sum';sum.innerHTML='<span class="qs-sum-t"></span><span class="qs-sum-c" aria-hidden="true">›</span>';c.append(sum)}
     if(folded){const t=texts.get(c)??'';const st=sum.querySelector('.qs-sum-t');if(st.textContent!==t)st.textContent=t}}
@@ -6359,13 +6522,13 @@ return}
  document.addEventListener('click',e=>{if(!on&&!quick())return;const c=e.target.closest('.qs-cards>.qs-card:not(.qd-card)');if(!c||e.target.closest('input,label,button,.qs-mail'))return;
   /* 9.02: Schnellansicht – ein Klick klappt die Karte auf, der nächste wieder zu (keine Noteneingabe-Seite; dafür gibt es den Noten-Manager) */
   /* 9.85: aufgeklappte Karte – Klick in den Notenbereich öffnet die Notenbesprechung (wie am iPhone), Klick auf den Namen klappt zu */if(quick()&&!c.classList.contains('qs-folded')&&!e.target.closest('.qs-top'))return;
-  if(quick()){e.preventDefault();e.stopImmediatePropagation();const n=nameOf(c),f=c.classList.contains('qs-folded');if(on){if(f)open.add(n);else open.delete(n)}else{if(f)closed.delete(n);else closed.add(n)}apply();return}
-  if(c.classList.contains('qs-folded')){e.preventDefault();e.stopImmediatePropagation();open.add(nameOf(c));apply()}
-  else if(e.target.closest('.qs-top')){e.preventDefault();e.stopImmediatePropagation();open.delete(nameOf(c));apply()}},true);
+  if(quick()){e.preventDefault();e.stopImmediatePropagation();const n=nameOf(c),f=c.classList.contains('qs-folded');if(on){if(f)open.add(n);else open.delete(n)}else{if(f)closed.delete(n);else closed.add(n)}keepScroll(apply,c);return}
+  if(c.classList.contains('qs-folded')){e.preventDefault();e.stopImmediatePropagation();open.add(nameOf(c));keepScroll(apply,c)}
+  else if(e.target.closest('.qs-top')){e.preventDefault();e.stopImmediatePropagation();open.delete(nameOf(c));keepScroll(apply,c)}},true);
  document.addEventListener('classroom-cards-mean-lock',()=>apply());
  classroomOnDomChange(()=>{if((on||quick())&&cards().some(c=>!c.classList.contains('qs-folded')&&!c.classList.contains('qs-unfolded')))apply()});/* 9.14: gemeinsamer Beobachter */
  const st=document.createElement('style');st.textContent='.pl-fold{flex:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:38px;height:38px;min-height:38px;padding:0;margin-left:8px;border:1px solid #cbd6e5;border-radius:50%;background:#fff;color:#2f5f9b;cursor:pointer}.pl-fold svg{width:20px;height:20px}.pl-fold[aria-pressed=true]{background:#e8f0fb;border-color:#9dbbe3}'
-  +'.qs-card.qs-folded .qs-bars,.qs-card.qs-folded .qs-ft,.qs-card.qs-folded>.qs-edits{display:none}.qs-card>.qs-sum{display:none}.qs-card.qs-folded>.qs-sum{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:14px;color:#5b6b82}.qs-sum-t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.qs-sum-c{font-size:20px;line-height:1;color:#8fa0b8}';
+  +'.qs-cards,.qs-cards>.qs-card{overflow-anchor:none}.qs-card.qs-folded .qs-bars,.qs-card.qs-folded .qs-ft,.qs-card.qs-folded>.qs-edits{display:none}.qs-card>.qs-sum{display:none}.qs-card.qs-folded>.qs-sum{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:14px;color:#5b6b82}.qs-sum-t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.qs-sum-c{font-size:20px;line-height:1;color:#8fa0b8}';
  document.head.append(st);
  const t=setInterval(()=>{if(document.querySelector('.pl-fold')){apply();clearInterval(t)}},500);setTimeout(()=>clearInterval(t),20000);
 })();
