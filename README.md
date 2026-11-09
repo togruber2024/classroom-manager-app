@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 09.11.2026 · Version 10.11
+Stand: 09.11.2026 · Version 10.12
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1290,3 +1290,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.09: A-/B-Tests: beide Rohpunkt-Eingaben werden übernommen; Abstand im Kopf „Testmittel Q1+Q2“.
 10.10: A-/B-Test mit direkter Bewertung, Notenspiegel standardmäßig Anzahl, Tabellenhöhe Kompaktansicht, ✕ im Vergleich zentriert.
 10.11: Mittelwert-Köpfe exakt ausgerichtet, Schalter %/x:y versetzt, Halbjahresnoten automatisch statt im Menü.
+10.12: Kompaktansicht bis zum unteren Rand mit fester Mittelwert-Zeile; A/B-direkt-Test: Sortierschalter rechts, ohne Rohpunkt-Elemente.

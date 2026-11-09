@@ -2758,9 +2758,13 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
     if((th.dataset.qtag||'')!==tag){if(tag)th.dataset.qtag=tag;else delete th.dataset.qtag}}}}
  const _apply=apply;apply=function(){_apply();applyNormal()};
  /* 10.10: Höhe des Scrollbereichs so, dass die Tabelle (nach unten gescrollt) vom oberen Rand bis zur Legende reicht – kein verschenkter Platz */
- function sizeWraps(){if(document.documentElement.classList.contains('ph-lite'))return;const docH=document.documentElement.scrollHeight;
-  for(const w of document.querySelectorAll('.table-wrap')){if(!w.querySelector(':scope>table.compact-entry-table')||!w.offsetParent)continue;const r=w.getBoundingClientRect();let below=docH-(r.bottom+scrollY);if(below<0)below=0;if(below>innerHeight*.4)below=60;
-   const h=Math.max(260,Math.round(innerHeight-below-8)),cur=parseFloat(w.style.maxHeight)||0;if(Math.abs(cur-h)>2)w.style.maxHeight=h+'px'}}
+ /* 10.12: Scrollbereich reicht immer bis zum unteren Bildschirmrand – egal wie weit die Seite gescrollt ist (oben Kopf, unten Mittelwert-Zeile fest) */
+ function sizeWraps(){if(document.documentElement.classList.contains('ph-lite'))return;
+  for(const w of document.querySelectorAll('.table-wrap')){const tb=w.querySelector(':scope>table.compact-entry-table');if(!tb||!w.offsetParent)continue;const top=w.getBoundingClientRect().top;
+   {const n=tb.tHead?.rows[0]?.cells.length||0;for(const r of tb.tFoot?.rows||[]){let have=[...r.cells].reduce((a,c)=>a+(c.colSpan||1),0);while(have<n){const td=document.createElement('td');td.className='qp-pad';r.append(td);have++}}}/* Mittelwert-Zeile voll breit, damit beim Festhalten nichts durchscheint */
+   const need=w.firstElementChild?.offsetHeight||0,h=Math.max(240,Math.round(innerHeight-Math.max(top,8)-8)),cur=parseFloat(w.style.maxHeight)||0;
+   if(Math.abs(cur-h)>1)w.style.maxHeight=h+'px'}}
+ addEventListener('scroll',()=>requestAnimationFrame(sizeWraps),{passive:true});
  addEventListener('resize',()=>requestAnimationFrame(sizeWraps));
  const _apply2=apply;apply=function(){_apply2();sizeWraps()};
  let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{apply()}catch(e){console.warn(e)}})};
@@ -2775,7 +2779,8 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
  html:not(.ph-lite) body[data-module=noten] table.previous-quarter-inline th[data-qtag]:has(.mh-stack),html:not(.ph-lite) body[data-module=noten] table.next-quarter-inline th[data-qtag]:has(.mh-stack){vertical-align:top!important}.compact-heading-label .qp-hide{display:none}
  html:not(.ph-lite) body[data-module=noten] .table-wrap:has(>table.compact-entry-table){max-height:calc(100dvh - 120px);overflow:auto;overscroll-behavior:contain;padding-top:0!important;border-top:0!important}
  html:not(.ph-lite) body[data-module=noten] table.compact-entry-table>thead{position:sticky;top:0;z-index:4}
- html:not(.ph-lite) body[data-module=noten] table.compact-entry-table>thead>tr{background:#fff}`;document.head.append(st);
+ html:not(.ph-lite) body[data-module=noten] table.compact-entry-table>thead>tr{background:#fff}
+ html:not(.ph-lite) body[data-module=noten] table.compact-entry-table>tfoot{position:sticky;bottom:0;z-index:3}html:not(.ph-lite) body[data-module=noten] table.compact-entry-table>tfoot>tr>*{background:#f6f8fc;box-shadow:inset 0 1px 0 #dbe3ef}`;document.head.append(st);
 })();
 ;
 
@@ -3146,7 +3151,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
  /* 10.10: A-/B-Test mit direkter Eingabe der Bewertungen – Gruppe je Schüler:in, Bewertung direkt, keine Notengrenzen. */
  function directMode(panel,record){const {data,task,config}=record,sys=config.system;
   panel.classList.add('test-direct');panel.querySelector('details.ng-box')?.remove();panel.querySelector('.test-entry-seg')?.remove();
-  if(!document.getElementById('test-direct-style')){const st=document.createElement('style');st.id='test-direct-style';st.textContent='.test-direct .test-entry-seg{display:none!important}body[data-module=noten] .test-direct input.test-direct-input:not(#_){box-sizing:border-box;width:120px;height:38px;border-radius:9px;border:1px solid #d6dee9;text-align:center;font:inherit;font-size:16px;font-weight:650;color:#243247;padding:0 6px}body[data-module=noten] .test-direct input.test-direct-input:focus{outline:2px solid #2f5f9b;outline-offset:1px}';document.head.append(st)}
+  if(!document.getElementById('test-direct-style')){const st=document.createElement('style');st.id='test-direct-style';st.textContent='body .test-direct .test-results-head>.test-entry-seg:not(#_):not(#__),.test-direct .test-entry-seg,.test-direct .test-defaults-badge{display:none!important}body[data-module=noten] .test-direct input.test-direct-input:not(#_){box-sizing:border-box;width:120px;height:38px;border-radius:9px;border:1px solid #d6dee9;text-align:center;font:inherit;font-size:16px;font-weight:650;color:#243247;padding:0 6px}body[data-module=noten] .test-direct input.test-direct-input:focus{outline:2px solid #2f5f9b;outline-offset:1px}';document.head.append(st)}
   const intro=panel.querySelector('.test-detail-head+p');if(intro)intro.textContent='Bewertungen hier direkt eintragen'+(config.abGroups?' und die Gruppe (A/B) wählen':'')+'. Die Ergebnisse werden automatisch in die verknüpfte Tests-Übersicht übernommen.';
   const t=panel.querySelector('table.test-detail-results');if(!t)return;const hr=t.tHead.rows[0];hr.cells[hr.cells.length-1].remove();hr.cells[hr.cells.length-1].textContent=sys==='participation'?'Bewertung':sys==='gradePoints'?'Notenpunkte':'Note';
   const shown=v=>{if(v===''||v==null)return '';const n=Number(v);if(String(v).toLowerCase()==='x')return 'A';return sys==='participation'?participationLabel(n,false):sys==='gradePoints'?String(participationPoints(n)):formatTaskScore(n,'grades',false,config.tendencies)};
@@ -3187,7 +3192,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
   {const acts=panel.querySelector('.test-detail-head .oral-display-actions');if(acts&&!acts.querySelector('.exam-lock')){const lab=document.createElement('label');lab.className='toggle exam-lock';lab.title='Zurückgegebenen Test sperren, damit nichts mehr versehentlich geändert wird.';lab.innerHTML='<input type="checkbox" role="switch"><span>🔒<span class="exam-lock-text"> Zurückgegeben</span></span>';acts.append(lab);const inp=lab.querySelector('input');inp.checked=!!config.locked;const set=v=>{config.locked=v;config.lockedAt=v?new Date().toISOString().slice(0,10):'';saveCurrentSubject();render(record)};inp.onchange=()=>set(inp.checked);
    const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(config.lockedAt||''),go=()=>window.classroomLockApply?.(panel,!!config.locked,m?m[3]+'.'+m[2]+'.'+m[1]:'',()=>set(false));if(window.classroomLockApply)go();else setTimeout(go,0)}}
   if(panel._tpChange)panel.removeEventListener('change',panel._tpChange);panel._tpChange=e=>{if(e.target.matches?.('.test-raw-input'))setTimeout(drawP,0)};panel.addEventListener('change',panel._tpChange)}
- if(config.system==='participation'){const own=!config.useSubject,box=document.createElement('div');box.className='test-defaults-badge'+(own?' is-own':'');
+ if(config.system==='participation'&&!config.direct){const own=!config.useSubject,box=document.createElement('div');box.className='test-defaults-badge'+(own?' is-own':'');
   box.innerHTML='<span>Grenzen: <b>'+(own?'eigene Werte':'Fachvorgabe '+htmlEscape(subjects[currentSubject]?.label||''))+'</b></span><button type="button">'+(own?'Fachvorgabe übernehmen':'Eigene Werte')+'</button>';
   const inner=panel.querySelector('.ng-box .ng-inner');if(inner)inner.prepend(box);else panel.querySelector('.section-title')?.after(box);
   box.querySelector('button').onclick=async()=>{
@@ -5323,14 +5328,14 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   if(!same){const anchor=rows.at(-1).nextSibling;for(const x of sorted)body.insertBefore(x.r,anchor)}
   const orig=sorted.every((x,k)=>k===0||x.i>sorted[k-1].i);if(orig)delete body.dataset.psSorted;else body.dataset.psSorted='1'}
  function anchorFor(panel,table){
-  if(table.matches('.test-detail-results:not(.exam-overview-table)')){const h=panel.querySelector('.test-results-head');if(h)return {box:h,before:h.querySelector(':scope>.hatch-seg')||h.querySelector('.test-results-print')}}
+  if(table.matches('.test-detail-results:not(.exam-overview-table)')){const h=panel.querySelector('.test-results-head');if(h){const cv=h.querySelector(':scope>.compact-view-toggle');/* 10.12: rechts neben „Kompaktansicht“ wie auf den anderen Seiten */if(cv)return {box:h,after:cv};return {box:h,before:h.querySelector(':scope>.hatch-seg')||h.querySelector('.test-results-print')}}}
   const hs=panel.querySelector('.section-title .hatch-seg:not(.hs-results)');if(hs)return {box:hs.parentElement,before:hs};
   const box=panel.querySelector('.section-title .oral-display-actions')||panel.querySelector('.exam-overview-actions');return box?{box,before:box.firstElementChild}:null}
  function ensureSeg(panel,table,mode,kind){
   let seg=panel.querySelector('.ps-seg');const a=anchorFor(panel,table);if(!a)return seg;
   if(seg&&seg.dataset.kind!==kind){seg.remove();seg=null}
   if(!seg){const w=document.createElement('span');w.innerHTML=segHtml('mean-seg ps-seg',mode);seg=w.firstChild;seg.dataset.kind=kind}
-  if(seg.parentElement!==a.box){a.before?a.before.before(seg):a.box.append(seg)}
+  if(a.after){if(seg.previousElementSibling!==a.after)a.after.after(seg)}else if(seg.parentElement!==a.box){a.before?a.before.before(seg):a.box.append(seg)}
   return seg}
  function placeDesktop(){
   if(document.documentElement.classList.contains('ph-lite'))return;
