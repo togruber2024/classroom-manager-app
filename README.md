@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 09.11.2026 · Version 10.05
+Stand: 09.11.2026 · Version 10.06
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1284,3 +1284,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.03: Anteile nach Zusammenführen repariert, Q1/Q2 in der Kompaktansicht, Seitenleiste lädt zuverlässig, iPhone-Knöpfe getauscht.
 10.04: Testmittel Q1+Q2 bei eingeblendetem anderen Quartal.
 10.05: iPhone-Notenspiegel neueste Arbeiten zuerst.
+10.06: Namensspalte bleibt beim Scrollen stehen, Schalter für Testmittel Q1+Q2.

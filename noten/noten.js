@@ -3699,17 +3699,27 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
   if(c.group.type==='tests')window.classroomTestsHalfColumn?.(target,'data-previous-quarter-cell');/* 10.04 */
  }
 
- /* 10.04: Tests – bei eingeblendetem anderen Quartal ganz rechts „Testmittel Q1+Q2“ (Mittel der beiden Quartals-Testmittel; fehlt eines, zählt das vorhandene). Nur Anzeige. */
- window.classroomTestsHalfColumn=window.classroomTestsHalfColumn||function(target,attr){try{
+ /* 10.04: Tests – bei eingeblendetem anderen Quartal ganz rechts „Testmittel Q1+Q2“ (Mittel der beiden Quartals-Testmittel; fehlt eines, zählt das vorhandene). Nur Anzeige.
+    10.06: mit eigenem Schalter Gerundet | Tendenz | Dezimal (je Klasse gemerkt). */
+ const HKEY=()=>'classroom-tests-half-mean:'+currentSubject+':'+currentClassId;
+ const hmode=d=>{try{return localStorage.getItem(HKEY())||d?.meanDisplay||'decimal'}catch{return d?.meanDisplay||'decimal'}};
+ function paintHalf(root=document){const ctx=window.__testsHalfCtx;if(!ctx)return;const m=hmode(ctx.d),d={...ctx.d,meanDisplay:m};
+  for(const sp of root.querySelectorAll('.tests-half-cell [data-v]')){const v=Number(sp.dataset.v);sp.textContent=formatTaskMean(v,ctx.sys,d);if(sp.classList.contains('task-end-grade'))sp.className='task-end-grade '+(taskMeanClass(v,ctx.sys,d)||'')}
+  for(const b of root.querySelectorAll('.tests-half-cell [data-half-mean]')){const on=b.dataset.halfMean===m;b.setAttribute('aria-checked',String(on))}}
+ if(!window.__testsHalfClick){window.__testsHalfClick=true;document.addEventListener('click',e=>{const b=e.target.closest?.('.tests-half-cell [data-half-mean]');if(!b||b.disabled)return;e.preventDefault();e.stopPropagation();try{localStorage.setItem(HKEY(),b.dataset.halfMean)}catch{}paintHalf()},true)}
+ window.classroomTestsHalfColumn=function(target,attr){try{
   const g=subjectExamGroups(currentSubject).find(x=>x.type==='tests'&&x.halfYearId===currentHalfYearId);if(!g||!g.pages?.[0]||!g.pages?.[1]||!target.tHead?.rows[0])return;
   const norm=v=>String(v||'').trim().toLocaleLowerCase('de-DE'),pages=[g.pages[0],g.pages[1]].map(k=>{const d=taskPageData(currentSubject,k),sys=taskGradeSystem(currentSubject,k);return {d,sys,by:new Map((d.students||[]).map(s=>[norm(s.name),s]))}});
-  const cur=pages[Number(classesBySubject[currentSubject].find(c=>c.id===currentClassId)?.sharedQuarterSelection?.[currentHalfYearId])===1?1:0];
+  const cur=pages[Number(classesBySubject[currentSubject].find(c=>c.id===currentClassId)?.sharedQuarterSelection?.[currentHalfYearId])===1?1:0];window.__testsHalfCtx={sys:cur.sys,d:cur.d};
   const val=name=>{const v=pages.map(p=>{const s=p.by.get(name);if(!s||!p.d.tasks?.length)return null;try{return taskStudentResult(p.d,s,p.sys==='participation')}catch{return null}}).filter(x=>x!==null&&Number.isFinite(x));return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
   const mk=(tag,cls)=>{const c=document.createElement(tag);c.setAttribute(attr,'');c.classList.add('tests-half-cell');if(cls)c.className+=' '+cls;return c};
-  const th=mk('th');th.innerHTML='<span class="th-main">Testmittel</span> <small class="previous-quarter-label">Q1 + Q2</small>';th.title='Mittel der Testmittel aus dem 1. und 2. Quartal – nur zur Ansicht';target.tHead.rows[0].append(th);
+  const th=mk('th');th.innerHTML='<div class="mh-stack"><div class="mh-top"><span class="th-main">Testmittel</span> <small class="previous-quarter-label">Q1 + Q2</small></div></div>';th.title='Mittel der Testmittel aus dem 1. und 2. Quartal – nur zur Ansicht';
+  try{const w=document.createElement('div');w.innerHTML=taskMeanControl(cur.sys,{...cur.d,meanDisplay:hmode(cur.d)}).replace(/data-mean-display=/g,'data-half-mean=').replace(/data-result-rounded=/g,'data-half-rounded=');const seg=w.firstElementChild;if(seg){seg.classList.add('tests-half-seg');th.querySelector('.mh-stack').append(seg)}}catch(e){console.warn(e)}
+  target.tHead.rows[0].append(th);
   const all=[];for(const row of target.tBodies[0]?.rows||[]){if(row.cells.length<2)continue;const name=norm(row.cells[0]?.querySelector('input')?.value||row.cells[0]?.textContent);const v=val(name);const td=mk('td');
-   if(v===null)td.innerHTML='<span class="task-end-grade">—</span>';else{all.push(v);const sp=document.createElement('span');sp.className='task-end-grade '+(taskMeanClass(v,cur.sys,cur.d)||'');sp.textContent=formatTaskMean(v,cur.sys,cur.d);td.append(sp)}row.append(td)}
-  const fr=target.tFoot?.rows[0];if(fr){const td=mk('td');td.textContent=all.length?formatTaskMean(all.reduce((a,b)=>a+b,0)/all.length,cur.sys,cur.d):'—';fr.append(td)}
+   if(v===null)td.innerHTML='<span class="task-end-grade">—</span>';else{all.push(v);const sp=document.createElement('span');sp.className='task-end-grade';sp.dataset.v=String(v);td.append(sp)}row.append(td)}
+  const fr=target.tFoot?.rows[0];if(fr){const td=mk('td');if(all.length){const sp=document.createElement('span');sp.dataset.v=String(all.reduce((a,b)=>a+b,0)/all.length);td.append(sp)}else td.textContent='—';fr.append(td)}
+  paintHalf(target);
  }catch(e){console.warn('Testmittel Q1+Q2',e)}};
  if(!document.getElementById('tests-half-style')){const st=document.createElement('style');st.id='tests-half-style';st.textContent='body[data-module=noten] table th.tests-half-cell,body[data-module=noten] table td.tests-half-cell{border-left:3px solid #9fb3ce;background:#f7f9fd;min-width:120px;text-align:center}body[data-module=noten] table th.tests-half-cell .previous-quarter-label{display:block;margin:4px 0 0}';document.head.append(st)}
  function show(c,button,open){

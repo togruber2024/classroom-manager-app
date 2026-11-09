@@ -1052,3 +1052,8 @@ body[data-module=noten] .task-actions>:is([data-task-action="add-student"],[data
 #addExamUpperMode input[type=radio]:not(#_){border-radius:50%!important}
 /* 9.87: iPad/iPhone – Seite positionsfest: kein seitliches Verschieben der ganzen Seite (breite Tabellen scrollen in ihrem eigenen Rahmen) und kein Gummiband-Nachfedern; normales Scrollen nach unten bleibt. */
 @media (pointer:coarse){html{overflow-x:clip;overscroll-behavior:none}body{overflow-x:clip;overscroll-behavior:none}.table-wrap{max-width:100%;overscroll-behavior-x:contain}}
+
+/* 10.06: Normalansicht – beim waagerechten Scrollen bleiben die Namen links stehen */
+body[data-module=noten] .table-wrap>table:not(.compact-entry-table)>tbody>tr>:first-child,
+body[data-module=noten] .table-wrap>table:not(.compact-entry-table)>tfoot>tr>:first-child{position:sticky;left:0;z-index:2;background:#fff;box-shadow:inset -1px 0 0 #dbe3ef,6px 0 8px -6px rgba(31,41,55,.18)}
+body[data-module=noten] .table-wrap>table:not(.compact-entry-table)>thead>tr>:first-child{position:sticky;left:0;z-index:3;background:#f6f8fc;box-shadow:inset -1px 0 0 #dbe3ef,6px 0 8px -6px rgba(31,41,55,.18)}
