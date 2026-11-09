@@ -5846,9 +5846,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    d.querySelector('[data-x]').onclick=()=>d.close();d.querySelectorAll('[data-k]').forEach(i=>i.onchange=()=>{const cc=dcfg();cc[i.dataset.k]=i.checked;dsave(cc);draw()});d.querySelector('[data-reset]').onclick=()=>{bag.set(DK(),[]);draw()}};
   draw();d.showModal()}
  const n_esc=t=>String(t??'').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
- function bindDice(dice,bar){let timer=null,long=false;const start=()=>{long=false;clearTimeout(timer);timer=setTimeout(()=>{long=true;diceSettings(bar)},550)},stop=()=>clearTimeout(timer);
-  dice.addEventListener('pointerdown',start);['pointerup','pointerleave','pointercancel'].forEach(ev=>dice.addEventListener(ev,stop));
-  dice.addEventListener('contextmenu',e=>{e.preventDefault();clearTimeout(timer);if(!long){long=true;diceSettings(bar)}});
+ /* 10.14: Einstellungen erst beim Loslassen öffnen – sonst markiert iOS unter dem noch liegenden Finger Text im Fenster */
+ function bindDice(dice,bar){let timer=null,long=false;const start=e=>{long=false;clearTimeout(timer);timer=setTimeout(()=>{long=true;dice.classList.add('is-long');try{navigator.vibrate?.(15)}catch{}},550)};
+  dice.addEventListener('pointerdown',start);
+  dice.addEventListener('pointerup',e=>{clearTimeout(timer);if(long){e.preventDefault();dice.classList.remove('is-long');setTimeout(()=>diceSettings(bar),60)}});
+  ['pointercancel'].forEach(ev=>dice.addEventListener(ev,()=>{clearTimeout(timer);if(long){dice.classList.remove('is-long');setTimeout(()=>diceSettings(bar),60)}}));
+  dice.addEventListener('pointerleave',()=>{if(!long)clearTimeout(timer)});
+  dice.addEventListener('contextmenu',e=>{e.preventDefault();if(timer&&dice.classList.contains('is-long'))return;/* Finger liegt noch: erst beim Loslassen */if(e.pointerType==='touch'||e.sourceCapabilities?.firesTouchEvents)return;clearTimeout(timer);if(!long){long=true;diceSettings(bar)}});
   dice.onclick=e=>{e.stopPropagation();if(long){long=false;return}pickRandom(bar)}}
  function place(){for(const bar of document.querySelectorAll('.pl-bar'))try{arrange(bar)}catch(e){console.warn(e)}}
  addEventListener('resize',()=>requestAnimationFrame(place));
@@ -5873,6 +5877,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .pl-pick{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:60;box-shadow:0 10px 30px rgba(20,40,70,.28);display:flex;align-items:center;gap:8px;background:#2f5f9b;color:#fff;border-radius:14px;padding:10px 10px 10px 14px}.pl-pick>div{flex:1;min-width:0}.pl-pick b{display:block;font-size:16px}.pl-pick small{display:block;font-size:12.5px;opacity:.88;margin-top:1px}
  .pl-pick button:not(#_){flex:none;border:0;border-radius:10px;font:inherit;cursor:pointer}.pl-pick .pl-pick-next:not(#_){background:#fff;color:#2f5f9b;font-weight:650;font-size:13.5px;padding:8px 10px;min-height:36px}.pl-pick .pl-pick-x:not(#_){background:transparent;color:#fff;width:30px;height:30px;font-size:14px;padding:0}
  .qs-card.qs-pick{box-shadow:0 0 0 3px #8fb0dc;border-color:#2f5f9b!important}
+ .pl-dice{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}.pl-dice.is-long{background:#e8f0fb!important;transform:scale(.94)}
+ .dice-sheet,.dice-sheet *{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
  .dice-body{padding:14px 16px;overflow:auto}.dice-sub{color:#66758a;font-size:13.5px;margin:0 0 6px}.dice-opt{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid #eef2f7;cursor:pointer}.dice-opt input{flex:none;margin-top:3px;width:20px;height:20px;accent-color:#2f5f9b}.dice-opt b{display:block;font-size:14.5px}.dice-opt small{display:block;color:#66758a;font-size:13px;margin-top:2px}
  .dice-odds{margin-top:10px;background:#f4f7fb;border-radius:14px;padding:12px 14px;font-size:13px}.dice-odds>div{display:flex;justify-content:space-between;gap:10px;padding:3px 0}.dice-odds i{display:inline-block;height:8px;border-radius:4px;background:#2f5f9b;vertical-align:middle;margin-right:6px;max-width:160px}.dice-more{color:#66758a}
  .dice-reset{margin-top:12px;min-height:40px;border-radius:10px;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;font:inherit;font-weight:600;padding:0 14px;cursor:pointer}
