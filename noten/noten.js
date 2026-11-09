@@ -5399,7 +5399,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   /* 9.100: „Karten verkleinern“ immer mittig unter dem Notenspiegel-Knopf; Ø-Schalter so breit wie der Sortierschalter */const sort=bar.querySelector('.pl-sort'),sw=sort?Math.round(sort.getBoundingClientRect().width):0;if(sw&&mean.dataset.plxW!==String(sw)){mean.dataset.plxW=String(sw);mean.style.setProperty('min-width',sw+'px','important')}const fits=false,p=c1;
   if(bar.style.getPropertyValue('--plx-c1')!==c1+'px')bar.style.setProperty('--plx-c1',c1+'px');
   if(bar.style.getPropertyValue('--plx-p')!==p+'px')bar.style.setProperty('--plx-p',p+'px');
-  if(r2.classList.contains('plx-fit')!==fits)r2.classList.toggle('plx-fit',fits)}
+  {const nb=bar.querySelector('.plx1>.pl-ns')?.getBoundingClientRect(),hb=hatch.getBoundingClientRect(),g=nb&&hb.width?Math.max(8,Math.round(hb.left-nb.right)):12;if(bar.style.getPropertyValue('--plx-g2')!==g+'px')bar.style.setProperty('--plx-g2',g+'px')}if(r2.classList.contains('plx-fit')!==fits)r2.classList.toggle('plx-fit',fits)}
  function place(){for(const bar of document.querySelectorAll('.pl-bar'))try{arrange(bar)}catch(e){console.warn(e)}}
  addEventListener('resize',()=>requestAnimationFrame(place));
  if(typeof classroomOnDomChange==='function')classroomOnDomChange(place);place();
@@ -5407,13 +5407,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const st=document.createElement('style');st.textContent=`
  .pl-bar .pl-row.plx:not(#_){display:grid!important;align-items:center;column-gap:8px;flex-wrap:nowrap}
  .pl-bar .plx1:not(#_){grid-template-columns:var(--plx-c1,130px) 40px minmax(0,1fr)}
- .pl-bar .plx2:not(#_){grid-template-columns:var(--plx-p,130px) 40px minmax(0,1fr)}
+ .pl-bar .plx2:not(#_){grid-template-columns:minmax(0,1fr) 40px auto;column-gap:var(--plx-g2,12px)}/* 9.101: Info-Feld füllt die Breite, Abstände gleich */
  .pl-bar .plx>*:not(#_){margin:0!important}
  .pl-bar .plx1>.pl-half,.pl-bar .plx1>.pl-view{grid-column:1;grid-row:1;justify-self:start}
  .pl-bar .plx1>.pl-ns,.pl-bar .plx2>.pl-fold{grid-column:2;grid-row:1;justify-self:center}
  .pl-bar .plx1>.pl-hatch,.pl-bar .plx2>.pl-mean{grid-column:3;grid-row:1;justify-self:end}
- .pl-bar .plx2>.pl-flags{grid-column:1;grid-row:1;min-width:0;max-width:100%;overflow:hidden;justify-content:flex-start}
- .pl-bar .plx2>.pl-flags>*{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .pl-bar .plx2>.pl-flags{grid-column:1;grid-row:1;min-width:0;max-width:100%;width:100%;overflow:hidden;justify-content:flex-start;flex-wrap:nowrap!important;margin-left:0!important}
+ .pl-bar .plx2>.pl-flags>*{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto;justify-content:flex-start}.pl-bar .plx2>.pl-flags>*>b{flex:none}
  .pl-bar .plx2 .pl-mean:not(#_){width:auto!important;flex:none}
  .pl-bar .plx2 .pl-mean button:not(#_){min-width:0!important;width:auto!important;flex:1 1 0!important;padding:0 11px!important}
  .pl-bar .pl-fold:not(#_),.pl-ns:not(#_){width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;padding:0!important;border-radius:50%!important;display:inline-grid!important;place-items:center}
@@ -6304,7 +6304,7 @@ return}
   let f=panel.dataset.plFilter||'';const html=[];
   /* 8.20: kurze Beschriftungen, damit die Hinweise neben „1. Quartal“ in eine Zeile passen (bei mehreren noch kürzer) */
   const nl0=window.classroomStudentNotes?.list?.().length||0,shown=FLAGS.filter(([k,,test])=>{const n=cards.filter(test).length;return n&&n<cards.length});const tight=shown.length+(nl0?1:0)>1;
-  for(const [k,label,test] of FLAGS){const n=cards.filter(test).length;if(!n||n===cards.length){if(f===k)f='';continue}const lab=tight?(k==='ha'?'3× HA':'ohne MM'):k==='mm'&&matchMedia('(max-width:440px)').matches?'Ohne mdl. Note'/* 9.100: iPhone */:label;html.push(`<button type="button" data-flag="${k}" aria-pressed="${f===k}" title="${k==='ha'?'3× oder öfter Hausaufgaben fehlend (im Halbjahr)':'Noch keine mündliche Note im Quartal'}"><b>${n}</b> ${lab}</button>`)}
+  for(const [k,label,test] of FLAGS){const n=cards.filter(test).length;if(!n||n===cards.length){if(f===k)f='';continue}const lab=tight?(k==='ha'?'3× HA':'ohne MM'):label;html.push(`<button type="button" data-flag="${k}" aria-pressed="${f===k}" title="${k==='ha'?'3× oder öfter Hausaufgaben fehlend (im Halbjahr)':'Noch keine mündliche Note im Quartal'}"><b>${n}</b> ${lab}</button>`)}
   /* 8.17: Notizen der Klasse als Hinweis – antippen öffnet die Liste */const nl=window.classroomStudentNotes?.list?.().length||0;if(nl)html.unshift(`<button type="button" data-notes="1" title="Notizen in dieser Klasse"><b>${nl}</b> ${tight?'📝':(nl===1?'Notiz':'Notizen')}</button>`);
   box.classList.toggle('is-tight',tight);panel.dataset.plFilter=f;const sig=html.join('');if(box.dataset.sig!==sig){box.dataset.sig=sig;box.innerHTML=sig}box.hidden=!html.length;
   const test=FLAGS.find(x=>x[0]===f)?.[2];for(const c of cards){const hit=!test||test(c);if(c.classList.contains('pl-hit')!==hit)c.classList.toggle('pl-hit',hit)}}

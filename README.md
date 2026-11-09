@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 09.11.2026 · Version 9.100
+Stand: 09.11.2026 · Version 9.101
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1277,3 +1277,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.98: iPhone – Knopf „Notenspiegel“ in der Kartenansicht (alle Notenspiegel der Klasse, Vergleichen); Vergleich nach Datum geordnet
 9.99: Organisation (Geld/Abhaken-Listen je Klasse, Fristen in der Glocke, Abhaken am Sitzplatz); Kartenleiste neu geordnet; ✕-Knopf rund
 9.100: Notenspiegel-Vergleich mit Thema, „Alle markieren“, iPhone-Leiste angeglichen, Organisation kompakter.
+9.101: Infofeld in der Kartenleiste nutzt die Breite, gleiche Abstände.
