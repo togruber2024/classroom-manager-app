@@ -2716,7 +2716,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
  const HALF=/Halbjahr|Klassenarbeit|Klausur|Schuljahr|∑|Zeugnis/i;
  function kindOf(key){try{const g=subjectExamGroups(currentSubject).find(g=>(g.pages||[]).includes(key));return g?(g.material?'material':g.type):null}catch{return null}}
  function quarterOf(key,kind){try{if(kind==='quarterSummary'){const h=(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId);return Number(h?.sharedQuarterSelection?.[currentHalfYearId])||0}const g=subjectExamGroups(currentSubject).find(g=>(g.pages||[]).includes(key));const i=g.pages.indexOf(key);return i>=0?i%2:0}catch{return 0}}
- function apply(){
+ let apply=function(){
   if(document.documentElement.classList.contains('ph-lite'))return;
   for(const t of document.querySelectorAll('table.compact-entry-table')){const panel=t.closest('[data-custom-panel]');if(!panel)continue;const key=panel.dataset.customPanel,kind=kindOf(key);
    const sig=key+'|'+kind;
@@ -2729,10 +2729,23 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
      else if(!HALF.test(txt)&&!th.classList.contains('qa-col')&&!th.classList.contains('tests-half-cell'))qp='Q'+(quarterOf(key,kind)+1)+' · ';
      if(qp)lab.dataset.qp=qp;else delete lab.dataset.qp}
     lab.dataset.qpSig=sig+'|'+lab.textContent}}}
+ /* 10.08: auch in der normalen Ansicht – kleines „Q1“/„Q2“ über jedem Spaltenkopf eines Quartals (per CSS, Text unverändert).
+    Eingeblendete Spalten des anderen Quartals bekommen ihr eigenes Kürzel statt „1. Quartal“/„2. Quartal“. */
+ function applyNormal(){
+  for(const t of document.querySelectorAll('[data-custom-panel] table:not(.compact-entry-table)')){const panel=t.closest('[data-custom-panel]'),key=panel.dataset.customPanel,kind=kindOf(key);const row=t.tHead?.rows[0];if(!row)continue;
+   const on=QUARTERLY.has(kind)&&kind!=='quarterSummary',q=quarterOf(key,kind)+1;
+   for(const th of row.cells){let tag='';
+    if(on&&th.cellIndex>0&&!th.matches('.task-add-column,.task-space-column,.task-spacer-column,.tests-half-cell')){
+     if(th.hasAttribute('data-previous-quarter-cell'))tag='Q'+(q-1>0?q-1:1);else if(th.hasAttribute('data-next-quarter-cell'))tag='Q'+(q+1);else tag='Q'+q}
+    if((th.dataset.qtag||'')!==tag){if(tag)th.dataset.qtag=tag;else delete th.dataset.qtag}}}}
+ const _apply=apply;apply=function(){_apply();applyNormal()};
  let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{apply()}catch(e){console.warn(e)}})};
  if(typeof classroomOnDomChange==='function')classroomOnDomChange(run);else new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});run();
  const st=document.createElement('style');st.textContent=`
- .compact-heading-label[data-qp]::before{content:attr(data-qp)}.compact-heading-label .qp-hide{display:none}
+ .compact-heading-label[data-qp]::before{content:attr(data-qp)}
+ html:not(.ph-lite) body[data-module=noten] table:not(.compact-entry-table) th[data-qtag]:not(#_){position:relative;padding-top:30px!important}
+ html:not(.ph-lite) body[data-module=noten] table:not(.compact-entry-table) th[data-qtag]::before{content:attr(data-qtag);position:absolute;top:8px;left:50%;transform:translateX(-50%);padding:1px 7px;border-radius:999px;background:#e8eef7;color:#3d5a80;font-size:11px;font-weight:700;letter-spacing:.03em;line-height:16px}
+ html:not(.ph-lite) body[data-module=noten] table:not(.compact-entry-table) th[data-qtag] .previous-quarter-label{display:none}.compact-heading-label .qp-hide{display:none}
  html:not(.ph-lite) body[data-module=noten] .table-wrap:has(>table.compact-entry-table){max-height:calc(100dvh - 120px);overflow:auto;overscroll-behavior:contain;padding-top:0!important;border-top:0!important}
  html:not(.ph-lite) body[data-module=noten] table.compact-entry-table>thead{position:sticky;top:0;z-index:4}
  html:not(.ph-lite) body[data-module=noten] table.compact-entry-table>thead>tr{background:#fff}`;document.head.append(st);
