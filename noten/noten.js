@@ -3536,7 +3536,8 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
   const holder=(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId)||subjectPageSource(currentSubject);
   if(Number(holder?.sharedQuarterSelection?.[currentHalfYearId])!==1)return null;
   const groups=subjectExamGroups(currentSubject),group=groups.find(g=>g.pages.includes(activePage));
-  if(!group||['halfYear','schoolYear','semester'].includes(group.type))return null;/* Halbjahresnote enthält Q1 und Q2 bereits – kein Vergleichsschalter. */
+  if(!group||['halfYear','schoolYear','semester'].includes(group.type))return null;
+  /* 9.85: Klassenarbeiten und Klausuren gelten fürs ganze Halbjahr – „1. Quartal“ würde nur dieselben Werte noch einmal zeigen */if(!quarterly.has(group.type)&&group.type!=='quarterSummary')return null;/* Halbjahresnote enthält Q1 und Q2 bereits – kein Vergleichsschalter. */
   const panel=document.querySelector(`[data-custom-panel="${CSS.escape(activePage)}"]`);
   const root=panel?.closest('[data-exam-combined]')||panel;
   if(!root||root.classList.contains('hide'))return null;
@@ -4440,7 +4441,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   // Notenspiegel
   const cats=pts?Array.from({length:16},(_,i)=>15-i):[1,2,3,4,5,6],count=new Map(cats.map(g=>[g,0]));for(const r of done)count.set(r.end,count.get(r.end)+1);
   const mx=Math.max(1,...count.values()),H=pts?54:(multi?46:70);
-  const spiegel=`<div class="ep-ns ${pts?'p':''}">${cats.map(g=>`<div><div class="ep-bar" style="height:${H}px">${count.get(g)?`<i class="task-end-grade ${esc(taskGradeClass(g,pts?'gradePoints':'grades'))}" style="height:${Math.max(3,count.get(g)/mx*(H-4))}px"></i>`:''}</div><b>${count.get(g)||(pts?'·':'0')}</b>${pts?g:'Note '+g}</div>`).join('')}</div>`;
+  const spiegel=`<div class="ep-ns ${pts?'p':''}">${cats.map(g=>`<div><div class="ep-bar" style="height:${H}px">${count.get(g)?`<i class="task-end-grade ${esc(taskGradeClass(g,pts?'gradePoints':'grades'))}" style="height:${Math.max(3,count.get(g)/mx*(H-4))}px"></i>`:''}</div><b>${count.get(g)||(pts?'·':'0')}</b>${g}</div>`).join('')}</div>`;
   const foot=`<div class="ep-foot"><span>Classroom-Manager · gedruckt am ${today()}</span></div>`;
   let body='';
   if(!multi){
@@ -4464,7 +4465,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    // Breite je Aufgabe: Rohwert + Teilnote (76 px) bzw. nur Teilnote (38 px); passt es nicht in zwei Spalten, wird die Liste einspaltig
    const need=tasks.reduce((a,t)=>a+(raw(t)?78:38),0),one=need>190,per=one?rows.length:Math.ceil(rows.length/2)||1;
    const res=part=>`<table class="ep-res"><thead><tr><th>Name</th>${tasks.map((t,i)=>(raw(t)?`<th class="n" style="width:${one?52:40}px">${kind(t)}</th>`:'')+`<th class="c" style="width:${one?46:38}px">A${i+1}</th>`).join('')}<th class="c ep-end" style="width:46px">Note</th></tr></thead><tbody>${part.map(r=>`<tr><td class="nm">${esc(r.name)}</td>${tasks.map(t=>(raw(t)?`<td class="n">${cell(r.s,t)}</td>`:'')+`<td class="c">${gcell(r.s,t)}</td>`).join('')}<td class="c ep-end">${r.end===null?'—':chip(r.end,pts?'gradePoints':'grades')}</td></tr>`).join('')}</tbody></table>`;
-   body=`${head}${kpi}<div class="ep-cols" style="grid-template-columns:1.25fr 1fr"><div class="ep-box"><h2>Notenspiegel${pts?' (Endnote, Notenpunkte)':' (Endnote)'}</h2>${spiegel}</div><div class="ep-box"><h2>Teilnoten</h2>${tt}</div></div>
+   body=`${head}<div class="ep-cols" style="grid-template-columns:1.25fr 1fr"><div class="ep-box"><h2>Notenspiegel${pts?' (Endnote, Notenpunkte)':' (Endnote)'}</h2>${spiegel}${kpi.replace('ep-kpi','ep-kpi in')}</div><div class="ep-box"><h2>Teilnoten</h2>${tt}</div></div>
     <h2>Ergebnisse</h2><div class="ep-cols ${one?'':'two'}">${(one?[rows]:[rows.slice(0,per),rows.slice(per)]).filter((p,i)=>p.length||!i).map(res).join('')}</div>`;
   }
   return {title,html:`<div class="ep ${rows.length>32?'ep-small':''}">${body}${foot}</div>`};
@@ -4487,7 +4488,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .ep .ep-lim th:first-child{width:40px}
  .ep .ep-chip{display:inline-flex;align-items:center;justify-content:center;min-width:24px;width:auto;height:17px;padding:0 5px;border-radius:5px;font-weight:700;font-size:10.5px;line-height:1;margin:0;box-shadow:none;border:0}
  .ep-ns{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.ep-ns.p{grid-template-columns:repeat(16,1fr);gap:3px}
- .ep-ns>div{text-align:center;font-size:10px;color:#5b6b82}.ep-ns:not(.p)>div{border:1px solid #e3e9f1;border-radius:8px;padding:5px 2px 4px}
+ .ep-ns>div{text-align:center;font-size:10px;color:#5b6b82}/* 9.85: Sek. I wie Sek. II – Balken auf einer Grundlinie, ohne Kasten je Note */.ep-ns:not(.p) .ep-bar{border-bottom:1px solid #d5deea}.ep-ns:not(.p)>div{font-size:11px}
  .ep-ns b{display:block;color:#1f2a3d;font-size:14px}.ep-ns.p b{font-size:10.5px}
  .ep-bar{display:flex;align-items:flex-end;justify-content:center;margin-bottom:3px}.ep-ns.p .ep-bar{border-bottom:1px solid #d5deea}
  .ep-bar i{display:block;width:62%;min-width:0;padding:0;border-radius:4px 4px 0 0;border:0;box-shadow:none}.ep-ns.p .ep-bar i{width:72%}
@@ -5382,8 +5383,10 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    /* 8.88: Sonstige Mitarbeit wie die übrigen Zeilen – links Q1- und Q2-Quartalsnote (Q2 blass, solange nur Vorschlag), rechts Ø des Halbjahres */
    {const so=sect(/^Sonstige Mitarbeit/);if(so&&!so.querySelector('.qs-row')){const get=re=>{const hh=heads,k=hh.findIndex(h=>re.test(h));if(k<0)return null;const row=[...table.tBodies[0].rows].find(r=>r.cells[0]?.textContent.trim()===name),c=row?.cells[k];if(!c)return null;const i=c.querySelector('input');if(i)return i.value.trim()?{text:i.value.trim(),cls:i.className.replace(/\bquarter-summary-input\b/,'').trim()}:null;const sp=c.querySelector('span'),tx=(sp||c).textContent.trim();return tx&&tx!=='—'?{text:tx,cls:(sp?.className||'').replace(/\bprevious-quarter-value\b/,'').trim()}:null};
     const q1=get(/^Q1 · Quartalsnote/)||get(/^Q1 · Sonstige Mitarbeit/),q2set=get(/^Quartalsnote · Q\d/),q2=q2set||get(/^Sonstige Mitarbeit$/);
-    const colorOf=v=>{if(!v||/\bg\d|participation-|grade-/.test(v.cls||''))return v;try{const pr=parseReviewGrade(v.text);if(pr&&!pr.absence){const n=pts?participationPoints(pr.value):Number(pr.value);return {...v,cls:taskGradeClass(n,pts?'gradePoints':'grades')}}}catch{}return v};
-    const chip=(v,lab,soft)=>{v=colorOf(v);/* 9.79: Q1-Note mit Farbkästchen wie Q2 */const sq=document.createElement('span');sq.className='qs-sq qs-qn-chip'+(soft?' qs-qn-soft':'');const i=document.createElement('i');if(v){const f=fmtMean(v.text,v.cls);i.textContent=f.text;i.className=f.cls||''}else{i.textContent='—';i.className='qs-abs'}const sm=document.createElement('small');sm.textContent=lab;sq.append(i,sm);return sq};
+    const gradeNum=t=>{t=String(t||'').replace(/\s+/g,'').replace(/[−–]/g,'-').replace(',','.');let m=t.match(/^(\d+(?:\.\d+)?)$/);if(m)return Number(m[1]);m=t.match(/^([1-6])([+-])$/);if(m)return Number(m[1])+(m[2]==='+'?-1/3:1/3);m=t.match(/^([1-6])-([1-6])$/);if(m)return (Number(m[1])+Number(m[2]))/2;return null};
+    const colorOf=v=>{if(!v||/\bg\d|participation-|grade-/.test(v.cls||''))return v;try{const n=gradeNum(v.text);if(n!==null)return {...v,cls:taskGradeClass(pts?Math.round(n):n,pts?'gradePoints':'grades')}}catch{}return v};
+    const dec=v=>{if(!v||pts||!/[+\-−–]/.test(v.text))return v;const n=gradeNum(v.text);return n===null?v:{...v,text:String(Math.round(n*10)/10).replace('.',',')}};/* 9.85: eingetragene Quartalsnoten mit Tendenz als Dezimalzahl (3+ → 2,7) – die Rechnung bleibt nachvollziehbar */
+    const chip=(v,lab,soft)=>{v=dec(colorOf(v));/* 9.79: Q1-Note mit Farbkästchen wie Q2 */const sq=document.createElement('span');sq.className='qs-sq qs-qn-chip'+(soft?' qs-qn-soft':'');const i=document.createElement('i');if(v){const f=fmtMean(v.text,v.cls);i.textContent=f.text;i.className=f.cls||''}else{i.textContent='—';i.className='qs-abs'}const sm=document.createElement('small');sm.textContent=lab;sq.append(i,sm);return sq};
     const val=so.querySelector(':scope>.qs-sh .qs-val');if(val){const row=document.createElement('div');row.className='qs-row';const seq=document.createElement('div');seq.className='qs-seq';const sep=document.createElement('span');sep.className='qs-sep';seq.append(chip(q1,'Q1',false),sep,chip(q2,'Q2',!q2set));
      if(!val.querySelector('small')&&(val.querySelector('i')?.textContent.trim()||'—')!=='—'){const o=document.createElement('small');o.textContent='Ø';val.prepend(o)}row.append(seq,val);so.append(row)}}}
    /* Ø Q1 und Ø Q2 je zur Hälfte – nur Anzeige */
@@ -5473,7 +5476,7 @@ return}
     card.classList.toggle('q1-open',q1Open.has(name));
     const t=document.createElement('button');t.type='button';t.className='qs-q1t';const upd=()=>{const o=q1Open.has(name);t.innerHTML=(o?EYE:EYE_OFF)+'<span>1. Quartal</span>';t.setAttribute('aria-expanded',String(o));card.classList.toggle('q1-open',o)};upd();t.addEventListener('qs-sync',upd);t.onclick=e=>{e.stopPropagation();q1Open.has(name)?q1Open.delete(name):q1Open.add(name);upd()};
     const ft=document.createElement('div');ft.className='qs-ft';ft.append(t);if(edits.childElementCount)ft.append(edits);card.append(ft)}
-   else if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;if(document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch())return;/* 9.02/9.04: Schnellansicht am Mac ohne Noteneingabe-Seite (iPad wie iPhone) */openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card){if(document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch())card.click();else openDetail(panel,name)}};frag.append(card);
+   else if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;/* 9.85: auch in der Noten-Seitenleiste am Mac öffnet ein Klick in den Notenbereich die Notenbesprechung (Klick auf den Namen klappt ein/aus) */if(document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch()&&(card.classList.contains('qs-folded')||e.target.closest('.qs-top')))return;openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card){if(document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch())card.click();else openDetail(panel,name)}};frag.append(card);
   }
   box.replaceChildren(frag);fixUnstriped(box);/* 9.67: Sortierung A–Z | Note */setTimeout(()=>window.classroomPerfSort?.(),0);/* Schraffur „Aus“ sofort anwenden, nicht erst über den Beobachter (8.15) */window.classroomUnstripe?.(box);
   if(detail?.panel===panel&&!sheet.hidden&&!sheet.contains(document.activeElement))renderDetail();
@@ -5876,6 +5879,7 @@ return}
  window.classroomCardsFold={get:()=>on,toggle(){on=!on;open.clear();closed.clear();try{localStorage.setItem(KEY,on?'1':'0')}catch{}apply()},apply};
  document.addEventListener('click',e=>{if(!on&&!quick())return;const c=e.target.closest('.qs-cards>.qs-card:not(.qd-card)');if(!c||e.target.closest('input,label,button,.qs-mail'))return;
   /* 9.02: Schnellansicht – ein Klick klappt die Karte auf, der nächste wieder zu (keine Noteneingabe-Seite; dafür gibt es den Noten-Manager) */
+  /* 9.85: aufgeklappte Karte – Klick in den Notenbereich öffnet die Notenbesprechung (wie am iPhone), Klick auf den Namen klappt zu */if(quick()&&!c.classList.contains('qs-folded')&&!e.target.closest('.qs-top'))return;
   if(quick()){e.preventDefault();e.stopImmediatePropagation();const n=nameOf(c),f=c.classList.contains('qs-folded');if(on){if(f)open.add(n);else open.delete(n)}else{if(f)closed.delete(n);else closed.add(n)}apply();return}
   if(c.classList.contains('qs-folded')){e.preventDefault();e.stopImmediatePropagation();open.add(nameOf(c));apply()}
   else if(e.target.closest('.qs-top')){e.preventDefault();e.stopImmediatePropagation();open.delete(nameOf(c));apply()}},true);
