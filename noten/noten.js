@@ -2784,6 +2784,126 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
 })();
 ;
 
+/* ==== noten/early-warning.js ==== */
+/* 10.13: Frühwarnliste „Auffällig“ – je Klasse und Halbjahr: Abwärtstrend Q1 → Q2 (Sonstige Mitarbeit), Hausaufgaben (oft fehlend),
+   knapp vor 5 (Halbjahr), lange ohne mündliche Note. Nur Ansicht – an den Noten ändert sich nichts.
+   Mac/iPad: Knopf „Auffällig“ in der Kopfzeile der Seite · iPhone: Hinweis „Auffällig“ in der Hinweiszeile.
+   Die Werte stammen aus der Quartalsnoten-Tabelle (dieselben Zahlen wie dort). */
+(()=>{
+ const SKEY='classroom-early-warning-v1',DEF={trend:.5,ha:3,near:4.4,days:21,show:{trend:1,ha:1,near:1,days:1}};
+ const cfg=()=>{try{const s=JSON.parse(localStorage.getItem(SKEY)||'{}');return {...DEF,...s,show:{...DEF.show,...(s.show||{})}}}catch{return structuredClone(DEF)}};
+ const saveCfg=c=>{try{localStorage.setItem(SKEY,JSON.stringify(c))}catch{}};
+ const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const norm=t=>String(t||'').replace(/\s+/g,' ').trim().toLocaleLowerCase('de-DE');
+ const comma=v=>String(Math.round(v*10)/10).replace('.',',');
+ const pts=()=>{try{return classUsesGradePoints()}catch{return false}};
+ const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+ const days=d=>Math.round((new Date(today())-new Date(d))/864e5);
+ const dateDe=d=>d?d.slice(8,10)+'.'+d.slice(5,7)+'.':'';
+ function num(t){t=String(t??'').replace(/\s+/g,'').replace('−','-').replace('–','-');if(!t||t==='—'||t==='-')return null;let m=t.match(/^(\d+(?:,\d+)?)\*?$/);if(m)return Number(m[1].replace(',','.'));
+  m=t.match(/^([1-6])([+-])$/);if(m)return Number(m[1])+(m[2]==='+'?-1/3:1/3);m=t.match(/^([1-6])-([1-6])$/);if(m)return (Number(m[1])+Number(m[2]))/2;return null}
+ const holder=()=>(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId);
+ const sel=()=>Number(holder()?.sharedQuarterSelection?.[currentHalfYearId])||0;
+ const sumGroup=()=>subjectExamGroups(currentSubject).find(g=>g.type==='quarterSummary'&&g.halfYearId===currentHalfYearId);
+ /* Quartalsnoten-Tabelle lesen: je Name SoMi/HA je Quartal, Halbjahr ∑, Klassenarbeit */
+ function readTable(t,q,out){if(!t?.tHead)return;const heads=[...t.tHead.rows[0].cells].map(th=>{const raw=norm(th.textContent).replace(/^q\d · /,'');const hist=th.classList.contains('previous-quarter-history-cell'),qq=th.hasAttribute('data-next-quarter-cell')?1:hist?(q===1?0:1):q;
+   const base=raw.replace(/ · q\d$/,'');return {base,q:qq}});
+  for(const row of t.tBodies[0]?.rows||[]){if(row.cells.length<2)continue;const name=(row.cells[0].querySelector('input')?.value||row.cells[0].textContent).replace(/\s+/g,' ').trim();if(!name)continue;const r=out[name]??={name,q:[{},{}]};
+   heads.forEach((h,i)=>{if(!i)return;const c=row.cells[i];if(!c)return;const tx=String(c.querySelector('input')?.value??c.textContent).replace(/\s+/g,'').trim(),v=num(tx);if(v===null)return;
+    if(h.base==='sonstige mitarbeit'){r.q[h.q].somi=v;r.q[h.q].somiT=tx}else if(h.base==='ha · fehlend')r.q[h.q].ha=v;else if(h.base==='halbjahr ∑'){r.hj=v;r.hjT=tx}else if(/^(klassenarbeit|klausur)$/.test(h.base)){r.ka=v;r.kaT=tx}})}}
+ function summaryTable(key){return document.querySelector(`[data-custom-panel="${CSS.escape(key)}"] table`)}
+ function collectRows(){const sum=sumGroup();if(!sum?.pages?.[0])return null;const key=sum.pages[0],s=sel(),out={};const phone=document.documentElement.classList.contains('ph-lite');
+  const vis=summaryTable(key);const hasHist=!!vis?.querySelector('th.previous-quarter-history-cell');
+  if(phone||(activePage===key&&(hasHist||s===0))){readTable(vis,s,out);return out}
+  const h=holder();if(!h)return null;h.sharedQuarterSelection??={};const old=h.sharedQuarterSelection[currentHalfYearId];
+  try{for(const q of s>=1?[0,1]:[0]){h.sharedQuarterSelection[currentHalfYearId]=q;renderTasksPage(currentSubject,key);readTable(summaryTable(key),q,out)}}
+  finally{h.sharedQuarterSelection[currentHalfYearId]=old;if(activePage===key)renderTasksPage(currentSubject,key)}
+  return out}
+ /* letzte mündliche Note je Name (beide Quartale des Halbjahres); auch für den fairen Würfel */
+ function oralLast(){const res=new Map();try{const perf=subjectExamGroups(currentSubject).find(g=>g.type==='performance'&&g.halfYearId===currentHalfYearId);for(const key of (perf?.pages||[]).filter(Boolean)){const d=taskPageData(currentSubject,key);
+   for(const st of d.students||[]){for(const tk of d.tasks||[]){const v=st.grades?.[tk.id];if(v===''||v==null||!tk.date)continue;const k=norm(st.name),cur=res.get(k)||{};if(String(v).toLowerCase()==='x'){if(tk.date===today())cur.absentToday=true}else if(!cur.date||tk.date>cur.date)cur.date=tk.date;res.set(k,cur)}}}}catch{}return res}
+ window.classroomOralLast=oralLast;
+ function analyze(rows){const c=cfg(),P=pts(),s=sel(),o=oralLast(),F={trend:[],ha:[],near:[],days:[]};
+  for(const r of Object.values(rows||{})){const a=r.q[0].somi,b=r.q[1].somi;
+   if(s>=1&&a!=null&&b!=null){const d=P?(a-b)/3:(b-a);if(d>=c.trend-1e-9)F.trend.push({r,a,b,d:P?a-b:b-a})}
+   const ha=(r.q[0].ha||0)+(s>=1?(r.q[1].ha||0):0);if(ha>=c.ha)F.ha.push({r,ha,h0:r.q[0].ha||0,h1:r.q[1].ha||0});
+   const hv=r.hj??(s>=1?b:a);if(hv!=null&&(P?hv<=Math.round(15-(c.near-1)*3)+.01:hv>=c.near-1e-9))F.near.push({r,hv});
+   const ol=o.get(norm(r.name));const dd=ol?.date?days(ol.date):null;if(dd===null||dd>c.days)F.days.push({r,date:ol?.date||null,dd})}
+  F.trend.sort((x,y)=>y.d-x.d);F.ha.sort((x,y)=>y.ha-x.ha);F.near.sort((x,y)=>P?x.hv-y.hv:y.hv-x.hv);F.days.sort((x,y)=>(y.dd??9999)-(x.dd??9999));
+  const names=new Set();for(const k of Object.keys(F))if(c.show[k])for(const e of F[k])names.add(e.r.name);return {F,count:names.size,total:Object.keys(rows||{}).length,c,P}}
+ const gcls=(v,P)=>{try{return taskGradeClass(P?Math.round(v):v,P?'gradePoints':'grades')}catch{return ''}};
+ const g=(v,P,t)=>`<span class="ew-g task-end-grade ${gcls(v,P)}">${esc(t||comma(v))}</span>`;/* t: Text wie in der Tabelle (z. B. „1+“) */
+ const actions=n=>`<span class="ew-act"><button type="button" data-ew-note="${esc(n)}">Notiz</button><button type="button" data-ew-mail="${esc(n)}">Eltern-Mail</button></span>`;
+ function render(d,res){const {F,count,total,c,P}=res,sec=(k,title,cls,items,row)=>!c.show[k]?'':`<div class="ew-sec ${cls}">${title}<b>${items.length}</b></div>`+(items.length?items.map(row).join(''):'<p class="ew-none">Niemand.</p>');
+  const label=holder()?.label||'',subj=subjects[currentSubject]?.label||'';
+  d.innerHTML=`<div class="ew-top"><h2>Auffällig · ${esc(label)} · ${esc(subj)}</h2><button type="button" class="ew-x" data-ew-x aria-label="Schließen">✕</button></div>
+  <p class="ew-sub">${esc(subjectExamGroups(currentSubject).find(x=>x.id===currentHalfYearId)?.label||'Halbjahr')} · Stand heute · nur zur Ansicht – an den Noten ändert sich nichts</p>
+  <div class="ew-filters">${[['trend','Abwärtstrend'],['ha','Hausaufgaben'],['near',P?'Unterkurs-Gefahr':'Knapp vor 5'],['days','Lange ohne mündliche Note']].map(([k,l])=>`<button type="button" class="ew-chip" data-ew-f="${k}" aria-pressed="${!!c.show[k]}">${l}</button>`).join('')}<button type="button" class="ew-chip" data-ew-set aria-pressed="false">Einstellungen …</button></div>
+  <div class="ew-settings" hidden><label>Abwärtstrend ab <input type="number" step="0.1" min="0.1" data-ew-c="trend" value="${c.trend}"> Notenschritten</label><label>Hausaufgaben ab <input type="number" step="1" min="1" data-ew-c="ha" value="${c.ha}">× fehlend</label><label>Knapp vor 5 ab <input type="number" step="0.1" min="3" max="6" data-ew-c="near" value="${c.near}"></label><label>Ohne mündliche Note ab <input type="number" step="1" min="1" data-ew-c="days" value="${c.days}"> Tagen</label></div>
+  ${sel()<1&&c.show.trend?'<p class="ew-none">Abwärtstrend erst im 2. Quartal.</p>':''}
+  ${sel()>=1?sec('trend','Abwärtstrend Q1 → Q2','',F.trend,e=>`<div class="ew-row"><span class="ew-nm">${esc(e.r.name)}</span><span class="ew-facts"><span class="ew-f">SoMi ${g(e.a,P,e.r.q[0].somiT)} → ${g(e.b,P,e.r.q[1].somiT)} <i class="ew-up">${P?'−':'+'}${comma(e.d)}</i></span>${e.r.ka!=null?`<span class="ew-f">${/klausur/i.test(subj)?'Klausur':'KA'} ${g(e.r.ka,P,e.r.kaT)}</span>`:''}</span>${actions(e.r.name)}</div>`):''}
+  ${sec('ha',`Hausaufgaben (${c.ha}× oder öfter fehlend)`,'amber',F.ha,e=>`<div class="ew-row"><span class="ew-nm">${esc(e.r.name)}</span><span class="ew-facts"><span class="ew-f">HA ✕ ${e.ha}${sel()>=1?` (Q1: ${e.h0} · Q2: ${e.h1})`:''}</span></span>${actions(e.r.name)}</div>`)}
+  ${sec('near',P?'Unterkurs-Gefahr (Halbjahr)':`Knapp vor 5 (Halbjahr ≥ ${comma(c.near)})`,'',F.near,e=>`<div class="ew-row"><span class="ew-nm">${esc(e.r.name)}</span><span class="ew-facts"><span class="ew-f">${e.r.hj!=null?'Halbjahr ∑':'Sonstige Mitarbeit'} ${g(e.hv,P,e.r.hj!=null?e.r.hjT:(sel()>=1?e.r.q[1].somiT:e.r.q[0].somiT))}</span>${e.r.ka!=null?`<span class="ew-f">KA ${g(e.r.ka,P,e.r.kaT)}</span>`:''}</span>${actions(e.r.name)}</div>`)}
+  ${sec('days',`Lange ohne mündliche Note (über ${c.days} Tage)`,'blue',F.days,e=>`<div class="ew-row"><span class="ew-nm">${esc(e.r.name)}</span><span class="ew-facts"><span class="ew-f">${e.date?'letzte mündliche Note '+dateDe(e.date)+' · vor '+e.dd+' Tagen':'noch keine mündliche Note im Halbjahr'}</span></span><span class="ew-act"><button type="button" data-ew-oral>Note eintragen</button></span></div>`)}
+  <div class="ew-foot"><span>${count} Schüler:in${count===1?'':'nen'} auffällig (von ${total})</span><span class="ew-act"><button type="button" data-ew-print>Drucken</button><button type="button" class="ew-pri" data-ew-x>Schließen</button></span></div>`;
+  d.querySelectorAll('[data-ew-x]').forEach(b=>b.onclick=()=>d.close());
+  d.querySelectorAll('[data-ew-f]').forEach(b=>b.onclick=()=>{const cc=cfg();cc.show[b.dataset.ewF]=cc.show[b.dataset.ewF]?0:1;saveCfg(cc);render(d,analyze(d._rows));refreshPill()});
+  d.querySelector('[data-ew-set]').onclick=e=>{const s=d.querySelector('.ew-settings');s.hidden=!s.hidden;e.currentTarget.setAttribute('aria-pressed',String(!s.hidden))};
+  d.querySelectorAll('[data-ew-c]').forEach(i=>i.onchange=()=>{const cc=cfg(),v=Number(i.value);if(!Number.isFinite(v)||v<=0)return;cc[i.dataset.ewC]=v;saveCfg(cc);render(d,analyze(d._rows));d.querySelector('.ew-settings').hidden=false;refreshPill()});
+  d.querySelectorAll('[data-ew-note]').forEach(b=>b.onclick=()=>noteDialog(b.dataset.ewNote));
+  d.querySelectorAll('[data-ew-mail]').forEach(b=>b.onclick=()=>mailDialog(b.dataset.ewMail,res));
+  d.querySelectorAll('[data-ew-oral]').forEach(b=>b.onclick=()=>{d.close();try{const perf=subjectExamGroups(currentSubject).find(x=>x.type==='performance'&&x.halfYearId===currentHalfYearId);const k=perf?.pages?.[sel()]||perf?.pages?.[0];if(k&&!document.documentElement.classList.contains('ph-lite'))setPage(k)}catch{}});
+  d.querySelector('[data-ew-print]').onclick=()=>printList(d)}
+ function small(html){const d=document.createElement('dialog');d.className='classroom-dialog ew-small';d.innerHTML=html;document.body.append(d);d.addEventListener('close',()=>d.remove());d.showModal();return d}
+ function noteDialog(name){const api=window.classroomStudentNotes;const d=small(`<h2>Notiz · ${esc(name)}</h2><textarea rows="5" maxlength="500"></textarea><div class="ew-act"><button type="button" data-c>Abbrechen</button><button type="button" class="ew-pri" data-s>Speichern</button></div>`);
+  const ta=d.querySelector('textarea');ta.value=api?.get?.(name)||'';ta.focus();d.querySelector('[data-c]').onclick=()=>d.close();d.querySelector('[data-s]').onclick=()=>{api?.set?.(name,ta.value);d.close()}}
+ function mailDialog(name,res){const parts=[];const {F,P}=res;const f=e=>e.r.name===name;
+  const t=F.trend.find(f);if(t)parts.push(`die Leistungen in der Sonstigen Mitarbeit sind vom 1. zum 2. Quartal schwächer geworden (${comma(t.a)} → ${comma(t.b)})`);
+  const h=F.ha.find(f);if(h)parts.push(`die Hausaufgaben fehlten in diesem Halbjahr bisher ${h.ha}-mal`);
+  const n=F.near.find(f);if(n)parts.push(`die Halbjahresnote steht derzeit bei ${comma(n.hv)}${P?' Punkten':''}`);
+  const first=name.includes(',')?name.split(',')[1].trim():name;
+  const body=parts.length?parts.map(x=>x[0].toUpperCase()+x.slice(1)+'.').join(' '):'Ich sehe derzeit Gesprächsbedarf.';const txt=`Sehr geehrte Eltern von ${first},\n\nich möchte Sie kurz über den Stand im Fach ${subjects[currentSubject]?.label||''} informieren. ${body}\n\nGern bespreche ich mit Ihnen, wie wir ${first} gemeinsam unterstützen können.\n\nMit freundlichen Grüßen\n`;
+  const d=small(`<h2>Eltern-Mail vorbereiten · ${esc(name)}</h2><textarea rows="11"></textarea><p class="ew-sub" data-st></p><div class="ew-act"><button type="button" data-c>Schließen</button><button type="button" class="ew-pri" data-cp>Text kopieren</button></div>`);
+  const ta=d.querySelector('textarea');ta.value=txt;d.querySelector('[data-c]').onclick=()=>d.close();d.querySelector('[data-cp]').onclick=async()=>{try{await navigator.clipboard.writeText(ta.value);d.querySelector('[data-st]').textContent='Text kopiert – nichts wurde gesendet.'}catch{ta.select();document.execCommand?.('copy');d.querySelector('[data-st]').textContent='Text markiert – mit ⌘C kopieren.'}}}
+ function printList(d){const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.append(f);const doc=f.contentDocument;
+  doc.open();doc.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Auffällig</title><style>body{font:13px -apple-system,system-ui,sans-serif;color:#222;margin:18mm}h2{margin:0 0 4px}.ew-sub{color:#666;margin:0 0 12px}.ew-filters,.ew-settings,.ew-act,.ew-x{display:none!important}.ew-sec{font-weight:700;margin:14px 0 6px;text-transform:uppercase;font-size:11.5px;letter-spacing:.05em}.ew-sec b{margin-left:6px}.ew-row{display:flex;gap:12px;border-bottom:1px solid #ddd;padding:6px 0}.ew-nm{font-weight:600;min-width:180px}.ew-f{margin-right:10px}.ew-foot{margin-top:12px;color:#666}</style></head><body>${d.innerHTML}</body></html>`);doc.close();
+  setTimeout(()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch{}setTimeout(()=>f.remove(),1500)},200)}
+ function open(){let rows=null;try{rows=collectRows()}catch(e){console.warn('Frühwarnliste',e)}const d=document.createElement('dialog');d.className='classroom-dialog ew-dialog'+(document.documentElement.classList.contains('ph-lite')?' ew-sheet':'');document.body.append(d);d.addEventListener('close',()=>d.remove());d._rows=rows||{};
+  if(!rows){d.innerHTML='<div class="ew-top"><h2>Auffällig</h2><button type="button" class="ew-x" data-ew-x>✕</button></div><p class="ew-sub">Für diese Klasse gibt es im gewählten Halbjahr noch keine Quartalsnoten.</p>';d.querySelector('[data-ew-x]').onclick=()=>d.close()}else render(d,analyze(rows));d.showModal()}
+ window.classroomEarlyWarning={open,analyze:()=>analyze(collectRows())};
+ /* Mac/iPad: Knopf in der Kopfzeile der sichtbaren Seite (nur Seiten dieser Klasse mit Quartalsnoten) */
+ function placeButton(){if(document.documentElement.classList.contains('ph-lite'))return;const has=!!sumGroup();const panel=[...document.querySelectorAll('[data-custom-panel]')].find(p=>p.offsetParent&&!p.closest('.hide'));
+  document.querySelectorAll('.ew-btn').forEach(b=>{if(!has||!panel||!panel.contains(b))b.remove()});if(!has||!panel)return;
+  const box=panel.querySelector('.section-title .oral-display-actions')||panel.querySelector('.section-title');if(!box||box.querySelector('.ew-btn'))return;
+  const b=document.createElement('button');b.type='button';b.className='ew-btn';b.title='Frühwarnliste: Abwärtstrend, Hausaufgaben, knapp vor 5, lange ohne mündliche Note';b.innerHTML='<span aria-hidden="true">⚠︎</span> Auffällig';b.onclick=open;
+  const pr=box.querySelector('.page-print-button,.test-results-print');pr?pr.before(b):box.append(b)}
+ /* iPhone: Hinweis in der Hinweiszeile (Zahl aus der sichtbaren Quartalsnoten-Tabelle) */
+ let pillSig='';function refreshPill(){if(!document.documentElement.classList.contains('ph-lite'))return;const flags=document.querySelector('.pl-bar .pl-flags');if(!flags)return;let n=0;
+  try{const sum=sumGroup();if(sum&&activePage===sum.pages[0]){const rows={};readTable(summaryTable(sum.pages[0]),sel(),rows);n=analyze(rows).count}}catch{}
+  let p=flags.querySelector('[data-ew-pill]');if(!n){if(p)p.remove();flags.hidden=!flags.children.length;return}
+  if(!p){p=document.createElement('button');p.type='button';p.dataset.ewPill='1';p.className='ew-pill';p.onclick=e=>{e.stopPropagation();open()};flags.append(p)}
+  const html=`<b>${n}</b> Auffällig`;if(p.innerHTML!==html)p.innerHTML=html;if(flags.hidden)flags.hidden=false;const r3=flags.closest('.pl-row3');if(r3?.hidden)r3.hidden=false}
+ let q=false;const run=()=>{if(q)return;q=true;setTimeout(()=>{q=false;try{placeButton();refreshPill()}catch(e){console.warn(e)}},120)};
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(run);else new MutationObserver(run).observe(document.body,{childList:true,subtree:true});run();
+ const st=document.createElement('style');st.textContent=`
+ .ew-btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:10px;border:1px solid #f3cfa3;background:#fff8ec;color:#8a4b0a;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+ .ew-dialog{width:min(780px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;border:0;border-radius:20px;padding:22px 24px!important;box-shadow:0 20px 50px rgba(30,45,70,.2)}
+ .ew-dialog.ew-sheet{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;margin:0;border-radius:0;padding:16px!important}
+ .ew-top{display:flex;align-items:center;gap:10px}.ew-top h2{margin:0;font-size:21px;flex:1}.ew-x{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;font-size:15px;cursor:pointer;display:grid;place-items:center;padding:0}
+ .ew-sub{color:#66758a;font-size:14px;margin:4px 0 14px}.ew-none{color:#8794a7;font-size:13.5px;margin:4px 2px 8px}
+ .ew-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.ew-chip{border:1px solid #cfd9e6;border-radius:999px;padding:6px 12px;font:inherit;font-size:13.5px;color:#2f5f9b;background:#fff;cursor:pointer}.ew-chip[aria-pressed=true]{background:#e8f0fb;border-color:#9dbbe3}
+ .ew-settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 14px;background:#f4f7fb;border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:13.5px}.ew-settings[hidden]{display:none}.ew-settings input{width:64px;margin:0 4px;padding:4px 6px;border:1px solid #cfd9e6;border-radius:8px;font:inherit}
+ .ew-sec{margin:14px 0 6px;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#5b6b82}.ew-sec b{background:#e5484d;color:#fff;border-radius:9px;padding:1px 7px;font-size:11px;letter-spacing:0}.ew-sec.amber b{background:#d08a1f}.ew-sec.blue b{background:#2f5f9b}
+ .ew-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid #e3e9f1;border-radius:12px;margin-bottom:6px;flex-wrap:wrap}.ew-nm{font-weight:650;min-width:170px}.ew-facts{display:flex;gap:6px;flex:1;flex-wrap:wrap}.ew-f{font-size:13px;border-radius:8px;padding:3px 8px;background:#f4f7fb;color:#3d4d63;display:inline-flex;align-items:center;gap:4px}
+ .ew-g:not(#_){display:inline-block;min-width:34px;text-align:center;border-radius:7px;padding:2px 6px;font-weight:700;font-size:13px;height:auto;line-height:1.3}.ew-up{font-style:normal;color:#b42318;font-weight:700}
+ .ew-act{display:flex;gap:6px}.ew-act button,.ew-small button{border:1px solid #cfd9e6;border-radius:9px;padding:6px 10px;font:inherit;font-size:13px;color:#2f5f9b;background:#fff;cursor:pointer;white-space:nowrap}.ew-pri:not(#_){background:#2f5f9b;color:#fff;border-color:#2f5f9b}
+ .ew-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;color:#66758a;font-size:13px;flex-wrap:wrap}
+ .ew-small{width:min(520px,calc(100vw - 24px));border:0;border-radius:18px;padding:20px!important}.ew-small h2{margin:0 0 10px;font-size:18px}.ew-small textarea{width:100%;box-sizing:border-box;border:1px solid #cfd9e6;border-radius:10px;padding:10px;font:inherit;font-size:14px;margin-bottom:10px}.ew-small .ew-act{justify-content:flex-end}
+ .pl-flags .ew-pill:not(#_){border-color:#f3cfa3;background:#fff3e6;color:#8a4b0a}.pl-flags .ew-pill b{background:#d97706!important}
+ @media (max-width:560px){.ew-nm{min-width:0;flex:1 1 100%}.ew-act{margin-left:auto}}`;document.head.append(st);
+})();
+;
+
 /* ==== noten/page-print.js ==== */
 // Print the visible page directly, including its current compact display.
 (()=>{
@@ -5687,21 +5807,49 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function order(parent,kids){kids=kids.filter(Boolean);for(let i=0;i<kids.length;i++){if(parent.children[i]!==kids[i])parent.insertBefore(kids[i],parent.children[i]||null)}}
  function arrange(bar){const r1=bar.querySelector('.pl-row:not(.pl-row2):not(.pl-row3)'),r2=bar.querySelector('.pl-row2'),fold=bar.querySelector('.pl-fold'),hatch=bar.querySelector('.pl-hatch'),mean=bar.querySelector('.pl-mean'),flags=bar.querySelector('.pl-flags'),view=bar.querySelector('.pl-view');if(!r1||!r2||!fold||!hatch||!mean||!flags||!view)return;
   let ns=bar.querySelector('.pl-ns');if(!ns){ns=document.createElement('button');ns.type='button';ns.className='pl-ns';ns.title='Notenspiegel der Klasse';ns.setAttribute('aria-label','Notenspiegel der Klasse');ns.innerHTML=ICON;ns.onclick=e=>{e.stopPropagation();openList()}}
-  let dice=bar.querySelector('.pl-dice');if(!dice){dice=document.createElement('button');dice.type='button';dice.className='pl-ns pl-dice';dice.title='Zufällig jemanden auswählen';dice.setAttribute('aria-label','Zufällig jemanden auswählen');dice.innerHTML=DICE;dice.onclick=e=>{e.stopPropagation();pickRandom(bar)}}
+  let dice=bar.querySelector('.pl-dice');if(!dice){dice=document.createElement('button');dice.type='button';dice.className='pl-ns pl-dice';dice.title='Zufällig jemanden auswählen · lange drücken: Einstellungen';dice.setAttribute('aria-label','Zufällig jemanden auswählen');dice.innerHTML=DICE;bindDice(dice,bar)}
   let r3=bar.querySelector('.pl-row3');if(!r3){r3=document.createElement('div');r3.className='pl-row pl-row3';r2.after(r3)}
   const half=bar.querySelector('.pl-half');if(half&&half.parentElement!==bar)r1.before(half);/* zweites Halbjahr: eigene Zeile darüber */
   order(r1,[view,fold,ns,dice]);/* 10.03: Karten verkleinern vor Notenspiegel */order(r2,[hatch,mean,bar.querySelector('.pl-sort')]);order(r3,[bar.querySelector('.q1open'),flags]);
   for(const [r,c] of [[r1,'plx1'],[r2,'plx2'],[r3,'plx3']])if(!r.classList.contains(c))r.classList.add('plx',c);
   /* weiße Auswahl mindestens kreisrund */const bh=Math.round(view.querySelector('button')?.getBoundingClientRect().height||0);if(bh&&bar.style.getPropertyValue('--plx-bh')!==bh+'px')bar.style.setProperty('--plx-bh',bh+'px');
   const hasHint=!!r3.querySelector('.q1open')||!flags.hidden;if(r3.hidden===hasHint)r3.hidden=!hasHint}
- /* Zufall: jede Person einmal, dann von vorn (je Klasse, bis die App geschlossen wird) */
+ /* 10.13: Fairer Würfel – Einstellungen je Klasse (lange drücken): fair (wer lange keine mündliche Note hat, kommt eher dran),
+    heute Abwesende überspringen, ohne Wiederholung, nur Karten mit Filter. Oben steht, warum jemand dran ist. */
+ const DK=()=>'classroom-dice-v1:'+(typeof currentSubject!=='undefined'?currentSubject:'')+':'+(typeof currentClassId!=='undefined'?currentClassId:'');
+ const dcfg=()=>{try{return {fair:true,skipAbsent:true,noRepeat:true,onlyFilter:false,...JSON.parse(localStorage.getItem(DK())||'{}')}}catch{return {fair:true,skipAbsent:true,noRepeat:true,onlyFilter:false}}};
+ const dsave=c=>{try{localStorage.setItem(DK(),JSON.stringify(c))}catch{}};
  const bag=new Map();let last='';
- function pickRandom(bar){const cards=[...document.querySelectorAll('.qs-cards>.qs-card:not(.qd-card)')].filter(c=>c.offsetParent);if(!cards.length)return;
-  const key=(typeof currentSubject!=='undefined'?currentSubject:'')+':'+(typeof currentClassId!=='undefined'?currentClassId:''),nameOf=c=>c.querySelector('.qs-name')?.textContent.trim()||'';
-  const names=cards.map(nameOf);let left=(bag.get(key)||[]).filter(n=>names.includes(n));if(!left.length){left=names.filter(n=>n!==last);if(!left.length)left=names}
-  const n=left[Math.floor(Math.random()*left.length)];bag.set(key,left.filter(x=>x!==n));last=n;
-  const card=cards[names.indexOf(n)];document.querySelectorAll('.qs-card.qs-pick').forEach(c=>c.classList.remove('qs-flash','qs-pick'));void card.offsetWidth;card.classList.add('qs-flash','qs-pick');card.scrollIntoView({block:card.offsetHeight>innerHeight*.6?'start':'center',behavior:'smooth'});setTimeout(()=>card.classList.remove('qs-flash','qs-pick'),1800);
-  let live=bar.querySelector('.pl-live');if(!live){live=document.createElement('span');live.className='pl-live';live.setAttribute('aria-live','polite');bar.append(live)}live.textContent='Ausgewählt: '+n}
+ const nrm=t=>String(t||'').replace(/\s+/g,' ').trim().toLocaleLowerCase('de-DE');
+ const todayIso=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+ const daysSince=d=>d?Math.max(0,Math.round((new Date(todayIso())-new Date(d))/864e5)):null;
+ function pool(bar,c){const panel=bar.closest('[data-custom-panel]')||document;let all=[...document.querySelectorAll('.qs-cards>.qs-card:not(.qd-card)')];
+  if(!c.onlyFilter&&panel.dataset?.plFilter){panel.dataset.plFilter='';bar.querySelectorAll('.pl-flags [data-flag]').forEach(b=>b.setAttribute('aria-pressed','false'))}
+  all=all.filter(x=>x.offsetParent);const ol=window.classroomOralLast?.()||new Map();
+  return all.map(card=>{const name=card.querySelector('.qs-name')?.textContent.trim()||'',o=ol.get(nrm(name))||{};return {card,name,date:o.date||null,absent:!!o.absentToday,d:daysSince(o.date)}}).filter(x=>x.name&&!(c.skipAbsent&&x.absent))}
+ const weight=(x,c)=>!c.fair?1:x.d===null?60:x.d===0?.25:Math.max(1,x.d);
+ function pickRandom(bar){const c=dcfg(),items=pool(bar,c);if(!items.length)return;const key=DK();
+  let left=items;if(c.noRepeat){const done=new Set(bag.get(key)||[]);left=items.filter(x=>!done.has(x.name));if(!left.length){bag.set(key,[]);left=items.filter(x=>x.name!==last);if(!left.length)left=items}}else{left=items.filter(x=>x.name!==last);if(!left.length)left=items}
+  const tot=left.reduce((s,x)=>s+weight(x,c),0);let r=Math.random()*tot,pick=left[left.length-1];for(const x of left){r-=weight(x,c);if(r<=0){pick=x;break}}
+  if(c.noRepeat)bag.set(key,[...(bag.get(key)||[]),pick.name]);last=pick.name;
+  const card=pick.card;document.querySelectorAll('.qs-card.qs-pick').forEach(x=>x.classList.remove('qs-flash','qs-pick'));void card.offsetWidth;card.classList.add('qs-flash','qs-pick');card.scrollIntoView({block:card.offsetHeight>innerHeight*.6?'start':'center',behavior:'smooth'});setTimeout(()=>card.classList.remove('qs-flash'),1800);
+  const why=pick.d===null?'noch keine mündliche Note im Halbjahr':pick.d===0?'heute schon eine mündliche Note':'letzte mündliche Note vor '+pick.d+' Tag'+(pick.d===1?'':'en')+' ('+pick.date.slice(8,10)+'.'+pick.date.slice(5,7)+'.)';
+  let t=bar.querySelector('.pl-pick');if(!t){t=document.createElement('div');t.className='pl-pick';t.setAttribute('role','status');bar.append(t)}
+  t.innerHTML='<div><b></b><small></small></div><button type="button" class="pl-pick-next">Nächste ›</button><button type="button" class="pl-pick-x" aria-label="Schließen">✕</button>';t.querySelector('b').textContent=pick.name;t.querySelector('small').textContent=why;
+  t.querySelector('.pl-pick-next').onclick=e=>{e.stopPropagation();pickRandom(bar)};t.querySelector('.pl-pick-x').onclick=e=>{e.stopPropagation();t.remove();card.classList.remove('qs-pick')};
+  let live=bar.querySelector('.pl-live');if(!live){live=document.createElement('span');live.className='pl-live';live.setAttribute('aria-live','polite');bar.append(live)}live.textContent='Ausgewählt: '+pick.name+' – '+why}
+ function diceSettings(bar){const c=dcfg();const d=document.createElement('dialog');d.className='nsv-dialog nsv-sheet dice-sheet';document.body.append(d);d.addEventListener('close',()=>d.remove());
+  const rows=[['fair','Fair würfeln','Wer am längsten keine mündliche Note hat, kommt eher dran – niemand wird ganz ausgeschlossen.'],['skipAbsent','Heute Abwesende überspringen','Wer heute „A“ in der mündlichen Mitarbeit hat, wird nicht gezogen.'],['noRepeat','Ohne Wiederholung','Jede:r kommt einmal dran, dann beginnt eine neue Runde.'],['onlyFilter','Nur Karten mit Filter','Ist ein Hinweis wie „Ohne mündliche Note“ gewählt, nur aus diesen Karten ziehen.']];
+  const odds=()=>{const cc=dcfg(),it=pool(bar,{...cc,onlyFilter:true}),done=new Set(cc.noRepeat?(bag.get(DK())||[]):[]),l=it.filter(x=>!done.has(x.name)),tot=l.reduce((s,x)=>s+weight(x,cc),0)||1,top=[...l].sort((a,b)=>weight(b,cc)-weight(a,cc)).slice(0,4);
+   return '<div class="dice-odds"><b>Chancen in dieser Runde</b>'+top.map(x=>`<div><span><i style="width:${Math.max(6,Math.round(weight(x,cc)/tot*360))}px"></i>${n_esc(x.name)}</span><span>${x.d===null?'noch keine':x.d===0?'heute':'seit '+x.d+' Tagen'}</span></div>`).join('')+(l.length>top.length?`<div class="dice-more">… ${l.length-top.length} weitere</div>`:'')+'</div>'};
+  const draw=()=>{const cc=dcfg();d.innerHTML='<div class="nsv-shead"><h2>Würfel · Einstellungen</h2><button type="button" class="nsv-x" data-x aria-label="Schließen">✕</button></div><div class="dice-body"><p class="dice-sub">Gilt für diese Klasse. Lange auf den Würfel drücken öffnet dieses Fenster.</p>'+rows.map(([k,t,h])=>`<label class="dice-opt"><input type="checkbox" role="switch" data-k="${k}" ${cc[k]?'checked':''}><span><b>${t}</b><small>${h}</small></span></label>`).join('')+odds()+'<button type="button" class="dice-reset" data-reset>Neue Runde beginnen</button></div>';
+   d.querySelector('[data-x]').onclick=()=>d.close();d.querySelectorAll('[data-k]').forEach(i=>i.onchange=()=>{const cc=dcfg();cc[i.dataset.k]=i.checked;dsave(cc);draw()});d.querySelector('[data-reset]').onclick=()=>{bag.set(DK(),[]);draw()}};
+  draw();d.showModal()}
+ const n_esc=t=>String(t??'').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+ function bindDice(dice,bar){let timer=null,long=false;const start=()=>{long=false;clearTimeout(timer);timer=setTimeout(()=>{long=true;diceSettings(bar)},550)},stop=()=>clearTimeout(timer);
+  dice.addEventListener('pointerdown',start);['pointerup','pointerleave','pointercancel'].forEach(ev=>dice.addEventListener(ev,stop));
+  dice.addEventListener('contextmenu',e=>{e.preventDefault();clearTimeout(timer);if(!long){long=true;diceSettings(bar)}});
+  dice.onclick=e=>{e.stopPropagation();if(long){long=false;return}pickRandom(bar)}}
  function place(){for(const bar of document.querySelectorAll('.pl-bar'))try{arrange(bar)}catch(e){console.warn(e)}}
  addEventListener('resize',()=>requestAnimationFrame(place));
  if(typeof classroomOnDomChange==='function')classroomOnDomChange(place);place();
@@ -5722,6 +5870,12 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .pl-bar .plx3>.pl-flags>*{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;justify-content:flex-start}.pl-bar .plx3>.pl-flags>*>b{flex:none}
  .pl-bar .pl-stand:not(#_){display:block}.pl-live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
  .qs-card.qs-pick{scroll-margin:12px}
+ .pl-pick{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:60;box-shadow:0 10px 30px rgba(20,40,70,.28);display:flex;align-items:center;gap:8px;background:#2f5f9b;color:#fff;border-radius:14px;padding:10px 10px 10px 14px}.pl-pick>div{flex:1;min-width:0}.pl-pick b{display:block;font-size:16px}.pl-pick small{display:block;font-size:12.5px;opacity:.88;margin-top:1px}
+ .pl-pick button:not(#_){flex:none;border:0;border-radius:10px;font:inherit;cursor:pointer}.pl-pick .pl-pick-next:not(#_){background:#fff;color:#2f5f9b;font-weight:650;font-size:13.5px;padding:8px 10px;min-height:36px}.pl-pick .pl-pick-x:not(#_){background:transparent;color:#fff;width:30px;height:30px;font-size:14px;padding:0}
+ .qs-card.qs-pick{box-shadow:0 0 0 3px #8fb0dc;border-color:#2f5f9b!important}
+ .dice-body{padding:14px 16px;overflow:auto}.dice-sub{color:#66758a;font-size:13.5px;margin:0 0 6px}.dice-opt{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid #eef2f7;cursor:pointer}.dice-opt input{flex:none;margin-top:3px;width:20px;height:20px;accent-color:#2f5f9b}.dice-opt b{display:block;font-size:14.5px}.dice-opt small{display:block;color:#66758a;font-size:13px;margin-top:2px}
+ .dice-odds{margin-top:10px;background:#f4f7fb;border-radius:14px;padding:12px 14px;font-size:13px}.dice-odds>div{display:flex;justify-content:space-between;gap:10px;padding:3px 0}.dice-odds i{display:inline-block;height:8px;border-radius:4px;background:#2f5f9b;vertical-align:middle;margin-right:6px;max-width:160px}.dice-more{color:#66758a}
+ .dice-reset{margin-top:12px;min-height:40px;border-radius:10px;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;font:inherit;font-weight:600;padding:0 14px;cursor:pointer}
  .pl-bar .pl-fold:not(#_),.pl-ns:not(#_){width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;padding:0!important;border-radius:50%!important;display:inline-grid!important;place-items:center}
  .pl-ns{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;display:inline-grid;place-items:center;padding:0;cursor:pointer}
  .pl-ns:active{background:#eaf0fa}
@@ -6611,7 +6765,7 @@ return}
   const nl0=window.classroomStudentNotes?.list?.().length||0,shown=FLAGS.filter(([k,,test])=>{const n=cards.filter(test).length;return n&&n<cards.length});const n2=shown.length+(nl0?1:0),tight=n2>2;/* 10.02: eigene Zeile – zwei Hinweise passen ausgeschrieben */
   for(const [k,label,test] of FLAGS){const n=cards.filter(test).length;if(!n||n===cards.length){if(f===k)f='';continue}const lab=tight?(k==='ha'?'3× HA':'ohne MM'):n2>1&&k==='mm'?'Ohne mündl. Note':label;html.push(`<button type="button" data-flag="${k}" aria-pressed="${f===k}" title="${k==='ha'?'3× oder öfter Hausaufgaben fehlend (im Halbjahr)':'Noch keine mündliche Note im Quartal'}"><b>${n}</b> ${lab}</button>`)}
   /* 8.17: Notizen der Klasse als Hinweis – antippen öffnet die Liste */const nl=window.classroomStudentNotes?.list?.().length||0;if(nl)html.unshift(`<button type="button" data-notes="1" title="Notizen in dieser Klasse"><b>${nl}</b> ${tight?'📝':(nl===1?'Notiz':'Notizen')}</button>`);
-  box.classList.toggle('is-tight',tight);panel.dataset.plFilter=f;const sig=html.join('');if(box.dataset.sig!==sig){box.dataset.sig=sig;box.innerHTML=sig}box.hidden=!html.length;
+  box.classList.toggle('is-tight',tight);panel.dataset.plFilter=f;const sig=html.join('');if(box.dataset.sig!==sig){box.dataset.sig=sig;box.innerHTML=sig}box.hidden=!html.length&&!box.querySelector("[data-ew-pill]");
   const test=FLAGS.find(x=>x[0]===f)?.[2];for(const c of cards){const hit=!test||test(c);if(c.classList.contains('pl-hit')!==hit)c.classList.toggle('pl-hit',hit)}}
  const gradeOf=card=>{const t=(card.querySelector('.qs-big')?.textContent||'').trim().replace(/[−–—]/g,'-');let m=/^(\d+(?:,\d+)?)$/.exec(t);if(m)return Number(m[1].replace(',','.'));m=/^([1-6])\s*([+-])$/.exec(t);if(m)return Number(m[1])+(m[2]==='+'?-.33:.33);m=/^(\d)\s*-\s*(\d)$/.exec(t);if(m)return (Number(m[1])+Number(m[2]))/2;return 99};
  function sortCards(panel){const box=panel.querySelector('.qs-cards');if(!box)return;const cards=[...box.children];if(!cards.length)return;
