@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 09.11.2026 · Version 10.08
+Stand: 09.11.2026 · Version 10.09
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1287,3 +1287,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.06: Namensspalte bleibt beim Scrollen stehen, Schalter für Testmittel Q1+Q2.
 10.07: Spaltenköpfe Q1/Q2 einheitlich, Tabellenkopf der Kompaktansicht bleibt sichtbar.
 10.08: Q1/Q2-Kennzeichnung auch in der normalen Ansicht.
+10.09: A-/B-Tests: beide Rohpunkt-Eingaben werden übernommen; Abstand im Kopf „Testmittel Q1+Q2“.
