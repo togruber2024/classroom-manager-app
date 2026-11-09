@@ -1941,18 +1941,25 @@ function classroomCentralGroup(sourceKey){
 function classroomCanonicalRoster(data,sourceKey){
  const group=classroomCentralGroup(sourceKey);if(!group)return false;
  const old=data.students||[],next=[];let changed=false;
- const resolve=student=>group.students.find(p=>p.id===student.classroomId||p.id===student.id)?.id||classroomCanonical.studentAliases[sourceKey+'::'+student.id]?.id;
+ /* 9.91: Nachschlagetabellen statt verschachtelter Suchen – bei langen Klassenlisten (viele entfernte Schüler:innen) dauerte jedes Speichern sonst 1–2 s. Ergebnis unverändert. */
+ const lc=v=>v.trim().toLocaleLowerCase('de-DE'),pos=new Map(),byId=new Map();group.students.forEach((p,i)=>{if(!pos.has(p.id)){pos.set(p.id,i);byId.set(p.id,p)}});
+ const aliases=classroomCanonical.studentAliases||{};
+ const resolve=student=>{const a=pos.get(student.classroomId),b=pos.get(student.id);const hit=a===undefined?b:b===undefined?a:Math.min(a,b);return (hit!==undefined?group.students[hit].id:undefined)||aliases[sourceKey+'::'+student.id]?.id};
+ const rid=old.map(resolve),byRid=new Map(),byName=new Map();
+ old.forEach((s,i)=>{const id=rid[i];if(id){if(!byRid.has(id))byRid.set(id,[]);byRid.get(id).push(i)}else{const k=lc(String(s.name||''));if(!byName.has(k))byName.set(k,[]);byName.get(k).push(i)}});
 
  for(const person of group.students.filter(s=>!s.deleted)){
-  const matches=old.filter(s=>{const id=resolve(s);return id?id===person.id:String(s.name||'').trim().toLocaleLowerCase('de-DE')===person.name.trim().toLocaleLowerCase('de-DE')});
+  const matches=[...(byRid.get(person.id)||[]),...(byName.get(lc(person.name))||[])].sort((x,y)=>x-y).map(i=>old[i]);
   const student=matches[0]||{grades:{},rawScores:{},statuses:{}};
   for(const extra of matches.slice(1))for(const key of ['grades','rawScores','statuses']){student[key]??={};for(const [id,value] of Object.entries(extra[key]||{}))if(student[key][id]===undefined||student[key][id]==='')student[key][id]=value}
   if(student.id!==person.id||student.name!==person.name||student.classroomId!==person.id)changed=true;
   student.id=person.id;student.classroomId=person.id;student.name=person.name;student.gender=person.gender||'';student.grades??={};student.rawScores??={};student.statuses??={};next.push(student);
  }
  // Newly typed names are imported by the next snapshot before applying the central roster.
- for(const student of old){if(group.students.some(p=>p.deleted&&(p.id===resolve(student)||String(p.name).trim().toLocaleLowerCase('de-DE')===String(student.name).trim().toLocaleLowerCase('de-DE'))))continue;const alias=classroomCanonical.studentAliases[sourceKey+'::'+student.id],known=group.students.find(p=>p.id===resolve(student));if(student.placeholder&&next.length&&typeof isEmptyStudent==='function'&&isEmptyStudent(student))continue;if(!known&&!next.some(p=>p===student))next.push(student)}
- if(JSON.stringify(old.map(s=>s.id))!==JSON.stringify(next.map(s=>s.id)))changed=true;
+ const delIds=new Set(),delNames=new Set();for(const p of group.students)if(p.deleted){delIds.add(p.id);delNames.add(lc(String(p.name)))}
+ const inNext=new Set(next);
+ old.forEach((student,i)=>{const r=rid[i];if((r!==undefined&&delIds.has(r))||delNames.has(lc(String(student.name))))return;const known=r!==undefined&&byId.has(r);if(student.placeholder&&next.length&&typeof isEmptyStudent==='function'&&isEmptyStudent(student))return;if(!known&&!inNext.has(student)){next.push(student);inNext.add(student)}});
+ if(old.length!==next.length||old.some((s,i)=>s.id!==next[i].id))changed=true;
  data.students=next;return changed;
 }
 function classroomFillSharedNames(data,subject){

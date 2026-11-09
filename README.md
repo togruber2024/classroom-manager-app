@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 09.11.2026 · Version 9.90
+Stand: 09.11.2026 · Version 9.91
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1267,3 +1267,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.88: Datenschutzmodus – Teilnoten auch bei gesperrten Arbeiten und ohne Farbe unkenntlich, Tendenz-Rahmen ausgeblendet
 9.89: Backups zusammenführen (Änderungsprotokoll mit Zeitstempeln); Sitzplan mittig, Mac 100 %, iPad eingepasst; Test-Gewichtung in der Sonstigen Mitarbeit als Fachvorgabe
 9.90: Zusammenführen – Spalten mit gleichem Datum (Mitarbeit, Hausaufgaben, Material) und Halbjahresbereiche werden vereint, Gewichte neu verteilt
+9.91: Speichern einer Bewertung im Unterrichts-Manager deutlich schneller (Klassenlisten-Abgleich mit Nachschlagetabellen)
