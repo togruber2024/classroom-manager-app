@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 09.11.2026 · Version 9.85
+Stand: 09.11.2026 · Version 9.86
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1262,3 +1262,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.83: „Halbjahr im Überblick“ (auch ohne Selbsteinschätzung); Druck/Übersicht von KA/Klausur/Test in Seitensortierung
 9.84: Sortieren nach Note immer möglich – offene am schwachen Ende; Ergebnis mit Sprachrichtigkeits-Abzug richtig erkannt
 9.85: Q-Noten dezimal in Kästchen, Notenbesprechung in der Mac-Seitenleiste, Notenspiegel-Druck vereinheitlicht, kein „1. Quartal“ bei Klausuren
+9.86: Notenspiegel-Fenster als Säulendiagramm; Beschriftung (Note/Punkte, darunter Anzahl) auch im Druck

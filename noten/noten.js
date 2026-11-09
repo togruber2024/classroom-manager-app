@@ -4441,7 +4441,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   // Notenspiegel
   const cats=pts?Array.from({length:16},(_,i)=>15-i):[1,2,3,4,5,6],count=new Map(cats.map(g=>[g,0]));for(const r of done)count.set(r.end,count.get(r.end)+1);
   const mx=Math.max(1,...count.values()),H=pts?54:(multi?46:70);
-  const spiegel=`<div class="ep-ns ${pts?'p':''}">${cats.map(g=>`<div><div class="ep-bar" style="height:${H}px">${count.get(g)?`<i class="task-end-grade ${esc(taskGradeClass(g,pts?'gradePoints':'grades'))}" style="height:${Math.max(3,count.get(g)/mx*(H-4))}px"></i>`:''}</div><b>${count.get(g)||(pts?'·':'0')}</b>${g}</div>`).join('')}</div>`;
+  const spiegel=`<div class="ep-ns ${pts?'p':''}">${cats.map(g=>`<div><div class="ep-bar" style="height:${H}px">${count.get(g)?`<i class="task-end-grade ${esc(taskGradeClass(g,pts?'gradePoints':'grades'))}" style="height:${Math.max(3,count.get(g)/mx*(H-4))}px"></i>`:''}</div><span class="ep-lab">${g}</span><b>${count.get(g)||(pts?'·':'0')}</b></div>`).join('')}</div>`;
   const foot=`<div class="ep-foot"><span>Classroom-Manager · gedruckt am ${today()}</span></div>`;
   let body='';
   if(!multi){
@@ -4489,7 +4489,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .ep .ep-chip{display:inline-flex;align-items:center;justify-content:center;min-width:24px;width:auto;height:17px;padding:0 5px;border-radius:5px;font-weight:700;font-size:10.5px;line-height:1;margin:0;box-shadow:none;border:0}
  .ep-ns{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.ep-ns.p{grid-template-columns:repeat(16,1fr);gap:3px}
  .ep-ns>div{text-align:center;font-size:10px;color:#5b6b82}/* 9.85: Sek. I wie Sek. II – Balken auf einer Grundlinie, ohne Kasten je Note */.ep-ns:not(.p) .ep-bar{border-bottom:1px solid #d5deea}.ep-ns:not(.p)>div{font-size:11px}
- .ep-ns b{display:block;color:#1f2a3d;font-size:14px}.ep-ns.p b{font-size:10.5px}
+ .ep-ns b{display:block;color:#1f2a3d;font-size:14px}.ep-ns.p b{font-size:10.5px}/* 9.86: zuerst Note/Punktwert (grau), darunter fett die Anzahl – wie im Notenspiegel-Fenster */.ep-ns .ep-lab{display:block;color:#7a889c;font-size:10px;line-height:1.2}
  .ep-bar{display:flex;align-items:flex-end;justify-content:center;margin-bottom:3px}.ep-ns.p .ep-bar{border-bottom:1px solid #d5deea}
  .ep-bar i{display:block;width:62%;min-width:0;padding:0;border-radius:4px 4px 0 0;border:0;box-shadow:none}.ep-ns.p .ep-bar i{width:72%}
  .ep-note{min-height:64px;margin-top:4px}.ep-sig{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:30px}.ep-sig div{border-top:1px solid #8a97a9;padding-top:4px;font-size:10px;color:#5b6b82}
@@ -4509,7 +4509,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const cats=pts?Array.from({length:16},(_,i)=>15-i):[1,2,3,4,5,6],count=new Map(cats.map(g=>[g,0]));for(const r of done){const k=pts?Math.round(r.value):Math.max(1,Math.min(6,Math.round(r.value)));count.set(k,(count.get(k)||0)+1)}
   const lab=g=>{if(!part)return pts?String(g):'Note '+g;const e=t.scales[0].ranges.find(x=>Math.round(x.value)===g);return e?e.label:String(g)};
   const mx=Math.max(1,...count.values()),H=pts?54:70,gs=pts?'gradePoints':'grades';
-  const spiegel=`<div class="ep-ns ${pts?'p':''}">${cats.map(g=>`<div><div class="ep-bar" style="height:${H}px">${count.get(g)?`<i class="task-end-grade ${esc(taskGradeClass(g,gs))}" style="height:${Math.max(3,count.get(g)/mx*(H-4))}px"></i>`:''}</div><b>${count.get(g)||(pts?'·':'0')}</b>${esc(lab(g))}</div>`).join('')}</div>`;
+  const spiegel=`<div class="ep-ns ${pts?'p':''}">${cats.map(g=>`<div><div class="ep-bar" style="height:${H}px">${count.get(g)?`<i class="task-end-grade ${esc(taskGradeClass(g,gs))}" style="height:${Math.max(3,count.get(g)/mx*(H-4))}px"></i>`:''}</div><span class="ep-lab">${esc(lab(g))}</span><b>${count.get(g)||(pts?'·':'0')}</b></div>`).join('')}</div>`;
   const weak=done.filter(r=>pts?r.value<5:Math.round(r.value)>=5).length;
   const kpi=`<div class="ep-kpi in">${mean!==null&&!part?`<span>Ø ${pts?'Notenpunkte':'Note'} <b>${pts?fmt(mean,1):fmt2(mean)}</b></span>`:''}${withRaw.length?`<span>Ø Punkte <b>${fmt(withRaw.reduce((a,r)=>a+r.raw,0)/withRaw.length,1)}</b></span>`:''}<span>Teilnehmende <b>${n}</b></span>${t.ab?`<span>Gruppe A <b>${t.rows.filter(r=>r.group==='A').length}</b> · B <b>${t.rows.filter(r=>r.group==='B').length}</b></span>`:''}${n&&!part?`<span>${pts?'unter 5 Punkten':'Note 5/6'} <b>${weak}</b></span>`:''}</div>`;
   const limT=s=>`<table class="ep-lim"><thead><tr><th>${pts?'NP':part?'Zeichen':'Note'}</th><th class="n">Punkte von</th><th class="n">bis</th></tr></thead><tbody>${s.ranges.filter(e=>e.valid).map(e=>`<tr><td><span class="task-end-grade ep-chip ${esc(e.cls)}">${esc(e.label)}</span></td><td class="n">${fmt(e.lower)}</td><td class="n">${esc(e.upper)}</td></tr>`).join('')}</tbody></table>`;
@@ -5098,6 +5098,47 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes){if(n.tagName==='IFRAME')watch(n);else n.querySelectorAll?.('iframe').forEach(watch)}}).observe(document.documentElement,{childList:true,subtree:true});
  // Druckfenster
  const open=window.open;window.open=function(...a){const w=open.apply(window,a);patch(w);return w};
+})();
+;
+
+/* ==== noten/notenspiegel-chart.js ==== */
+/* 9.86: Notenspiegel-Fenster (unter der Grundlinie zuerst Note/Punktwert, darunter fett die Anzahl – zwei ruhige Zeilen) als Säulendiagramm (nebeneinander statt 16 bzw. 6 Zeilen untereinander) – wie im Druck.
+   Die Tabelle wird weiter von der App erzeugt (Berechnung unverändert) und nur versteckt; das Diagramm liest ihre Werte.
+   Darunter die Kennzahlen: Ø, Teilnehmende und unter 5 Punkten bzw. Note 5/6. */
+(()=>{
+ const table=document.getElementById('notenspiegelTable');if(!table)return;
+ const dialog=table.closest('dialog'),wrap=table.closest('.table-wrap')||table;
+ const box=document.createElement('div');box.className='nsc';wrap.before(box);
+ const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ let last='';
+ function build(){
+  const rows=[...(table.tBodies[0]?.rows||[])].map(r=>{const chip=r.querySelector('th span')||r.querySelector('th');const lab=(chip?.textContent||'').replace(/^Note\s+/i,'').trim();
+   const cls=[...(chip?.classList||[])].filter(c=>(/^notenspiegel-/.test(c)&&c!=='notenspiegel-chip')||c==='grade-four-fail').join(' ');
+   const nums=[...r.querySelectorAll('td .notenspiegel-count span, td')].map(x=>x.textContent.trim());const cnt=Number((r.querySelector('.notenspiegel-count span')?.textContent||nums[0]||'0').replace(/\D+/g,''))||0;
+   const pct=(r.querySelector('.notenspiegel-count span:nth-child(2)')?.textContent||'').trim();return {lab,cls,cnt,pct,title:chip?.getAttribute('title')||''}}).filter(r=>r.lab);
+  if(!rows.length){dialog?.classList.remove('nsc-on');box.innerHTML='';return}
+  const head=table.tHead?.rows[0],kind=(head?.cells[0]?.textContent||'').trim(),n=(head?.cells[1]?.textContent.match(/n\s*=\s*(\d+)/)||[])[1]||rows.reduce((a,r)=>a+r.cnt,0);
+  const foot=table.tFoot?.rows[0],avgLab=(foot?.cells[0]?.textContent||'Durchschnitt').trim(),avg=(foot?.cells[1]?.textContent||'').replace(/\s*Punkte$/,'').trim();
+  const points=/punkte/i.test(kind),grades=!points&&rows.every(r=>/^[1-6]$/.test(r.lab));
+  const weak=points?rows.filter(r=>Number(r.lab)<5).reduce((a,r)=>a+r.cnt,0):grades?rows.filter(r=>Number(r.lab)>=5).reduce((a,r)=>a+r.cnt,0):null;
+  const mx=Math.max(1,...rows.map(r=>r.cnt));
+  const sig=JSON.stringify([rows,n,avg,kind]);if(sig===last)return;last=sig;
+  box.innerHTML=`<div class="nsc-cols ${points?'p':''}" style="grid-template-columns:repeat(${rows.length},1fr)">${rows.map(r=>`<div class="nsc-col" title="${esc((points?r.lab+' Punkte':grades?'Note '+r.lab:r.lab)+': '+r.cnt+(r.pct?' ('+r.pct+')':'')+(r.title?' – '+r.title:''))}"><div class="nsc-bar">${r.cnt?`<i class="${esc(r.cls)}" style="height:${Math.max(4,r.cnt/mx*100)}%"></i>`:''}</div><span>${esc(r.lab)}</span><b class="${r.cnt?'':'z'}">${r.cnt||'·'}</b></div>`).join('')}</div>`
+   +`<div class="nsc-kpi">${avg&&avg!=='—'?`<span>${points?'Ø Notenpunkte':esc(avgLab==='Mittelwert'?'Mittelwert':'Ø Note')} <b>${esc(avg)}</b></span>`:''}<span>Teilnehmende <b>${esc(n)}</b></span>${weak!==null?`<span>${points?'unter 5 Punkten':'Note 5/6'} <b>${weak}</b>${Number(n)?' ('+Math.round(weak/Number(n)*100)+' %)':''}</span>`:''}</div>`;
+  dialog?.classList.add('nsc-on')}
+ new MutationObserver(()=>{last='';build()}).observe(table,{childList:true,subtree:true,characterData:true});build();
+ const st=document.createElement('style');st.textContent=`
+ .notenspiegel-dialog.nsc-on .table-wrap:has(#notenspiegelTable){display:none}
+ .nsc{margin:6px 0 4px}.nsc:empty{display:none}
+ .nsc-cols{display:grid;gap:6px;align-items:end;padding:10px 6px 4px;border:1px solid #e3e9f1;border-radius:14px;background:#fff}.nsc-cols.p{gap:3px}
+ .nsc-col{display:flex;flex-direction:column;align-items:center;min-width:0;text-align:center;cursor:default}
+ .nsc-bar{width:100%;height:150px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid #d5deea;margin-bottom:5px}
+ .nsc-bar i{display:block;width:70%;max-width:46px;border-radius:6px 6px 0 0;padding:0!important;min-height:4px}
+ .nsc-col b{font-size:15px;color:#1f2a3d;line-height:1.2;margin-top:2px}.nsc-col b.z{color:#b8c3d2;font-weight:700}
+ .nsc-col span{font-size:12px;color:#7a889c;line-height:1.2}
+ .nsc-kpi{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 2px}.nsc-kpi span{border:1px solid #dfe6ef;border-radius:10px;padding:6px 12px;font-size:14px;background:#f6f8fb;color:#33445c}.nsc-kpi b{font-size:15px;color:#1f2a3d}
+ @media (max-width:540px){.nsc-bar{height:110px}.nsc-cols.p .nsc-col b{font-size:12px}.nsc-cols.p .nsc-col span{font-size:10.5px}}`;
+ document.head.append(st);
 })();
 ;
 
