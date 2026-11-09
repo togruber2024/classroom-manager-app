@@ -5529,7 +5529,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const ICON='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 20v-8M10 20V6M15 20v-10M20 20v-5M3 20.5h18"/></svg>';
  const byDate=(a,b)=>(a.date||'9999').localeCompare(b.date||'9999')||String(a.name).localeCompare(String(b.name),'de',{numeric:true});
  function ownItems(){const n=N();if(!n)return {exams:[],tests:[]};const own=x=>x.subject===currentSubject&&x.classId===currentClassId;
-  return {exams:n.collect('exam').filter(own).sort(byDate),tests:n.collect('test').filter(own).sort(byDate)}}
+  /* 10.05: jüngste oben, älteste unten (ohne Datum ganz unten) */const newest=(a,b)=>(b.date||'0000').localeCompare(a.date||'0000')||String(a.name).localeCompare(String(b.name),'de',{numeric:true});
+  return {exams:n.collect('exam').filter(own).sort(newest),tests:n.collect('test').filter(own).sort(newest)}}
  const examWord=()=>{try{return classUsesGradePoints()?'Klausuren':'Klassenarbeiten'}catch{return 'Klassenarbeiten'}};
  const className=()=>{try{return (classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId)?.label||''}catch{return ''}};
  function sheet(cls){const d=document.createElement('dialog');d.className='nsv-dialog nsv-sheet '+cls;document.body.append(d);d.addEventListener('close',()=>d.remove());return d}
