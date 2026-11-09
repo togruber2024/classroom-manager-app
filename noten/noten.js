@@ -4929,13 +4929,14 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   let m=t.match(/^(\d+(?:,\d+)?)\*?$/);if(m)return Number(m[1].replace(',','.'));
   m=t.match(/^([1-6])([+-])$/);if(m)return Number(m[1])+(m[2]==='+'?-1/3:1/3);
   m=t.match(/^([1-6])-([1-6])$/);if(m)return (Number(m[1])+Number(m[2]))/2;return null}
- const cmp=(points)=>(a,b)=>{if(a.v===null&&b.v===null)return a.n.localeCompare(b.n,'de');if(a.v===null)return 1;if(b.v===null)return -1;return (points?a.v-b.v:b.v-a.v)||a.n.localeCompare(b.n,'de')};
+ /* 9.84: Noch ohne Note („offen“) steht beim Sortieren nach Note am schwachen Ende: 6–1 bzw. 0–15 → offen zuerst, 1–6 bzw. 15–0 → offen zuletzt */
+ const cmp=(points)=>(a,b)=>{if(a.v===null&&b.v===null)return a.n.localeCompare(b.n,'de');if(a.v===null)return -1;if(b.v===null)return 1;return (points?a.v-b.v:b.v-a.v)||a.n.localeCompare(b.n,'de')};
  const byName=(a,b)=>a.n.localeCompare(b.n,'de');
- const flip=f=>(a,b)=>{if(a.v===null||b.v===null)return f(a,b);return -f(a,b)};
+ const flip=f=>(a,b)=>-f(a,b);
  const sorter=(mode,base)=>{const f=mode==='grade'?cmp(pts()):base;return rev()?(mode==='grade'?flip(f):(a,b)=>-f(a,b)):f};
  function paint(seg,mode){const r=rev(),cnt=seg.dataset?.kind==='count',x=seg.dataset?.max||'x',open=Number(seg.dataset?.open||0);for(const b of seg.querySelectorAll('[data-psort]')){const on=b.dataset.psort===mode,P=pts(),g=b.dataset.psort==='grade';
   const txt=!g?(on&&r?'Z–A':'A–Z'):cnt?(on&&r?'0–'+x:x+'–0'):(P?(on&&r?'15–0':'0–15'):(on&&r?'1–6':'6–1'));
-  let tip=!g?(on?(r?'Z–A · nochmal tippen: A–Z':'A–Z · nochmal tippen: Z–A'):'Alphabetisch'):cnt?(on?(r?'Wenigste Fehlende zuerst · nochmal tippen: meiste zuerst':'Meiste Fehlende zuerst · nochmal tippen: wenigste zuerst'):'Nach Anzahl fehlend – meiste zuerst'):(on?(r?'Nach Note, stärkste zuerst · nochmal tippen: schwächste zuerst':'Nach Note, schwächste zuerst · nochmal tippen: stärkste zuerst'):'Nach Note – schwächste zuerst');
+  let tip=!g?(on?(r?'Z–A · nochmal tippen: A–Z':'A–Z · nochmal tippen: Z–A'):'Alphabetisch'):cnt?(on?(r?'Wenigste Fehlende zuerst · nochmal tippen: meiste zuerst':'Meiste Fehlende zuerst · nochmal tippen: wenigste zuerst'):'Nach Anzahl fehlend – meiste zuerst'):(on?(r?'Nach Note: stärkste zuerst, ohne Note zuletzt · nochmal tippen: ohne Note und schwächste zuerst':'Nach Note: ohne Note zuerst, dann schwächste · nochmal tippen: stärkste zuerst'):'Nach Note – ohne Note und schwächste zuerst');
   const off=g&&!cnt&&open>0;if(off)tip='Erst möglich, wenn alle Ergebnisse eingetragen sind (noch '+open+' offen)';b.classList.toggle('ps-off',off);if(off)b.setAttribute('aria-disabled','true');else b.removeAttribute('aria-disabled');
   if(b.textContent!==txt)b.textContent=txt;if(b.title!==tip)b.title=tip;if(b.getAttribute('aria-pressed')!==String(on)){b.setAttribute('aria-pressed',String(on));b.setAttribute('aria-checked',String(on))}}}
  const segHtml=(cls,m)=>`<span class="${cls}" role="radiogroup" aria-label="Sortierung"><button type="button" role="radio" data-psort="name" aria-pressed="${m==='name'}" aria-checked="${m==='name'}" title="Alphabetisch">A–Z</button><button type="button" role="radio" data-psort="grade" aria-pressed="${m==='grade'}" aria-checked="${m==='grade'}" title="Nach Note – schwächste zuerst">${pts()?'0–15':'6–1'}</button></span>`;
@@ -4965,7 +4966,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  // Spalte (mit colspan) → Zelle
  function colPos(cells,cell){let p=0;for(const c of cells){if(c===cell)return p;p+=c.colSpan||1}return -1}
  function cellAt(row,pos){let p=0;for(const c of row.cells){const n=c.colSpan||1;if(pos>=p&&pos<p+n)return c;p+=n}return null}
- const cellText=c=>{if(!c)return '';const sym=c.querySelector('.test-rating-symbol[aria-label]');if(sym)return sym.getAttribute('aria-label');return (c.querySelector('.task-end-grade')||c).textContent.trim()};
+ const cellText=c=>{if(!c)return '';const sym=c.querySelector('.test-rating-symbol[aria-label]');if(sym)return sym.getAttribute('aria-label');const el=(c.querySelector('.task-end-grade')||c).cloneNode(true);/* 9.84: hochgestellten Abzug (z. B. „−1“ der Sprachrichtigkeit) nicht mitlesen */el.querySelectorAll('sup,.sr-minus,.semester-partial').forEach(x=>x.remove());return el.textContent.trim()};
  /* zählt als Eintrag: Note/Zeichen/Zahl – nicht „A“ (abwesend) o. ä. und nicht die eingeblendete Spalte des Vorquartals */
  const realVal=v=>{v=String(v||'').trim();return v!==''&&!(/^[a-zäöüß.]+$/i.test(v)&&!/^o$/i.test(v))};
  const hasEntry=(row,skip)=>[...row.cells].slice(1).some(c=>c!==skip&&!c.matches('.pq-mean-col,.previous-quarter-history-cell,.mh-pq,.task-add-column,.task-space-column')&&([...c.querySelectorAll('input:not([type=checkbox]):not([type=radio]),select')].some(i=>realVal(i.value))||/\d/.test(c.querySelector('.exam-ov-chip,.task-end-grade,[class*="chip"]')?.textContent||'')));
@@ -4985,7 +4986,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const items=rows.map(r=>({r,i:idxOf(r),n:(r.cells[0]?.querySelector('input')?.value||r.cells[0]?.textContent||'').trim(),v:mode==='grade'?keyFn(r):null}));
   let f;if(mode!=='grade')f=rev()?(a,b)=>b.i-a.i:(a,b)=>a.i-b.i;
   else if(kind==='count')f=rev()?(a,b)=>a.v-b.v||a.i-b.i:(a,b)=>b.v-a.v||a.i-b.i;
-  else{const P=pts();f=(a,b)=>{if(a.v===null&&b.v===null)return a.i-b.i;if(a.v===null)return 1;if(b.v===null)return -1;const d=P?a.v-b.v:b.v-a.v;return (rev()?-d:d)||a.i-b.i}}
+  else{const P=pts(),r=rev();f=(a,b)=>{if(a.v===null&&b.v===null)return a.i-b.i;if(a.v===null)return r?1:-1;if(b.v===null)return r?-1:1;const d=P?a.v-b.v:b.v-a.v;return (r?-d:d)||a.i-b.i}}
   const sorted=[...items].sort(f);const cur=trs(body);
   const same=sorted.every((x,k)=>x.r===cur.filter(r=>r.cells.length>=2)[k]);
   if(!same){const anchor=rows.at(-1).nextSibling;for(const x of sorted)body.insertBefore(x.r,anchor)}
@@ -5015,7 +5016,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    done.add(panel);const {t,sp}=found;
    let open=0;if(sp.kind==='grade'){for(const r of trs(t.tBodies[0]).filter(r=>r.cells.length>=2)){if(sp.key(r)===null&&sp.entry(r))open++}}
    let max=0;if(sp.kind==='count')for(const r of trs(t.tBodies[0]).filter(r=>r.cells.length>=2))max=Math.max(max,sp.key(r)||0);
-   const eff=mode==='grade'&&open?'name':mode;
+   const eff=mode;open=0;
    const seg=ensureSeg(panel,t,mode,sp.kind);if(seg){seg.dataset.open=String(open);seg.dataset.max=String(max);paint(seg,eff)}
    sortRows(t,eff,sp.key,sp.kind)}
  }
@@ -5025,7 +5026,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const mode=get(),bar=document.querySelector('.pl-bar');
   if(bar){let seg=bar.querySelector('.pl-sort');
    if(!seg){const w=document.createElement('span');w.innerHTML=segHtml('pl-seg pl-sort',mode);seg=w.firstChild;const r2=bar.querySelector('.pl-row2'),mean=r2?.querySelector('.pl-mean');if(r2){mean?mean.before(seg):r2.append(seg)}}
-   {const open=phoneOpen(phoneCards());seg.dataset.open=String(open);paint(seg,mode==='grade'&&open?'name':mode)}
+   seg.dataset.open='0';paint(seg,mode);
    /* passt die 2. Zeile nicht, wandert der Schalter rechts in die Hinweiszeile („Antippen zeigt …“) */
    const r2=bar.querySelector('.pl-row2'),stand=bar.querySelector('.pl-stand');const over=()=>{if(!r2)return false;const kids=[...r2.children].filter(k=>k.offsetParent&&getComputedStyle(k).display!=='none');const gap=parseFloat(getComputedStyle(r2).columnGap)||8;const need=kids.reduce((a,k)=>a+Math.max(k.scrollWidth,k.getBoundingClientRect().width),0)+gap*Math.max(0,kids.length-1);return need>r2.clientWidth+1};
    /* 9.74: ohne Hin- und Herschieben prüfen, ob der Schalter in die 2. Zeile passt (sonst Endlosschleife mit anderen Beobachtern) */
@@ -5038,7 +5039,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const cardEntry=c=>[...c.querySelectorAll('.qs-sq')].some(q=>{const t=q.textContent.trim();return t&&t!=='—'&&t!=='–'&&!/^[a-zäöü]+$/i.test(t.replace(/^o$/i,'0'))});
  const phoneOpen=cards=>cards.filter(c=>cardVal(c)===null&&cardEntry(c)).length;
  const phoneCards=()=>[...document.querySelectorAll('.qs-cards')].flatMap(b=>[...b.children].filter(c=>c.matches('.qs-card:not(.qd-card)')&&c.offsetParent!==null));
- function order(cards){let mode=get();if(mode==='grade'&&phoneOpen(cards))mode='name';cards.forEach((c,i)=>{if(!c.dataset.idx)c.dataset.idx=String(i)});const items=cards.map(c=>({c,n:(c.querySelector('.qs-name')?.textContent||'').trim(),i:Number(c.dataset.idx),v:mode==='grade'?cardVal(c):null}));return items.sort(sorter(mode,(a,b)=>a.i-b.i)).map(x=>x.c)}
+ function order(cards){let mode=get();cards.forEach((c,i)=>{if(!c.dataset.idx)c.dataset.idx=String(i)});const items=cards.map(c=>({c,n:(c.querySelector('.qs-name')?.textContent||'').trim(),i:Number(c.dataset.idx),v:mode==='grade'?cardVal(c):null}));return items.sort(sorter(mode,(a,b)=>a.i-b.i)).map(x=>x.c)}
  /* kein Tooltip am iPhone: Antippen des blassen Knopfs zeigt kurz den Hinweis */
  function hint(btn,text){document.querySelector('.ps-hint')?.remove();const h=document.createElement('div');h.className='ps-hint';h.textContent=text;document.body.append(h);const r=btn.getBoundingClientRect();h.style.top=Math.min(window.innerHeight-h.offsetHeight-8,r.bottom+6)+'px';h.style.left=Math.max(8,Math.min(window.innerWidth-h.offsetWidth-8,r.right-h.offsetWidth))+'px';setTimeout(()=>h.remove(),2600)}
  window.classroomPerfOrder=order;
