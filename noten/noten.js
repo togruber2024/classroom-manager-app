@@ -2246,7 +2246,10 @@ document.addEventListener('keydown',event=>{
   for(const names of Object.values(h?.sharedQuarterNames||{}))for(const key of Object.keys(names)){const name=rename(names[key]);if(name!==names[key]){names[key]=name;changed=true}}
   if(changed){const record=customSubjects.find(s=>s.id===currentSubject);if(record){record.pageNames={...source.pageNames};persistCustomSubjects()}else localStorage.setItem(builtInExtraPagesKey,JSON.stringify(builtInExtraPages));persistClasses()}
 },after(){
-  /* 9.79: stand man auf der (jetzt ausgeblendeten) Seite „Halbjahresnoten“, zur Quartalsnoten-Seite wechseln */
+  /* 9.81: Gibt es Quartalsnoten, aber (noch) keine Halbjahresnote, legt die App sie still an – die Halbjahresspalten (SoMi · Halbjahr,
+     Klassenarbeit, Halbjahr ∑) brauchen sie; die Gewichtung kommt aus den Fach-Einstellungen. Die Seite selbst ist ausgeblendet. */
+  {const gs=subjectExamGroups(currentSubject);if(currentClassId&&currentHalfYearId&&!window.__cmSemAuto&&gs.some(g=>g.type==='quarterSummary'&&g.halfYearId===currentHalfYearId)&&!gs.some(g=>g.type==='semester'&&g.halfYearId===currentHalfYearId)&&typeof createPeriodPage==='function'){window.__cmSemAuto=true;const pg=activePage;try{createPeriodPage(currentSubject,'Halbjahresnote','semester',currentHalfYearId);buildCustomSubjectPanels(currentSubject);try{buildCustomSettingRows();fillCustomDefaultInputs()}catch{}if(pg&&activePage!==pg)setPage(pg)}catch(e){console.warn('Halbjahresnote anlegen',e)}finally{window.__cmSemAuto=false}}}
+    /* 9.79: stand man auf der (jetzt ausgeblendeten) Seite „Halbjahresnoten“, zur Quartalsnoten-Seite wechseln */
   {const gs=subjectExamGroups(currentSubject),sem=gs.find(g=>g.type==='semester'&&g.pages.includes(activePage)),qs=sem&&gs.find(g=>g.type==='quarterSummary'&&g.halfYearId===sem.halfYearId);if(qs?.pages?.[0]&&!window.__cmSemRedirect){window.__cmSemRedirect=true;try{setPage(qs.pages[0])}finally{window.__cmSemRedirect=false}}}
   if(selection()!==1)document.getElementById('addSemesterQuick').classList.add('hide');
   const groups=subjectExamGroups(currentSubject),active=groups.find(g=>g.pages.includes(activePage)),hasYear=groups.some(g=>g.type==='halfYear'&&g.id===currentHalfYearId),school=active?.type==='schoolYear';
@@ -5320,10 +5323,18 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   setv(sect(/^Sonstige Mitarbeit/)?.querySelector(':scope>.qs-sh .qs-val i'),cellOfHead(/^Sonstige Mitarbeit$/));
   {const s=sect(/^Mündliche Mitarbeit/);if(s)setv([...s.querySelectorAll('.qs-val i')].pop(),cellOfHead(/^MM · Mittelwert/))}
   {const s=sect(/^Tests/);if(s)setv([...s.querySelectorAll('.qs-val i')].pop(),cellOfHead(/^Tests · Mittelwert/))}
-  /* 9.76: Mit Halbjahreszeilen (2. Quartal) bleibt die Klassenarbeit an ihrer Stelle zwischen „Sonstige Mitarbeit · Halbjahr“ und „Halbjahr ∑“ – kein Extra-Kasten */if(sect(/^Halbjahr( 2)? ∑/))return;
-  const exams=[...wrap.querySelectorAll('.qs-sect')].filter(x=>/^(Klassenarbeit|Klausur)/.test((x.querySelector('.qs-sh-l')?.textContent||'').trim()));exams.forEach(x=>x.remove());
-  const ins=[...edits.querySelectorAll('input')];if(ins.length<2||ins.some(i=>!i.value.trim()))return;
-  const box=document.createElement('div');box.className='qd-hjbox';const cap=document.createElement('div');cap.className='qd-hjcap';cap.textContent='Für das Halbjahr';box.append(cap,...exams);
+  /* 9.81: Notenbesprechung in zwei Schritten – zuerst nur die mündliche Seite (Sonstige Mitarbeit mit Mündlich, Tests, HA/Material)
+     und die Felder Selbsteinschätzung / Quartalsnote. Sind beide eingetragen, erscheint darunter „Für das Halbjahr“:
+     Sonstige Mitarbeit · Halbjahr, Klassenarbeit/Klausur, Halbjahr ∑ und das Feld für die eigene Halbjahresnote. */
+  const lab=x=>(x.querySelector('.qs-sh-l')?.textContent||'').replace(/\s+/g,' ').trim(),allS=[...wrap.querySelectorAll('.qs-sect')];
+  const hjSo=allS.find(x=>/^Sonstige Mitarbeit · Halbjahr/.test(lab(x))),hjSum=allS.find(x=>/^Halbjahr( 2)? ∑/.test(lab(x)));
+  const exams=allS.filter(x=>/^(Klassenarbeit|Klausur)/.test(lab(x)));[hjSo,...exams,hjSum].forEach(x=>x?.remove());
+  const fields=[...edits.children],hjField=fields.find(f=>/^Halbjahr/.test((f.querySelector('.qs-edit-t')?.textContent||f.textContent||'').trim()));
+  const ins=fields.filter(f=>f!==hjField).flatMap(f=>[...f.querySelectorAll('input')]);
+  if(ins.length<2||ins.some(i=>!i.value.trim())){hjField?.remove();return}
+  const box=document.createElement('div');box.className='qd-hjbox';const cap=document.createElement('div');cap.className='qd-hjcap';cap.textContent='Für das Halbjahr';box.append(cap);
+  if(hjSum){box.append(...[hjSo,...exams,hjSum].filter(Boolean));if(hjField){const line=document.createElement('div');line.className='qs-edits qd-edits qd-hjline';line.append(hjField);box.append(line)}edits.after(box);return}
+  hjField?.remove();box.append(...exams);
   if(sel>=1){const t=semTable();if(t){const name=detail.name,hh=[...t.tHead.rows[0].cells].map(c=>c.textContent.replace(/\s+/g,' ').trim()),row=[...t.tBodies[0].rows].find(r=>r.cells[0]?.textContent.trim()===name);
    if(row){let calc=null,inp=null;hh.forEach((h,k)=>{if(!/^Halbjahresnote/.test(h))return;const c=row.cells[k];const i=c?.querySelector('input');if(i)inp=i;else{const sp=c?.querySelector('span'),tx=(sp||c)?.textContent.trim();if(tx&&tx!=='—')calc={text:tx,cls:sp?.className||''}}});
     if(!calc){const so=cellOfHead(/^Sonstige Mitarbeit$/);hh.forEach((h,k)=>{if(/^Sonstige Mitarbeit/.test(h)&&!calc){const c=row.cells[k],sp=c?.querySelector('span'),tx=(sp||c)?.textContent.trim();if(tx&&tx!=='—')calc={text:tx,cls:sp?.className||''}}})}
