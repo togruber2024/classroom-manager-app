@@ -2318,6 +2318,23 @@ document.addEventListener('keydown',event=>{
  document.addEventListener('click',event=>{const b=event.target.closest('#confirmAddExam,#addSemesterQuick');if(!b)return;event.preventDefault();event.stopImmediatePropagation();if(b.id==='confirmAddExam')confirmAddExam();else addSemesterNote()},true);
  refreshExamNavigation();
 })();
+
+/* 10.11: „Halbjahresnoten“ nicht mehr im Menü „＋ Hinzufügen“ – die Halbjahresnote wird am Ende der Quartalsnoten des 2. Quartals eingetragen.
+   Der dafür nötige Bereich wird automatisch angelegt, sobald es im 2. Quartal Quartalsnoten gibt (ohne Seitenwechsel). Bestehende Daten bleiben. */
+(()=>{
+ const st=document.createElement('style');st.textContent='#addSemesterQuick{display:none!important}';document.head.append(st);
+ const tried=new Set();
+ function ensureSemester(){try{
+  const holder=(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId);if(!holder||!currentHalfYearId)return;
+  if(Number(holder.sharedQuarterSelection?.[currentHalfYearId])!==1)return;
+  const k=currentSubject+'|'+currentClassId+'|'+currentHalfYearId;if(tried.has(k))return;tried.add(k);
+  const groups=subjectExamGroups(currentSubject);
+  if(!groups.some(g=>g.type==='quarterSummary'&&g.halfYearId===currentHalfYearId))return;
+  if(groups.some(g=>g.type==='semester'&&g.halfYearId===currentHalfYearId))return;
+  const page=activePage;createPeriodPage(currentSubject,'Halbjahresnote','semester',currentHalfYearId);
+  buildCustomSubjectPanels(currentSubject);try{buildCustomSettingRows();fillCustomDefaultInputs()}catch{}if(page)setPage(page)}catch(e){console.warn('Halbjahresnote anlegen',e)}}
+ classroomHooks.add('setPage','quarter-navigation: Halbjahresnote automatisch',{after(){setTimeout(ensureSemester,0)}});
+})();
 ;
 
 /* ==== noten/excel-import.js ==== */
@@ -2735,7 +2752,8 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
   for(const t of document.querySelectorAll('[data-custom-panel] table:not(.compact-entry-table)')){const panel=t.closest('[data-custom-panel]'),key=panel.dataset.customPanel,kind=kindOf(key);const row=t.tHead?.rows[0];if(!row)continue;
    const on=QUARTERLY.has(kind)&&kind!=='quarterSummary',q=quarterOf(key,kind)+1;
    for(const th of row.cells){let tag='';
-    if(on&&th.cellIndex>0&&!th.matches('.task-add-column,.task-space-column,.task-spacer-column,.tests-half-cell')){
+    if(on&&th.classList.contains('tests-half-cell'))tag='Q1 + Q2';/* 10.11: Plättchen wie Q1/Q2 */
+    else if(on&&th.cellIndex>0&&!th.matches('.task-add-column,.task-space-column,.task-spacer-column')){
      if(th.hasAttribute('data-previous-quarter-cell'))tag='Q'+(q-1>0?q-1:1);else if(th.hasAttribute('data-next-quarter-cell'))tag='Q'+(q+1);else tag='Q'+q}
     if((th.dataset.qtag||'')!==tag){if(tag)th.dataset.qtag=tag;else delete th.dataset.qtag}}}}
  const _apply=apply;apply=function(){_apply();applyNormal()};
@@ -2751,7 +2769,10 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
  .compact-heading-label[data-qp]::before{content:attr(data-qp)}
  html:not(.ph-lite) body[data-module=noten] table:not(.compact-entry-table) th[data-qtag]:not(#_){position:relative;padding-top:30px!important}
  html:not(.ph-lite) body[data-module=noten] table:not(.compact-entry-table) th[data-qtag]::before{content:attr(data-qtag);position:absolute;top:8px;left:50%;transform:translateX(-50%);padding:1px 7px;border-radius:999px;background:#e8eef7;color:#3d5a80;font-size:11px;font-weight:700;letter-spacing:.03em;line-height:16px}
- html:not(.ph-lite) body[data-module=noten] table:not(.compact-entry-table) th[data-qtag] .previous-quarter-label{display:none}.compact-heading-label .qp-hide{display:none}
+ html:not(.ph-lite) body[data-module=noten] table:not(.compact-entry-table) th[data-qtag] .previous-quarter-label{display:none}
+ /* 10.11: Mittelwert-Spalten bei eingeblendetem anderen Quartal exakt gleich aufbauen (Vorbild „Testmittel · Q2“): Abstand Überschrift → Schalter 21 px */
+ html:not(.ph-lite) body[data-module=noten] table.previous-quarter-inline th[data-qtag] .mh-stack,html:not(.ph-lite) body[data-module=noten] table.next-quarter-inline th[data-qtag] .mh-stack{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;row-gap:21px!important;gap:21px!important;height:auto!important;min-height:0!important;padding-top:6px!important;margin:0!important}
+ html:not(.ph-lite) body[data-module=noten] table.previous-quarter-inline th[data-qtag]:has(.mh-stack),html:not(.ph-lite) body[data-module=noten] table.next-quarter-inline th[data-qtag]:has(.mh-stack){vertical-align:top!important}.compact-heading-label .qp-hide{display:none}
  html:not(.ph-lite) body[data-module=noten] .table-wrap:has(>table.compact-entry-table){max-height:calc(100dvh - 120px);overflow:auto;overscroll-behavior:contain;padding-top:0!important;border-top:0!important}
  html:not(.ph-lite) body[data-module=noten] table.compact-entry-table>thead{position:sticky;top:0;z-index:4}
  html:not(.ph-lite) body[data-module=noten] table.compact-entry-table>thead>tr{background:#fff}`;document.head.append(st);

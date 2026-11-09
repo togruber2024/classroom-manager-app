@@ -1057,3 +1057,6 @@ body[data-module=noten] .task-actions>:is([data-task-action="add-student"],[data
 body[data-module=noten] .table-wrap>table:not(.compact-entry-table)>tbody>tr>:first-child,
 body[data-module=noten] .table-wrap>table:not(.compact-entry-table)>tfoot>tr>:first-child{position:sticky;left:0;z-index:2;background:#fff;box-shadow:inset -1px 0 0 #dbe3ef,6px 0 8px -6px rgba(31,41,55,.18)}
 body[data-module=noten] .table-wrap>table:not(.compact-entry-table)>thead>tr>:first-child{position:sticky;left:0;z-index:3;background:#f6f8fc;box-shadow:inset -1px 0 0 #dbe3ef,6px 0 8px -6px rgba(31,41,55,.18)}
+
+/* 10.11: Schalter „% | x:y“ im Kopf „Schüler:in“ nicht bündig an der Spaltenlinie, sondern etwas nach links */
+body[data-module=noten] th.task-student-heading-with-weight .task-weight-menu-options>.mean-seg{position:relative;left:-16px}
