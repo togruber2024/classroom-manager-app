@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 09.11.2026 · Version 9.95
+Stand: 09.11.2026 · Version 9.96
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1272,3 +1272,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 9.93: Zusammenführen – Änderungsprotokoll prüft selbst alle 2 s (Safari meldet Änderungen aus eingebetteten Fenstern nicht zuverlässig); Hinweis bei Backups ohne Zeitangaben
 9.94: Fenster „Backup laden“ fürs iPhone angepasst; Tausenderpunkt bleibt
 9.95: Entsperren einer zurückgegebenen Arbeit wirkt auf den aktuellen Stand (Feld wurde nach der ersten Eingabe wieder grau)
+9.96: Klausur mit Sprachrichtigkeits-Abzug – Notenfeld behält beim Tippen den Cursor (kein Neuzeichnen der Seite)
