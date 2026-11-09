@@ -5258,16 +5258,20 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   render();d.showModal()}
 
  /* ---------- Vergleichsansicht ---------- */
- let asPct=true;
- function card(it,ref,mx){const pct=asPct;const cols=it.cats.map(c=>{const n=it.counts.get(c)||0,v=pct?(it.n?n/it.n:0):n;return `<div class="nsv-col"><div class="nsv-b">${n?`<i class="task-end-grade ${esc(taskGradeClass(c,it.system))}" style="height:${Math.max(3,v/mx*100)}%"></i>`:''}</div><span>${esc(label(it,c))}</span><b class="${n?'':'z'}">${n?(pct?Math.round(n/it.n*100)+'%':n):'·'}</b></div>`}).join('');
+ let asPct=true;const NARROW=matchMedia('(max-width:560px)');
+ /* 9.98: Reihenfolge – gleiche Klasse: erst die Kategorie des Ausgangs (Arbeiten bzw. Tests), je nach Datum (alt zuerst);
+    mit anderen Klassen: Ausgang zuerst, dann nach Datum. Der Ausgang bleibt Bezug für den Ø-Unterschied. */
+ function orderSel(sel){const ref=sel[0],kind=x=>x.taskId?'test':'exam',same=sel.every(x=>norm(x.classLabel)===norm(ref.classLabel)),byDate=(a,b)=>(a.date||'9999').localeCompare(b.date||'9999')||String(a.name).localeCompare(String(b.name),'de',{numeric:true});
+  return same?[...sel].sort((a,b)=>(kind(a)===kind(ref)?0:1)-(kind(b)===kind(ref)?0:1)||byDate(a,b)):[ref,...sel.slice(1).sort(byDate)]}
+ function card(it,ref,mx){const pct=asPct;const cols=it.cats.map(c=>{const n=it.counts.get(c)||0,v=pct?(it.n?n/it.n:0):n;return `<div class="nsv-col"><div class="nsv-b">${n?`<i class="task-end-grade ${esc(taskGradeClass(c,it.system))}" style="height:${Math.max(3,v/mx*100)}%"></i>`:''}</div><span>${esc(label(it,c))}</span><b class="${n?'':'z'}">${n?(pct?Math.round(n/it.n*100)+(NARROW.matches&&it.scale==='points'?'':'%'):n):'·'}</b></div>`}).join('');
   const isRef=it===ref,diff=!isRef&&it.mean!==null&&ref.mean!==null?it.mean-ref.mean:null,better=diff===null?null:(it.scale==='points'?diff>0:diff<0);
   const delta=diff===null||Math.abs(diff)<.005?'':`<span class="nsv-d ${better?'up':'dn'}">${diff>0?'+':'−'}${comma(Math.abs(diff),it.scale==='points'?1:2)} zu ${esc(it.classLabel===ref.classLabel?ref.name:ref.classLabel)}</span>`;
   return `<div class="nsv-card${isRef?' ref':''}"><div class="nsv-h"><b>${esc(it.name)} · ${esc(it.classLabel)}</b><small>${esc(it.subjectLabel)}${it.date?' · '+dateDe(it.date):''}${isRef?' · Bezug':''}</small></div><div class="nsv-cols${it.scale==='points'?' p':''}" style="grid-template-columns:repeat(${it.cats.length},1fr)">${cols}</div><div class="nsv-kpi"><span>Ø <b>${comma(it.mean,it.scale==='points'?1:2)}</b></span><span>n <b>${it.n}</b></span><span>${it.scale==='points'?'unter 5 P.':'Note 5/6'} <b>${it.weak}</b> (${it.n?Math.round(it.weak/it.n*100):0} %)</span>${delta}</div></div>`}
- function showCompare(sel){const ref=sel[0];const d=document.createElement('dialog');d.className='nsv-dialog nsv-cmp';document.body.append(d);d.addEventListener('close',()=>d.remove());
+ function showCompare(sel,opts={}){const ref=sel[0];sel=orderSel(sel);const d=document.createElement('dialog');d.className='nsv-dialog nsv-cmp';document.body.append(d);d.addEventListener('close',()=>d.remove());
   function render(){const mx=Math.max(1e-9,...sel.flatMap(it=>[...it.counts.values()].map(n=>asPct?(it.n?n/it.n:0):n)));const cols=sel.length<=2?2:sel.length<=4?2:3;
    d.innerHTML=`<div class="nsv-top"><h2>Notenspiegel im Vergleich</h2><div class="mean-seg nsv-seg" role="radiogroup" aria-label="Darstellung"><button type="button" role="radio" data-m="n" aria-checked="${!asPct}">Anzahl</button><button type="button" role="radio" data-m="p" aria-checked="${asPct}">Prozent</button></div><button type="button" data-back>Auswahl ändern</button><button type="button" data-print>Drucken</button><button type="button" class="nsv-pri" data-x>Schließen</button></div><div class="nsv-grid" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${sel.map(it=>card(it,ref,mx)).join('')}</div>`;
    d.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{asPct=b.dataset.m==='p';render()});
-   d.querySelector('[data-x]').onclick=()=>d.close();d.querySelector('[data-back]').onclick=()=>{d.close();openPicker()};
+   d.querySelector('[data-x]').onclick=()=>d.close();d.querySelector('[data-back]').onclick=()=>{d.close();(opts.back||openPicker)()};
    d.querySelector('[data-print]').onclick=()=>print(d,sel)}
   render();d.showModal()}
  function print(d,sel){const css=[...document.querySelectorAll('style')].map(s=>s.textContent).filter(t=>/nsv-|task-end-grade|\.g[1-6]/.test(t)).join('\n');
@@ -5277,6 +5281,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   f.contentDocument.open();f.contentDocument.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>${links}<style>${css}@page{size:A4 landscape;margin:10mm}body{margin:0;background:#fff;font:13px/1.4 -apple-system,system-ui,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}.nsv-top button,.nsv-top .mean-seg{display:none!important}.nsv-dialog{position:static;box-shadow:none;border:0;padding:0;max-height:none;width:auto}.nsv-card{break-inside:avoid}.nsv-b{height:${sel.length>4?90:110}px!important}</style></head><body><div class="nsv-dialog nsv-cmp">${d.innerHTML}</div><p style="color:#7a889c;font-size:11px;margin-top:8px">Classroom-Manager · gedruckt am ${new Date().toLocaleDateString('de-DE')}</p></body></html>`);f.contentDocument.close();
   setTimeout(()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){console.error(e)}setTimeout(()=>f.remove(),60000)},400)}
 
+ window.classroomNsv={collect,stats,showCompare,card:(it,ref,mx)=>card(it,ref,mx),setPct:v=>{asPct=v},getPct:()=>asPct,meanTxt,spark,label,norm,dateDe,comma,esc};
  /* ---------- Knopf ---------- */
  const btn=document.createElement('button');btn.type='button';btn.id='compareNotenspiegel';btn.textContent='Vergleichen';btn.title='Diesen Notenspiegel mit anderen Klassen oder Fächern vergleichen';btn.onclick=()=>openPicker();printBtn.before(btn);
  // Nur bei Klassenarbeiten/Klausuren und Tests (nicht bei Mitarbeit/Hausaufgaben)
@@ -5315,7 +5320,83 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .nsv-col span{font-size:11.5px;color:#7a889c;line-height:1.2}.nsv-col b{font-size:11.5px;line-height:1.3}.nsv-col b.z{color:#b8c3d2}
  .nsv-kpi{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.nsv-kpi span{border:1px solid #dfe6ef;border-radius:9px;padding:3px 9px;font-size:12.5px;background:#fff;color:#33445c}
  .nsv-kpi .nsv-d{font-weight:650}.nsv-kpi .up{background:#eaf7ef;border-color:#bfe0c9;color:#1d6b3a}.nsv-kpi .dn{background:#fdeeee;border-color:#efc4c0;color:#9b2f2a}
- @media (max-width:760px){.nsv-grid{grid-template-columns:1fr!important}.nsv-row{grid-template-columns:24px 1fr 80px;padding:8px 10px}.nsv-dialog{padding:18px 14px}}`;
+ .nsv-dialog[open]{margin:auto}@media (max-width:560px){.nsv-cols.p .nsv-col b,.nsv-cols.p .nsv-col span{font-size:9px}.nsv-b{height:90px}.nsv-cmp{padding:12px!important;width:100vw!important;max-width:100vw!important;height:100dvh;max-height:100dvh!important;margin:0!important;border-radius:0!important}.nsv-top{gap:6px!important}.nsv-top h2{font-size:18px;flex:1 1 100%!important}.nsv-top button:not(#_):not(#__){min-height:34px!important;padding:0 10px!important;font-size:13.5px!important}.nsv-top .nsv-seg{order:-0}.nsv-top [data-x]{margin-left:auto}.nsv-top [data-print]{display:none!important}.nsv-top h2{flex:1 1 auto!important}.nsv-top [data-x]:not(#_):not(#__){order:-1;width:34px;padding:0!important;font-size:0!important;border-radius:50%!important;background:#fff!important;color:#2f5f9b!important;border-color:#cfd9e6!important}.nsv-top [data-x]::after{content:'✕';font-size:15px}.nsv-top h2{order:-2}}@media (max-width:760px){.nsv-grid{grid-template-columns:1fr!important}.nsv-row{grid-template-columns:24px 1fr 80px;padding:8px 10px}.nsv-dialog{padding:18px 14px}}`;
+ document.head.append(st);
+})();
+;
+
+/* ==== noten/phone-notenspiegel.js ==== */
+/* 9.98: iPhone (Kartenansicht) – runder Knopf „Notenspiegel“ neben „11 | 10,6“.
+   Öffnet alle Notenspiegel der Klasse untereinander (Klassenarbeiten bzw. Klausuren, darunter Tests), nach Datum (alt zuerst),
+   umschaltbar Anzahl | Prozent. „Vergleichen“: Arbeiten der Klasse und anderer Klassen abhaken (bis 4 bei Notenpunkten,
+   bis 6 bei Noten insgesamt) – die Ansicht stammt aus notenspiegel-compare.js. */
+(()=>{
+ const N=()=>window.classroomNsv;
+ const ICON='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 20v-8M10 20V6M15 20v-10M20 20v-5M3 20.5h18"/></svg>';
+ const byDate=(a,b)=>(a.date||'9999').localeCompare(b.date||'9999')||String(a.name).localeCompare(String(b.name),'de',{numeric:true});
+ function ownItems(){const n=N();if(!n)return {exams:[],tests:[]};const own=x=>x.subject===currentSubject&&x.classId===currentClassId;
+  return {exams:n.collect('exam').filter(own).sort(byDate),tests:n.collect('test').filter(own).sort(byDate)}}
+ const examWord=()=>{try{return classUsesGradePoints()?'Klausuren':'Klassenarbeiten'}catch{return 'Klassenarbeiten'}};
+ const className=()=>{try{return (classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId)?.label||''}catch{return ''}};
+ function sheet(cls){const d=document.createElement('dialog');d.className='nsv-dialog nsv-sheet '+cls;document.body.append(d);d.addEventListener('close',()=>d.remove());return d}
+
+ /* ---------- Alle Notenspiegel der Klasse ---------- */
+ function openList(){const n=N();if(!n||document.querySelector('dialog.nsv-sheet[open]'))return;const {exams,tests}=ownItems();const d=sheet('nsv-list-sheet');
+  function render(){const one=it=>{const mx=Math.max(1e-9,...[...it.counts.values()].map(c=>n.getPct()?(it.n?c/it.n:0):c));return n.card(it,it,mx).replace('nsv-card ref','nsv-card').replace(' · Bezug','')};
+   const sec=(t,xs)=>xs.length?`<div class="nsv-sec"><span>${t}</span><span>${xs.length}</span></div>${xs.map(one).join('')}`:'';
+   d.innerHTML=`<div class="nsv-shead"><h2>Notenspiegel · ${n.esc(className())}</h2><button type="button" class="nsv-sbtn" data-cmp>Vergleichen</button><button type="button" class="nsv-x" data-x aria-label="Schließen">✕</button></div>
+   <div class="nsv-sbody"><div class="nsv-center"><div class="mean-seg nsv-seg" role="radiogroup" aria-label="Darstellung"><button type="button" role="radio" data-m="n" aria-checked="${!n.getPct()}">Anzahl</button><button type="button" role="radio" data-m="p" aria-checked="${n.getPct()}">Prozent</button></div></div>
+   ${sec(examWord(),exams)}${sec('Tests',tests)}${!exams.length&&!tests.length?`<p class="nsv-empty">Für ${n.esc(className())} gibt es noch keine Ergebnisse von ${examWord()} oder Tests.</p>`:''}</div>`;
+   d.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{n.setPct(b.dataset.m==='p');const t=d.querySelector('.nsv-sbody').scrollTop;render();d.querySelector('.nsv-sbody').scrollTop=t});
+   d.querySelector('[data-x]').onclick=()=>d.close();d.querySelector('[data-cmp]').onclick=()=>{d.close();openPick()}}
+  render();d.showModal()}
+
+ /* ---------- Auswahl zum Vergleichen ---------- */
+ let pick=null;
+ function openPick(keep){const n=N();if(!n)return;const own=ownItems(),label=className(),subject=currentSubject;
+  if(!keep||!pick)pick={ids:[],filter:'subject',cache:null};pick.cache??=[...n.collect('exam'),...n.collect('test')];
+  const pool=pick.cache,d=sheet('nsv-pick-sheet');
+  function render(){const sel=pick.ids.map(id=>pool.find(x=>x.id===id)).filter(Boolean),scale=sel[0]?.scale||null,max=scale==='points'?4:6,full=sel.length>=max;
+   const others=pool.filter(x=>!(x.subject===subject&&x.classId===currentClassId)&&(!x.lockable||x.locked)).filter(x=>pick.filter==='all'?true:pick.filter==='class'?n.norm(x.classLabel)===n.norm(label):x.subject===subject).sort((a,b)=>a.subjectLabel.localeCompare(b.subjectLabel,'de')||a.classLabel.localeCompare(b.classLabel,'de',{numeric:true})||byDate(a,b));
+   const row=(x,showCls)=>{const on=pick.ids.includes(x.id),bad=scale&&x.scale!==scale,dis=!on&&(bad||full);
+    return `<button type="button" class="nsv-prow${dis?' dis':''}" data-id="${n.esc(x.id)}" ${dis?'aria-disabled="true"':''}><span class="nsv-cb${on?' on':''}">${on?'✓':''}</span><span class="nsv-nm"><b>${n.esc(x.name)}</b>${showCls?' · '+n.esc(x.classLabel):' · '+n.dateDe(x.date)}${x.locked?' <span class="nsv-lk">🔒</span>':''}<small>${showCls&&x.date?n.dateDe(x.date)+' · ':''}Ø ${n.comma(x.mean,x.scale==='points'?1:2)} · n ${x.n}${pick.ids[0]===x.id?' · Bezug':''}</small></span>${bad?'<span class="nsv-sp"></span>':n.spark(x)}</button>`};
+   const groups=new Map();for(const x of others){const g=x.subjectLabel;if(!groups.has(g))groups.set(g,[]);groups.get(g).push(x)}
+   const fl={subject:'gleiches Fach',class:'gleiche Klasse',all:'alle'}[pick.filter];
+   d.innerHTML=`<div class="nsv-shead"><h2>Vergleichen · bis ${scale?max:'6'}</h2><button type="button" class="nsv-x" data-x aria-label="Schließen">✕</button></div>
+   <div class="nsv-sbody">${own.exams.length?`<div class="nsv-sec"><span>${examWord()}</span></div>`+own.exams.map(x=>row(x,false)).join(''):''}${own.tests.length?`<div class="nsv-sec"><span>Tests</span></div>`+own.tests.map(x=>row(x,false)).join(''):''}
+   ${[...groups].map(([g,xs])=>`<div class="nsv-sec"><span>Andere Klassen · ${n.esc(g)}</span></div>`+xs.map(x=>row(x,true)).join('')).join('')||`<p class="nsv-empty">Keine zurückgegebenen Arbeiten anderer Klassen (${fl}).</p>`}
+   <div class="nsv-center"><button type="button" class="nsv-sbtn" data-f>Filter: ${fl} ▾</button></div><p class="nsv-hint">Die zuerst gewählte Arbeit ist der Bezug für den Unterschied im Ø. Andere Klassen: nur zurückgegebene.</p></div>
+   <div class="nsv-sfoot"><span><b>${sel.length} von ${scale?max:'…'}</b> gewählt</span><button type="button" class="nsv-pri" data-go ${sel.length>=2?'':'disabled'}>Vergleichen</button></div>`;
+   d.querySelector('[data-x]').onclick=()=>d.close();
+   d.querySelector('[data-f]').onclick=()=>{pick.filter={subject:'class',class:'all',all:'subject'}[pick.filter];const t=d.querySelector('.nsv-sbody').scrollTop;render();d.querySelector('.nsv-sbody').scrollTop=t};
+   d.querySelectorAll('.nsv-prow:not([aria-disabled])').forEach(b=>b.onclick=()=>{const id=b.dataset.id,i=pick.ids.indexOf(id);if(i>=0)pick.ids.splice(i,1);else pick.ids.push(id);const t=d.querySelector('.nsv-sbody').scrollTop;render();d.querySelector('.nsv-sbody').scrollTop=t});
+   d.querySelector('[data-go]').onclick=()=>{const s=pick.ids.map(id=>pool.find(x=>x.id===id)).filter(Boolean);d.close();n.showCompare(s,{back:()=>openPick(true)})}}
+  render();d.showModal()}
+ window.classroomPhoneNotenspiegel=openList;
+
+ /* ---------- Knopf in der Kartenleiste ---------- */
+ function place(){for(const row of document.querySelectorAll('.pl-bar .pl-row2')){if(row.querySelector('.pl-ns'))continue;const b=document.createElement('button');b.type='button';b.className='pl-ns';b.title='Notenspiegel der Klasse';b.setAttribute('aria-label','Notenspiegel der Klasse');b.innerHTML=ICON;b.onclick=e=>{e.stopPropagation();openList()};row.append(b)}}
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(place);place();
+
+ const st=document.createElement('style');st.textContent=`
+ .pl-bar .pl-row2 .pl-mean button:not(#_){min-width:0;padding:0 10px}
+ .pl-ns{flex:none;width:40px;height:40px;margin-left:8px;border-radius:50%;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;display:inline-grid;place-items:center;padding:0;cursor:pointer}
+ .pl-ns:active{background:#eaf0fa}
+ .nsv-sheet{width:min(560px,100vw);max-width:100vw;height:min(100dvh,900px);max-height:100dvh;padding:0!important;display:flex;flex-direction:column;overflow:hidden}
+ .nsv-sheet[open]{display:flex}
+ @media (max-width:560px){.nsv-sheet{width:100vw;height:100dvh;border-radius:0!important;margin:0!important}}
+ .nsv-shead{display:flex;align-items:center;gap:8px;padding:12px 12px 10px 16px;border-bottom:1px solid #e3e9f1;background:#fff;flex:none}
+ .nsv-shead h2{flex:1;margin:0!important;font-size:18px!important;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .nsv-sbody{flex:1;overflow:auto;padding:12px;background:#f6f8fc;-webkit-overflow-scrolling:touch}
+ .nsv-sbtn{height:36px;padding:0 12px;border-radius:10px;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;font:inherit;font-weight:650;font-size:14px;cursor:pointer}
+ .nsv-x{width:36px;height:36px;border-radius:50%;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;font-size:16px;padding:0;cursor:pointer}
+ .nsv-center{display:flex;justify-content:center;margin:2px 0 10px}
+ .nsv-sec{display:flex;justify-content:space-between;font-size:12px;font-weight:750;color:#7a889c;text-transform:uppercase;letter-spacing:.05em;margin:10px 4px 8px}
+ .nsv-sheet .nsv-card{background:#fff;margin-bottom:10px}
+ .nsv-prow{display:grid;grid-template-columns:24px 1fr 104px;align-items:center;gap:10px;width:100%;padding:9px 12px;border:1px solid #e3e9f1;border-radius:14px;margin:0 0 8px;background:#fff;font:inherit;text-align:left;color:inherit;cursor:pointer}
+ .nsv-prow.dis{opacity:.45;cursor:default}.nsv-prow .nsv-sp{height:26px}
+ .nsv-hint{font-size:12px;color:#7a889c;text-align:center;margin:6px 8px 4px}
+ .nsv-sfoot{flex:none;display:flex;align-items:center;gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #e3e9f1;background:#fff}.nsv-sfoot span{flex:1;color:#66758a;font-size:13.5px}`;
  document.head.append(st);
 })();
 ;
