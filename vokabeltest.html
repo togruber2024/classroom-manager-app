@@ -24,7 +24,7 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
 .done{position:fixed;inset:0;background:#f6f8fcf2;display:none;align-items:center;justify-content:center;padding:20px;z-index:5}.done.on{display:flex}.done .card{max-width:520px;padding:28px;text-align:center}.done h2{margin:0 0 8px}
 .err{padding:30px;max-width:640px;margin:40px auto;text-align:center}
 @media (max-width:760px){.row{grid-template-columns:28px 1fr;gap:8px}.row.head{display:none}.row>.n{grid-row:span 4}.gen{justify-content:flex-start}}
-</style></head><body>
+.prep{padding:22px 24px;max-width:640px;margin:0 auto}.prep h1{margin-bottom:10px}.st{font-weight:650;font-size:1.05rem;display:flex;align-items:center;gap:10px}.st.ok{color:#1f7a45;font-size:1.35rem}.st.bad{color:#b42318}.spin{width:18px;height:18px;border:3px solid #cfd9e6;border-top-color:#2f5f9b;border-radius:50%;animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}.steps{margin:16px 0 0;padding-left:22px}.steps li{margin:0 0 14px}.net{margin-top:8px;padding:8px 12px;border-radius:10px;font-weight:650;font-size:.95rem}.net.on{background:#fff4e5;color:#8a4b0a}.net.off{background:#e7f6ec;color:#1f7a45}.netwarn{position:sticky;top:0;z-index:5;margin:0 0 12px;padding:10px 14px;border-radius:12px;background:#fff4e5;color:#8a4b0a;font-weight:650;text-align:center}.netwarn[hidden]{display:none}</style></head><body>
 <div id="app"></div>
 <script>
 (async()=>{
@@ -32,6 +32,24 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
  const fail=msg=>{app.innerHTML='<div class="card err"><h1>Vokabeltest</h1><p class="muted">'+esc(msg)+'</p></div>'};
  const b64=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u};
+ /* 10.57: Offline-Speicher (Flugmodus während des Tests). QR-Code 1 „iPads vorbereiten“ öffnet #vorbereiten. */
+ const swOk='serviceWorker' in navigator&&'caches' in window;
+ if(swOk){try{navigator.serviceWorker.register('vt-sw.js',{scope:'./vokabeltest.html'}).catch(()=>{})}catch{}}
+ const pageUrl=location.href.split('#')[0].split('?')[0];
+ addEventListener('hashchange',()=>location.reload());/* neuer QR-Code im selben Tab */
+ async function offlineReady(){if(!swOk)return false;try{return !!(await caches.match(pageUrl))}catch{return false}}
+ if(/^#vorbereiten/.test(location.hash)){
+  document.title='iPad vorbereiten · Vokabeltest';
+  app.innerHTML='<div class="card prep"><h1>iPad vorbereiten</h1><p class="st" id="st"><span class="spin"></span> Der Vokabeltest wird auf diesem iPad gespeichert …</p>'
+   +'<ol class="steps" id="steps" hidden><li><b>Flugmodus einschalten.</b> Kontrollzentrum öffnen (oben rechts nach unten wischen) und auf das Flugzeug ✈︎ tippen. WLAN muss aus sein.<div class="net" id="net"></div></li>'
+   +'<li><b>QR-Code deiner Gruppe scannen</b> (A oder B), sobald deine Lehrkraft ihn zeigt. Der Test öffnet sich ohne Internet.</li>'
+   +'<li><b>Nach dem Abgeben:</b> Flugmodus wieder ausschalten und die Datei per AirDrop an deine Lehrkraft senden.</li></ol></div>';
+  const net=()=>{const n=document.getElementById('net');if(!n)return;const on=navigator.onLine;n.className='net '+(on?'on':'off');n.textContent=on?'Internet ist noch an – bitte Flugmodus einschalten.':'✓ Flugmodus ist an – jetzt den Test-QR-Code scannen.'};
+  addEventListener('online',net);addEventListener('offline',net);
+  let tries=0;const check=async()=>{const ok=await offlineReady();const st=document.getElementById('st');
+   if(ok){st.className='st ok';st.textContent='✓ Offline bereit';document.getElementById('steps').hidden=false;net();return}
+   if(++tries>40||!swOk){st.className='st bad';st.textContent=swOk?'Noch nicht bereit. Bitte mit Internet diesen QR-Code noch einmal scannen.':'Dieses Gerät kann den Test nicht offline speichern. Der Test geht nur mit Internet.';return}
+   setTimeout(check,500)};check();return}
  let test;
  try{const h=decodeURIComponent(location.hash.slice(1));if(!h)throw new Error('Kein Test im Link. Bitte den QR-Code noch einmal scannen.');
   let bytes;if(h.startsWith('z1.')){if(typeof DecompressionStream!=='function')throw new Error('Bitte Safari aktualisieren.');bytes=new Uint8Array(await new Response(new Blob([b64(h.slice(3))]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())}
@@ -51,7 +69,8 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
    '<span class="gen">'+['m','f','n'].map(g=>'<button type="button" data-g="'+g+'"'+(kind==='n'?'':' disabled')+(a.ge===g?' class="on"':'')+' aria-label="Genus '+g+'">'+g+'</button>').join('')+'</span>'+
    '<input class="in" data-k="m" '+off+' placeholder="Bedeutung" value="'+esc(a.m)+'"></div>'}).join('')+
   '<div class="foot"><div style="display:flex;align-items:center;gap:12px"><div class="bar"><i id="bar"></i></div><span class="muted" id="cnt"></span></div><button class="btn" id="go">Abgeben</button></div></div>'+
-  '<div class="done" id="done"><div class="card"><h2>Fast fertig!</h2><p class="muted" id="dmsg">Tippe auf „Per AirDrop senden“ und wähle das Gerät deiner Lehrkraft.</p><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn" id="again">Per AirDrop senden</button><button class="btn sec" id="edit">Zurück zum Test</button></div></div></div>';
+  '<div class="done" id="done"><div class="card"><h2>Fast fertig!</h2><p class="muted" id="dmsg">Schalte den Flugmodus aus. Tippe dann auf „Per AirDrop senden“ und wähle das Gerät deiner Lehrkraft.</p><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn" id="again">Per AirDrop senden</button><button class="btn sec" id="edit">Zurück zum Test</button></div></div></div>';
+ {const bn=document.createElement('div');bn.className='netwarn';bn.hidden=true;bn.textContent='Bitte Flugmodus einschalten – der Test läuft ohne Internet.';app.prepend(bn);const upd=async()=>{bn.hidden=!(navigator.onLine&&await offlineReady())};addEventListener('online',upd);addEventListener('offline',upd);upd()}
  const filled=a=>(a.l.trim()||a.m.trim())?1:0;
  const count=()=>{const n=test.r.filter(([f,k],i)=>{const a=draft.a[i];return k==='x'?a.m.trim():(a.l.trim()&&a.m.trim()&&(k!=='n'||a.ge))}).length;document.getElementById('cnt').textContent=n+' von '+test.r.length+' ausgefüllt';document.getElementById('bar').style.width=(100*n/test.r.length)+'%'};
  app.addEventListener('input',e=>{const t=e.target;if(t.id==='nm'){draft.name=t.value;save();return}const row=t.closest('.row');if(!row||!t.dataset.k)return;draft.a[+row.dataset.i][t.dataset.k]=t.value;save();count()});
