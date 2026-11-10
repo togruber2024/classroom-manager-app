@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.47
+Stand: 10.11.2026 · Version 10.48
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1326,3 +1326,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.45: Hinweis-Pillen über den Notenkarten mittig
 10.46: iPhone – Notenspiegel ohne ↗/Sprung zur Arbeit
 10.47: Kompaktansicht und Notenspiegel als Symbol, Import entfällt
+10.48: Schülerübersicht- und Papierkorb-Symbol, Vokabular ergänzen, Fächer-Fenster Knopfgröße

@@ -1070,3 +1070,6 @@ html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_)
 html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_):not(#__) span{position:absolute!important;right:-7px;top:-8px;font-size:0!important;line-height:0}
 html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_):not(#__) span::after{content:attr(data-q);display:block;min-width:20px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#9aa9bd;color:#fff;font:800 10.5px/18px system-ui,-apple-system,sans-serif;text-align:center;letter-spacing:.01em}
 html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_):not(#__):has(input:checked) span::after{background:#2f5f9b}
+
+/* 10.48: „−“ im Fenster „Fächer umbenennen“ so groß wie das Zahnrad */
+.rename-row-dialog .rename-row-remove:not(#_){width:34px;height:34px;min-width:34px;min-height:34px;padding:0;border-radius:10px;justify-self:center}
