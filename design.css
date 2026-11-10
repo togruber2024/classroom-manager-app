@@ -1073,3 +1073,8 @@ html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_)
 
 /* 10.48: „−“ im Fenster „Fächer umbenennen“ so groß wie das Zahnrad */
 .rename-row-dialog .rename-row-remove:not(#_){width:34px;height:34px;min-width:34px;min-height:34px;padding:0;border-radius:10px;justify-self:center}
+/* 10.49: Kopfleiste – oben rund = Ansicht (1. Quartal, Kompakt, Sortierung, Farben, Vollbild), unten eckig = Aktionen (… Drucken · Auffällig · Löschen) */
+html:not(.ph-lite) body[data-module=noten] .panel>.section-title>.oral-display-actions>:is(.fs-btn,label.previous-quarter-toggle,label.compact-view-toggle):not(#_):not(#__):not(#___){width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;padding:0!important;border-radius:999px!important}
+body[data-module=noten] .panel>.section-title:has(>.oral-display-actions):not(#_){row-gap:10px}
+body[data-module=noten] .is-compact-view .task-actions>.ew-btn:not(#_){display:inline-flex!important}
+html:not(.ph-lite) body[data-module=noten] .panel>.section-title>.task-actions>.page-print-button:not(#_):not(#__){border-color:#a8bdd8!important}
