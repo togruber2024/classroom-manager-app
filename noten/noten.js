@@ -3384,9 +3384,10 @@ html.fs-view .fs-hide{display:none!important}
   const newSec=name=>{sec={name,entries:[]};out.sections.push(sec);last=null;paused=false};
   for(const items of pages){if(stopped)break;const rows=rowsOf(items);if(!rows.length)continue;
    /* Spalten der Seite bestimmen: linker Rand (häufigster Zeilenanfang) und die drei folgenden Spaltenanfänge */
-   const starts=rows.filter(r=>r.items.length>=2).map(r=>r.items[0].x),left=mode(starts);if(left==null)continue;
+   /* 10.36: Übungen unten auf der Seite nicht für die Spaltenerkennung nutzen */const cutY=rows.find(r=>/^ÜBUNGEN$/.test(joinText(r.items)))?.y,colRows=cutY==null?rows:rows.filter(r=>r.y>cutY+1);
+   const starts=colRows.filter(r=>r.items.length>=2).map(r=>r.items[0].x),left=mode(starts);if(left==null)continue;
    /* Spalten nur aus Zeilen ableiten, die wie Vokabelzeilen aussehen (Anfang am linken Rand, mehrere Teile) */
-   const cand=rows.filter(r=>Math.abs(r.items[0].x-left)<6&&r.items.length>=2);
+   const cand=colRows.filter(r=>Math.abs(r.items[0].x-left)<6&&r.items.length>=2);
    const c2=mode(cand.map(r=>r.items.find(i=>i.x>left+40&&i.x<left+150)?.x).filter(x=>x!=null));
    const c3=c2!=null?mode(cand.map(r=>r.items.find(i=>i.x>c2+60&&i.x<c2+200)?.x).filter(x=>x!=null)):null;
    const c4=c3!=null?mode(cand.map(r=>r.items.find(i=>i.x>c3+100)?.x).filter(x=>x!=null)):null;
@@ -3411,7 +3412,7 @@ html.fs-view .fs-hide{display:none!important}
      if(!sec)newSec(/^T/.test(out.lesson)?'Transitio '+out.lesson.slice(1):'Lektion '+(out.lesson||''));
      if(sec.skip)continue;
      last={lemma:p1,info:p2,meaning:p3};sec.entries.push(last)}
-    else if(last&&!p1&&(p2||p3)){if(p2)last.info=appendText(last.info,p2);if(p3)last.meaning=appendText(last.meaning,p3)}
+    else if(last&&!p1&&(p2||p3)){/* 10.36: Fortsetzungszeilen nur, wenn sie am Spaltenanfang beginnen (nicht Kästen rechts daneben) */const q2=parts[2].length&&Math.abs(parts[2][0].x-c2)<30?p2:'',q3=parts[3].length&&Math.abs(parts[3][0].x-c3)<30?p3:'';if(q2)last.info=appendText(last.info,q2);if(q3)last.meaning=appendText(last.meaning,q3)}
    }
    if(inRep&&repText){/* Wiederholung bis Seitenende */}
   }
@@ -3640,14 +3641,16 @@ html.fs-view .fs-hide{display:none!important}
   const v=verbParadigm(lemma,info);if(v)return {...base,...v};
   /* 10.34: deus mit seinen Sonderformen */
   if(plain(lemma)==='deus'){const W=x=>x.split(' '),f={};const sg=W('deus deī deō deum deō'),pl=W('dī deōrum dīs deōs dīs');CASES.forEach((c,i)=>{f[c+' Sg.']=sg[i];f[c+' Pl.']=pl[i]});return {...base,kind:'n',genus:['m'],gen:'deī',forms:f,decl:'o',unsure:''}}
+  /* 10.36: nur Genus, Deklination offen („pater | m.“ in Salvē!): Grundform + Genus abfragen */
+  {const g=/^([mfn])\.$/.exec(info);if(g&&!/\s/.test(lemma))return {...base,kind:'n',genus:[g[1]],gen:'',forms:{'Nom. Sg.':lemma},decl:'',unsure:''}}
   /* 10.34: Wendungen, Pronomen wie sē/sibī, inquit/ait u. Ä.: nur die Bedeutung abfragen statt weglassen */
   if(base.meaning&&lemma.length<=40){const full=e.raw||(info&&!/[mfn]\.|^(Adv|Akk|Abl|Dat|Gen|Konj|Subj|Präp)\b/.test(info)?lemma+' '+info:lemma);return {...base,lemma:full.replace(/\s+/g,' ').trim(),kind:'x',loose:true}}
   return {...base,kind:'?'}}
  /* ---------- Lehrgang (Pontes 2020, nach Inhaltsverzeichnis „Formenlehre“) ---------- */
  const PONTES={persons3sg:1,plural:2,persons:3,gen:6,abl:7,dat:9,impf:12,fut:13,perf:10,plqpf:14,pass:15,passPerf:16,ppp:16,ppa:20,konjImpf:24,konjPlqpf:24,konjPraes:28,konjPerf:29,dep:31,
   pron:{is:9,hic:11,ille:11,ipse:13,'quī':16,iste:19,'īdem':19},irr:{sum:3,possum:4,'eō':7,'volō':23,'ferō':30,'fīō':31,'nōlō':32,'mālō':32,'dō':1}};
- function learned(lesson){const n=Number(lesson)||99,c=PONTES,on=k=>n>=c[k];
-  return {lesson:n,cases:new Set(['Nom.','Akk.',...(on('gen')?['Gen.']:[]),...(on('abl')?['Abl.']:[]),...(on('dat')?['Dat.']:[])]),plural:on('plural'),
+ function learned(lesson){const n=lesson===''||lesson==null||isNaN(Number(lesson))?99:Number(lesson),c=PONTES,on=k=>n>=c[k];
+  return {lesson:n,cases:new Set(['Nom.',...(n>=1?['Akk.']:[]),...(on('gen')?['Gen.']:[]),...(on('abl')?['Abl.']:[]),...(on('dat')?['Dat.']:[])]),plural:on('plural'),
    persons:new Set(n>=c.persons?[0,1,2,3,4,5]:n>=c.plural?[2,5]:[2]),
    tenses:new Set(['praes',...(on('impf')?['impf']:[]),...(on('fut')?['fut']:[]),...(on('perf')?['perf']:[]),...(on('plqpf')?['plqpf']:[])]),
    passive:on('pass'),passPerf:on('passPerf'),konj:on('konjImpf')||on('konjPraes'),konjT:new Set([...(on('konjPraes')?['praes']:[]),...(on('konjImpf')?['impf']:[]),...(on('konjPerf')?['perf']:[]),...(on('konjPlqpf')?['plqpf']:[])]),
@@ -3676,7 +3679,7 @@ html.fs-view .fs-hide{display:none!important}
    /* im gemischten Test auch Partizipien, wenn bekannt und gewählt */
    const extra=[];if(o.focus!=='verbs'){if(o.mixPpp&&o.ppp)for(const k of Object.keys(lex.pppForms))if(nominalOk(k,o)&&lex.pppForms[k]!==lex.ppp)extra.push(k);if(o.mixPpa&&o.ppa)for(const k of Object.keys(lex.ppaForms))if(nominalOk(k,o))extra.push(k)}
    return [{...lex.forms,...lex.pppForms,...lex.ppaForms},[...keys,...extra.slice(0,Math.ceil(keys.length/6))]]}
-  if(lex.kind==='n')return [lex.forms,Object.keys(lex.forms).filter(k=>nominalOk(k,o)&&plain(lex.forms[k])!==plain(lex.lemma))];
+  if(lex.kind==='n'){const keys=Object.keys(lex.forms).filter(k=>nominalOk(k,o)&&plain(lex.forms[k])!==plain(lex.lemma));/* 10.36: Salvē! – nur der Nominativ bekannt: dann die Grundform selbst */if(!keys.length&&lex.forms['Nom. Sg.']&&o.lesson<1)keys.push('Nom. Sg.');return [lex.forms,keys]}
   if(lex.kind==='a')return [lex.forms,Object.keys(lex.forms).filter(k=>nominalOk(k,o)&&lex.forms[k]!==lex.lemma&&!(lex.nomAlso||[]).includes(lex.forms[k]))];
   return [{},[]]}
  function chooseForm(lex,o,taken){const [src,keys]=candidates(lex,o);if(!keys.length)return null;
@@ -3692,7 +3695,7 @@ html.fs-view .fs-hide{display:none!important}
   if(lex.kind==='n')return {...base,kind:'n',need:[lex.lemma],genus:lex.genus,also:[lex.gen]};
   if(lex.kind==='v')return {...base,kind:'v',need:[lex.lemma,lex.sg],also:lex.also};
   return {...base,kind:'a',need:[lex.lemma],also:lex.nomAlso||[]}}
- function eligible(lex,o){if(lex.kind==='?')return false;const n=o.lesson||99;
+ function eligible(lex,o){if(lex.kind==='?')return false;const n=o.lesson??99;
   /* Lehrgang: Adjektive a/o ab L5, 3. Dekl. ab L17, e-Dekl. ab L21, u-Dekl. ab L26 */
   if(lex.adjAO&&n<5||lex.adj3&&n<17||lex.decl==='e'&&n<21||lex.decl==='u'&&n<26)return false;
   if(lex.kind==='a'&&lex.pron&&o.pron&&o.pron[lex.lemma]&&o.lesson<o.pron[lex.lemma])return false;
@@ -3705,7 +3708,8 @@ html.fs-view .fs-hide{display:none!important}
   const pool=shuffle(lexes.filter(l=>eligible(l,o)));const amb=ambiguous(lexes);const out={};let i=0;
   for(const g of groups){const taken={forms:new Set([...amb,...Object.values(out).flat().map(it=>plain(it.form))]),labels:new Map()};out[g]=[];
    let x=0;while(out[g].length<count&&i<pool.length){const l=pool[i++];if(l.kind==='x'&&(o.focus!=='mixed'||x>=Math.max(1,Math.round(count/8))))continue;const it=toItem(l,o,taken);if(!it)continue;if(l.kind==='x')x++;out[g].push(it)}
-   if(out[g].length<count){const have=new Set(out[g].map(it=>it.lex.lemma));for(const l of shuffle(pool)){if(out[g].length>=count)break;if(have.has(l.lemma)||l.kind==='x')continue;const it=toItem(l,o,taken);if(it){out[g].push(it);have.add(l.lemma)}}}}
+   if(out[g].length<count){const have=new Set(out[g].map(it=>it.lex.lemma));for(const l of shuffle(pool)){if(out[g].length>=count)break;if(have.has(l.lemma)||l.kind==='x')continue;const it=toItem(l,o,taken);if(it){out[g].push(it);have.add(l.lemma)}}
+    /* 10.36: reicht es immer noch nicht (z. B. Salvē!), auch unveränderliche Wörter nehmen */if(out[g].length<count&&o.focus==='mixed')for(const l of shuffle(pool)){if(out[g].length>=count)break;if(have.has(l.lemma)||l.kind!=='x')continue;const it=toItem(l,o,taken);if(it){out[g].push(it);have.add(l.lemma)}}}}
   return out}
  function redrawOne(lexes,groups,g,idx,opts={}){const o=optsOf(opts);const used=new Set(Object.values(groups).flat().map(it=>it.lex?.lemma));const pool=shuffle(lexes.filter(l=>eligible(l,o)&&!used.has(l.lemma)));
   const taken={forms:new Set([...ambiguous(lexes),...Object.values(groups).flat().map(it=>plain(it.form))]),labels:new Map()};const old=groups[g][idx];const sameKind=pool.filter(l=>l.kind===old.kind);
@@ -3715,10 +3719,13 @@ html.fs-view .fs-hide{display:none!important}
   return false}
  /* 10.33: Ganzer Vokabelteil in einer PDF (oder viele Einzel-PDFs): Seiten nach Kopfzeile („7 Vokabular“, „T2 Vokabular“) den Lektionen zuordnen */
  function pageKey(items){const top=[...items].sort((a,b)=>b.y-a.y).slice(0,5);if(!top.some(i=>/^(\d{1,3}\s+)?Vokabular(\s+\d{1,3})?$/.test(i.s.trim())))return null;
-  for(const i of top){const m=/^(\d{1,2}|T\s?\d)$/.exec(i.s.trim());if(m)return m[1].replace(/\s/g,'')}return null}
+  for(const i of top){const m=/^(\d{1,2}|T\s?\d)$/.exec(i.s.trim());if(m)return m[1].replace(/\s/g,'')}
+  /* 10.36: Starterlektion „Salvē!“ (Kopfzeile „Vokabular S“) = Lektion 0 */
+  if(top.some(i=>i.s.trim()==='S')||items.some(i=>/^Salv[eē]!$/.test(i.s.trim())))return '0';return null}
  function parseBook(pages){const groups=[];for(const items of pages){const k=pageKey(items);if(!k){groups.push(null);continue}const g=groups.at(-1);if(g&&g.key===k)g.pages.push(items);else groups.push({key:k,pages:[items]})}
-  const lessons={};for(const g of groups){if(!g)continue;const r=parseVocab(g.pages);if(!r.sections.length)continue;const key=g.key,prev=lessons[key];
+  const lessons={};for(const g of groups){if(!g)continue;const r=parseVocab(g.pages);if(!r.sections.length)continue;const key=g.key,prev=lessons[key];if(key==='0'){r.title=r.title||'Willkommen im alten Rom!';for(const x of r.sections)if(/^Lektion\s*$/.test(x.name))x.name='Salvē!'}
    if(prev){prev.sections.push(...r.sections);continue}lessons[key]={key,title:r.title,sections:r.sections}}
+  for(const l of Object.values(lessons))for(const sec of l.sections)sec.entries=sec.entries.filter(e=>!/^[A-Z]\d{1,2}$/.test(String(e.meaning||'').trim()));
   /* Hinweistexte des Buchs („Den Infinitiv der …“, „Näheres …“) sind keine Vokabeln */
   const NOTE=/\b(du|kannst|kennst|hast|findest|Hier|Näheres|Infinitive?|mitlernen|kennengelernt)\b/;
   for(const l of Object.values(lessons)){for(const sec of l.sections)sec.entries=sec.entries.filter(e=>!NOTE.test(e.lemma+' '+e.info));l.sections=l.sections.filter(x=>x.entries.length)}
@@ -3734,7 +3741,7 @@ html.fs-view .fs-hide{display:none!important}
   const all=Object.values(lessons).flatMap(l=>l.sections[0].entries);const has=all.some(e=>MAC.test(e.lemma+e.info));all.forEach(e=>e.noMac=!has);return lessons}
  const isWh=pages=>pages.some(p=>p.some(i=>/WH-?\s*Vokabular\s+zu\s+Lektion/i.test(i.s)));
  const lessonOrder=k=>/^T/.test(k)?100+ +k.slice(1):+k;
- const lessonLabel=k=>/^T/.test(k)?'Transitio '+k.slice(1):'Lektion '+k;
+ const lessonLabel=k=>/^T/.test(k)?'Transitio '+k.slice(1):k==='0'?'Salvē! (Lektion 0)':'Lektion '+k;
  root.classroomVocabPdf={pageKey,parseBook,parseWhBook,isWh,lessonOrder,lessonLabel,pdfItems,parseVocab,parseTwoColumn,parseAny,analyze,draw,redrawOne,shortLabel,plain,learned,PONTES};
 })(typeof window!=='undefined'?window:globalThis);
 ;
