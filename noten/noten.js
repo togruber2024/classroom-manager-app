@@ -2876,9 +2876,11 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
  /* Mac/iPad: Knopf in der Kopfzeile der sichtbaren Seite (nur Seiten dieser Klasse mit Quartalsnoten) */
  function placeButton(){if(document.documentElement.classList.contains('ph-lite'))return;const has=!!sumGroup();const panel=[...document.querySelectorAll('[data-custom-panel]')].find(p=>p.offsetParent&&!p.closest('.hide'));
   document.querySelectorAll('.ew-btn').forEach(b=>{if(!has||!panel||!panel.contains(b))b.remove()});if(!has||!panel)return;
-  const box=panel.querySelector('.section-title .oral-display-actions')||panel.querySelector('.section-title');if(!box||box.querySelector('.ew-btn'))return;
+  /* 10.34: immer links neben „Drucken“ – auch wenn „Drucken“ nicht in der ersten Kopfzeile steht (Test-Detailseite) */
+  const prBtn=[...panel.querySelectorAll('.page-print-button,.test-results-print,[data-page-print]')].find(x=>x.offsetParent);
+  const box=prBtn?.parentElement||panel.querySelector('.section-title .oral-display-actions')||panel.querySelector('.section-title');if(!box)return;const have=panel.querySelector('.ew-btn');if(have){if(have.parentElement===box)return;have.remove()}
   const b=document.createElement('button');b.type='button';b.className='ew-btn';b.title='Frühwarnliste: Abwärtstrend, Hausaufgaben, knapp vor 5, lange ohne mündliche Note';b.innerHTML='<span aria-hidden="true">⚠︎</span> Auffällig';b.onclick=open;
-  const pr=box.querySelector('.page-print-button,.test-results-print');pr?pr.before(b):box.append(b)}
+  const pr=prBtn&&prBtn.parentElement===box?prBtn:box.querySelector('.page-print-button,.test-results-print');pr?pr.before(b):box.append(b)}
  /* iPhone: Hinweis in der Hinweiszeile (Zahl aus der sichtbaren Quartalsnoten-Tabelle) */
  let pillSig='';function refreshPill(){if(!document.documentElement.classList.contains('ph-lite'))return;const flags=document.querySelector('.pl-bar .pl-flags');if(!flags)return;let n=0;
   try{const sum=sumGroup();if(sum&&activePage===sum.pages[0]){const rows={};readTable(summaryTable(sum.pages[0]),sel(),rows);n=analyze(rows).count}}catch{}
@@ -3430,7 +3432,7 @@ html.fs-view .fs-hide{display:none!important}
     const lt=joinText(L),rt=joinText(R);if(!lt||!rt)continue;
     if(/^(\.\.\.|…)/.test(lt)&&last){last.meaning+='; '+rt;continue}
     let lemma,info;const m=/^([^\s,(]+)\s*(?:,\s*)?(.*)$/.exec(lt);lemma=m[1];info=m[2].replace(/\(i\)/g,'i').replace(/[()]/g,' ').replace(/\s+/g,' ').trim();
-    last={lemma,info,meaning:rt};entries.push(last)}}
+    last={lemma,info,meaning:rt,raw:lt};entries.push(last)}}
   if(!out.lesson){const fm=/L(?:ektion)?[\s_-]*(\d{1,2})\b/i.exec(fileName||'');if(fm)out.lesson=fm[1]}
   if(entries.length)out.sections.push({name:'Wortliste'+(out.lesson?' zu Lektion '+out.lesson:''),entries});return out}
  function parseAny(pages,fileName){const a=parseVocab(pages),b=parseTwoColumn(pages,fileName);const n=r=>r.sections.reduce((x,s)=>x+s.entries.length,0);const r=n(b)>n(a)?b:a;
@@ -3457,8 +3459,8 @@ html.fs-view .fs-hide{display:none!important}
   const set=(num,list)=>list.forEach((f,i)=>{if(f)forms[CASES[i]+' '+num]=f});
   const neut=genus.length===1&&genus[0]==='n';
   if(pluralOnly){
-   if(/ārum$/.test(gen)){stem=gen.slice(0,-4);set('Pl.',END.a.pl.map(e=>stem+e))}
-   else if(/ōrum$/.test(gen)){stem=gen.slice(0,-4);set('Pl.',(neut?END.on:END.om).pl.map(e=>stem+e))}
+   if(/arum$/.test(plain(gen))){stem=gen.slice(0,-4);set('Pl.',END.a.pl.map(e=>stem+e))}
+   else if(/orum$/.test(plain(gen))){stem=gen.slice(0,-4);set('Pl.',(neut?END.on:END.om).pl.map(e=>stem+e))}
    else if(/ium$/.test(gen)){stem=gen.slice(0,-3);set('Pl.',[L,gen,stem+'ibus',neut?L:stem+'ēs',stem+'ibus'])}
    else if(/um$/.test(gen)){stem=gen.slice(0,-2);set('Pl.',[L,gen,stem+'ibus',neut?L:stem+'ēs',stem+'ibus'])}
    else return null;
@@ -3585,13 +3587,23 @@ html.fs-view .fs-hide{display:none!important}
  const stripMac=x=>typeof x==='string'?x.normalize('NFD').replace(/̄/g,'').normalize('NFC'):x;
  function stripLex(l){/* Liste ohne Längenzeichen → auch die gebildeten Formen ohne */const m=o=>o&&Object.fromEntries(Object.entries(o).map(([k,v])=>[k,stripMac(v)]));
   return {...l,forms:m(l.forms),pppForms:m(l.pppForms),ppaForms:m(l.ppaForms),also:(l.also||[]).map(stripMac),nomAlso:(l.nomAlso||[]).map(stripMac),ppp:stripMac(l.ppp),gen:stripMac(l.gen)}}
- function expandInfo(lemma,info){/* „gaudium, -i n.“ → „gaudii n.“; „ira, -ae f.“ → „irae f.“; „parent(i)um“ → „parentium“ */
+ function expandInfo(lemma,info){
+  /* 10.34: „clamor, -oris m.“ → „clamoris m.“; „homo, -minis“ → „hominis“; „manus, manus f.“ → „manūs f.“ */
+  {const pl=plain(lemma);
+   if(/^-ii\b/.test(info)&&/ium$/.test(pl))return lemma.slice(0,-2)+'ī'+info.slice(3);
+   if(/^-us\b/.test(info)&&/us$/.test(pl)&&pl!=='domus')return lemma.slice(0,-2)+'ūs'+info.slice(3);
+   if(/^-um\s+[mfn]\./.test(info)&&/es$/.test(pl))return lemma.slice(0,-2)+'um'+info.slice(3).replace(/\s*$/,'')+(/Pl\./.test(info)?'':' Pl.');
+   const a=/^-([^\s,]{1,6}is)\b(.*)$/u.exec(info);if(a&&/[mfn]\./.test(info)&&!/is$/.test(pl)){const first=plain(a[1])[0];const at=pl.lastIndexOf(first);if(at>0)return lemma.slice(0,at)+a[1]+a[2];if(/us$/.test(pl))return lemma.slice(0,-2)+a[1]+a[2]}}
+  {const u=/^(\S+us)(\s+[mfn]\..*)$/u.exec(info);if(u&&plain(u[1])===plain(lemma)&&/us$/.test(plain(lemma)))return lemma.slice(0,-2)+'ūs'+u[2]}/* „gaudium, -i n.“ → „gaudii n.“; „ira, -ae f.“ → „irae f.“; „parent(i)um“ → „parentium“ */
   info=info.replace(/(\w)\(i\)(um)/g,'$1i$2');const m=/^-(ae|ī|i|ūs|us|eī|ei|is|ōrum|orum|ārum|arum)\b(.*)$/.exec(info);if(!m||!/[mfn]\./.test(info))return info;
   const e=m[1],L=lemma;let st=L;if(/^(ae|ārum|arum)$/.test(e))st=L.replace(/(a|ae)$/,'');else if(/^(ī|i|ōrum|orum)$/.test(e))st=L.replace(/(us|um|ī|i|a)$/,'');else if(/^(ūs|us)$/.test(e))st=L.replace(/us$/,'');else if(/^(eī|ei)$/.test(e))st=L.replace(/ēs$|es$/,'');else if(e==='is')st=L.replace(/is$/,'');
   return st+e+m[2]}
  /* 10.33: Lektion 1–5 nennen statt Genitiv den Akkusativ („soror | sorōrem f.“) und statt 1. Person die 3. („amāre | amat“) – in die übliche Form umschreiben */
  const ISTEM=/(cip|fic|spic|fug|iac|cup|rap|sap|quat|fac)ere$/;
  function earlyInfo(lemma,info){const L=lemma,pl=plain(L);
+  if(/^\+/.test(info)&&/(are|ere|ire|āre|ēre|īre)$/.test(pl))info='';
+  /* Wortlisten ohne Stammformen („pugnare | kämpfen“): a- und i-Konjugation sind eindeutig */
+  if(!info&&!/\s/.test(L)&&pl.length>2){if(pl==='ire')return 'eō';if(pl==='dare')return L.includes('ā')?'dō':'do';{const c=/^(ab|ad|ex|red|trans|per|sub|in|prae|inter|ob|prod|amb)ire$/.exec(pl);if(c)return L.slice(0,-3)+(L.includes('ī')?'eō':'eo')}if(pl.length<=4)return info;if(/āre$/.test(L))return L.slice(0,-3)+'ō';if(/are$/.test(L))return L.slice(0,-3)+'o';if(/ēre$/.test(L))return L.slice(0,-2)+'ō';if(/īre$/.test(L))return L.slice(0,-2)+'ō';if(/[^a]ire$/.test(L)&&!/(i|e)ire$/.test(L))return L.slice(0,-2)+'o'}
   /* Adjektiv-Zusätze: „Gen. prūdentis Adv. prūdenter“, „(Gen. prūdentis; Adv. prūdenter)“ */
   info=info.replace(/^\((.*)\)$/,'$1').replace(/;\s*Adv\.\s+\S+$/,'').replace(/\s+Adv\.\s+\S+$/,'').replace(/^Gen\.\s+(?=\S+\s*$)/,'');
   /* „Rōmānus m., Rōmāna f., Rōmānum n.“ / „ātra, ātrum“ → „-a, -um“ */
@@ -3608,7 +3620,7 @@ html.fs-view .fs-hide{display:none!important}
    else if(/āre$/.test(L))first=L.slice(0,-3)+'ō';else if(/ēre$/.test(L))first=L.slice(0,-2)+'ō';else if(/īre$/.test(L))first=L.slice(0,-2)+'ō';
    else if(/ere$/.test(L))first=(/iunt$/.test(plu)||ISTEM.test(pl))?L.slice(0,-3)+'iō':L.slice(0,-3)+'ō';
    return first||info}
-  const m=/^(\S+?)(em|am|um|ōs|ās|ēs)\s+([mfn])\.(\s+Pl\.)?\s*$/u.exec(info);if(!m)return info;const [,st,end,g,P]=m;
+  const m=/^(\S+?)(em|am|um|ōs|ās|ēs)\s+([mfn])\.(\s+Pl\.)?\s*$/u.exec(info);if(!m||/^-/.test(info))return info;const [,st,end,g,P]=m;
   if(P){if(end==='ōs')return st+'ōrum '+g+'. Pl.';if(end==='ās')return st+'ārum '+g+'. Pl.';if(end==='ēs')return st+'um '+g+'. Pl.';if(end==='um'&&g==='n'&&plain(st+end)!==pl)return info;return info}
   if(end==='am')return st+'ae '+g+'.';if(end==='em')return st+'is '+g+'.';
   if(end==='um'){if(g!=='n')return st+'ī '+g+'.';if(plain(st+end)===pl)return st+'ī n.'}
@@ -3626,6 +3638,10 @@ html.fs-view .fs-hide{display:none!important}
   if(/\b[mfn]\.(?!\w)/.test(info)){const n=nounParadigm(lemma,info);if(n)return {...base,...n}}
   const a=adjParadigm(lemma,info);if(a)return {...base,...a};
   const v=verbParadigm(lemma,info);if(v)return {...base,...v};
+  /* 10.34: deus mit seinen Sonderformen */
+  if(plain(lemma)==='deus'){const W=x=>x.split(' '),f={};const sg=W('deus deī deō deum deō'),pl=W('dī deōrum dīs deōs dīs');CASES.forEach((c,i)=>{f[c+' Sg.']=sg[i];f[c+' Pl.']=pl[i]});return {...base,kind:'n',genus:['m'],gen:'deī',forms:f,decl:'o',unsure:''}}
+  /* 10.34: Wendungen, Pronomen wie sē/sibī, inquit/ait u. Ä.: nur die Bedeutung abfragen statt weglassen */
+  if(base.meaning&&lemma.length<=40){const full=e.raw||(info&&!/[mfn]\.|^(Adv|Akk|Abl|Dat|Gen|Konj|Subj|Präp)\b/.test(info)?lemma+' '+info:lemma);return {...base,lemma:full.replace(/\s+/g,' ').trim(),kind:'x',loose:true}}
   return {...base,kind:'?'}}
  /* ---------- Lehrgang (Pontes 2020, nach Inhaltsverzeichnis „Formenlehre“) ---------- */
  const PONTES={persons3sg:1,plural:2,persons:3,gen:6,abl:7,dat:9,impf:12,fut:13,perf:10,plqpf:14,pass:15,passPerf:16,ppp:16,ppa:20,konjImpf:24,konjPlqpf:24,konjPraes:28,konjPerf:29,dep:31,
@@ -3703,11 +3719,23 @@ html.fs-view .fs-hide{display:none!important}
  function parseBook(pages){const groups=[];for(const items of pages){const k=pageKey(items);if(!k){groups.push(null);continue}const g=groups.at(-1);if(g&&g.key===k)g.pages.push(items);else groups.push({key:k,pages:[items]})}
   const lessons={};for(const g of groups){if(!g)continue;const r=parseVocab(g.pages);if(!r.sections.length)continue;const key=g.key,prev=lessons[key];
    if(prev){prev.sections.push(...r.sections);continue}lessons[key]={key,title:r.title,sections:r.sections}}
+  /* Hinweistexte des Buchs („Den Infinitiv der …“, „Näheres …“) sind keine Vokabeln */
+  const NOTE=/\b(du|kannst|kennst|hast|findest|Hier|Näheres|Infinitive?|mitlernen|kennengelernt)\b/;
+  for(const l of Object.values(lessons)){for(const sec of l.sections)sec.entries=sec.entries.filter(e=>!NOTE.test(e.lemma+' '+e.info));l.sections=l.sections.filter(x=>x.entries.length)}
   /* Längenzeichen: für das ganze Buch entscheiden */const all=Object.values(lessons).flatMap(l=>l.sections.flatMap(s=>s.entries));const has=all.some(e=>MAC.test(e.lemma+e.info));all.forEach(e=>e.noMac=!has);
   return lessons}
+ /* 10.34: Wiederholungsvokabular des Kollegiums („WH-Vokabular zu Lektion 13“ + zweispaltige Tabelle, eine Seite je Lektion) */
+ function whKey(items){const h=items.find(i=>/WH-?\s*Vokabular\s+zu\s+Lektion/i.test(i.s));if(!h)return null;const m=/Lektion\s+(\d{1,2})/.exec(h.s);if(m)return m[1];
+  const near=items.filter(i=>/^\d{1,2}$/.test(i.s.trim())&&i.x>h.x&&i.x<h.x+h.w+80&&Math.abs(i.y-h.y)<30).sort((a,b)=>Math.abs(a.y-h.y)-Math.abs(b.y-h.y));return near[0]?.s.trim()||null}
+ function parseWhBook(pages){const lessons={};let cur=null;
+  for(const items of pages){if(!items.length)continue;const k=whKey(items);if(k)cur=k;if(!cur)continue;
+   const r=parseTwoColumn([items.filter(i=>!/WH-?\s*Vokabular/i.test(i.s)&&!(k&&i.s.trim()===k))],'');const entries=r.sections.flatMap(x=>x.entries);if(!entries.length)continue;
+   (lessons[cur]??={key:cur,title:'',sections:[{name:'Wiederholungsvokabular',entries:[]}]}).sections[0].entries.push(...entries)}
+  const all=Object.values(lessons).flatMap(l=>l.sections[0].entries);const has=all.some(e=>MAC.test(e.lemma+e.info));all.forEach(e=>e.noMac=!has);return lessons}
+ const isWh=pages=>pages.some(p=>p.some(i=>/WH-?\s*Vokabular\s+zu\s+Lektion/i.test(i.s)));
  const lessonOrder=k=>/^T/.test(k)?100+ +k.slice(1):+k;
  const lessonLabel=k=>/^T/.test(k)?'Transitio '+k.slice(1):'Lektion '+k;
- root.classroomVocabPdf={pageKey,parseBook,lessonOrder,lessonLabel,pdfItems,parseVocab,parseTwoColumn,parseAny,analyze,draw,redrawOne,shortLabel,plain,learned,PONTES};
+ root.classroomVocabPdf={pageKey,parseBook,parseWhBook,isWh,lessonOrder,lessonLabel,pdfItems,parseVocab,parseTwoColumn,parseAny,analyze,draw,redrawOne,shortLabel,plain,learned,PONTES};
 })(typeof window!=='undefined'?window:globalThis);
 ;
 
@@ -3855,8 +3883,12 @@ html.fs-view .fs-hide{display:none!important}
 
  /* ---------- 10.33: Klett Pontes Gesamtband (2020) – Vokabular einmal laden, dann Lektion wählen ----------
     Das Vokabular kommt aus den PDFs der Lehrkraft und bleibt nur auf diesem Gerät (und im Backup) – es ist nicht Teil der App. */
- const LIB='classroom-vocab-library-v1',BOOK='Klett Pontes Gesamtband (2020)';
- const lib=()=>{try{const v=JSON.parse(localStorage.getItem(LIB)||'null');return v&&v.lessons&&Object.keys(v.lessons).length?v:null}catch{return null}};
+ /* 10.34: zweites „Buch“: Wiederholungsvokabular L5–31 (Listen des Kollegiums) – eigene Rubrik, eigene Ablage */
+ const BOOKS={main:{key:'classroom-vocab-library-v1',title:'Klett Pontes Gesamtband (2020)',sub:'iPad-Vokabeltest: Lektion wählen, ausgeben, auswerten'},
+  wh:{key:'classroom-vocab-library-wh-v1',title:'Klett Pontes Gesamtband – Wiederholungsvokabular L5–31',sub:'Zu Beginn einer Lektion ihr Wiederholungsvokabular abfragen'}};
+ let cur='main';const B=()=>BOOKS[cur];
+ const libOf=id=>{try{const v=JSON.parse(localStorage.getItem(BOOKS[id].key)||'null');return v&&v.lessons&&Object.keys(v.lessons).length?v:null}catch{return null}};
+ const lib=()=>libOf(cur);
  const keysOf=l=>Object.keys(l.lessons).sort((a,b)=>window.classroomVocabPdf.lessonOrder(a)-window.classroomVocabPdf.lessonOrder(b));
  let bookSel=new Set();
  async function importBook(){const files=await pick('application/pdf,.pdf',true);if(!files.length)return;
@@ -3864,38 +3896,39 @@ html.fs-view .fs-hide{display:none!important}
   dlg.innerHTML='<form method="dialog"><h2>Vokabular wird gelesen …</h2><p class="vt-sub" data-prog>'+files.length+' PDF'+(files.length>1?'s':'')+'</p></form>';if(!dlg.open)dlg.showModal();const prog=dlg.querySelector('[data-prog]');
   try{let n=0;for(const f of files){n++;prog.textContent='PDF '+n+' von '+files.length+': '+f.name;
     const pages=await V.pdfItems(await f.arrayBuffer(),(i,t)=>{prog.textContent=(files.length>1?'PDF '+n+' von '+files.length+' · ':'')+'Seite '+i+' von '+t});
-    let got=V.parseBook(pages);
+    const wh=V.isWh(pages);let got=wh?V.parseWhBook(pages):V.parseBook(pages);if(wh&&cur!=='wh'){cur='wh';bookSel=new Set()}else if(!wh&&cur==='wh'&&Object.keys(got).length){cur='main';bookSel=new Set()}
     if(!Object.keys(got).length){const r=V.parseAny(pages,f.name);if(r.lesson&&r.sections.length)got={[r.lesson]:{key:r.lesson,title:r.title,sections:r.sections}};else skipped.push(f.name)}
     for(const [k,l] of Object.entries(got)){if(lessons[k])lessons[k].sections.push(...l.sections);else lessons[k]=l}}
    if(!Object.keys(lessons).length)throw new Error('In den gewählten PDFs wurde kein Vokabular gefunden.');
    const old=lib(),merged={...(old?.lessons||{}),...lessons};
-   const data={book:BOOK,updated:Date.now(),lessons:merged};try{localStorage.setItem(LIB,JSON.stringify(data))}catch{throw new Error('Der Speicher dieses Geräts ist voll – das Vokabular konnte nicht gespeichert werden.')}
-   let words=0,unk=0;for(const l of Object.values(lessons))for(const sec of l.sections)for(const e of sec.entries){words++;if(V.analyze(e).kind==='?')unk++}
-   bookSel=new Set();openBook('Gelesen: '+Object.keys(lessons).length+' Lektionen, '+words+' Vokabeln'+(unk?' ('+unk+' nicht erkannt – werden nicht abgefragt)':'')+(skipped.length?' · ohne Vokabular: '+skipped.join(', '):'')+'.')}
+   const data={book:B().title,updated:Date.now(),lessons:merged};try{localStorage.setItem(B().key,JSON.stringify(data))}catch{throw new Error('Der Speicher dieses Geräts ist voll – das Vokabular konnte nicht gespeichert werden.')}
+   let words=0,unk=0,loose=0;for(const l of Object.values(lessons))for(const sec of l.sections)for(const e of sec.entries){words++;const a=V.analyze(e);if(a.kind==='?')unk++;else if(a.loose)loose++}
+   bookSel=new Set();openBook('Gelesen: '+Object.keys(lessons).length+' Lektionen, '+words+' Vokabeln'+(loose?' ('+loose+' Wendungen u. Ä.: nur die Bedeutung wird abgefragt)':'')+(unk?' ('+unk+' nicht erkannt – werden nicht abgefragt)':'')+(skipped.length?' · ohne Vokabular: '+skipped.join(', '):'')+'.')}
   catch(e){console.error(e);dlg.close();alert('Vokabular: '+(e.message||e))}}
- function openBook(note){const l=lib(),V=window.classroomVocabPdf;
-  if(!l){dlg.innerHTML='<form method="dialog" class="vt-mid"><h2>'+esc(BOOK)+'</h2><p class="vt-sub">Lade einmal den Vokabelteil des Buchs – als eine PDF mit allen Lektionen oder alle Einzel-PDFs auf einmal (mehrere auswählen). Danach wählst du hier nur noch die Lektion.</p><p class="vt-sub">Das Vokabular bleibt auf diesem Gerät und im Backup – es wird nicht mit der App weitergegeben.</p><div class="dialog-actions"><button type="button" data-x>Schließen</button><button type="button" data-mgr>iPad-Tests &amp; Auswertung …</button><button type="button" class="primary" data-imp>Vokabel-PDF(s) laden …</button></div></form>';
+ function openBook(note,id){if(id&&id!==cur){cur=id;bookSel=new Set()}const l=lib(),V=window.classroomVocabPdf;
+  if(!l){dlg.innerHTML='<form method="dialog" class="vt-mid"><h2>'+esc(B().title)+'</h2><p class="vt-sub">'+(cur==='wh'?'Lade einmal die PDF mit dem Wiederholungsvokabular (eine Seite je Lektion, „WH-Vokabular zu Lektion …“) – als eine PDF oder viele auf einmal.':'Lade einmal den Vokabelteil des Buchs – als eine PDF mit allen Lektionen oder alle Einzel-PDFs auf einmal (mehrere auswählen).')+' Danach wählst du hier nur noch die Lektion.</p><p class="vt-sub">Das Vokabular bleibt auf diesem Gerät und im Backup – es wird nicht mit der App weitergegeben.</p><div class="dialog-actions"><button type="button" data-x>Schließen</button><button type="button" data-mgr>iPad-Tests &amp; Auswertung …</button><button type="button" class="primary" data-imp>Vokabel-PDF(s) laden …</button></div></form>';
    dlg.querySelector('[data-x]').onclick=()=>dlg.close();dlg.querySelector('[data-mgr]').onclick=()=>openManager();dlg.querySelector('[data-imp]').onclick=()=>importBook();if(!dlg.open)dlg.showModal();return}
   const keys=keysOf(l);bookSel=new Set([...bookSel].filter(k=>l.lessons[k]));
   const cnt=k=>l.lessons[k].sections.filter(x=>!/^(Wiederholung|Übungen)$/.test(x.name)).reduce((a,x)=>a+x.entries.length,0);
   const chip=k=>'<button type="button" class="vt-les'+(bookSel.has(k)?' on':'')+'" data-les="'+esc(k)+'" title="'+esc(V.lessonLabel(k)+(l.lessons[k].title?' – '+l.lessons[k].title:''))+'"><b>'+esc(/^T/.test(k)?k:'L'+k)+'</b><small>'+cnt(k)+'</small></button>';
   const sel=[...bookSel].sort((a,b)=>V.lessonOrder(a)-V.lessonOrder(b));
-  dlg.innerHTML='<form method="dialog" class="vt-mid"><h2>'+esc(BOOK)+'</h2><div class="vt-sub">Lektion wählen – auch mehrere (z. B. L14, L15, L16). Die Zahl zeigt die neuen Vokabeln der Lektion.</div>'+(note?'<div class="vt-note">'+esc(note)+'</div>':'')+
+  dlg.innerHTML='<form method="dialog" class="vt-mid"><h2>'+esc(B().title)+'</h2><div class="vt-sub">'+(cur==='wh'?'Lektion wählen, deren Wiederholungsvokabular abgefragt wird – auch mehrere. Die Zahl zeigt die Vokabeln der Liste.':'Lektion wählen – auch mehrere (z. B. L14, L15, L16). Die Zahl zeigt die neuen Vokabeln der Lektion.')+'</div>'+(note?'<div class="vt-note">'+esc(note)+'</div>':'')+
    '<div class="vt-lesgrid">'+keys.map(chip).join('')+'</div>'+
    '<div class="vt-sub" data-selinfo>'+(sel.length?esc(sel.map(k=>V.lessonLabel(k)+(l.lessons[k].title?' „'+l.lessons[k].title+'“':'')).join(' · ')):'Noch keine Lektion gewählt.')+'</div>'+
    '<div class="dialog-actions vt-bookact"><button type="button" class="vt-delbook" data-rm>Vokabular entfernen</button><span style="flex:1"></span><button type="button" data-imp>PDF(s) nachladen …</button><button type="button" data-one>Andere Vokabel-PDF …</button><button type="button" data-mgr>iPad-Tests &amp; Auswertung …</button><button type="submit" class="primary" data-go'+(sel.length?'':' disabled')+'>Weiter</button></div></form>';
   dlg.querySelectorAll('[data-les]').forEach(b=>b.onclick=()=>{const k=b.dataset.les;if(bookSel.has(k))bookSel.delete(k);else bookSel.add(k);openBook()});
-  dlg.querySelector('[data-rm]').onclick=()=>{if(!confirm('Das gespeicherte Vokabular ('+BOOK+') von diesem Gerät entfernen? Bereits erstellte Tests bleiben erhalten.'))return;try{localStorage.removeItem(LIB)}catch{}bookSel=new Set();openBook()};
+  dlg.querySelector('[data-rm]').onclick=()=>{if(!confirm('Das gespeicherte Vokabular („'+B().title+'“) von diesem Gerät entfernen? Bereits erstellte Tests bleiben erhalten.'))return;try{localStorage.removeItem(B().key)}catch{}bookSel=new Set();openBook()};
   dlg.querySelector('[data-imp]').onclick=()=>importBook();dlg.querySelector('[data-one]').onclick=()=>fromPdf();dlg.querySelector('[data-mgr]').onclick=()=>openManager();
   dlg.querySelector('form').onsubmit=e=>{e.preventDefault();if(!bookSel.size)return;fromBook([...bookSel].sort((a,b)=>V.lessonOrder(a)-V.lessonOrder(b)))};
   if(!dlg.open)dlg.showModal()}
  function fromBook(keys){const l=lib(),V=window.classroomVocabPdf;const secs=[];
-  for(const k of keys){const les=l.lessons[k],tag=/^T/.test(k)?k:'L'+k;for(const sec of les.sections){const main=!/^(Wiederholung|Übungen)$/.test(sec.name);secs.push({name:tag+' · '+(main?V.lessonLabel(k):sec.name),on:main,lex:sec.entries.map(V.analyze)})}}
+  const wh=cur==='wh';for(const k of keys){const les=l.lessons[k],tag=/^T/.test(k)?k:'L'+k;for(const sec of les.sections){const main=wh||!/^(Wiederholung|Übungen)$/.test(sec.name);secs.push({name:tag+' · '+(wh?'Wiederholungsvokabular':main?V.lessonLabel(k):sec.name),on:main,lex:sec.entries.map(V.analyze)})}}
   const last=keys.at(-1),tags=keys.map(k=>/^T/.test(k)?k:'L'+k),range=keys.length===1?tags[0]:keys.length===2?tags.join(' + '):tags[0]+'–'+tags.at(-1);
   const contiguous=keys.every((k,i)=>!i||V.lessonOrder(k)===V.lessonOrder(keys[i-1])+1);
   const name=keys.length<=2||contiguous?range:tags.join(', ');
   const label=keys.length===1?V.lessonLabel(last):keys.every(k=>!/^T/.test(k))?'Lektion '+(keys.length<=2||contiguous?keys[0]+(keys.length===2?' + ':'–')+last:keys.join(', ')):name;
-  const ln=V.learned(last);pdfState={book:true,file:BOOK,info:{lesson:last,title:keys.length===1?l.lessons[last].title:'',label},pages:0,secs,name:name+' (Vok.)',count:10,groups:'AB',focus:'mixed',date:today(),draw:null,g:'A',learn:ln,ov:{tenses:new Set(ln.tenses),passive:ln.passive,passPerf:ln.passPerf,konj:ln.konj,ppp:ln.ppp,ppa:ln.ppa}};pdfSetup()}
+  /* Wiederholung zu Beginn von Lektion N: Grammatik bis Lektion N−1 */const lnKey=wh&&/^\d+$/.test(last)?String(Math.max(1,+last-1)):last;
+  const ln=V.learned(lnKey);pdfState={book:true,file:B().title,info:{lesson:lnKey,title:keys.length===1?l.lessons[last].title:'',label:wh?'Wiederholung zu '+label:label},pages:0,secs,name:(wh?'WH ':'')+name+' (Vok.)',count:10,groups:'AB',focus:'mixed',date:today(),draw:null,g:'A',learn:ln,ov:{tenses:new Set(ln.tenses),passive:ln.passive,passPerf:ln.passPerf,konj:ln.konj,ppp:ln.ppp,ppa:ln.ppa}};pdfSetup()}
  const lexPool=()=>{const seen=new Set(),out=[];for(const s of pdfState.secs)if(s.on)for(const l of s.lex){const k=window.classroomVocabPdf.plain(l.lemma);if(!seen.has(k)){seen.add(k);out.push(l)}}return out};
  const KINDS={v:'Verben',n:'Substantive',a:'Pronomen/Adjektive',x:'unveränderlich','?':'nicht erkannt'};
  const drawOpts=()=>{const st=pdfState,ov=st.ov,ln=st.learn;const konjT=ln.konjT.size?ln.konjT:new Set([...ov.tenses]);return {lesson:st.info.lesson,focus:st.focus,mixPpp:ov.ppp,mixPpa:ov.ppa,overrides:{tenses:ov.tenses,passive:ov.passive,passPerf:ov.passPerf,konj:ov.konj,konjT,ppp:ov.ppp,ppa:ov.ppa}}};
@@ -3940,8 +3973,8 @@ html.fs-view .fs-hide{display:none!important}
    const t=normalizeTest(raw);t.date=st.date||today();t.source=st.file;saveTest(t);state={test:t,g:'A'};showTest()};
   if(!dlg.open)dlg.showModal()}
  /* Eintrag im Fenster „Test erstellen“ */
- const place=()=>{const d=document.querySelector('dialog.test-create-dialog');if(!d)return;let b=d.querySelector('.vt-open-btn');if(!b){b=document.createElement('button');b.type='button';b.className='nav-import-btn vt-open-btn';b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M9 7.5h6M9 11h6M9 14.5h3.5"/></svg><span>'+BOOK+'<small>iPad-Vokabeltest: Lektion wählen, ausgeben, auswerten</small></span>';b.onclick=()=>{d.close();openBook()};const after=d.querySelector('.nav-import-btn:not(.vt-open-btn)')||d.querySelector('form>p')||d.querySelector('form>h2');after.after(b)}
-  const show=isLatin();if(b.hidden===show)b.hidden=!show};
+ const place=()=>{const d=document.querySelector('dialog.test-create-dialog');if(!d)return;let b=d.querySelector('.vt-open-btn');if(!b){let after=d.querySelector('.nav-import-btn:not(.vt-open-btn)')||d.querySelector('form>p')||d.querySelector('form>h2');for(const id of ['main','wh']){const x=document.createElement('button');x.type='button';x.className='nav-import-btn vt-open-btn';x.dataset.book=id;x.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M9 7.5h6M9 11h6M9 14.5h3.5"/></svg><span>'+esc(BOOKS[id].title)+'<small>'+esc(BOOKS[id].sub)+'</small></span>';x.onclick=()=>{d.close();openBook(null,id)};after.after(x);after=x}b=d.querySelector('.vt-open-btn')}
+  const show=isLatin();for(const x of d.querySelectorAll('.vt-open-btn'))if(x.hidden===show)x.hidden=!show};
  document.addEventListener('click',()=>setTimeout(place,0),true);setTimeout(place,600);
  window.classroomVocabTest={open:openManager,openBook,normalizeTest,studentUrl};
  const st=document.createElement('style');st.textContent=`

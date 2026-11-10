@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.33
+Stand: 10.11.2026 · Version 10.34
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1312,3 +1312,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.31: Fenster unten einheitlich 12 px (Noten & Unterricht), Knopfzeile Sitzplan ohne Scrollleisten-Flackern
 10.32: Sitzplan-Knopfzeile friert bei Hin-und-Her ein, Diagnose-Hinweis, scrollbar-gutter
 10.33: Klett Pontes Gesamtband – Vokabular einmal laden, Lektionen wählen; Mac-PDFs mit verlorenen Längenzeichen; Lektion 1–5 (Akk./3. Ps.); Vokabular im Backup
+10.34: Wiederholungsvokabular L5–31 als eigene Rubrik; Wendungen nur mit Bedeutung; deus; Abkürzungen -oris/-ii/-us; „Auffällig“ links neben „Drucken“ auf Test-Detailseiten
