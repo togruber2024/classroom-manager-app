@@ -2879,7 +2879,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
   /* 10.34: immer links neben „Drucken“ – auch wenn „Drucken“ nicht in der ersten Kopfzeile steht (Test-Detailseite) */
   const prBtn=[...panel.querySelectorAll('.page-print-button,.test-results-print,[data-page-print]')].find(x=>x.offsetParent);
   const box=prBtn?.parentElement||panel.querySelector('.section-title .oral-display-actions')||panel.querySelector('.section-title');if(!box)return;const have=panel.querySelector('.ew-btn');if(have){if(have.parentElement===box)return;have.remove()}
-  const b=document.createElement('button');b.type='button';b.className='ew-btn';b.title='Frühwarnliste: Abwärtstrend, Hausaufgaben, knapp vor 5, lange ohne mündliche Note';b.innerHTML='<span aria-hidden="true">⚠︎</span> Auffällig';b.onclick=open;
+  const b=document.createElement('button');b.type='button';b.className='ew-btn';b.title='Auffällig – Frühwarnliste: Abwärtstrend, Hausaufgaben, knapp vor 5, lange ohne mündliche Note';b.innerHTML='<span aria-hidden="true">⚠︎</span><span class="ew-lbl">Auffällig</span>';b.setAttribute('aria-label','Auffällig');b.onclick=open;
   const pr=prBtn&&prBtn.parentElement===box?prBtn:box.querySelector('.page-print-button,.test-results-print');pr?pr.before(b):box.append(b)}
  /* iPhone: Hinweis in der Hinweiszeile (Zahl aus der sichtbaren Quartalsnoten-Tabelle) */
  let pillSig='';function refreshPill(){if(!document.documentElement.classList.contains('ph-lite'))return;const flags=document.querySelector('.pl-bar .pl-flags');if(!flags)return;let n=0;
@@ -2890,7 +2890,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
  let q=false;const run=()=>{if(q)return;q=true;setTimeout(()=>{q=false;try{placeButton();refreshPill()}catch(e){console.warn(e)}},120)};
  if(typeof classroomOnDomChange==='function')classroomOnDomChange(run);else new MutationObserver(run).observe(document.body,{childList:true,subtree:true});run();
  const st=document.createElement('style');st.textContent=`
- .ew-btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:10px;border:1px solid #f3cfa3;background:#fff8ec;color:#8a4b0a;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+ .ew-btn .ew-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap} .ew-btn>span[aria-hidden]{font-size:18px;line-height:1} .ew-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;min-width:42px;padding:0 10px;border-radius:10px;border:1px solid #f3cfa3;background:#fff8ec;color:#8a4b0a;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
  .ew-dialog{width:min(780px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;border:0;border-radius:20px;padding:22px 24px!important;box-shadow:0 20px 50px rgba(30,45,70,.2)}
  .ew-dialog.ew-sheet{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;margin:0;border-radius:0;padding:16px!important}
  .ew-top{display:flex;align-items:center;gap:10px}.ew-top h2{margin:0;font-size:21px;flex:1}.ew-x{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;font-size:15px;cursor:pointer;display:grid;place-items:center;padding:0}

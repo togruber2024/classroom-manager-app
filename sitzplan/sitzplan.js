@@ -4069,6 +4069,72 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
 })();
 ;
 
+/* ==== sitzplan/side-resize.js ==== */
+/* 10.41: Seitenmenü (Noten-Schnellansicht) per Griff breiter ziehen – der Inhalt wächst mit (Zoom).
+   Griff: helle Pille ⋮ im Spalt; beim Ziehen blaue Linie über die volle Höhe und ein Schild mit der Größe.
+   Doppelklick/-tipp: zurück auf 100 %. Breite wird gemerkt (Maus- und Touch-Geräte getrennt). */
+(function(){
+ const BASE=360,root=document.documentElement;
+ const KEY='classroom-side-width-v1-'+(matchMedia('(pointer:coarse)').matches?'touch':'mouse');
+ let width=BASE;try{const v=+localStorage.getItem(KEY);if(v>=BASE&&v<4000)width=v}catch{}
+ const cont=()=>document.querySelector('body[data-module=sitzplan] .container');
+ const panel=()=>cont()?.querySelector(':scope>.panel');
+ const right=()=>root.classList.contains('cm-side-right');
+ function usable(){const c=cont(),p=panel();if(!c||!p||!p.getClientRects().length)return false;
+  if(root.classList.contains('classroom-beamer')||root.classList.contains('ph-lite'))return false;
+  if(c.classList.contains('sidebar-collapsed')||c.classList.contains('sidebar-hidden'))return false;
+  return getComputedStyle(c).gridTemplateColumns.trim().split(/\s+/).length>=2}
+ const maxW=()=>{const c=cont();return Math.max(BASE,Math.round((c?c.clientWidth:1200)*0.5))};
+ const clampW=w=>Math.max(BASE,Math.min(maxW(),Math.round(w)));
+ let applied=null;
+ function apply(){const on=usable(),w=on?clampW(width):BASE,z=(w/BASE).toFixed(4),key=on+'|'+w;
+  if(key!==applied){applied=key;root.classList.toggle('sp-side-sized',on&&w!==BASE);root.style.setProperty('--sp-side-w',w+'px');root.style.setProperty('--sp-side-z',z);try{window.classroomFitPanels?.()}catch{}}
+  place(on)}
+ /* Griff */
+ const h=document.createElement('div');h.className='sp-side-handle';h.setAttribute('role','separator');h.setAttribute('aria-orientation','vertical');h.setAttribute('aria-label','Seitenmenü breiter oder schmaler ziehen');h.title='Ziehen: Seitenmenü vergrößern · Doppelklick: 100 %';
+ h.innerHTML='<span class="sp-side-pill" aria-hidden="true">⋮</span><span class="sp-side-line" aria-hidden="true"></span><span class="sp-side-badge" aria-hidden="true"></span>';
+ function place(on){const c=cont(),p=panel();if(!on||!c||!p){h.hidden=true;return}
+  if(h.parentElement!==c)c.append(h);h.hidden=false;
+  const cr=c.getBoundingClientRect(),pr=p.getBoundingClientRect(),gap=parseFloat(getComputedStyle(c).columnGap)||20;
+  const x=right()?pr.left-cr.left-gap/2:pr.right-cr.left+gap/2;
+  const top=Math.max(pr.top,0)-cr.top,bottom=Math.min(pr.bottom,innerHeight)-cr.top;
+  const s=h.style,L=Math.round(x-12)+'px',T=Math.round(top)+'px',H=Math.max(60,Math.round(bottom-top))+'px';
+  if(s.left!==L)s.left=L;if(s.top!==T)s.top=T;if(s.height!==H)s.height=H}
+ const badge=h.querySelector('.sp-side-badge');
+ let drag=null;
+ h.addEventListener('pointerdown',e=>{if(e.button>0)return;e.preventDefault();drag={x:e.clientX,w:clampW(width),id:e.pointerId};try{h.setPointerCapture(e.pointerId)}catch{}root.classList.add('sp-side-dragging');badge.textContent=Math.round(drag.w/BASE*100)+' %'});
+ h.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;const dx=e.clientX-drag.x;width=clampW(drag.w+(right()?-dx:dx));badge.textContent=Math.round(width/BASE*100)+' %';apply()});
+ const end=e=>{if(!drag)return;drag=null;root.classList.remove('sp-side-dragging');try{localStorage.setItem(KEY,String(width))}catch{}apply()};
+ h.addEventListener('pointerup',end);h.addEventListener('pointercancel',end);
+ let lastTap=0;h.addEventListener('pointerup',()=>{const now=Date.now();if(now-lastTap<350){reset()}lastTap=now});
+ h.addEventListener('dblclick',e=>{e.preventDefault();reset()});
+ function reset(){width=BASE;try{localStorage.setItem(KEY,String(BASE))}catch{}applied=null;apply()}
+ h.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();const d=(e.key==='ArrowRight')!==right()?36:-36;width=clampW(width+d);try{localStorage.setItem(KEY,String(width))}catch{}apply()}});
+ h.tabIndex=0;
+ let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{apply()}catch(e){console.warn(e)}})};
+ addEventListener('resize',run);addEventListener('scroll',run,true);
+ new MutationObserver(run).observe(root,{attributes:true,attributeFilter:['class']});
+ const watch=()=>{const c=cont();if(c&&!c.__spSide){c.__spSide=true;new MutationObserver(run).observe(c,{attributes:true,attributeFilter:['class']});new ResizeObserver(run).observe(c)}};
+ new MutationObserver(()=>{watch();run()}).observe(document.body,{childList:true});watch();
+ addEventListener('load',run);run();setTimeout(run,700);
+ window.classroomSideZoom=()=>root.classList.contains('sp-side-sized')?parseFloat(getComputedStyle(root).getPropertyValue('--sp-side-z'))||1:1;
+ const st=document.createElement('style');st.textContent=
+  'body[data-module=sitzplan] .container{position:relative}'
+  +'html.sp-side-sized:not(.classroom-beamer) body[data-module=sitzplan] .container:not(.sidebar-collapsed):not(.sidebar-hidden):not(#_){grid-template-columns:var(--sp-side-w) minmax(0,1fr)!important}'
+  +'html.sp-side-sized.cm-side-right:not(.classroom-beamer) body[data-module=sitzplan] .container:not(.sidebar-collapsed):not(.sidebar-hidden):not(#_){grid-template-columns:minmax(0,1fr) var(--sp-side-w)!important}'
+  +'html.sp-side-sized:not(.classroom-beamer) body[data-module=sitzplan] .container>.panel{zoom:var(--sp-side-z)}'
+  +'html.sp-side-dragging body[data-module=sitzplan] .container{transition:none!important}html.sp-side-dragging,html.sp-side-dragging *{cursor:col-resize!important;user-select:none!important;-webkit-user-select:none!important}'
+  +'.sp-side-handle{position:absolute;z-index:30;width:24px;cursor:col-resize;touch-action:none;display:flex;align-items:center;justify-content:center;outline:none}.sp-side-handle[hidden]{display:none}'
+  +'.sp-side-pill{width:10px;height:56px;border-radius:6px;background:#fff;border:1px solid #c9d4e3;box-shadow:0 1px 3px #233d6022;display:flex;align-items:center;justify-content:center;color:#8aa0bd;font-size:14px;line-height:1;transition:background .15s,border-color .15s,color .15s}'
+  +'.sp-side-handle:hover .sp-side-pill,.sp-side-handle:focus-visible .sp-side-pill{background:#2f5f9b;border-color:#2f5f9b;color:#fff}'
+  +'.sp-side-line{position:absolute;left:10px;top:8px;bottom:8px;width:4px;border-radius:3px;background:#2f5f9b;display:none}'
+  +'.sp-side-badge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#2f5f9b;color:#fff;font:700 12px/1 system-ui,-apple-system,sans-serif;padding:6px 9px;border-radius:8px;white-space:nowrap;display:none}'
+  +'html.sp-side-dragging .sp-side-line,html.sp-side-dragging .sp-side-badge{display:block}html.sp-side-dragging .sp-side-pill{opacity:0}'
+  +'@media print{.sp-side-handle{display:none!important}}';
+ document.head.append(st);
+})();
+;
+
 /* ==== sitzplan/fit-panels.js ==== */
 /* 10.19: Mac/iPad – Sitzplan-Fenster und Einstellungs-Spalte enden unten auf derselben Höhe wie die Noten-Schnellansicht
    (12 px über dem unteren Rand). Die Seite selbst scrollt nicht mehr, gescrollt wird innerhalb der Fenster. */
@@ -4089,11 +4155,12 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
   boxes=list;if(!root.classList.contains('sp-fit'))root.classList.add('sp-fit');
   if(document.scrollingElement.scrollTop)document.scrollingElement.scrollTop=0;
   for(const b of list){if(!b.classList.contains('sp-fit-box'))b.classList.add('sp-fit-box');
-   const h=Math.max(240,Math.round(innerHeight-b.getBoundingClientRect().top-gap()));
+   /* 10.41: vergrößertes Seitenmenü (zoom) – Höhe in seinen eigenen Einheiten */const z=b.classList.contains('panel')?(window.classroomSideZoom?.()||1):1;
+   const h=Math.max(240,Math.round((innerHeight-b.getBoundingClientRect().top-gap())/z));
    if(Math.abs((parseFloat(b.style.height)||0)-h)>1)b.style.height=h+'px'}
  }
  let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{fit()}catch(e){console.warn(e)}})};
- addEventListener('resize',run);window.visualViewport?.addEventListener('resize',run);
+ addEventListener('resize',run);window.visualViewport?.addEventListener('resize',run);window.classroomFitPanels=run;
  new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
  new MutationObserver(run).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
  document.addEventListener('fullscreenchange',run);document.addEventListener('webkitfullscreenchange',run);
