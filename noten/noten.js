@@ -3362,32 +3362,30 @@ html.fs-view .fs-hide{display:none!important}
  const compact=s=>s.replace(/[\s-]+/g,'');
  function lev(a,b){if(a===b)return 0;const m=a.length,n=b.length;if(Math.abs(m-n)>2)return 9;let p=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
  const typo=(a,b)=>{const l=Math.max(a.length,b.length);return l>=4&&lev(a,b)<=(l>=7?2:1)};
- const maxOf=item=>item.kind==='x'?1:2;
+ /* 10.22: 1 Punkt je verlangtem Wort, je Genus und für die Bedeutung; keine halben Punkte; Tippfehler = falsch */
+ const lemmaMax=item=>item.kind==='x'?0:item.kind==='n'?2:item.kind==='v'?Math.max(1,(item.need||[]).length):1;
+ const maxOf=item=>lemmaMax(item)+1;
  function gradeLemma(item,ans){
-  if(item.kind==='x')return {p:0,max:0};
+  const max=lemmaMax(item);if(!max)return {p:0,max:0};
   const toks=latTokens(ans.l);let ge=ans.ge||'';const rest=[];for(const t of toks){if(GENUS_WORDS[t]&&!(item.need||[]).map(normLat).includes(t)){if(!ge)ge=GENUS_WORDS[t];continue}if(t==='pl'||t==='plural')continue;rest.push(t)}
-  const need=(item.need||[]).map(normLat),also=(item.also||[]).map(normLat);
-  if(!rest.length)return {p:0,max:1,note:'leer'};
-  const present=need.filter(t=>rest.includes(t)),extras=rest.filter(t=>!need.includes(t)&&!also.includes(t)),missing=need.filter(t=>!rest.includes(t));
-  const typos=missing.filter(t=>extras.some(x=>typo(x,t)));const unknown=extras.filter(x=>!missing.some(t=>typo(x,t)));
-  let r;
-  if(present.length===need.length&&!extras.length)r={p:1};
-  else if(present.length===need.length)r={q:true,s:1,note:'zusätzlich: '+extras.join(', ')};
-  else if(present.length+typos.length===need.length&&!unknown.length)r={q:true,s:1,note:'Tippfehler?'};
-  else if(present.length||typos.length)r={q:true,s:.5,note:'unvollständig'};
-  else r={p:0,note:'falsch'};
-  if(item.kind==='n'){const ok=(item.genus||[]).includes(ge);if(!ok){const why=ge?'Genus falsch ('+ge+')':'Genus fehlt';if(r.p===1)r={p:.5,note:why};else if(r.q){r.s=Math.min(r.s,.5);r.note+=' · '+why}}}
-  return {...r,max:1,ge}}
+  const need=(item.need||[]).map(normLat);
+  const want=item.kind==='v'?need:need.slice(0,1);
+  const found=want.filter(t=>rest.includes(t));let p=found.length;const miss=want.filter(t=>!rest.includes(t));
+  const notes=[];if(!rest.length)notes.push('leer');else if(miss.length)notes.push('fehlt/falsch: '+miss.join(', '));
+  if(item.kind==='n'){const ok=rest.length&&(item.genus||[]).includes(ge);if(ok)p++;else notes.push(ge?'Genus falsch ('+ge+')':'Genus fehlt')}
+  return {p,max,ge,note:notes.join(' · ')}}
  function gradeMeaning(item,ans){
   const raw=String(ans.m||'').trim();if(!raw)return {p:0,max:1,note:'leer'};
   const exp=new Set();for(const m of item.meanings||[])for(const part of String(m).split(/[;,]/)){const n=normDe(part);if(n){exp.add(n);exp.add(compact(n))}}
   const pieces=raw.split(/[,;\/]|\s+(?:oder|bzw\.?)\s+/i).map(normDe).filter(Boolean);
-  let hits=0,near=0,nearKind='',misses=[];
   const bag=x=>x.split(' ').sort().join(' '),bags=new Set([...exp].map(bag));
-  for(const p of pieces){if(exp.has(p)||exp.has(compact(p))||bags.has(bag(p))){hits++;continue}let found='';for(const e of exp){if(typo(p,e)){found='typo';break}if(e.length>=4&&p.length>=4&&(e.includes(p)||p.includes(e)))found=found||'part'}if(found){near++;nearKind=nearKind==='typo'?'typo':found}else misses.push(p)}
-  if(hits&&!misses.length)return {p:1,max:1};
-  if(hits)return {q:true,s:1,max:1,note:'weitere Angabe: '+misses.join(', ')};
-  if(near)return {q:true,s:nearKind==='typo'?1:.5,max:1,note:nearKind==='typo'?'Tippfehler?':'ähnlich'};
+  let hits=0,part='',misses=[];
+  for(const p of pieces){if(exp.has(p)||exp.has(compact(p))||bags.has(bag(p))){hits++;continue}
+   let f='';for(const e of exp)if(e.length>=4&&p.length>=4&&(p.includes(e)||e.includes(p))){f=p.includes(e)?'mehr':'weniger';break}
+   if(f&&!part)part=f;if(!f)misses.push(p)}
+  if(hits&&!misses.length&&!part)return {p:1,max:1};
+  if(hits)return {q:true,s:1,max:1,note:'zusätzlich: '+[...misses,...(part?['(ähnlich)']:[])].join(', ')};
+  if(part)return {q:true,s:part==='mehr'?1:0,max:1,note:'ähnlich wie die Lösung'};
   return {p:0,max:1,note:'falsch'}}
  function gradeAll(test,sub){const items=test.groups[sub.g]||[];return items.map((item,i)=>{const a=sub.a?.[i]||{};return {lemma:gradeLemma(item,a),meaning:gradeMeaning(item,a),ans:a}})}
  window.classroomVocabGrade={gradeLemma,gradeMeaning,normDe,normLat};
@@ -3421,7 +3419,7 @@ html.fs-view .fs-hide{display:none!important}
  async function loadFile(){const [f]=await pick('.cmvok,.json,application/json');if(!f)return;try{const t=normalizeTest(JSON.parse(await f.text()));saveTest(t);state={test:t,g:Object.keys(t.groups)[0]};showTest()}catch(e){alert('Vokabeltest: '+(e.message||e))}}
  async function showTest(){const t=state.test,g=state.g,items=t.groups[g],groups=Object.keys(t.groups),url=await studentUrl(t,g);
   const total=items.reduce((a,it)=>a+maxOf(it),0);let qr='';try{qr=classroomQrSvg(url,{ecc:'M',boost:false,dark:'#243247',border:3})}catch(e){qr='<p class="vt-warn">QR-Code nicht möglich: '+esc(e.message)+'</p>'}
-  dlg.innerHTML='<form method="dialog" class="vt-wide"><div class="vt-top"><div><h2>'+esc(t.title)+'</h2><div class="vt-sub">'+esc(t.className)+' · '+items.length+' Vokabeln je Gruppe · '+total+' Punkte (Grundform + Bedeutung je 1 P)</div></div>'+(groups.length>1?'<div class="vt-seg">'+groups.map(x=>'<button type="button" data-g="'+x+'" class="'+(x===g?'on':'')+'">Gruppe '+x+'</button>').join('')+'</div>':'')+'</div>'+
+  dlg.innerHTML='<form method="dialog" class="vt-wide"><div class="vt-top"><div><h2>'+esc(t.title)+'</h2><div class="vt-sub">'+esc(t.className)+' · '+items.length+' Vokabeln je Gruppe · '+total+' Punkte (je 1 P für jedes Wort der Grundform, das Genus und die Bedeutung)</div></div>'+(groups.length>1?'<div class="vt-seg">'+groups.map(x=>'<button type="button" data-g="'+x+'" class="'+(x===g?'on':'')+'">Gruppe '+x+'</button>').join('')+'</div>':'')+'</div>'+
    '<div class="vt-grid"><div class="vt-tab"><table><thead><tr><th>Form (Schüler sehen)</th><th>Grundform (Lösung)</th><th>Bedeutungen (Lösung)</th><th>P</th></tr></thead><tbody>'+items.map((it,i)=>'<tr><td><input class="vt-in vt-form" data-f="form" data-i="'+i+'" value="'+esc(it.form)+'"></td><td>'+(it.kind==='x'?'<span class="vt-sub">— unveränderlich</span>':'<input class="vt-in" data-f="lemma" data-i="'+i+'" value="'+esc(lemmaText(it))+'">')+'</td><td><input class="vt-in" data-f="meanings" data-i="'+i+'" value="'+esc(it.meanings.join('; '))+'"></td><td class="vt-c">'+maxOf(it)+'</td></tr>').join('')+'</tbody></table></div>'+
    '<div><div class="vt-card vt-qr"><b>Gruppe '+esc(g)+' ausgeben</b><div class="vt-sub">Mit der iPad-Kamera scannen</div><div class="vt-qrimg">'+qr+'</div><div class="vt-row"><button type="button" class="vt-btn" data-beamer>Groß am Beamer</button><button type="button" class="vt-btn" data-copy>Link kopieren</button></div></div>'+
    '<div class="vt-card"><b>Abgaben</b><div class="vt-sub" style="margin:4px 0 12px">'+Object.keys(t.subs||{}).length+' eingelesen. Die Schüler senden ihre Datei per AirDrop. Die Lösungen sind <b>nicht</b> im Link enthalten.</div><button type="button" class="vt-btn vt-pri" data-subs>Abgaben einlesen …</button>'+(Object.keys(t.subs||{}).length?'<button type="button" class="vt-btn" style="margin-top:8px;width:100%" data-review>Auswertung öffnen</button>':'')+'</div></div></div>'+
@@ -3453,7 +3451,7 @@ html.fs-view .fs-hide{display:none!important}
   const dup=[...assigned].filter(n=>rows.filter(r=>r.s.student===n).length>1);
   dlg.innerHTML='<form method="dialog" class="vt-wide"><h2>'+esc(t.title)+' – Abgaben</h2><div class="vt-sub">'+rows.length+' Abgaben ('+Object.keys(t.groups).map(g=>'Gruppe '+g+': '+rows.filter(r=>r.s.g===g).length).join(' · ')+') · '+Object.keys(totals).map(g=>g+': '+totals[g]+' P').join(', ')+' · Grenzen 90 / 80 / 70 / 60 / 50 %</div>'+
    '<div class="vt-sum"><div><b>'+rows.length+'</b>Abgaben</div><div><b class="vt-green">'+auto+'</b>Antworten automatisch bewertet</div><div class="vt-amber"><b>'+open.length+'</b>fragliche Antworten</div><div><b>'+missing.length+'</b>ohne Abgabe'+(missing.length?': '+esc(missing.slice(0,4).map(n=>n.split(',').reverse().join(' ').trim()).join(', '))+(missing.length>4?' …':''):'')+'</div></div>'+
-   '<div class="vt-grid2"><div>'+(open.length?'<h3>Bitte kurz prüfen</h3>'+open.slice(0,30).map((q,n)=>{const it=t.groups[q.row.s.g][q.i],a=q.row.res[q.i].ans;return '<div class="vt-q"><small>'+esc(q.row.s.name)+' · '+esc(q.row.s.g)+(q.i+1)+' <b>'+esc(it.form)+'</b> · '+(q.part==='lemma'?'Grundform':'Bedeutung')+'</small><div class="vt-ans">„'+esc(q.part==='lemma'?a.l:a.m)+'“'+(q.part==='lemma'&&it.kind==='n'?' · Genus '+esc(q.x.ge||'—'):'')+'</div><div class="vt-sub">'+esc(q.x.note||'')+' – Lösung: '+esc(q.part==='lemma'?lemmaText(it):it.meanings.join('; '))+'</div><div class="vt-row"><button type="button" class="vt-btn vt-ok" data-q="'+n+'" data-v="1">✓ richtig</button><button type="button" class="vt-btn vt-half" data-q="'+n+'" data-v="0.5">½ halb</button><button type="button" class="vt-btn vt-bad" data-q="'+n+'" data-v="0">✗ falsch</button></div></div>'}).join('')+(open.length>30?'<div class="vt-sub">+ '+(open.length-30)+' weitere</div>':''):'<div class="vt-card vt-done">✓ Keine fraglichen Antworten.</div>')+'</div>'+
+   '<div class="vt-grid2"><div>'+(open.length?'<h3>Bitte kurz prüfen</h3>'+open.slice(0,30).map((q,n)=>{const it=t.groups[q.row.s.g][q.i],a=q.row.res[q.i].ans;return '<div class="vt-q"><small>'+esc(q.row.s.name)+' · '+esc(q.row.s.g)+(q.i+1)+' <b>'+esc(it.form)+'</b> · '+(q.part==='lemma'?'Grundform':'Bedeutung')+'</small><div class="vt-ans">„'+esc(q.part==='lemma'?a.l:a.m)+'“'+(q.part==='lemma'&&it.kind==='n'?' · Genus '+esc(q.x.ge||'—'):'')+'</div><div class="vt-sub">'+esc(q.x.note||'')+' – Lösung: '+esc(q.part==='lemma'?lemmaText(it):it.meanings.join('; '))+'</div><div class="vt-row"><button type="button" class="vt-btn vt-ok" data-q="'+n+'" data-v="1">✓ richtig</button><button type="button" class="vt-btn vt-bad" data-q="'+n+'" data-v="0">✗ falsch</button></div></div>'}).join('')+(open.length>30?'<div class="vt-sub">+ '+(open.length-30)+' weitere</div>':''):'<div class="vt-card vt-done">✓ Keine fraglichen Antworten.</div>')+'</div>'+
    '<div class="vt-tab"><table><thead><tr><th>Abgabe</th><th>Schüler:in</th><th>Gr.</th><th>Punkte</th><th>Erg.</th></tr></thead><tbody>'+rows.sort((a,b)=>(a.s.student||'~').localeCompare(b.s.student||'~','de')).map(r=>'<tr class="'+(r.s.student?'':'vt-open')+'"><td>'+esc(r.s.name||'—')+'</td><td><select data-st="'+esc(r.k)+'">'+optList(r.s.student)+'</select></td><td class="vt-c">'+esc(r.s.g)+'</td><td class="vt-c">'+String(r.pts).replace('.',',')+(r.qs.length?' <span class="vt-tag">?</span>':'')+'</td><td class="vt-c"><b>'+signOf(r.pts,r.s.g)+'</b></td></tr>').join('')+'</tbody></table>'+(dup.length?'<p class="vt-warn">Doppelt zugeordnet: '+esc(dup.join(', '))+'</p>':'')+'</div></div>'+
    '<div class="dialog-actions"><button type="button" data-more>Weitere Abgaben einlesen …</button><button type="button" data-backt>Zurück</button><button type="submit" class="primary" data-make>'+(t.done?'Test erneut anlegen':'Test anlegen')+'</button></div></form>';
   dlg.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const q=open[+b.dataset.q];q.row.s.over??={};q.row.s.over[q.key]=Number(b.dataset.v);saveTest(t);review()});
@@ -3462,8 +3460,8 @@ html.fs-view .fs-hide{display:none!important}
   dlg.querySelector('form').onsubmit=e=>{e.preventDefault();if(dup.length){alert('Bitte doppelte Zuordnungen auflösen.');return}if(open.length&&!confirm(open.length+' fragliche Antworten sind noch offen. Mit dem Vorschlag (gelb) übernehmen?'))return;
    if(t.done&&!confirm('Für diesen iPad-Test wurde schon ein Test angelegt. Noch einen anlegen?'))return;
    const scores=new Map();rows.forEach(r=>{if(r.s.student)scores.set(r.s.student,{p:r.pts,g:r.s.g})});const ab=Object.keys(t.groups).length>1;
-   const go=()=>window.classroomCreateRawTest({label:t.name,system:'participation',abGroups:ab,init(task,data){task.date=t.date||today();const c=task.testDetail;const tot=Math.max(...Object.values(totals));Object.assign(c,{total:tot,pass:50,halfPoints:true,useSubject:false,manual:true,manualRatios:{...RATIOS},tendencies:false,source:'ipad-vokabeltest'});
-     if(ab){c.variants={};for(const g of ['A','B'])c.variants[g]={total:totals[g]??tot,pass:50,halfPoints:true,tendencies:false,manual:true}}
+   const go=()=>window.classroomCreateRawTest({label:t.name,system:'participation',abGroups:ab,init(task,data){task.date=t.date||today();const c=task.testDetail;const tot=Math.max(...Object.values(totals));Object.assign(c,{total:tot,pass:50,halfPoints:false,useSubject:false,manual:true,manualRatios:{...RATIOS},tendencies:false,source:'ipad-vokabeltest'});
+     if(ab){c.variants={};for(const g of ['A','B'])c.variants[g]={total:totals[g]??tot,pass:50,halfPoints:false,tendencies:false,manual:true}}
      for(const st of data.students||[]){const n=String(st.name||'').trim(),x=scores.get(n);if(!x)continue;st.rawScores??={};st.rawScores[task.id]=String(x.p);if(ab){st.testGroups??={};st.testGroups[task.id]=x.g==='B'?'B':'A'}}}});
    /* Der Test entsteht im gerade gewählten Quartal der Klasse, für die der iPad-Test ausgegeben wurde */
    if(t.classId!==currentClassId&&!confirm('Achtung: Der iPad-Test wurde für '+t.className+' ausgegeben, gerade ist eine andere Klasse gewählt. Trotzdem hier anlegen?'))return;
