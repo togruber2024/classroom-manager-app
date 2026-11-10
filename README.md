@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.62
+Stand: 10.11.2026 · Version 10.63
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1341,3 +1341,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.60: Vokabeltest – Link für Jamf kopieren, Offline-Vorbereitung nur noch aufklappbar
 10.61: Vokabeltest-Fenster mit Reitern (Ausgeben, Vokabeln & Lösungen, Abgaben), Smartboard-Ansicht; Symbolleisten im Querformat in einer Zeile
 10.62: Vokabeltest – Deutsch 1 Buchstabe falsch = ½ Punkt Abzug, Latein streng; Auffällig-Zahl wie an der Glocke
+10.63: Vokabeltest – Tische wie im Sitzplan-Manager, Reihenabstand = Tischhöhe; QR-Code einzeln groß zeigen; Klett-Fenster neu angeordnet; Auffällig-Zahl kleiner und rund
