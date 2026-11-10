@@ -2156,6 +2156,36 @@ try{const f=window.frameElement;if(f)new MutationObserver(()=>setTimeout(classro
 window.addEventListener('resize',()=>{if(classroomDeferredRender.pending)setTimeout(classroomFlushDeferredRender,0)});
 ;
 
+/* ==== noten/roster-readonly.js ==== */
+/* 10.42: Schülerliste in den Bewertungstabellen nur noch anzeigen. Hinzufügen, Umbenennen und Entfernen
+   geschehen in der „Schülerübersicht“ (Bearbeiten). Die „−“-Knöpfe und „＋ Schüler:in“ entfallen, die Namen sind normaler Text. */
+(function(){
+ const SEL='input[data-student-name],input[data-homework-name]';
+ function apply(){for(const i of document.querySelectorAll(SEL)){if(!i.readOnly){i.readOnly=true;i.tabIndex=-1;i.title=i.value?i.value+' – bearbeiten in der Schülerübersicht':''}}}
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(apply);else new MutationObserver(apply).observe(document.documentElement,{childList:true,subtree:true});
+ addEventListener('load',apply);apply();
+ const st=document.createElement('style');st.textContent=
+  '.student-remove-button,[data-task-action="add-student"],[data-homework-action="add-student"]{display:none!important}'
+  +'input[data-student-name][readonly],input[data-homework-name][readonly]{border-color:transparent!important;background:transparent!important;box-shadow:none!important;cursor:default;color:inherit;padding-left:2px!important;outline:none}'
+  +'.task-student-cell{gap:0!important}';
+ document.head.append(st);
+})();
+;
+
+/* ==== noten/print-icon.js ==== */
+/* 10.42: „Drucken“ in den Tabellenleisten als Symbol (Drucker, Stil wie Auge/Glocke/Vollbild). Der Text bleibt für Vorlesen und Skripte erhalten. */
+(function(){
+ const SVG='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 8V4.5h9V8"/><path d="M6.5 16.5H6A2.5 2.5 0 0 1 3.5 14v-3.5A2.5 2.5 0 0 1 6 8h12a2.5 2.5 0 0 1 2.5 2.5V14a2.5 2.5 0 0 1-2.5 2.5h-.5"/><path d="M7.5 13h9v6.5h-9z"/></svg>';
+ function apply(){for(const b of document.querySelectorAll('.page-print-button,[data-page-print]')){if(b.querySelector(':scope>svg'))continue;if(b.textContent.trim()!=='Drucken')continue;b.innerHTML=SVG+'<span class="pi-lbl">Drucken</span>';b.classList.add('pi-icon');b.setAttribute('aria-label','Drucken');if(!b.title)b.title='Drucken'}}
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(apply);else new MutationObserver(apply).observe(document.documentElement,{childList:true,subtree:true});
+ addEventListener('load',apply);apply();
+ const st=document.createElement('style');st.textContent=
+  'button.pi-icon:not(#_){position:relative;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:42px;min-width:42px;padding:0!important}button.pi-icon>svg{width:20px;height:20px;flex:none}'
+  +'button.pi-icon .pi-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}';
+ document.head.append(st);
+})();
+;
+
 /* ==== table-navigation.js ==== */
 // Enter commits a table field and selects the next editable field in its column.
 document.addEventListener('keydown',event=>{
