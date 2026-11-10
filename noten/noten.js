@@ -3352,7 +3352,25 @@ html.fs-view .fs-hide{display:none!important}
   return new Promise((resolve,reject)=>{const s=document.createElement('script');if(inline){s.textContent=inline.textContent;document.head.append(s);resolve();return}
    s.src=new URL('../vendor/'+name+'.js',location.href).href;s.onload=resolve;s.onerror=()=>reject(new Error('Der PDF-Leser konnte nicht geladen werden.'));document.head.append(s)})}
  async function pdfLib(){if(root.pdfjsLib?.getDocument&&root.pdfjsWorker?.WorkerMessageHandler)return root.pdfjsLib;loading??=(async()=>{if(!root.pdfjsWorker?.WorkerMessageHandler)await loadScript('pdfjs-worker');if(!root.pdfjsLib?.getDocument)await loadScript('pdfjs')})();try{await loading}catch(e){loading=null;throw e}return root.pdfjsLib}
- async function pdfItems(buf){const lib=await pdfLib(),pdf=await lib.getDocument({data:new Uint8Array(buf)}).promise,pages=[];for(let i=1;i<=pdf.numPages;i++){const tc=await (await pdf.getPage(i)).getTextContent();pages.push(tc.items.filter(it=>String(it.str||'').trim()).map(it=>({s:NFC(it.str),x:it.transform[4],y:it.transform[5],w:it.width||0,h:it.height||Math.abs(it.transform[3])||10})))}return pages}
+ /* 10.33: PDFs, die am Mac zusammengefügt wurden („Drucken als PDF“), verlieren die Zuordnung der Längenzeichen (ā erscheint als „&“).
+    Die Glyphennamen der Schrift (amacron …) stehen aber noch in der Kodierung – daraus wird der Buchstabe zurückgewonnen. */
+ const GL={amacron:'ā',emacron:'ē',imacron:'ī',omacron:'ō',umacron:'ū',ymacron:'ȳ',Amacron:'Ā',Emacron:'Ē',Imacron:'Ī',Omacron:'Ō',Umacron:'Ū',Ymacron:'Ȳ',abreve:'ă',ebreve:'ĕ',ibreve:'ĭ',obreve:'ŏ',ubreve:'ŭ',
+  adieresis:'ä',odieresis:'ö',udieresis:'ü',Adieresis:'Ä',Odieresis:'Ö',Udieresis:'Ü',edieresis:'ë',idieresis:'ï',germandbls:'ß',eacute:'é',egrave:'è',agrave:'à',ccedilla:'ç',
+  arrowright:'→',arrowleft:'←',arrowboth:'↔',approxequal:'≈',endash:'–',emdash:'—',bullet:'•',periodcentered:'·',quoteright:'’',quoteleft:'‘',quotedblleft:'“',quotedblright:'”',quotedblbase:'„',ellipsis:'…',space:' ',
+  zero:'0',one:'1',two:'2',three:'3',four:'4',five:'5',six:'6',seven:'7',eight:'8',nine:'9',hyphen:'-',comma:',',period:'.',colon:':',semicolon:';',parenleft:'(',parenright:')',slash:'/',question:'?',exclam:'!',equal:'=',plus:'+'};
+ const glyph=n=>{if(!n)return null;const b=String(n).split('.')[0];if(GL[b])return GL[b];if(/^[A-Za-z]$/.test(b))return b;const u=/^uni([0-9A-F]{4})$/i.exec(b);if(u){const c=String.fromCharCode(parseInt(u[1],16));return c===' '?' ':c}return null};
+ const SUSPECT=/[A-Za-z][!"#$%&'][a-z]|[!"#$%&'](?:re|ri|rum|rus|s|tum|tus|m)\b/;
+ async function pdfItems(buf,onPage){const lib=await pdfLib(),pdf=await lib.getDocument({data:new Uint8Array(buf),fontExtraProperties:true}).promise,pages=[];
+  for(let i=1;i<=pdf.numPages;i++){try{onPage?.(i,pdf.numPages)}catch{}const pg=await pdf.getPage(i),tc=await pg.getTextContent();let items=tc.items.filter(it=>String(it.str||'').trim());
+   if(items.some(it=>/^[!"#$%&']$/.test(it.str.trim())||SUSPECT.test(it.str))){try{await pg.getOperatorList()}catch{}
+    const cache=new Map(),diff=name=>{if(!cache.has(name)){let d=null;try{const f=pg.commonObjs.get(name);if(f?.differences?.some(Boolean))d=f.differences}catch{}cache.set(name,d)}return cache.get(name)};
+    items=items.map(it=>{const d=diff(it.fontName);if(!d)return it;let ch=false;const s=[...it.str].map(c=>{const g=glyph(d[c.charCodeAt(0)]);if(g!=null&&g!==c){ch=true;return g}return c}).join('');return ch?{...it,str:s}:it})
+}
+   /* Wortteile ohne Zwischenraum („pr“ „ō“ „vincia“) wieder zu einem Wort zusammenfügen */
+   const list=items.map(it=>({s:it.str,x:it.transform[4],y:it.transform[5],w:it.width||0,h:it.height||Math.abs(it.transform[3])||10})).sort((a,b)=>b.y-a.y||a.x-b.x),out=[];
+   for(const it of list){const p=out.at(-1),gap=p?it.x-(p.x+p.w):0;if(p&&Math.abs(p.y-it.y)<1.5&&gap>-0.8&&gap<Math.min(p.h,it.h)*0.12&&!/\s$/.test(p.s)&&!/^\s/.test(it.s)){p.s+=it.s;p.w=it.x+it.w-p.x}else out.push({...it})}
+   pages.push(out.map(it=>({...it,s:NFC(it.s)})))}
+  return pages}
  /* ---------- Vokabeltabelle erkennen ---------- */
  const mode=arr=>{const m=new Map();let best=null,n=0;for(const v of arr){const k=Math.round(v/2)*2,c=(m.get(k)||0)+1;m.set(k,c);if(c>n){n=c;best=k}}return best};
  function rowsOf(items){const rows=[];for(const it of [...items].sort((a,b)=>b.y-a.y||a.x-b.x)){let r=rows.find(r=>Math.abs(r.y-it.y)<=2.6);if(!r){r={y:it.y,items:[]};rows.push(r)}r.items.push(it)}rows.forEach(r=>r.items.sort((a,b)=>a.x-b.x));return rows.sort((a,b)=>b.y-a.y)}
@@ -3372,7 +3390,7 @@ html.fs-view .fs-hide{display:none!important}
    const c4=c3!=null?mode(cand.map(r=>r.items.find(i=>i.x>c3+100)?.x).filter(x=>x!=null)):null;
    for(const r of rows){const first=r.items[0],t=joinText(r.items);
     if(/\.indd\b/.test(t)||/^\d{1,3}$/.test(t)||/^(\d+\s+)?Vokabular(\s+\d+)?$/.test(t))continue;
-    const lm=/^Lektion\s+(\d+)\s*(.*?)(\s+[A-Z]\d+)?$/.exec(t);if(lm&&!out.lesson){out.lesson=lm[1];out.title=lm[2].trim();continue}
+    const lm=/^(Lektion|Transitio)\s+(\d+)\s*(.*?)(\s+[A-Z]\d+)?$/.exec(t);if(lm&&!out.lesson){out.lesson=(lm[1]==='Transitio'?'T':'')+lm[2];out.title=lm[3].trim();continue}
     if(/^WIEDERHOLUNG$/.test(t)){inRep=true;repText='';continue}
     if(/^ÜBUNGEN$/.test(t)||/^EIGENNAMEN$/.test(t)&&out.sections.length&&false){stopped=true;break}
     if(/^EIGENNAMEN$/.test(t)){newSec('Eigennamen');sec.skip=true;inRep=false;continue}
@@ -3388,7 +3406,7 @@ html.fs-view .fs-hide{display:none!important}
      if(STOP.test(p1)||(!p2&&!p3&&/\s/.test(p1)&&p1.length>25)){paused=true;last=null;continue}
      if(!p2&&!p3)continue;
      if(paused||/,/.test(p1))continue;
-     if(!sec)newSec('Lektion '+(out.lesson||''));
+     if(!sec)newSec(/^T/.test(out.lesson)?'Transitio '+out.lesson.slice(1):'Lektion '+(out.lesson||''));
      if(sec.skip)continue;
      last={lemma:p1,info:p2,meaning:p3};sec.entries.push(last)}
     else if(last&&!p1&&(p2||p3)){if(p2)last.info=appendText(last.info,p2);if(p3)last.meaning=appendText(last.meaning,p3)}
@@ -3469,7 +3487,8 @@ html.fs-view .fs-hide{display:none!important}
   /* 3. Deklination: „-e“ (fortis), „ācris, ācre“, „fēlīcis“ (Gen.) */
   let st=null,nomN=null,w0=null;
   if(/^-e\b/.test(info)&&/is$/.test(plain(L))){st=L.slice(0,-2);nomN=st+'e'}
-  else{const w=info.split(/[\s,]+/).filter(Boolean);w0=w[0];if(w.length>=2&&/is$/.test(plain(w[0]))&&/e$/.test(plain(w[1]))){st=w[0].slice(0,-2);nomN=w[1]}else if(w[0]&&/is$/.test(plain(w[0]))&&!/[mfn]\./.test(info)){st=w[0].slice(0,-2);nomN=L}}
+  else{const w=info.split(/[\s,]+/).filter(Boolean);w0=w[0];if(w.length>=2&&/is$/.test(plain(w[0]))&&/e$/.test(plain(w[1]))){st=w[0].slice(0,-2);nomN=w[1]}else if(w[0]&&/is$/.test(plain(w[0]))&&!/[mfn]\./.test(info)){st=w[0].slice(0,-2);nomN=L}
+   /* 10.33: „grandis | grande“ (Neutrum ausgeschrieben) */else if(w.length===1&&/is$/.test(plain(L))&&plain(w[0])===plain(L).slice(0,-2)+'e'){st=L.slice(0,-2);nomN=w[0];w0=null}}
   if(st){const mf=[null,st+'is',st+'ī',st+'em',st+'ī'],pl=[st+'ēs',st+'ium',st+'ibus',st+'ēs',st+'ibus'];
    const nomF=(w0&&/is$/.test(plain(w0))&&plain(w0)!==plain(L))?w0:L;add('m','Sg.',[L,...mf.slice(1)]);add('m','Pl.',pl);add('f','Sg.',[nomF,...mf.slice(1)]);add('f','Pl.',pl);add('n','Sg.',[nomN,st+'is',st+'ī',nomN,st+'ī']);add('n','Pl.',[st+'ia',st+'ium',st+'ibus',st+'ia',st+'ibus']);
    return {kind:'a',lemma:L,forms,nomAlso:[nomF,nomN].filter(x=>x&&x!==L),adj3:true}}
@@ -3570,7 +3589,31 @@ html.fs-view .fs-hide{display:none!important}
   info=info.replace(/(\w)\(i\)(um)/g,'$1i$2');const m=/^-(ae|ī|i|ūs|us|eī|ei|is|ōrum|orum|ārum|arum)\b(.*)$/.exec(info);if(!m||!/[mfn]\./.test(info))return info;
   const e=m[1],L=lemma;let st=L;if(/^(ae|ārum|arum)$/.test(e))st=L.replace(/(a|ae)$/,'');else if(/^(ī|i|ōrum|orum)$/.test(e))st=L.replace(/(us|um|ī|i|a)$/,'');else if(/^(ūs|us)$/.test(e))st=L.replace(/us$/,'');else if(/^(eī|ei)$/.test(e))st=L.replace(/ēs$|es$/,'');else if(e==='is')st=L.replace(/is$/,'');
   return st+e+m[2]}
- function analyze(e){const lemma=NFC(e.lemma).replace(/\s+/g,' ').trim();let info=NFC(e.info).trim();
+ /* 10.33: Lektion 1–5 nennen statt Genitiv den Akkusativ („soror | sorōrem f.“) und statt 1. Person die 3. („amāre | amat“) – in die übliche Form umschreiben */
+ const ISTEM=/(cip|fic|spic|fug|iac|cup|rap|sap|quat|fac)ere$/;
+ function earlyInfo(lemma,info){const L=lemma,pl=plain(L);
+  /* Adjektiv-Zusätze: „Gen. prūdentis Adv. prūdenter“, „(Gen. prūdentis; Adv. prūdenter)“ */
+  info=info.replace(/^\((.*)\)$/,'$1').replace(/;\s*Adv\.\s+\S+$/,'').replace(/\s+Adv\.\s+\S+$/,'').replace(/^Gen\.\s+(?=\S+\s*$)/,'');
+  /* „Rōmānus m., Rōmāna f., Rōmānum n.“ / „ātra, ātrum“ → „-a, -um“ */
+  let mm=/^(\S+)\s+m\.,\s*(\S+)\s+f\.,\s*(\S+)\s+n\.$/u.exec(info);if(mm)info=mm[2]+', '+mm[3];
+  if(/^\S+ī\s+m\.\s*Pl\.,\s*\S+ae\s+f\.\s*Pl\.,\s*\S+a\s+n\.\s*Pl\.$/u.test(info))return '-ae, -a Pl.';
+  mm=/^(\S+?)a,\s*(\S+?)um$/u.exec(info);if(mm&&mm[1]===mm[2]&&/(us|er)$/.test(pl)){const st=mm[1];if(/us$/.test(pl)&&plain(st)===pl.slice(0,-2))return '-a, -um';if(/er$/.test(pl))return plain(st)===pl?'-era, -erum':'-ra, -rum'}
+  /* nur Genus („avus | m.“) */
+  mm=/^([mfn])\.$/.exec(info);if(mm){const g=mm[1];if(g==='m'&&/us$/.test(pl))return L.slice(0,-2)+'ī m.';if(g==='f'&&/a$/.test(pl))return L.slice(0,-1)+'ae f.';if(g==='n'&&/um$/.test(pl))return L.slice(0,-2)+'ī n.';return info}
+  if(!/^Gen\./.test(info)&&!/[mfn]\./.test(info)&&/(āre|ēre|īre|ere|are|ire|esse|sse|lle|rre)$/.test(pl+'')&&/^(\S+?)t(\s*,\s*\S+nt)?\s*$/u.test(info)&&!/,.*,/.test(info)){
+   const third=/^(\S+?)t\b/.exec(info)[1],plu=/,\s*(\S+nt)/.exec(info)?.[1]||'';let first=null;
+   if(/esse$/.test(pl)){first=pl==='posse'?'possum':pl==='prodesse'?'prōsum':L.slice(0,-4)+'sum'}
+   else if(/^(velle)$/.test(pl))first='volō';else if(/^(nolle)$/.test(pl))first='nōlō';else if(/^(malle)$/.test(pl))first='mālō';else if(/ferre$/.test(pl))first=L.slice(0,-3)+'ō';
+   else if(/^(īre|ire)$/.test(pl)||/[^aeiou]īre$/.test(L)&&/^\S*it$/.test(info)&&plain(third).length===plain(L).length-3)first=L.slice(0,-3)+'eō';
+   else if(/āre$/.test(L))first=L.slice(0,-3)+'ō';else if(/ēre$/.test(L))first=L.slice(0,-2)+'ō';else if(/īre$/.test(L))first=L.slice(0,-2)+'ō';
+   else if(/ere$/.test(L))first=(/iunt$/.test(plu)||ISTEM.test(pl))?L.slice(0,-3)+'iō':L.slice(0,-3)+'ō';
+   return first||info}
+  const m=/^(\S+?)(em|am|um|ōs|ās|ēs)\s+([mfn])\.(\s+Pl\.)?\s*$/u.exec(info);if(!m)return info;const [,st,end,g,P]=m;
+  if(P){if(end==='ōs')return st+'ōrum '+g+'. Pl.';if(end==='ās')return st+'ārum '+g+'. Pl.';if(end==='ēs')return st+'um '+g+'. Pl.';if(end==='um'&&g==='n'&&plain(st+end)!==pl)return info;return info}
+  if(end==='am')return st+'ae '+g+'.';if(end==='em')return st+'is '+g+'.';
+  if(end==='um'){if(g!=='n')return st+'ī '+g+'.';if(plain(st+end)===pl)return st+'ī n.'}
+  return info}
+ function analyze(e){const lemma=NFC(e.lemma).replace(/\s+/g,' ').trim();let info=earlyInfo(lemma,NFC(e.info).trim());
   if(e.noMac===true||e.noMac===undefined&&!MAC.test(lemma+info)){const r=analyze0(lemma,expandInfo(lemma,info),e);return r.kind==='?'||r.kind==='x'?r:stripLex(r)}
   return analyze0(lemma,expandInfo(lemma,info),e)}
  function analyze0(lemma,info,e){
@@ -3578,7 +3621,7 @@ html.fs-view .fs-hide{display:none!important}
   if(!info||INDECL.test(info)||/^(pro\s+)?\+\s*(Akk|Abl|Dat|Gen)\.?$/.test(info)||/\((Sg|Pl)\.\)|\/\s*\w+\s*\(Pl\.\)|^(Sg|Pl)\.\s*\//.test(info))return {...base,kind:'x'};
   if(/Pron/.test(info)){const p=pronParadigm(lemma.split(/[\s,]/)[0]);if(p)return {...base,...p};
    /* schon gebeugte Pronomen wie „quem?“ (Interrog.-Pron. Akk.): nur die Bedeutung abfragen */return {...base,kind:'x'}}
-  const pr=pronParadigm(lemma);if(pr&&!/[mfn]\./.test(info))return {...base,...pr};
+  const pr=pronParadigm(lemma);if(pr&&(!/[mfn]\./.test(info)||/^(duo|tres)$/.test(plain(lemma))))return {...base,...pr};
   if(/^[^\s,]+(ō|o|or|m)\b/u.test(info)&&/(re|rī|ī|sse|lle)$/.test(plain(lemma).replace(/i$/,'ī'))||/^[^\s,]+(ō|or)\s*(,|$)/u.test(info)){const v=verbParadigm(lemma,info);if(v)return {...base,...v}}
   if(/\b[mfn]\.(?!\w)/.test(info)){const n=nounParadigm(lemma,info);if(n)return {...base,...n}}
   const a=adjParadigm(lemma,info);if(a)return {...base,...a};
@@ -3602,7 +3645,7 @@ html.fs-view .fs-hide{display:none!important}
   const merged=new Map();for(const [k,cs] of by){const [num,g]=k.split('|'),ck=cs.join('/')+' '+num;if(!merged.has(ck))merged.set(ck,new Set());if(g)merged.get(ck).add(g)}
   return pre+[...merged].map(([ck,gs])=>ck+(gs.size&&gs.size<3?' '+[...gs].join('/'):'')).join(' · ')}
  const nominalOk=(key,o)=>{const p=key.replace(/^PP[PA] /,'').split(' ');return o.cases.has(p[0])&&(p[1]!=='Pl.'||o.plural)};
- function verbOk(lex,key,o){const m=lex.meta?.[key];if(!m)return false;if(!o.persons.has(m.p))return false;
+ function verbOk(lex,key,o){const m=lex.meta?.[key];if(!m)return false;/* 10.33: Neutrum („datum eram“) nur in der 3. Person */if(m.g==='n'&&m.p!==2&&m.p!==5)return false;if(!o.persons.has(m.p))return false;
   if(lex.irr&&o.pron&&o.irr[lex.irr]&&o.lesson<o.irr[lex.irr])return false;
   if(m.m==='k'){if(!o.konj||!o.konjT.has(m.t))return false;if(m.v==='p'&&!lex.dep&&!(lex.semi&&m.g)&&(lex.intrans||!o.passive))return false;if(m.g&&!lex.dep&&!lex.semi&&!o.passPerf)return false;return true}
   if(!o.tenses.has(m.t))return false;
@@ -3654,7 +3697,17 @@ html.fs-view .fs-hide{display:none!important}
   /* keine neue Vokabel mehr: dieselbe Vokabel in anderer Form */
   if(old.lex&&old.kind!=='x'){taken.forms.add(plain(old.form));const it=toItem(old.lex,o,taken);if(it&&it.form!==old.form){groups[g][idx]=it;return true}}
   return false}
- root.classroomVocabPdf={pdfItems,parseVocab,parseTwoColumn,parseAny,analyze,draw,redrawOne,shortLabel,plain,learned,PONTES};
+ /* 10.33: Ganzer Vokabelteil in einer PDF (oder viele Einzel-PDFs): Seiten nach Kopfzeile („7 Vokabular“, „T2 Vokabular“) den Lektionen zuordnen */
+ function pageKey(items){const top=[...items].sort((a,b)=>b.y-a.y).slice(0,5);if(!top.some(i=>/^(\d{1,3}\s+)?Vokabular(\s+\d{1,3})?$/.test(i.s.trim())))return null;
+  for(const i of top){const m=/^(\d{1,2}|T\s?\d)$/.exec(i.s.trim());if(m)return m[1].replace(/\s/g,'')}return null}
+ function parseBook(pages){const groups=[];for(const items of pages){const k=pageKey(items);if(!k){groups.push(null);continue}const g=groups.at(-1);if(g&&g.key===k)g.pages.push(items);else groups.push({key:k,pages:[items]})}
+  const lessons={};for(const g of groups){if(!g)continue;const r=parseVocab(g.pages);if(!r.sections.length)continue;const key=g.key,prev=lessons[key];
+   if(prev){prev.sections.push(...r.sections);continue}lessons[key]={key,title:r.title,sections:r.sections}}
+  /* Längenzeichen: für das ganze Buch entscheiden */const all=Object.values(lessons).flatMap(l=>l.sections.flatMap(s=>s.entries));const has=all.some(e=>MAC.test(e.lemma+e.info));all.forEach(e=>e.noMac=!has);
+  return lessons}
+ const lessonOrder=k=>/^T/.test(k)?100+ +k.slice(1):+k;
+ const lessonLabel=k=>/^T/.test(k)?'Transitio '+k.slice(1):'Lektion '+k;
+ root.classroomVocabPdf={pageKey,parseBook,lessonOrder,lessonLabel,pdfItems,parseVocab,parseTwoColumn,parseAny,analyze,draw,redrawOne,shortLabel,plain,learned,PONTES};
 })(typeof window!=='undefined'?window:globalThis);
 ;
 
@@ -3799,18 +3852,62 @@ html.fs-view .fs-hide{display:none!important}
    const secs=info.sections.map((sec,i)=>({name:sec.name,on:i===0,lex:sec.entries.map(V.analyze)}));
    const ln=V.learned(info.lesson);pdfState={file:f.name,info,pages:pages.length,secs,name:'L'+(info.lesson||'')+' (Vok.)',count:10,groups:'AB',focus:'mixed',date:today(),draw:null,g:'A',learn:ln,ov:{tenses:new Set(ln.tenses),passive:ln.passive,passPerf:ln.passPerf,konj:ln.konj,ppp:ln.ppp,ppa:ln.ppa}};pdfSetup()}
   catch(e){console.error(e);dlg.close();alert('Vokabel-PDF: '+(e.message||e))}}
+
+ /* ---------- 10.33: Klett Pontes Gesamtband (2020) – Vokabular einmal laden, dann Lektion wählen ----------
+    Das Vokabular kommt aus den PDFs der Lehrkraft und bleibt nur auf diesem Gerät (und im Backup) – es ist nicht Teil der App. */
+ const LIB='classroom-vocab-library-v1',BOOK='Klett Pontes Gesamtband (2020)';
+ const lib=()=>{try{const v=JSON.parse(localStorage.getItem(LIB)||'null');return v&&v.lessons&&Object.keys(v.lessons).length?v:null}catch{return null}};
+ const keysOf=l=>Object.keys(l.lessons).sort((a,b)=>window.classroomVocabPdf.lessonOrder(a)-window.classroomVocabPdf.lessonOrder(b));
+ let bookSel=new Set();
+ async function importBook(){const files=await pick('application/pdf,.pdf',true);if(!files.length)return;
+  const V=window.classroomVocabPdf,lessons={},skipped=[];
+  dlg.innerHTML='<form method="dialog"><h2>Vokabular wird gelesen …</h2><p class="vt-sub" data-prog>'+files.length+' PDF'+(files.length>1?'s':'')+'</p></form>';if(!dlg.open)dlg.showModal();const prog=dlg.querySelector('[data-prog]');
+  try{let n=0;for(const f of files){n++;prog.textContent='PDF '+n+' von '+files.length+': '+f.name;
+    const pages=await V.pdfItems(await f.arrayBuffer(),(i,t)=>{prog.textContent=(files.length>1?'PDF '+n+' von '+files.length+' · ':'')+'Seite '+i+' von '+t});
+    let got=V.parseBook(pages);
+    if(!Object.keys(got).length){const r=V.parseAny(pages,f.name);if(r.lesson&&r.sections.length)got={[r.lesson]:{key:r.lesson,title:r.title,sections:r.sections}};else skipped.push(f.name)}
+    for(const [k,l] of Object.entries(got)){if(lessons[k])lessons[k].sections.push(...l.sections);else lessons[k]=l}}
+   if(!Object.keys(lessons).length)throw new Error('In den gewählten PDFs wurde kein Vokabular gefunden.');
+   const old=lib(),merged={...(old?.lessons||{}),...lessons};
+   const data={book:BOOK,updated:Date.now(),lessons:merged};try{localStorage.setItem(LIB,JSON.stringify(data))}catch{throw new Error('Der Speicher dieses Geräts ist voll – das Vokabular konnte nicht gespeichert werden.')}
+   let words=0,unk=0;for(const l of Object.values(lessons))for(const sec of l.sections)for(const e of sec.entries){words++;if(V.analyze(e).kind==='?')unk++}
+   bookSel=new Set();openBook('Gelesen: '+Object.keys(lessons).length+' Lektionen, '+words+' Vokabeln'+(unk?' ('+unk+' nicht erkannt – werden nicht abgefragt)':'')+(skipped.length?' · ohne Vokabular: '+skipped.join(', '):'')+'.')}
+  catch(e){console.error(e);dlg.close();alert('Vokabular: '+(e.message||e))}}
+ function openBook(note){const l=lib(),V=window.classroomVocabPdf;
+  if(!l){dlg.innerHTML='<form method="dialog" class="vt-mid"><h2>'+esc(BOOK)+'</h2><p class="vt-sub">Lade einmal den Vokabelteil des Buchs – als eine PDF mit allen Lektionen oder alle Einzel-PDFs auf einmal (mehrere auswählen). Danach wählst du hier nur noch die Lektion.</p><p class="vt-sub">Das Vokabular bleibt auf diesem Gerät und im Backup – es wird nicht mit der App weitergegeben.</p><div class="dialog-actions"><button type="button" data-x>Schließen</button><button type="button" data-mgr>iPad-Tests &amp; Auswertung …</button><button type="button" class="primary" data-imp>Vokabel-PDF(s) laden …</button></div></form>';
+   dlg.querySelector('[data-x]').onclick=()=>dlg.close();dlg.querySelector('[data-mgr]').onclick=()=>openManager();dlg.querySelector('[data-imp]').onclick=()=>importBook();if(!dlg.open)dlg.showModal();return}
+  const keys=keysOf(l);bookSel=new Set([...bookSel].filter(k=>l.lessons[k]));
+  const cnt=k=>l.lessons[k].sections.filter(x=>!/^(Wiederholung|Übungen)$/.test(x.name)).reduce((a,x)=>a+x.entries.length,0);
+  const chip=k=>'<button type="button" class="vt-les'+(bookSel.has(k)?' on':'')+'" data-les="'+esc(k)+'" title="'+esc(V.lessonLabel(k)+(l.lessons[k].title?' – '+l.lessons[k].title:''))+'"><b>'+esc(/^T/.test(k)?k:'L'+k)+'</b><small>'+cnt(k)+'</small></button>';
+  const sel=[...bookSel].sort((a,b)=>V.lessonOrder(a)-V.lessonOrder(b));
+  dlg.innerHTML='<form method="dialog" class="vt-mid"><h2>'+esc(BOOK)+'</h2><div class="vt-sub">Lektion wählen – auch mehrere (z. B. L14, L15, L16). Die Zahl zeigt die neuen Vokabeln der Lektion.</div>'+(note?'<div class="vt-note">'+esc(note)+'</div>':'')+
+   '<div class="vt-lesgrid">'+keys.map(chip).join('')+'</div>'+
+   '<div class="vt-sub" data-selinfo>'+(sel.length?esc(sel.map(k=>V.lessonLabel(k)+(l.lessons[k].title?' „'+l.lessons[k].title+'“':'')).join(' · ')):'Noch keine Lektion gewählt.')+'</div>'+
+   '<div class="dialog-actions vt-bookact"><button type="button" class="vt-delbook" data-rm>Vokabular entfernen</button><span style="flex:1"></span><button type="button" data-imp>PDF(s) nachladen …</button><button type="button" data-one>Andere Vokabel-PDF …</button><button type="button" data-mgr>iPad-Tests &amp; Auswertung …</button><button type="submit" class="primary" data-go'+(sel.length?'':' disabled')+'>Weiter</button></div></form>';
+  dlg.querySelectorAll('[data-les]').forEach(b=>b.onclick=()=>{const k=b.dataset.les;if(bookSel.has(k))bookSel.delete(k);else bookSel.add(k);openBook()});
+  dlg.querySelector('[data-rm]').onclick=()=>{if(!confirm('Das gespeicherte Vokabular ('+BOOK+') von diesem Gerät entfernen? Bereits erstellte Tests bleiben erhalten.'))return;try{localStorage.removeItem(LIB)}catch{}bookSel=new Set();openBook()};
+  dlg.querySelector('[data-imp]').onclick=()=>importBook();dlg.querySelector('[data-one]').onclick=()=>fromPdf();dlg.querySelector('[data-mgr]').onclick=()=>openManager();
+  dlg.querySelector('form').onsubmit=e=>{e.preventDefault();if(!bookSel.size)return;fromBook([...bookSel].sort((a,b)=>V.lessonOrder(a)-V.lessonOrder(b)))};
+  if(!dlg.open)dlg.showModal()}
+ function fromBook(keys){const l=lib(),V=window.classroomVocabPdf;const secs=[];
+  for(const k of keys){const les=l.lessons[k],tag=/^T/.test(k)?k:'L'+k;for(const sec of les.sections){const main=!/^(Wiederholung|Übungen)$/.test(sec.name);secs.push({name:tag+' · '+(main?V.lessonLabel(k):sec.name),on:main,lex:sec.entries.map(V.analyze)})}}
+  const last=keys.at(-1),tags=keys.map(k=>/^T/.test(k)?k:'L'+k),range=keys.length===1?tags[0]:keys.length===2?tags.join(' + '):tags[0]+'–'+tags.at(-1);
+  const contiguous=keys.every((k,i)=>!i||V.lessonOrder(k)===V.lessonOrder(keys[i-1])+1);
+  const name=keys.length<=2||contiguous?range:tags.join(', ');
+  const label=keys.length===1?V.lessonLabel(last):keys.every(k=>!/^T/.test(k))?'Lektion '+(keys.length<=2||contiguous?keys[0]+(keys.length===2?' + ':'–')+last:keys.join(', ')):name;
+  const ln=V.learned(last);pdfState={book:true,file:BOOK,info:{lesson:last,title:keys.length===1?l.lessons[last].title:'',label},pages:0,secs,name:name+' (Vok.)',count:10,groups:'AB',focus:'mixed',date:today(),draw:null,g:'A',learn:ln,ov:{tenses:new Set(ln.tenses),passive:ln.passive,passPerf:ln.passPerf,konj:ln.konj,ppp:ln.ppp,ppa:ln.ppa}};pdfSetup()}
  const lexPool=()=>{const seen=new Set(),out=[];for(const s of pdfState.secs)if(s.on)for(const l of s.lex){const k=window.classroomVocabPdf.plain(l.lemma);if(!seen.has(k)){seen.add(k);out.push(l)}}return out};
  const KINDS={v:'Verben',n:'Substantive',a:'Pronomen/Adjektive',x:'unveränderlich','?':'nicht erkannt'};
  const drawOpts=()=>{const st=pdfState,ov=st.ov,ln=st.learn;const konjT=ln.konjT.size?ln.konjT:new Set([...ov.tenses]);return {lesson:st.info.lesson,focus:st.focus,mixPpp:ov.ppp,mixPpa:ov.ppa,overrides:{tenses:ov.tenses,passive:ov.passive,passPerf:ov.passPerf,konj:ov.konj,konjT,ppp:ov.ppp,ppa:ov.ppa}}};
  function formsHtml(){const st=pdfState,ov=st.ov,ln=st.learn,chk=(on,attr,label,known)=>'<label class="vt-chk'+(known?'':' vt-new')+'" title="'+(known?'Laut Lehrgang schon bekannt':'Laut Lehrgang noch nicht eingeführt')+'"><input type="checkbox" '+attr+(on?' checked':'')+'>'+esc(label)+'</label>';
-  return '<b style="margin-top:6px">Formen</b><div class="vt-sub">Vorbelegt nach dem Lehrgang Pontes 2020 bis Lektion '+esc(st.info.lesson||'?')+' – für diesen Test änderbar. Gestrichelt = noch nicht eingeführt.</div>'+
+  return '<b style="margin-top:6px">Formen</b><div class="vt-sub">Vorbelegt nach dem Lehrgang Pontes 2020 bis '+esc(st.info.lesson?window.classroomVocabPdf.lessonLabel(String(st.info.lesson)):'Lektion ?')+' – für diesen Test änderbar. Gestrichelt = noch nicht eingeführt.</div>'+
    '<div class="vt-chks">'+TENSES.map(([k,l])=>chk(ov.tenses.has(k),'data-t="'+k+'"',l,ln.tenses.has(k))).join('')+'</div>'+
    '<div class="vt-chks">'+chk(ov.passive,'data-ov="passive"','Passiv (Präs./Impf./Fut.)',ln.passive)+chk(ov.passPerf,'data-ov="passPerf"','Perf./Plusqpf. Passiv',ln.passPerf)+chk(ov.konj,'data-ov="konj"','Konjunktiv',ln.konj)+chk(ov.ppp,'data-ov="ppp"','PPP',ln.ppp)+chk(ov.ppa,'data-ov="ppa"','PPA',ln.ppa)+'</div>'}
  function pdfSetup(){const st=pdfState,i=st.info;
   const secHtml=st.secs.map((s,n)=>{const cnt={};s.lex.forEach(l=>cnt[l.kind]=(cnt[l.kind]||0)+1);const unk=s.lex.filter(l=>l.kind==='?');
    return '<label class="vt-sec"><input type="checkbox" data-sec="'+n+'"'+(s.on?' checked':'')+'><div><b>'+esc(s.name)+'</b> <span class="vt-sub">· '+s.lex.length+' Vokabeln ('+Object.entries(cnt).filter(([k])=>k!=='?').map(([k,v])=>v+' '+KINDS[k]).join(', ')+')</span>'+(unk.length?'<div class="vt-sub vt-warn" style="margin:2px 0 0">Nicht erkannt (werden nicht abgefragt): '+esc(unk.map(l=>l.lemma).join(', '))+'</div>':'')+'<div class="vt-chips">'+s.lex.slice(0,14).map(l=>'<span>'+esc(l.lemma)+'</span>').join('')+(s.lex.length>14?'<span>…</span>':'')+'</div></div></label>'}).join('');
   const pool=lexPool(),avail={mixed:pool.filter(l=>l.kind!=='?').length,verbs:pool.filter(l=>l.kind==='v').length,nominal:pool.filter(l=>l.kind==='n'||l.kind==='a').length,ppp:pool.filter(l=>l.kind==='v'&&!l.dep&&Object.keys(l.pppForms||{}).length).length,ppa:pool.filter(l=>l.kind==='v'&&Object.keys(l.ppaForms||{}).length).length};
-  dlg.innerHTML='<form method="dialog" class="vt-mid"><h2>Vokabeltest aus Vokabel-PDF</h2><div class="vt-sub">„'+esc(st.file)+'“'+(i.lesson?' · Lektion '+esc(i.lesson):'')+(i.title?' „'+esc(i.title)+'“':'')+' · '+st.pages+' Seiten gelesen</div>'+
+  dlg.innerHTML='<form method="dialog" class="vt-mid"><h2>Vokabeltest '+(st.book?esc(i.label):'aus Vokabel-PDF')+'</h2><div class="vt-sub">„'+esc(st.file)+'“'+(st.book?(i.title?' · „'+esc(i.title)+'“':''):(i.lesson?' · Lektion '+esc(i.lesson):'')+(i.title?' „'+esc(i.title)+'“':'')+' · '+st.pages+' Seiten gelesen')+'</div>'+
    '<b style="margin-top:6px">Welche Vokabeln dürfen vorkommen?</b>'+secHtml+
    formsHtml()+'<b style="margin-top:6px">Schwerpunkt</b><div class="vt-seg vt-focus">'+FOCUS.map(([k,l])=>'<button type="button" data-focus="'+k+'" class="'+(st.focus===k?'on':'')+'">'+esc(l)+' <small>('+avail[k]+')</small></button>').join('')+'</div>'+
    (st.focus==='ppp'||st.focus==='ppa'?'<div class="vt-sub">Die Schüler sehen eine Form des Partizips (z. B. „remissōs“ oder „vocantibus“) und geben Infinitiv, 1. Ps. Sg. Präs. und Bedeutung an.</div>':'')+
@@ -3822,7 +3919,7 @@ html.fs-view .fs-hide{display:none!important}
   dlg.querySelectorAll('[data-ov]').forEach(c=>c.onchange=()=>{st.ov[c.dataset.ov]=c.checked});
   dlg.querySelectorAll('[data-grp]').forEach(b=>b.onclick=()=>{st.groups=b.dataset.grp;pdfSetup()});
   dlg.querySelectorAll('[data-o]').forEach(inp=>inp.onchange=()=>{st[inp.dataset.o]=inp.dataset.o==='count'?Math.max(3,Math.min(25,+inp.value||10)):inp.value});
-  dlg.querySelector('[data-x]').onclick=()=>dlg.close();
+  dlg.querySelector('[data-x]').onclick=()=>st.book?openBook():dlg.close();
   dlg.querySelector('form').onsubmit=e=>{e.preventDefault();dlg.querySelectorAll('[data-o]').forEach(inp=>st[inp.dataset.o]=inp.dataset.o==='count'?Math.max(3,Math.min(25,+inp.value||10)):inp.value);
    const pool=lexPool();if(!pool.length){alert('Bitte mindestens einen Abschnitt wählen.');return}
    st.draw=window.classroomVocabPdf.draw(pool,{count:st.count,groups:st.groups==='AB'?['A','B']:['A'],...drawOpts()});st.g='A';
@@ -3839,14 +3936,14 @@ html.fs-view .fs-hide{display:none!important}
   dlg.querySelector('[data-all]').onclick=()=>{st.draw=window.classroomVocabPdf.draw(lexPool(),{count:st.count,groups:Object.keys(st.draw),...drawOpts()});pdfPreview()};
   dlg.querySelector('[data-back]').onclick=()=>pdfSetup();
   dlg.querySelector('form').onsubmit=e=>{e.preventDefault();const strip=it=>({form:it.form,kind:it.kind,need:it.need,genus:it.genus,also:it.also,meanings:it.meanings,det:it.det});
-   const raw={type:'classroom-vokabeltest',version:1,title:'Vokabeltest '+(st.info.lesson?'Lektion '+st.info.lesson:st.name),name:st.name,groups:Object.fromEntries(Object.entries(st.draw).map(([k,v])=>[k,v.map(strip)]))};
+   const raw={type:'classroom-vokabeltest',version:1,title:'Vokabeltest '+(st.info.label||(st.info.lesson?'Lektion '+st.info.lesson:st.name)),name:st.name,groups:Object.fromEntries(Object.entries(st.draw).map(([k,v])=>[k,v.map(strip)]))};
    const t=normalizeTest(raw);t.date=st.date||today();t.source=st.file;saveTest(t);state={test:t,g:'A'};showTest()};
   if(!dlg.open)dlg.showModal()}
  /* Eintrag im Fenster „Test erstellen“ */
- const place=()=>{const d=document.querySelector('dialog.test-create-dialog');if(!d)return;let b=d.querySelector('.vt-open-btn');if(!b){b=document.createElement('button');b.type='button';b.className='nav-import-btn vt-open-btn';b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M9 7.5h6M9 11h6M9 14.5h3.5"/></svg><span>iPad-Vokabeltest (Testdatei laden, ausgeben, auswerten)</span>';b.onclick=()=>{d.close();openManager()};const after=d.querySelector('.nav-import-btn:not(.vt-open-btn)')||d.querySelector('form>p')||d.querySelector('form>h2');after.after(b)}
+ const place=()=>{const d=document.querySelector('dialog.test-create-dialog');if(!d)return;let b=d.querySelector('.vt-open-btn');if(!b){b=document.createElement('button');b.type='button';b.className='nav-import-btn vt-open-btn';b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M9 7.5h6M9 11h6M9 14.5h3.5"/></svg><span>'+BOOK+'<small>iPad-Vokabeltest: Lektion wählen, ausgeben, auswerten</small></span>';b.onclick=()=>{d.close();openBook()};const after=d.querySelector('.nav-import-btn:not(.vt-open-btn)')||d.querySelector('form>p')||d.querySelector('form>h2');after.after(b)}
   const show=isLatin();if(b.hidden===show)b.hidden=!show};
  document.addEventListener('click',()=>setTimeout(place,0),true);setTimeout(place,600);
- window.classroomVocabTest={open:openManager,normalizeTest,studentUrl};
+ window.classroomVocabTest={open:openManager,openBook,normalizeTest,studentUrl};
  const st=document.createElement('style');st.textContent=`
 .vt-dialog{width:min(1180px,calc(100vw - 24px));max-height:calc(100dvh - 24px);box-sizing:border-box}
 .vt-dialog form{display:flex;flex-direction:column;gap:14px}.vt-dialog h2{margin:0}.vt-dialog h3{margin:0 0 10px}.vt-sub{color:#66758a;font-size:.88rem}
@@ -3867,6 +3964,8 @@ html.fs-view .fs-hide{display:none!important}
 .vt-tag{display:inline-block;padding:0 7px;border-radius:999px;background:#fff3e2;color:#9a6212;font-size:.75rem;font-weight:700}.vt-warn{color:#b4232a;font-size:.88rem;margin:8px}.vt-done{color:#1f7a45;font-weight:600}
 .vt-dialog:not(#_){overflow:auto}.vt-dialog .vt-tab td,.vt-dialog .vt-tab th{text-align:left}.vt-dialog .vt-tab td.vt-c{text-align:center}
 .vt-dialog label.vt-sec:not(#_){display:flex;flex-direction:row;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid #dce3ef;border-radius:12px;cursor:pointer;margin:0;font-weight:400}.vt-dialog .vt-sec input:not(#_){width:20px;height:20px;min-height:0;margin:2px 0 0;flex:none}
+.vt-lesgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}.vt-les{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:52px;border:1px solid #d5deea;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;cursor:pointer;padding:4px}.vt-les b{font-size:1rem}.vt-les small{font-size:.72rem;color:#66758a}.vt-les.on{background:#2f5f9b;border-color:#2f5f9b;color:#fff}.vt-les.on small{color:#dce7f7}
+.vt-note{padding:10px 12px;border-radius:10px;background:#eef6f0;color:#1f6b3d;font-size:.9rem}.vt-bookact{flex-wrap:wrap}.vt-dialog button.vt-delbook:not(#_){color:#b42318;border-color:#efb4b4;background:#fff}.vt-open-btn small{display:block;font-size:.78rem;color:#66758a;font-weight:500;margin-top:1px}
 .vt-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.vt-chips span{padding:2px 9px;border-radius:999px;background:#eef3fa;color:#3d5a80;font-size:.8rem}
 .vt-chks{display:flex;flex-wrap:wrap;gap:8px}.vt-dialog label.vt-chk:not(#_){display:inline-flex;flex-direction:row;align-items:center;gap:7px;padding:7px 12px;border:1px solid #d5deea;border-radius:10px;font-weight:500;margin:0;background:#fff}.vt-dialog .vt-chk input:not(#_){width:18px;height:18px;min-height:0;margin:0}.vt-dialog label.vt-chk.vt-new:not(#_){color:#8a97a9;border-style:dashed}
 .vt-focus{flex-wrap:wrap}.vt-focus small{color:#8a97a9;font-weight:500}.vt-opts{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}.vt-opts label{display:flex;flex-direction:column;gap:5px;font-size:.85rem;color:#66758a}.vt-opts input{height:40px;box-sizing:border-box;border:1px solid #d6dde8;border-radius:10px;padding:0 10px;font:inherit;color:#243247}.vt-opts input[type=number]{width:90px}
