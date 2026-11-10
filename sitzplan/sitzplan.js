@@ -3247,7 +3247,7 @@ document.addEventListener('keydown',event=>{
   const seats=(typeof gridData!=='undefined'?gridData:[]).flat().filter(v=>v&&v!=='X'&&v!=='PULT').map(norm);
   return seats.some(v=>v.includes(norm(entry.full)))?entry.full:entry.first;
  }
- function grow(){sizer.textContent=input.value||input.placeholder;input.style.setProperty('font-size',getComputedStyle(button).fontSize);input.style.setProperty('width',Math.max(30,Math.ceil(sizer.getBoundingClientRect().width)+4)+'px','important')}
+ function grow(){const t=input.value||input.placeholder;if(sizer.textContent!==t)sizer.textContent=t;const fs=getComputedStyle(button).fontSize;if(input.style.getPropertyValue('font-size')!==fs)input.style.setProperty('font-size',fs);const w=Math.max(30,Math.ceil(sizer.getBoundingClientRect().width)+4)+'px';if(input.style.getPropertyValue('width')!==w)input.style.setProperty('width',w,'important')}
  function renderList(){
   list.replaceChildren();matches.forEach((entry,i)=>{const li=document.createElement('li');li.setAttribute('role','option');li.id='studentFinderOption'+i;li.textContent=entry.label;li.setAttribute('aria-selected',String(i===active));
    li.addEventListener('pointerdown',e=>{e.preventDefault();choose(entry)});list.append(li)});
@@ -3271,10 +3271,12 @@ document.addEventListener('keydown',event=>{
  let hits=[];
  function cellName(cell){return cell.classList.contains('besetzt')&&typeof gridData!=='undefined'?gridData[Number(cell.dataset.row)]?.[Number(cell.dataset.col)]:null}
  function matchesQuery(full,q){const f=norm(firstName(full)),l=norm(lastName(full));return f.startsWith(q)||f.split(/[\s\-]+/).some(w=>w.startsWith(q))||(l&&(l.startsWith(q)||l.split(/[\s\-]+/).some(w=>w.startsWith(q))))}
- function mark(scroll){const q=norm(input.value.trim());hits=[];
+ let lastMark='';
+ function mark(scroll){const q=norm(input.value.trim());const prevHits=hits;hits=[];
   for(const cell of document.querySelectorAll('#roomGrid .cell')){const n=cellName(cell),hit=!!(open&&q&&n&&n!=='X'&&n!=='PULT'&&matchesQuery(n,q));if(cell.hasAttribute('data-finder-hit')!==hit){if(hit)cell.setAttribute('data-finder-hit','');else cell.removeAttribute('data-finder-hit')}if(hit)hits.push(cell)}
-  note.hidden=!(open&&q&&!hits.length);grow();
-  if(scroll&&hits.length===1)try{hits[0].scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'})}catch{}}
+  const key=q+'|'+hits.length+'|'+open;const nh=!(open&&q&&!hits.length);if(note.hidden!==nh)note.hidden=nh;if(key!==lastMark){lastMark=key;grow()}
+  /* 10.30: nur den Plan selbst (senkrecht) scrollen – kein scrollIntoView, das in Safari auch die umgebenden Flächen waagerecht verschob */
+  if(scroll&&hits.length===1){const sc=hits[0].closest('.classroom-plan-scroll');if(sc){const r=hits[0].getBoundingClientRect(),b=sc.getBoundingClientRect();if(r.top<b.top||r.bottom>b.bottom)sc.scrollTop+=r.top<b.top?r.top-b.top-8:r.bottom-b.bottom+8;if(r.left<b.left||r.right>b.right)sc.scrollLeft+=r.left<b.left?r.left-b.left-8:r.right-b.right+8}}}
  function openHit(){if(!hits.length)return;const cell=hits[0],name=cellName(cell);try{cell.scrollIntoView({block:'nearest',inline:'nearest'})}catch{}
   if(hits.length===1&&name&&typeof window.classroomOpenStudent==='function'&&!document.getElementById('classroomEditRoom')?.checked){setOpen(false);window.classroomOpenStudent(name)}}
  input.addEventListener('input',()=>{chosen=null;matches=[];active=-1;renderList();mark(true)});
@@ -3310,7 +3312,7 @@ document.addEventListener('keydown',event=>{
  +'.student-finder-sizer{position:absolute;visibility:hidden;white-space:pre;font:inherit;pointer-events:none;left:0;top:0}'
  +'.student-finder-list{position:absolute;z-index:40;left:0;top:calc(100% + 6px);min-width:100%;max-height:260px;overflow:auto;margin:0;padding:5px;list-style:none;background:#fff;border:1px solid #ccd9e9;border-radius:12px;box-shadow:0 12px 26px #2533491f}'
  +'.student-finder-list li{padding:8px 12px;border-radius:8px;white-space:nowrap;cursor:pointer;color:#253349}'
- +'.student-finder-list li[aria-selected=true],.student-finder-list li:hover{background:#eaf0fa}.student-finder-list{display:none!important}'+'.student-finder-note{display:none;align-self:center;padding-left:8px;color:#8794a7;font-size:.85em;white-space:nowrap}.student-finder[data-open=true] .student-finder-note:not([hidden]){display:block}'+/* 10.29: Markierung nur innerhalb der Kachel (kein outline/äußerer Schatten) – Safari zählt den äußeren Rahmen zur Breite des Plans; das ließ den Plan beim Einpassen hin- und herspringen */'body .room-grid .cell[data-finder-hit]:not(#_){background:#eaf0fa!important;background-image:none!important;color:#2f5f9b!important;border:2px solid #2f5f9b!important;outline:0!important;box-shadow:inset 0 0 0 2px #2f5f9b!important;z-index:2}'+'html.classroom-privacy .room-grid .cell[data-finder-hit]{color:transparent!important}';
+ +'.student-finder-list li[aria-selected=true],.student-finder-list li:hover{background:#eaf0fa}.student-finder-list{display:none!important}'+'.student-finder-note{display:none;align-self:center;padding-left:8px;color:#8794a7;font-size:.85em;white-space:nowrap}.student-finder[data-open=true] .student-finder-note:not([hidden]){display:block}'+/* 10.29: Markierung nur innerhalb der Kachel (kein outline/äußerer Schatten) – Safari zählt den äußeren Rahmen zur Breite des Plans; das ließ den Plan beim Einpassen hin- und herspringen */'body .room-grid .cell[data-finder-hit]:not(#_){background:#eaf0fa!important;background-image:none!important;color:#2f5f9b!important;border-color:#2f5f9b!important;outline:0!important;box-shadow:inset 0 0 0 2px #2f5f9b!important;z-index:2}'/* 10.30: Randbreite unverändert – ein dickerer Rand machte die Kachel größer, der Plan wurde neu eingepasst, die Markierung neu gesetzt … (Flackern) */+'html.classroom-privacy .room-grid .cell[data-finder-hit]{color:transparent!important}';
  document.head.append(style);
 })();
 ;
@@ -3626,7 +3628,9 @@ document.addEventListener('keydown',event=>{
   lastSig=sig;
  }
  let lastSig='';
- function scheduleFit(){if(fitPlanned)return;fitPlanned=true;requestAnimationFrame(fit)}
+ /* 10.30: Schutz vor Hin- und Herspringen – ändert sich die Aufteilung mehr als 6× pro Sekunde, 1,5 s Pause */
+ let fitRuns=[],fitPause=0;
+ function scheduleFit(){if(fitPlanned)return;const now=Date.now();if(now<fitPause)return;fitRuns=fitRuns.filter(t=>now-t<1000);fitRuns.push(now);if(fitRuns.length>12){fitPause=now+1500;fitRuns=[];setTimeout(scheduleFit,1600);return}fitPlanned=true;requestAnimationFrame(fit)}
  new ResizeObserver(scheduleFit).observe(grid);
  new MutationObserver(scheduleFit).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
  window.classroomFitPlanActions=fit;
@@ -4036,6 +4040,7 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
 html.sp-fit,html.sp-fit body{height:100%;overflow:hidden;overscroll-behavior:none}
 html.sp-fit body{padding-bottom:0!important;margin-bottom:0!important}
 html.sp-fit .container{align-items:start}
+html.sp-fit .grid-container.sp-fit-box{overflow-x:hidden!important}
 html.sp-fit .sp-fit-box{overflow:auto;overscroll-behavior:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box;margin-bottom:0!important}
 @media print{html.sp-fit,html.sp-fit body{height:auto;overflow:visible}html.sp-fit .sp-fit-box{height:auto!important;overflow:visible}}`;
  document.head.append(st);
