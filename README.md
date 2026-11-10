@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.19
+Stand: 10.11.2026 · Version 10.20
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1298,3 +1298,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.17: Vollbild als Symbol und am iPad (Ersatz-Vollbild), Gummiband am Mac, Abstand unten = Seitenabstand
 10.18: Vollbild ohne Erklärtext/Gewichtung, schmalere Ränder; Reihenfolge Vollbild · Auffällig · Drucken; Gummiband Mac mit Rückfederung (auch Kompaktansicht)
 10.19: Sitzplan-Fenster und Einstellungs-Spalte enden auf Höhe der Noten-Schnellansicht; Vollbild-Knopf ganz rechts
+10.20: Navigium-Import (Latein): Ergebnisprotokoll-PDF → Rohpunkte-Test mit Bewertungszeichen

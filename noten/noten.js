@@ -3069,6 +3069,204 @@ html.fs-view .fs-hide{display:none!important}
 })();
 ;
 
+/* ==== noten/navigium-import.js ==== */
+/* 10.20: Navigium-Import (nur Latein). „＋ Test“ → „Ergebnisse aus Navigium importieren (PDF)“.
+   Liest das als PDF gesicherte Ergebnisprotokoll des Navigium-Vokabeltrainers (Kürzel = 3 Buchstaben Vorname + 3 Buchstaben Nachname,
+   erreichte/mögliche Punkte, Navigium-Note), zeigt eine Vorschau mit Zuordnung und legt einen Rohpunkte-Test mit Bewertungszeichen an.
+   Die Notengrenzen werden wie in Navigium gesetzt (Vorgabe 90/80/70/60/50 %), so stimmen die Zeichen mit dem Protokoll überein.
+   Eigener kleiner PDF-Textleser (kein Fremdcode): unterstützt Flate-Streams, Objekt-Streams, einfache Schriften (MacRoman/WinAnsi) und ToUnicode. */
+(()=>{
+ /* ---------- PDF-Textleser ---------- */
+ const MAC='ÄÅÇÉÑÖÜáàâäãåçéèêëíìîïñóòôöõúùûü†°¢£§•¶ß®©™´¨≠ÆØ∞±≤≥¥µ∂∑∏π∫ªºΩæø¿¡¬√ƒ≈∆«»… ÀÃÕŒœ–—“”‘’÷◊ÿŸ⁄€‹›ﬁﬂ‡·‚„‰ÂÊÁËÈÍÎÏÌÓÔÒÚÛÙıˆ˜¯˘˙˚¸˝˛ˇ';
+ const WIN128='€�‚ƒ„…†‡ˆ‰Š‹Œ�Ž��‘’“”•–—˜™š›œ�žŸ';
+ const GLYPH={adieresis:'ä',odieresis:'ö',udieresis:'ü',Adieresis:'Ä',Odieresis:'Ö',Udieresis:'Ü',germandbls:'ß',space:' ',hyphen:'-',period:'.',comma:',',colon:':',slash:'/',parenleft:'(',parenright:')',bar:'|',percent:'%',endash:'–',emdash:'—',eacute:'é',egrave:'è',agrave:'à',ccedilla:'ç',zero:'0',one:'1',two:'2',three:'3',four:'4',five:'5',six:'6',seven:'7',eight:'8',nine:'9'};
+ const simple=(enc,b)=>b<128?String.fromCharCode(b):enc==='mac'?MAC[b-128]:b<160?WIN128[b-128]:String.fromCharCode(b);
+ const latin1=bytes=>{let s='';for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));return s};
+ const toBytes=str=>{const u=new Uint8Array(str.length);for(let i=0;i<str.length;i++)u[i]=str.charCodeAt(i)&255;return u};
+ async function inflate(bytes){
+  if(typeof DecompressionStream!=='function')throw new Error('Dieser Browser kann die PDF nicht entpacken (bitte Safari/Chrome aktualisieren).');
+  for(const kind of ['deflate','deflate-raw']){try{const src=kind==='deflate'?bytes:bytes.subarray(2);const out=await new Response(new Blob([src]).stream().pipeThrough(new DecompressionStream(kind))).arrayBuffer();return new Uint8Array(out)}catch{}}
+  /* abgeschnittene Streams: so viel nehmen, wie geht */
+  try{const ds=new DecompressionStream('deflate'),w=ds.writable.getWriter();w.write(bytes).catch(()=>{});w.close().catch(()=>{});const r=ds.readable.getReader(),parts=[];for(;;){let x;try{x=await r.read()}catch{break}if(x.done)break;parts.push(x.value)}let n=0;parts.forEach(p=>n+=p.length);const out=new Uint8Array(n);let o=0;for(const p of parts){out.set(p,o);o+=p.length}return out}catch{return new Uint8Array(0)}
+ }
+ /* kleiner Tokenizer für Objekte und Inhalts-Streams */
+ function tokenize(s){const out=[];let i=0;const n=s.length,ws=c=>c===' '||c==='\n'||c==='\r'||c==='\t'||c==='\f'||c==='\0',delim=c=>'()<>[]{}/%'.includes(c);
+  while(i<n){const c=s[i];
+   if(ws(c)){i++;continue}
+   if(c==='%'){while(i<n&&s[i]!=='\n'&&s[i]!=='\r')i++;continue}
+   if(c==='('){let depth=1,j=i+1,str='';while(j<n&&depth){const d=s[j];if(d==='\\'){const e=s[j+1];j+=2;if(e==='n')str+='\n';else if(e==='r')str+='\r';else if(e==='t')str+='\t';else if(e==='b')str+='\b';else if(e==='f')str+='\f';else if(e==='\r'){if(s[j]==='\n')j++}else if(e==='\n'){}else if(/[0-7]/.test(e)){let o=e;while(o.length<3&&/[0-7]/.test(s[j])){o+=s[j];j++}str+=String.fromCharCode(parseInt(o,8)&255)}else str+=e;continue}if(d==='(')depth++;else if(d===')'){depth--;if(!depth){j++;break}}str+=d;j++}out.push({t:'str',v:str});i=j;continue}
+   if(c==='<'&&s[i+1]==='<'){out.push({t:'op',v:'<<'});i+=2;continue}
+   if(c==='>'&&s[i+1]==='>'){out.push({t:'op',v:'>>'});i+=2;continue}
+   if(c==='<'){const j=s.indexOf('>',i);let h=s.slice(i+1,j).replace(/\s+/g,'');if(h.length%2)h+='0';let str='';for(let k=0;k<h.length;k+=2)str+=String.fromCharCode(parseInt(h.substr(k,2),16));out.push({t:'str',v:str,hex:true});i=j+1;continue}
+   if(c==='['||c===']'||c==='{'||c==='}'){out.push({t:'op',v:c});i++;continue}
+   if(c==='/'){let j=i+1;while(j<n&&!ws(s[j])&&!delim(s[j]))j++;out.push({t:'name',v:s.slice(i+1,j).replace(/#([0-9a-f]{2})/gi,(m,h)=>String.fromCharCode(parseInt(h,16)))});i=j;continue}
+   let j=i;while(j<n&&!ws(s[j])&&!delim(s[j]))j++;if(j===i)j++;const w=s.slice(i,j);i=j;
+   if(/^[+-]?(\d+\.?\d*|\.\d+)$/.test(w))out.push({t:'num',v:parseFloat(w)});else out.push({t:'kw',v:w})}
+  return out}
+ /* Objekte als JS-Werte: dict → Map-artiges Objekt, Referenzen {ref:n} */
+ function parseValue(tok,pos){const t=tok[pos];if(!t)return [null,pos+1];
+  if(t.t==='op'&&t.v==='<<'){const o={};pos++;while(pos<tok.length&&!(tok[pos].t==='op'&&tok[pos].v==='>>')){const k=tok[pos];if(k.t!=='name'){pos++;continue}const [v,p]=parseValue(tok,pos+1);o[k.v]=v;pos=p}return [o,pos+1]}
+  if(t.t==='op'&&t.v==='['){const a=[];pos++;while(pos<tok.length&&!(tok[pos].t==='op'&&tok[pos].v===']')){const [v,p]=parseValue(tok,pos);a.push(v);pos=p}return [a,pos+1]}
+  if(t.t==='num'&&tok[pos+1]?.t==='num'&&tok[pos+2]?.t==='kw'&&tok[pos+2].v==='R')return [{ref:t.v},pos+3];
+  if(t.t==='name')return [{name:t.v},pos+1];
+  return [t.v,pos+1]}
+ async function readPdf(buf){
+  const bytes=buf instanceof Uint8Array?buf:new Uint8Array(buf),src=latin1(bytes);
+  if(!src.startsWith('%PDF'))throw new Error('Das ist keine PDF-Datei.');
+  const objs=new Map();/* nr → {dict|value, stream?:Uint8Array(raw)} */
+  const re=/(\d+)\s+(\d+)\s+obj\b/g;let m;
+  while((m=re.exec(src))){const nr=+m[1],start=m.index+m[0].length;let end=src.indexOf('endobj',start);if(end<0)end=src.length;
+   const body=src.slice(start,end),si=body.search(/\bstream(\r\n|\n|\r)/);
+   if(si>=0){const head=body.slice(0,si),[dict]=parseValue(tokenize(head),0);let ds=si+body.slice(si).match(/^stream(\r\n|\n|\r)/)[0].length;let len=dict?.Length;let raw;
+    const abs=start+ds;if(typeof len==='number'&&src.slice(abs+len,abs+len+30).includes('endstream'))raw=bytes.subarray(abs,abs+len);else{const e=src.indexOf('endstream',abs);raw=bytes.subarray(abs,e>0?e:abs);}
+    objs.set(nr,{dict:dict||{},raw});re.lastIndex=end}
+   else{const [v]=parseValue(tokenize(body),0);objs.set(nr,{value:v});re.lastIndex=end}}
+  const get=r=>r&&typeof r==='object'&&'ref' in r?(objs.get(r.ref)?.dict||objs.get(r.ref)?.value):r;
+  const filters=d=>{const f=get(d.Filter);return f?(Array.isArray(f)?f:[f]).map(x=>x?.name):[]};
+  async function data(o){let b=o.raw;for(const f of filters(o.dict)){if(f==='FlateDecode'||f==='Fl')b=await inflate(b);else if(f)throw new Error('PDF-Filter '+f+' wird nicht unterstützt.')}return b}
+  /* Objekt-Streams entpacken */
+  for(const [nr,o] of [...objs])if(o.dict?.Type?.name==='ObjStm'){try{const s=latin1(await data(o)),first=o.dict.First,head=tokenize(s.slice(0,first)).map(t=>t.v);for(let k=0;k+1<head.length;k+=2){const onr=head[k],off=head[k+1],next=k+3<head.length?head[k+3]:s.length-first;if(objs.has(onr))continue;const [v]=parseValue(tokenize(s.slice(first+off,first+next)),0);objs.set(onr,{value:v})}}catch(e){console.warn('ObjStm',nr,e)}}
+  /* Schriften */
+  const fontCache=new Map();
+  async function fontOf(ref){const key=ref?.ref??ref;if(fontCache.has(key))return fontCache.get(key);const d=get(ref)||{};let f={bytes:1,map:null,enc:'win'};
+   const enc=get(d.Encoding);if(enc?.name==='MacRomanEncoding')f.enc='mac';else if(enc&&typeof enc==='object'&&!enc.name){if(get(enc.BaseEncoding)?.name==='MacRomanEncoding')f.enc='mac';const diff=get(enc.Differences);if(Array.isArray(diff)){f.diff={};let code=0;for(const x of diff){if(typeof x==='number')code=x;else if(x?.name){const n=x.name;f.diff[code++]=GLYPH[n]??(/^uni[0-9A-F]{4}$/.test(n)?String.fromCharCode(parseInt(n.slice(3),16)):n.length===1?n:'')}}}}
+   if(d.Subtype?.name==='Type0')f.bytes=2;
+   const tu=d.ToUnicode;if(tu&&tu.ref!=null&&objs.get(tu.ref)?.raw){try{const cm=latin1(await data(objs.get(tu.ref)));f.map={};const hex=h=>parseInt(h,16),u16=h=>{let s='';for(let k=0;k+3<h.length+1;k+=4)s+=String.fromCharCode(parseInt(h.substr(k,4),16));return s};
+    const cs=/begincodespacerange\s*<([0-9a-fA-F]+)>/.exec(cm);if(cs)f.bytes=cs[1].length/2;
+    for(const b of cm.matchAll(/beginbfchar([\s\S]*?)endbfchar/g))for(const x of b[1].matchAll(/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]*)>/g))f.map[hex(x[1])]=u16(x[2]);
+    for(const b of cm.matchAll(/beginbfrange([\s\S]*?)endbfrange/g))for(const x of b[1].matchAll(/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*(<[0-9a-fA-F]*>|\[[^\]]*\])/g)){const a=hex(x[1]),z=hex(x[2]);if(x[3][0]==='['){const list=[...x[3].matchAll(/<([0-9a-fA-F]*)>/g)].map(y=>u16(y[1]));for(let c=a;c<=z;c++)f.map[c]=list[c-a]??''}else{const base=x[3].slice(1,-1);for(let c=a;c<=z&&c-a<65536;c++){const last=parseInt(base.slice(-4),16)+(c-a);f.map[c]=u16(base.slice(0,-4))+String.fromCharCode(last)}}}
+   }catch(e){console.warn('ToUnicode',e)}}
+   fontCache.set(key,f);return f}
+  const decode=(f,str)=>{let s='';if(f.bytes===2){for(let k=0;k+1<str.length;k+=2){const c=(str.charCodeAt(k)<<8)|str.charCodeAt(k+1);s+=f.map?.[c]??''}return s}for(let k=0;k<str.length;k++){const c=str.charCodeAt(k);s+=f.map?.[c]??f.diff?.[c]??simple(f.enc,c)}return s};
+  /* Seiten in Reihenfolge */
+  const pages=[];const walk=(node,inh)=>{const d=get(node);if(!d)return;const res=d.Resources??inh;if(d.Type?.name==='Pages'||Array.isArray(get(d.Kids)))for(const k of get(d.Kids)||[])walk(k,res);else pages.push({d,res})};
+  const cat=[...objs.values()].map(o=>o.dict||o.value).find(x=>x?.Type?.name==='Catalog');
+  if(cat)walk(cat.Pages,null);if(!pages.length)for(const o of objs.values()){const d=o.dict||o.value;if(d?.Type?.name==='Page')pages.push({d,res:d.Resources})}
+  const items=[];
+  for(let pi=0;pi<pages.length;pi++){const {d,res}=pages[pi],R=get(res)||{},fonts=get(R.Font)||{};
+   const cont=get(d.Contents)===undefined?null:d.Contents;const list=Array.isArray(cont)?cont:Array.isArray(get(cont))?get(cont):[cont];let text='';
+   for(const c of list){const o=objs.get(c?.ref);if(o?.raw)text+=latin1(await data(o))+'\n'}
+   const toks=tokenize(text),stack=[];let ctm=[1,0,0,1,0,0],tm=[1,0,0,1,0,0],tlm=[1,0,0,1,0,0],font=null,leading=0,cur=null,args=[];
+   const mul=(a,b)=>[a[0]*b[0]+a[1]*b[2],a[0]*b[1]+a[1]*b[3],a[2]*b[0]+a[3]*b[2],a[2]*b[1]+a[3]*b[3],a[4]*b[0]+a[5]*b[2]+b[4],a[4]*b[1]+a[5]*b[3]+b[5]];
+   const newItem=()=>{const m=mul(tm,ctm);cur={page:pi,x:m[4],y:m[5],h:Math.abs(m[3])||Math.abs(m[0])||1,text:''};items.push(cur)};
+   const show=async str=>{if(!cur)newItem();cur.text+=decode(font||{enc:'win'},str)};
+   for(let k=0;k<toks.length;k++){const t=toks[k];
+    if(t.t!=='kw'){if(t.t==='op'&&t.v==='['){const [arr,p]=parseValue(toks,k);args.push(arr);k=p-1}else if(t.t==='op'&&t.v==='<<'){const [o,p]=parseValue(toks,k);args.push(o);k=p-1}else args.push(t.t==='name'?{name:t.v}:t.v);continue}
+    const op=t.v,a=args;args=[];
+    switch(op){
+     case 'q':stack.push(ctm.slice());break;case 'Q':ctm=stack.pop()||[1,0,0,1,0,0];break;
+     case 'cm':if(a.length>=6)ctm=mul(a.slice(-6),ctm);break;
+     case 'BT':tm=[1,0,0,1,0,0];tlm=tm.slice();cur=null;break;case 'ET':cur=null;break;
+     case 'Tf':{const n=a[a.length-2]?.name;font=n&&fonts[n]?await fontOf(fonts[n]):null;break}
+     case 'TL':leading=a[0]||0;break;
+     case 'Td':case 'TD':{const [tx,ty]=a.slice(-2);if(op==='TD')leading=-ty;tlm=mul([1,0,0,1,tx,ty],tlm);tm=tlm.slice();cur=null;break}
+     case 'Tm':if(a.length>=6){tm=a.slice(-6);tlm=tm.slice();cur=null}break;
+     case 'T*':tlm=mul([1,0,0,1,0,-leading],tlm);tm=tlm.slice();cur=null;break;
+     case 'Tj':if(typeof a[a.length-1]==='string')await show(a[a.length-1]);break;
+     case "'":case '"':tlm=mul([1,0,0,1,0,-leading],tlm);tm=tlm.slice();cur=null;if(typeof a[a.length-1]==='string')await show(a[a.length-1]);break;
+     case 'TJ':{const arr=a[a.length-1];if(Array.isArray(arr))for(const x of arr){if(typeof x==='string')await show(x);else if(typeof x==='number'&&x<-250){if(!cur)newItem();if(!cur.text.endsWith(' '))cur.text+=' '}}break}
+     case 'BI':{while(k<toks.length&&!(toks[k].t==='kw'&&toks[k].v==='EI'))k++;break}
+    }}
+  }
+  /* Zeilen bilden: gleiche Seite, ähnliche Höhe */
+  const rows=[];for(const it of items.filter(i=>i.text.trim()).sort((a,b)=>a.page-b.page||b.y-a.y||a.x-b.x)){const r=rows.find(r=>r.page===it.page&&Math.abs(r.y-it.y)<=Math.max(2.5,it.h*.4));if(r)r.items.push(it);else rows.push({page:it.page,y:it.y,items:[it]})}
+  rows.sort((a,b)=>a.page-b.page||b.y-a.y);
+  return rows.map(r=>r.items.sort((a,b)=>a.x-b.x).map(i=>i.text.replace(/\s+/g,' ').trim()).filter(Boolean).join('  '))}
+
+ /* ---------- Navigium-Protokoll auswerten ---------- */
+ const GRADES={'sehr gut':1,'gut':2,'befriedigend':3,'ausreichend':4,'mangelhaft':5,'ungenügend':6,'ungenuegend':6};
+ function parseProtocol(lines){
+  const all=lines.join('\n');
+  if(!/Vokabeltest|Vokabeltrainer|Navigium/i.test(all))throw new Error('Das sieht nicht wie ein Navigium-Ergebnisprotokoll aus.');
+  /* Kopf: „Online-Vokabeltest für 8d … (Pontes2020 - 11|Pontes2020 - 10|…)“ bis zur Zeitspanne */
+  const hs=lines.findIndex(l=>/Vokabeltest\s+f(ü|u)r/i.test(l));let head='';
+  if(hs>=0){for(let i=hs;i<lines.length&&i<hs+8;i++){if(i>hs&&/\d{2}\.\d{2}\.\d{4}\s+\d{1,2}:\d{2}/.test(lines[i]))break;head+=(head?' ':'')+lines[i]}}
+  const inner=(head.match(/\(([\s\S]*)\)\s*$/)||[,head])[1];
+  const lessons=[];let book='';
+  for(const part of inner.split('|')){const m=/([A-Za-zÄÖÜäöüß]+\d*)?\s*-\s*(\d+)/.exec(part.replace(/\s+/g,' '));if(m){if(!book&&m[1])book=m[1];lessons.push(+m[2])}}
+  const className=(head.match(/Vokabeltest\s+f(?:ü|u)r\s+(.+?)\s*\(/i)||[])[1]||'';
+  const dm=/(\d{2})\.(\d{2})\.(\d{4})\s+\d{1,2}:\d{2}/.exec(all)||/(\d{2})\.(\d{2})\.(\d{2})\s+\d{1,2}:\d{2}/.exec(all);
+  const date=dm?(dm[3].length===2?'20'+dm[3]:dm[3])+'-'+dm[2]+'-'+dm[1]:'';
+  /* Tabelle */
+  const hi=lines.findIndex(l=>/erreichte\s+Punkte/i.test(l)&&/Name/.test(l));
+  const rows=[];const gradeRe=/(\d+(?:[.,]\d+)?)\s+(\d+(?:[.,]\d+)?)\s+(sehr gut|gut|befriedigend|ausreichend|mangelhaft|ungenügend|ungenuegend)\s*$/i;
+  for(let i=(hi>=0?hi+1:0);i<lines.length;i++){const l=lines[i].replace(/\s+/g,' ').trim();if(/^(Aktualisieren|Zurück)\b/i.test(l)||/Aktualisieren\s+Zurück/i.test(l))break;if(hi<0)continue;
+   const m=/^(?:Protokoll\s+)?([A-Za-zÄÖÜäöüß0-9._-]{2,20})(?:\s+(.*))?$/.exec(l);if(!m)continue;const key=m[1].toLowerCase();if(/^(https?|seite|vokabeltrainer|name)$/.test(key))continue;
+   const g=gradeRe.exec(m[2]||'');const num=x=>Number(String(x).replace(',','.'));
+   rows.push({key,points:g?num(g[1]):null,max:g?num(g[2]):null,grade:g?GRADES[g[3].toLowerCase()]:null,gradeText:g?g[3]:'',started:/\d{2}\.\d{2}\.\d{2}/.test(m[2]||'')})}
+  const max=rows.find(r=>r.max!=null)?.max??null;
+  return {book,lessons,className,date,rows,max}}
+ function lessonName(lessons){
+  let ls=[...new Set(lessons)].sort((a,b)=>a-b);if(ls.length>1)ls=ls.filter(n=>n!==0);/* Lektion 0 („Salve“) nur, wenn sie allein abgefragt wurde */
+  if(!ls.length)return 'Vokabeltest';
+  const parts=[];let a=ls[0],b=a;for(const n of ls.slice(1)){if(n===b+1){b=n;continue}parts.push(a===b?String(a):a+'-'+b);a=b=n}parts.push(a===b?String(a):a+'-'+b);
+  return 'L'+parts.join(', L')}
+ const fold=s=>String(s||'').toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z]/g,'');
+ function keyOf(name){const n=String(name||'').trim();let first,last;if(n.includes(',')){[last,first]=n.split(',',2).map(x=>x.trim())}else{const p=n.split(/\s+/);last=p.pop()||'';first=p.join(' ')}
+  first=first.split(/[\s-]+/)[0]||'';const lp=last.split(/\s+/).filter(Boolean);/* „von Berg“ → nach Möglichkeit „ber“ und „von“ beide anbieten */
+  const keys=new Set([fold(first).slice(0,3)+fold(last).slice(0,3)]);if(lp.length>1)keys.add(fold(first).slice(0,3)+fold(lp[lp.length-1]).slice(0,3));return [...keys]}
+ function match(rows,names){const index=new Map();for(const n of names)for(const k of keyOf(n)){if(!index.has(k))index.set(k,[]);index.get(k).push(n)}
+  return rows.map(r=>{const c=index.get(r.key)||[];return {...r,candidates:c,student:c.length===1?c[0]:''}})}
+ window.classroomNavigium={readPdf,parseProtocol,lessonName,keyOf,match,async parse(buf){const lines=await readPdf(buf);return parseProtocol(lines)}};
+
+ /* ---------- Oberfläche ---------- */
+ if(typeof document==='undefined'||!document.body)return;
+ const isLatin=()=>{try{return currentSubject==='latein'||/latein/i.test(subjects?.[currentSubject]?.name||subjects?.[currentSubject]?.label||'')}catch{return false}};
+ const RATIOS={'1':90,'2':80,'3':70,'4':60,'5':50};
+ const SIGNS={1:'++',2:'+',3:'o',4:'-',5:'--',6:'---'};
+ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const file=document.createElement('input');file.type='file';file.accept='application/pdf,.pdf';file.hidden=true;document.body.append(file);
+ const sign=(points,max)=>{if(points==null||!max)return null;const st=Number.isInteger(points)&&Number.isInteger(max)?1:.5;const low=['1','2','3','4','5'].map(k=>Math.min(max,Math.ceil((RATIOS[k]/100*max-1e-8)/st)*st));const i=low.findIndex(l=>points+1e-8>=l);return i<0?6:i+1};
+ function roster(){try{const list=taskRosterForHalfYear(currentSubject,currentHalfYearId)||[];return list.map(s=>String(s.name||'').trim()).filter(Boolean)}catch{return []}}
+ const dlg=document.createElement('dialog');dlg.className='classroom-dialog nav-import-dialog';document.body.append(dlg);
+ function openPreview(info){
+  const names=roster(),rows=match(info.rows.filter(r=>r.points!=null),names),missing=info.rows.filter(r=>r.points==null);
+  const max=info.max||Math.max(...rows.map(r=>r.points),0);
+  const opts=sel=>'<option value="">— nicht übernehmen —</option>'+names.map(n=>'<option'+(n===sel?' selected':'')+'>'+esc(n)+'</option>').join('');
+  const lessons=[...new Set(info.lessons)].sort((a,b)=>a-b);
+  dlg.innerHTML='<form method="dialog"><h2>Navigium-Ergebnisse übernehmen</h2>'+
+   '<p class="nav-sub">'+esc(info.book||'Navigium')+(lessons.length?' · Lektion'+(lessons.length>1?'en ':' ')+esc(lessons.length>1?lessons[0]+'–'+lessons[lessons.length-1]:lessons[0]):'')+(info.className?' · '+esc(info.className):'')+' · '+esc(max)+' Punkte · Grenzen wie Navigium: 90 / 80 / 70 / 60 / 50 %</p>'+
+   '<div class="nav-fields"><label>Name<input data-nav-name maxlength="40" required value="'+esc(lessonName(info.lessons))+'"></label><label>Datum<input type="date" data-nav-date value="'+esc(info.date)+'"></label></div>'+
+   '<div class="nav-table-wrap"><table class="nav-table"><thead><tr><th>Navigium</th><th>Schüler:in</th><th>Punkte</th><th>Navigium</th><th>Ergebnis</th></tr></thead><tbody>'+
+   rows.map((r,i)=>{const s=sign(r.points,max),diff=r.grade&&s&&r.grade!==s;return '<tr class="'+(r.student?'':'nav-open')+'"><td><code>'+esc(r.key)+'</code></td><td><select data-nav-row="'+i+'">'+opts(r.student)+'</select>'+(r.candidates.length>1?'<small> mehrdeutig</small>':'')+'</td><td class="num">'+esc(String(r.points).replace('.',','))+' / '+esc(String(r.max??max).replace('.',','))+'</td><td>'+esc(r.gradeText)+'</td><td class="num'+(diff?' nav-diff':'')+'" title="'+(diff?'Weicht von der Navigium-Note ab – Notengrenzen in Navigium prüfen':'')+'"><b>'+esc(SIGNS[s]||'')+'</b></td></tr>'}).join('')+
+   '</tbody></table></div>'+
+   (missing.length?'<p class="nav-note">Ohne Ergebnis (bleiben leer): '+missing.map(r=>'<code>'+esc(r.key)+'</code>').join(', ')+'</p>':'')+
+   '<p class="nav-note" data-nav-status></p>'+
+   '<div class="dialog-actions"><button type="button" data-nav-cancel>Abbrechen</button><button type="submit" class="primary">Test anlegen</button></div></form>';
+  const status=dlg.querySelector('[data-nav-status]');
+  const refresh=()=>{const chosen=[...dlg.querySelectorAll('[data-nav-row]')].map(s=>s.value);const open=chosen.filter(v=>!v).length,dup=chosen.filter((v,i)=>v&&chosen.indexOf(v)!==i);dlg.querySelectorAll('[data-nav-row]').forEach(s=>s.closest('tr').classList.toggle('nav-open',!s.value));const diffs=dlg.querySelectorAll('.nav-diff').length;
+   status.innerHTML=(open?'<b>'+open+'</b> Kürzel ohne Zuordnung – bitte auswählen oder leer lassen. ':'Alle Kürzel sind zugeordnet. ')+(dup.length?'<span class="nav-warn">Doppelt gewählt: '+esc([...new Set(dup)].join(', '))+'</span> ':'')+(diffs?'<span class="nav-warn">'+diffs+'× weicht das Zeichen von der Navigium-Note ab.</span>':'');return !dup.length};
+  dlg.querySelectorAll('[data-nav-row]').forEach(s=>s.onchange=refresh);refresh();
+  dlg.querySelector('[data-nav-cancel]').onclick=()=>dlg.close();
+  dlg.querySelector('form').onsubmit=e=>{e.preventDefault();if(!refresh())return;const label=dlg.querySelector('[data-nav-name]').value.trim()||lessonName(info.lessons),date=dlg.querySelector('[data-nav-date]').value;
+   const scores=new Map();dlg.querySelectorAll('[data-nav-row]').forEach(s=>{if(s.value)scores.set(s.value,rows[+s.dataset.navRow].points)});
+   const half=[...scores.values()].some(v=>!Number.isInteger(v))||!Number.isInteger(max);
+   window.classroomCreateRawTest({label,system:'participation',init(task,data){if(date)task.date=date;const c=task.testDetail;Object.assign(c,{total:max,pass:50,halfPoints:half,useSubject:false,manual:true,manualRatios:{...RATIOS},tendencies:false,source:'navigium'});
+    for(const st of data.students||[]){const n=String(st.name||'').trim();if(scores.has(n)){st.rawScores??={};st.rawScores[task.id]=String(scores.get(n))}}}});
+   dlg.close()};
+  dlg.showModal()}
+ file.onchange=async()=>{const f=file.files?.[0];file.value='';if(!f)return;try{const info=await window.classroomNavigium.parse(await f.arrayBuffer());if(!info.rows.length)throw new Error('In der Datei wurden keine Ergebnisse gefunden.');openPreview(info)}catch(e){console.error(e);alert('Navigium-Import: '+(e.message||e))}};
+ /* Eintrag im Fenster „Test erstellen“ */
+ const place=()=>{const d=document.querySelector('dialog.test-create-dialog');if(!d)return;let b=d.querySelector('.nav-import-btn');if(!b){b=document.createElement('button');b.type='button';b.className='nav-import-btn';b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14l3 3 3-3"/></svg><span>Ergebnisse aus Navigium importieren (PDF)</span>';b.onclick=()=>{d.close();file.click()};const h=d.querySelector('form>p');(h||d.querySelector('form>h2')).after(b)}
+  const show=isLatin();if(b.hidden===show)b.hidden=!show};
+ document.addEventListener('click',()=>setTimeout(place,0),true);new MutationObserver(()=>place()).observe(document.body,{childList:true});setTimeout(place,500);
+ const st=document.createElement('style');st.textContent=`
+.nav-import-btn{display:flex;align-items:center;gap:9px;width:100%;box-sizing:border-box;min-height:40px;margin:4px 0 14px;padding:0 14px;border:1px dashed #9fb6d6;border-radius:10px;background:#f3f7fc;color:#2f5f9b;font:inherit;font-size:.92rem;font-weight:600;cursor:pointer;text-align:left}
+.nav-import-btn:hover{background:#e9f0fa}.nav-import-btn svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.nav-import-dialog{width:min(720px,calc(100vw - 32px));max-height:calc(100dvh - 32px);box-sizing:border-box}
+.nav-import-dialog form{display:flex;flex-direction:column;gap:12px;max-height:calc(100dvh - 80px)}
+.nav-import-dialog h2{margin:0}.nav-sub{margin:0;color:#66758a;font-size:.88rem}
+.nav-fields{display:flex;gap:12px;flex-wrap:wrap}.nav-fields label{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:#66758a;flex:1 1 180px}
+.nav-fields input{height:40px;box-sizing:border-box;border:1px solid #d6dde8;border-radius:10px;padding:0 10px;font:inherit;color:#243247}
+.nav-table-wrap{overflow:auto;min-height:120px;border:1px solid #dce3ef;border-radius:12px}
+.nav-table{width:100%;border-collapse:collapse;font-size:.9rem}.nav-table th{position:sticky;top:0;background:#f6f8fc;text-align:left;font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;color:#66758a;padding:8px 10px;border-bottom:1px solid #dce3ef}
+.nav-table td{padding:6px 10px;border-bottom:1px solid #eef2f7}.nav-table td.num{text-align:center;white-space:nowrap}.nav-table code{font-size:.85rem;color:#3d5a80}
+.nav-table select{height:34px;border:1px solid #d6dde8;border-radius:8px;padding:0 6px;font:inherit;width:220px;max-width:100%}
+.nav-table tr.nav-open td{background:#fff8ec}.nav-table small{color:#9a6212}.nav-diff b{color:#b4232a}
+.nav-note{margin:0;font-size:.85rem;color:#66758a}.nav-warn{color:#b4232a}`;document.head.append(st);
+})();
+;
+
 /* ==== noten/page-print.js ==== */
 // Print the visible page directly, including its current compact display.
 (()=>{
@@ -3549,7 +3747,7 @@ html.fs-view .fs-hide{display:none!important}
  panel.querySelectorAll('[data-tsl-mode]').forEach(b=>b.onclick=()=>{if(b.getAttribute('aria-checked')==='true')return;setManual(b.dataset.tslMode==='manual')});
 
  }
- window.classroomCreateRawTest=({label:caption,system,abGroups=false,errors=false,direct=false})=>{classroomSelectTestQuarter();let group=subjectExamGroups(currentSubject).find(g=>g.type==='tests'&&g.halfYearId===currentHalfYearId);if(!group){addTests();group=subjectExamGroups(currentSubject).find(g=>g.type==='tests'&&g.halfYearId===currentHalfYearId)}const holder=classesBySubject[currentSubject]?.find(c=>c.id===currentClassId),q=holder?.sharedQuarterSelection?.[currentHalfYearId]||0;if(!group.pages[q]){addTests();group=subjectExamGroups(currentSubject).find(g=>g.type==='tests'&&g.halfYearId===currentHalfYearId)}const pageKey=group.pages[q],data=taskPageData(currentSubject,pageKey),source=subjectPageSource(currentSubject),existing=new Set(customPagesFor(currentSubject).map(p=>p.key));let key='tasks',i=2;while(existing.has(key))key='tasks-'+i++;source.pages??=[];source.pageNames??={};source.pageSystems??={};source.pages.push(key);source.pageNames[key]=caption;source.pageSystems[key]=system==='gradePoints'?'gradePoints':'grades';const task={id:makeTaskId('test'),name:caption,date:new Date().toLocaleDateString('sv-SE'),weight:0,weightEdited:false,testDetail:{pageKey:key,abGroups,direct:!!direct,errors:!!errors,total:errors?20:30,pass:system==='participation'?defaultsOf(currentSubject).pass:system==='gradePoints'?45:50,halfPoints:system==='participation'&&defaultsOf(currentSubject).halfPoints,system,tendencies:false,useSubject:system==='participation'}};if(data.tasks.length===1&&!data.tasks[0].date&&data.students.every(s=>!numericEntry(s.grades?.[data.tasks[0].id])))data.tasks=[];data.tasks.push(task);rebalanceTaskWeights(data);persistExamGroups(currentSubject);saveCurrentSubject();if(subjects[currentSubject].custom)persistCustomSubjects();else localStorage.setItem(builtInExtraPagesKey,JSON.stringify(builtInExtraPages));buildCustomSubjectPanels(currentSubject);setPage(key)};
+ window.classroomCreateRawTest=({label:caption,system,abGroups=false,errors=false,direct=false,init=null})=>{classroomSelectTestQuarter();let group=subjectExamGroups(currentSubject).find(g=>g.type==='tests'&&g.halfYearId===currentHalfYearId);if(!group){addTests();group=subjectExamGroups(currentSubject).find(g=>g.type==='tests'&&g.halfYearId===currentHalfYearId)}const holder=classesBySubject[currentSubject]?.find(c=>c.id===currentClassId),q=holder?.sharedQuarterSelection?.[currentHalfYearId]||0;if(!group.pages[q]){addTests();group=subjectExamGroups(currentSubject).find(g=>g.type==='tests'&&g.halfYearId===currentHalfYearId)}const pageKey=group.pages[q],data=taskPageData(currentSubject,pageKey),source=subjectPageSource(currentSubject),existing=new Set(customPagesFor(currentSubject).map(p=>p.key));let key='tasks',i=2;while(existing.has(key))key='tasks-'+i++;source.pages??=[];source.pageNames??={};source.pageSystems??={};source.pages.push(key);source.pageNames[key]=caption;source.pageSystems[key]=system==='gradePoints'?'gradePoints':'grades';const task={id:makeTaskId('test'),name:caption,date:new Date().toLocaleDateString('sv-SE'),weight:0,weightEdited:false,testDetail:{pageKey:key,abGroups,direct:!!direct,errors:!!errors,total:errors?20:30,pass:system==='participation'?defaultsOf(currentSubject).pass:system==='gradePoints'?45:50,halfPoints:system==='participation'&&defaultsOf(currentSubject).halfPoints,system,tendencies:false,useSubject:system==='participation'}};if(data.tasks.length===1&&!data.tasks[0].date&&data.students.every(s=>!numericEntry(s.grades?.[data.tasks[0].id])))data.tasks=[];data.tasks.push(task);/* 10.20: z. B. Navigium-Import füllt Datum, Grenzen und Rohpunkte */if(typeof init==='function')try{init(task,data)}catch(e){console.error(e)}rebalanceTaskWeights(data);persistExamGroups(currentSubject);saveCurrentSubject();if(subjects[currentSubject].custom)persistCustomSubjects();else localStorage.setItem(builtInExtraPagesKey,JSON.stringify(builtInExtraPages));buildCustomSubjectPanels(currentSubject);setPage(key)};
  const numericEntry=v=>v!==''&&v!=null;
  function decorateTestsOverview(key){const pn=document.querySelector('[data-custom-panel="'+CSS.escape(key)+'"]');if(!pn)return;pn.classList.add('tests-ov-reduced');pn.querySelectorAll('.tests-ov-add').forEach(x=>x.remove());const ab=pn.querySelector('thead th.task-add-column .task-add-button');if(ab){if(ab.textContent!=='＋ Test')ab.textContent='＋ Test';requestAnimationFrame(()=>{const tr=ab.closest('tr');if(tr)ab.style.setProperty('--addh',Math.max(80,tr.offsetHeight-18)+'px')})}}
 /* 9.31: Daten für den A4-Druck einer Testseite (exam-print.js) */
