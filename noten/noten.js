@@ -3394,7 +3394,7 @@ html.fs-view .fs-hide{display:none!important}
    }
    if(inRep&&repText){/* Wiederholung bis Seitenende */}
   }
-  function parseRep(text){const s={name:'Wiederholung',entries:[]};for(const part of text.split('•')){const m=/^(.*?):\s*(.+)$/.exec(part.trim());if(!m)continue;const left=m[1].trim(),meaning=m[2].trim();let lemma,info;if(left.includes(',')){lemma=left.slice(0,left.indexOf(',')).trim();info=left.slice(left.indexOf(',')+1).trim()}else{const sp=left.split(/\s+/);lemma=sp[0];info=sp.slice(1).join(' ')}s.entries.push({lemma,info,meaning})}if(s.entries.length)out.sections.push(s)}
+  function parseRep(text){const s={name:'Wiederholung',entries:[]};for(const part of text.split('•')){/* Doppelpunkt außerhalb von Klammern trennt Wort und Bedeutung */const t=part.trim();let d=0,at=-1;for(let k=0;k<t.length;k++){const c=t[k];if(c==='(')d++;else if(c===')')d=Math.max(0,d-1);else if(c===':'&&!d){at=k;break}}if(at<0)continue;const m=[t,t.slice(0,at),t.slice(at+1)];const left=m[1].trim(),meaning=m[2].trim();let lemma,info;if(left.includes(',')){lemma=left.slice(0,left.indexOf(',')).trim();info=left.slice(left.indexOf(',')+1).trim()}else{const sp=left.split(/\s+/);lemma=sp[0];info=sp.slice(1).join(' ')}s.entries.push({lemma,info,meaning})}if(s.entries.length)out.sections.push(s)}
   out.sections=out.sections.filter(s=>!s.skip&&s.entries.length);
   /* Wiederholung an zweiter Stelle anzeigen */
   out.sections.sort((a,b)=>(a.name.startsWith('Lektion')?0:a.name==='Wiederholung'?1:2)-(b.name.startsWith('Lektion')?0:b.name==='Wiederholung'?1:2));
@@ -3413,7 +3413,8 @@ html.fs-view .fs-hide{display:none!important}
  const syll=w=>(plain(w).match(/[aeiouy]+/g)||[]).length;
  function nounParadigm(lemma,info){
   /* info: „flūminis n.“, „castrōrum n. Pl.“, „obsidis m., f.“, „nūntiī m.“ */
-  const genus=[...new Set((info.match(/\b([mfn])\.(?!\w)/g)||[]).map(x=>x[0]))];const pluralOnly=/\bPl\./.test(info);
+  const genPlGiven=(/Gen\.\s*Pl\.\s*:?\s*([^\s,;:)]+)/.exec(info)||[])[1]||'';info=info.replace(/\(?\s*Gen\.\s*Pl\.\s*:?\s*[^\s,;:)]+\s*\)?/,' ');
+  const genus=[...new Set((info.match(/\b([mfn])\.(?!\w)/g)||[]).map(x=>x[0]))];const pluralOnly=/\b[mfn]\.\s*Pl\./.test(info);
   const gen=(info.split(/[\s,]+/).find(w=>/^\p{L}{2,}$/u.test(w)&&!/^(Pl|m|f|n)$/.test(w))||'').trim();
   if(!gen||!genus.length)return null;
   const g=plain(gen),L=lemma,lp=plain(L);let decl,stem,forms={},unsure='';
@@ -3435,7 +3436,7 @@ html.fs-view .fs-hide{display:none!important}
    let gp;if(GENPL_UM.has(lp))gp='um';else if(neI)gp='ium';else if(pari&&/(is|es)$/.test(lp))gp='ium';else if(!pari&&syll(L)===1&&two)gp='ium';else if(!pari&&!two)gp='um';else{gp='um';unsure='Gen. Pl.'}
    set('Sg.',[L,gen,stem+'ī',neut?L:stem+'em',neI?stem+'ī':stem+'e']);
    set('Pl.',[neut?stem+(neI?'ia':'a'):stem+'ēs',stem+gp+(gp==='ium'?'':'')==stem+'ium'?stem+'ium':stem+gp,stem+'ibus',neut?stem+(neI?'ia':'a'):stem+'ēs',stem+'ibus']);
-   forms['Gen. Pl.']=stem+(gp==='ium'?'ium':'um')}
+   forms['Gen. Pl.']=genPlGiven||stem+(gp==='ium'?'ium':'um');if(genPlGiven&&unsure==='Gen. Pl.')unsure=''}
   else return null;
   return {kind:'n',lemma:L,genus,gen,forms,decl,unsure}}
  /* Adjektive */
@@ -3463,8 +3464,10 @@ html.fs-view .fs-hide{display:none!important}
   ille:{m:['ille illīus illī illum illō','illī illōrum illīs illōs illīs'],f:['illa illīus illī illam illā','illae illārum illīs illās illīs'],n:['illud illīus illī illud illō','illa illōrum illīs illa illīs']},
   iste:{m:['iste istīus istī istum istō','istī istōrum istīs istōs istīs'],f:['ista istīus istī istam istā','istae istārum istīs istās istīs'],n:['istud istīus istī istud istō','ista istōrum istīs ista istīs']},
   ipse:{m:['ipse ipsīus ipsī ipsum ipsō','ipsī ipsōrum ipsīs ipsōs ipsīs'],f:['ipsa ipsīus ipsī ipsam ipsā','ipsae ipsārum ipsīs ipsās ipsīs'],n:['ipsum ipsīus ipsī ipsum ipsō','ipsa ipsōrum ipsīs ipsa ipsīs']},
+  duo:{m:['duo duōrum duōbus duōs duōbus','duo duōrum duōbus duōs duōbus'],f:['duae duārum duābus duās duābus','duae duārum duābus duās duābus'],n:['duo duōrum duōbus duo duōbus','duo duōrum duōbus duo duōbus'],pl:true},
+  'trēs':{m:['trēs trium tribus trēs tribus','trēs trium tribus trēs tribus'],f:['trēs trium tribus trēs tribus','trēs trium tribus trēs tribus'],n:['tria trium tribus tria tribus','tria trium tribus tria tribus'],pl:true},
   'īdem':{m:['īdem eiusdem eīdem eundem eōdem','eīdem eōrundem eīsdem eōsdem eīsdem'],f:['eadem eiusdem eīdem eandem eādem','eaedem eārundem eīsdem eāsdem eīsdem'],n:['idem eiusdem eīdem idem eōdem','eadem eōrundem eīsdem eadem eīsdem']}};
- function pronParadigm(lemma){const key=Object.keys(PRON).find(k=>plain(k)===plain(lemma));if(!key)return null;const t=PRON[key],forms={};for(const g of ['m','f','n'])['Sg.','Pl.'].forEach((num,ni)=>t[g][ni].split(' ').forEach((f,i)=>forms[CASES[i]+' '+num+' '+g]=f));return {kind:'a',lemma:key,forms,nomAlso:[t.f[0].split(' ')[0],t.n[0].split(' ')[0]],pron:true}}
+ function pronParadigm(lemma){const key=Object.keys(PRON).find(k=>plain(k)===plain(lemma));if(!key)return null;const t=PRON[key],forms={};for(const g of ['m','f','n'])(t.pl?['Pl.']:['Sg.','Pl.']).forEach((num,ni)=>t[g][t.pl?1:ni].split(' ').forEach((f,i)=>forms[CASES[i]+' '+num+' '+g]=f));return {kind:'a',lemma:key,forms,nomAlso:[t.f[0].split(' ')[0],t.n[0].split(' ')[0]],pron:!t.pl,pluralOnly:!!t.pl}}
  /* Verben (10.25: alle Tempora des Indikativs ohne Futur II, Passiv, Konjunktiv, PPP, PPA) */
  const PERS=['1. Sg.','2. Sg.','3. Sg.','1. Pl.','2. Pl.','3. Pl.'];
  const TL={praes:'Präs.',impf:'Impf.',fut:'Fut. I',perf:'Perf.',plqpf:'Plusqpf.'};
@@ -3544,7 +3547,8 @@ html.fs-view .fs-hide{display:none!important}
  function analyze(e){const lemma=NFC(e.lemma).replace(/\s+/g,' ').trim(),info=NFC(e.info).trim();
   const base={lemma,info,meaning:NFC(e.meaning).replace(/\s+/g,' ').trim()};
   if(!info||INDECL.test(info))return {...base,kind:'x'};
-  if(/Pron/.test(info)){const p=pronParadigm(lemma.split(/[\s,]/)[0]);return p?{...base,...p}:{...base,kind:'?'}}
+  if(/Pron/.test(info)){const p=pronParadigm(lemma.split(/[\s,]/)[0]);if(p)return {...base,...p};
+   /* schon gebeugte Pronomen wie „quem?“ (Interrog.-Pron. Akk.): nur die Bedeutung abfragen */return {...base,kind:'x'}}
   const pr=pronParadigm(lemma);if(pr&&!/[mfn]\./.test(info))return {...base,...pr};
   if(/^[^\s,]+(ō|or|m)\b/u.test(info)&&/(re|rī|ī|sse|lle)$/.test(plain(lemma).replace(/i$/,'ī'))||/^[^\s,]+(ō|or)\s*(,|$)/u.test(info)){const v=verbParadigm(lemma,info);if(v)return {...base,...v}}
   if(/\b[mfn]\.(?!\w)/.test(info)){const n=nounParadigm(lemma,info);if(n)return {...base,...n}}
