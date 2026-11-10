@@ -2762,10 +2762,12 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
  function sizeWraps(){if(document.documentElement.classList.contains('ph-lite'))return;
   for(const w of document.querySelectorAll('.table-wrap')){const tb=w.querySelector(':scope>table.compact-entry-table');if(!tb||!w.offsetParent)continue;const top=w.getBoundingClientRect().top;
    {const n=tb.tHead?.rows[0]?.cells.length||0;for(const r of tb.tFoot?.rows||[]){let have=[...r.cells].reduce((a,c)=>a+(c.colSpan||1),0);while(have<n){const td=document.createElement('td');td.className='qp-pad';r.append(td);have++}}}/* Mittelwert-Zeile voll breit, damit beim Festhalten nichts durchscheint */
-   const need=w.firstElementChild?.offsetHeight||0,h=Math.max(240,Math.round(innerHeight-Math.max(top,8)-8)),cur=parseFloat(w.style.maxHeight)||0;
-   if(Math.abs(cur-h)>1)w.style.maxHeight=h+'px'}}
- addEventListener('scroll',()=>requestAnimationFrame(sizeWraps),{passive:true});
- addEventListener('resize',()=>requestAnimationFrame(sizeWraps));
+   const fb=window.classroomFitBox?.(),fr=fb?.contains(w)?fb.getBoundingClientRect():null,need=w.firstElementChild?.offsetHeight||0,h=fr?Math.max(240,Math.floor(fr.bottom-parseFloat(getComputedStyle(fb).paddingBottom)-Math.max(top,fr.top+8))-2):Math.max(240,Math.round(innerHeight-Math.max(top,8)-8)),cur=parseFloat(w.style.maxHeight)||0;
+   if(Math.abs(cur-h)>1)w.style.maxHeight=h+'px';
+   /* 10.15: Inhalt unter der Tabelle mit einrechnen, damit die Fläche nicht scrollt */
+   if(fr&&fb.scrollTop===0&&w.scrollHeight>w.clientHeight){const over=fb.scrollHeight-fb.clientHeight;if(over>0&&h-over>=240)w.style.maxHeight=(h-over)+'px'}}}
+ addEventListener('scroll',e=>{if(e.target?.classList?.contains?.('table-wrap'))return;requestAnimationFrame(sizeWraps)},{passive:true,capture:true});
+ addEventListener('resize',()=>requestAnimationFrame(sizeWraps));window.classroomSizeWraps=sizeWraps;
  const _apply2=apply;apply=function(){_apply2();sizeWraps()};
  let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{apply()}catch(e){console.warn(e)}})};
  if(typeof classroomOnDomChange==='function')classroomOnDomChange(run);else new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});run();
@@ -2901,6 +2903,45 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
  .ew-small{width:min(520px,calc(100vw - 24px));border:0;border-radius:18px;padding:20px!important}.ew-small h2{margin:0 0 10px;font-size:18px}.ew-small textarea{width:100%;box-sizing:border-box;border:1px solid #cfd9e6;border-radius:10px;padding:10px;font:inherit;font-size:14px;margin-bottom:10px}.ew-small .ew-act{justify-content:flex-end}
  .pl-flags .ew-pill:not(#_){border-color:#f3cfa3;background:#fff3e6;color:#8a4b0a}.pl-flags .ew-pill b{background:#d97706!important}
  @media (max-width:560px){.ew-nm{min-width:0;flex:1 1 100%}.ew-act{margin-left:auto}}`;document.head.append(st);
+})();
+;
+
+/* ==== noten/fit-panel.js ==== */
+/* 10.15: Weiße Hauptfläche passt genau in den sichtbaren Bereich (Mac/iPad).
+   Die Seite selbst scrollt nicht mehr – gescrollt wird nur noch innerhalb der Fläche bzw. der Tabelle. */
+(function(){
+ const root=document.documentElement,GAP=16;
+ let box=null;
+ const usable=()=>!root.classList.contains('ph-lite')&&innerWidth>=700&&innerHeight>=420;
+ const panels=()=>[...document.querySelectorAll('main>section.panel,main>div>section.panel')].filter(e=>e.offsetParent&&!e.closest('dialog'));
+ function clear(){if(box){box.style.height='';box.classList.remove('fit-box');box=null}root.classList.remove('fit-panel')}
+ function fit(){
+  if(!usable()){clear();return}
+  const list=panels();if(list.length!==1){clear();return}
+  const p=list[0];
+  if(box&&box!==p){const y=box.scrollTop;box.style.height='';box.classList.remove('fit-box');p.scrollTop=y}
+  box=p;if(!root.classList.contains('fit-panel'))root.classList.add('fit-panel');if(!p.classList.contains('fit-box'))p.classList.add('fit-box');
+  if(document.scrollingElement.scrollTop)document.scrollingElement.scrollTop=0;
+  const top=p.getBoundingClientRect().top,h=Math.max(260,Math.round(innerHeight-top-GAP));
+  if(Math.abs((parseFloat(p.style.height)||0)-h)>1){p.style.height=h+'px';try{window.classroomSizeWraps?.()}catch{}}
+ }
+ window.classroomFitBox=()=>box&&root.classList.contains('fit-panel')?box:null;
+ let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{fit()}catch(e){console.warn(e)}})};
+ addEventListener('resize',run);
+ window.visualViewport?.addEventListener('resize',run);
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(run);else new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
+ /* class/hidden-Wechsel lösen keinen childList-Change aus */
+ new MutationObserver(run).observe(document.querySelector('main')||document.body,{attributes:true,attributeFilter:['class','hidden'],subtree:true});
+ /* Seitenwechsel: Fläche wieder oben beginnen */
+ let lastKey='';const pageKey=()=>{try{return [currentSubject,currentClassId,currentHalfYearId,typeof activePage==='object'?activePage?.id:activePage].join('|')}catch{return ''}};
+ try{classroomHooks.add('setPage','fit-panel',{after(){const k=pageKey();if(k!==lastKey){lastKey=k;if(box)box.scrollTop=0}run()}})}catch(e){console.warn(e)}
+ addEventListener('load',run);run();setTimeout(run,600);
+ const st=document.createElement('style');st.textContent=`
+html.fit-panel,html.fit-panel body{height:100%;overflow:hidden;overscroll-behavior:none}
+html.fit-panel body[data-module=noten] main{padding-bottom:0!important}
+html.fit-panel .panel.fit-box{overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;margin-bottom:0!important}
+@media print{html.fit-panel,html.fit-panel body{height:auto;overflow:visible}html.fit-panel .panel.fit-box{height:auto!important;overflow:visible}}`;
+ document.head.append(st);
 })();
 ;
 
