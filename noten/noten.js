@@ -3267,6 +3267,236 @@ html.fs-view .fs-hide{display:none!important}
 })();
 ;
 
+/* ==== qr-code.js ==== */
+/* 10.21: QR-Code-Erzeuger (Byte-Modus, Fehlerkorrektur M/L, Version 1–40, automatische Maske) – eigener Code, ohne Fremdbibliothek.
+   Nach dem bekannten Verfahren aus ISO/IEC 18004 (Aufbau angelehnt an Nayukis Referenzimplementierung, MIT).
+   classroomQr(text,{ecc:'M'}) → {size, get(x,y)}; classroomQrSvg(text,opts) → SVG-Text */
+(function(root){
+ const ECC={L:[0,1],M:[1,0],Q:[2,3],H:[3,2]};/* [Ordnungsindex, Formatbits] */
+ const ECC_PER_BLOCK=[
+  [-1,7,10,15,20,26,18,20,24,30,18,20,24,26,30,22,24,28,30,28,28,28,28,30,30,26,28,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+  [-1,10,16,26,18,24,16,18,22,22,26,30,22,22,24,24,28,28,26,26,26,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+  [-1,13,22,18,26,18,24,18,22,20,24,28,26,24,20,30,24,28,28,26,30,28,30,30,30,30,28,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+  [-1,17,28,22,16,22,28,26,26,24,28,24,28,22,24,24,30,28,28,26,28,30,24,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30]];
+ const BLOCKS=[
+  [-1,1,1,1,1,1,2,2,2,2,4,4,4,4,4,6,6,6,6,7,8,8,9,9,10,12,12,12,13,14,15,16,17,18,19,19,20,21,22,24,25],
+  [-1,1,1,1,2,2,4,4,4,5,5,5,8,9,9,10,10,11,13,14,16,17,17,18,20,21,23,25,26,28,29,31,33,35,37,38,40,43,45,47,49],
+  [-1,1,1,2,2,4,4,6,6,8,8,8,10,12,16,12,17,16,18,21,20,23,23,25,27,29,34,34,35,38,40,43,45,48,51,53,56,59,62,65,68],
+  [-1,1,1,2,4,4,4,5,6,8,8,11,11,16,16,18,16,19,21,25,25,25,34,30,32,35,37,40,42,45,48,51,54,57,60,63,66,70,74,77,81]];
+ function rawModules(v){let r=(16*v+128)*v+64;if(v>=2){const n=Math.floor(v/7)+2;r-=(25*n-10)*n-55;if(v>=7)r-=36}return r}
+ const dataCodewords=(v,e)=>Math.floor(rawModules(v)/8)-ECC_PER_BLOCK[e][v]*BLOCKS[e][v];
+ function rsMul(x,y){let z=0;for(let i=7;i>=0;i--){z=(z<<1)^((z>>>7)*0x11D);z^=((y>>>i)&1)*x}return z&255}
+ function rsDivisor(deg){const r=new Array(deg).fill(0);r[deg-1]=1;let root=1;for(let i=0;i<deg;i++){for(let j=0;j<r.length;j++){r[j]=rsMul(r[j],root);if(j+1<r.length)r[j]^=r[j+1]}root=rsMul(root,2)}return r}
+ function rsRemainder(data,div){const r=div.map(()=>0);for(const b of data){const f=b^r.shift();r.push(0);div.forEach((c,i)=>r[i]^=rsMul(c,f))}return r}
+ function utf8(s){return Array.from(new TextEncoder().encode(s))}
+ function encode(text,opts={}){
+  const bytes=utf8(text);let e=ECC[opts.ecc||'M'][0];
+  let ver=0;for(let v=opts.minVersion||1;v<=40;v++){const cap=dataCodewords(v,e)*8,need=4+(v<10?8:16)+bytes.length*8;if(need<=cap){ver=v;break}}
+  if(!ver)throw new Error('Text zu lang für einen QR-Code');
+  /* höhere Fehlerkorrektur, wenn sie ohne größere Version passt */
+  for(const k of ['Q','H']){const ek=ECC[k][0];if(opts.boost!==false&&ek>e&&4+(ver<10?8:16)+bytes.length*8<=dataCodewords(ver,ek)*8&&opts.ecc!=='L')e=ek}
+  const bits=[];const put=(val,len)=>{for(let i=len-1;i>=0;i--)bits.push((val>>>i)&1)};
+  put(4,4);put(bytes.length,ver<10?8:16);bytes.forEach(b=>put(b,8));
+  const cap=dataCodewords(ver,e)*8;put(0,Math.min(4,cap-bits.length));put(0,(8-bits.length%8)%8);
+  for(let pad=0xEC;bits.length<cap;pad^=0xEC^0x11)put(pad,8);
+  const data=[];for(let i=0;i<bits.length;i+=8){let b=0;for(let j=0;j<8;j++)b=(b<<1)|bits[i+j];data.push(b)}
+  /* Blöcke + Fehlerkorrektur, verschränkt */
+  const nb=BLOCKS[e][ver],ecl=ECC_PER_BLOCK[e][ver],raw=Math.floor(rawModules(ver)/8),nShort=nb-raw%nb,shortLen=Math.floor(raw/nb);
+  const div=rsDivisor(ecl),blocks=[];for(let i=0,k=0;i<nb;i++){const dat=data.slice(k,k+shortLen-ecl+(i<nShort?0:1));k+=dat.length;const ec=rsRemainder(dat,div);if(i<nShort)dat.push(0);blocks.push(dat.concat(ec))}
+  const all=[];for(let i=0;i<blocks[0].length;i++)blocks.forEach((b,j)=>{if(i!==shortLen-ecl||j>=nShort)all.push(b[i])});
+  /* Matrix */
+  const size=ver*4+17,mod=[...Array(size)].map(()=>Array(size).fill(false)),fn=[...Array(size)].map(()=>Array(size).fill(false));
+  const set=(x,y,d)=>{mod[y][x]=d;fn[y][x]=true};
+  for(let i=0;i<size;i++){set(6,i,i%2===0);set(i,6,i%2===0)}
+  const finder=(cx,cy)=>{for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const d=Math.max(Math.abs(dx),Math.abs(dy)),x=cx+dx,y=cy+dy;if(x>=0&&x<size&&y>=0&&y<size)set(x,y,d!==2&&d!==4)}};
+  finder(3,3);finder(size-4,3);finder(3,size-4);
+  const align=[];if(ver>1){const n=Math.floor(ver/7)+2,step=ver===32?26:Math.floor((ver*4+n*2+1)/(n*2-2))*2;align.push(6);for(let p=size-7;align.length<n;p-=step)align.splice(1,0,p)}
+  align.forEach((a,i)=>align.forEach((b,j)=>{if((i===0&&j===0)||(i===0&&j===align.length-1)||(i===align.length-1&&j===0))return;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)set(a+dx,b+dy,Math.max(Math.abs(dx),Math.abs(dy))!==1)}));
+  const drawFormat=mask=>{const d=(ECC_FMT[e]<<3)|mask;let r=d;for(let i=0;i<10;i++)r=(r<<1)^((r>>>9)*0x537);const b=((d<<10)|r)^0x5412;const bit=i=>((b>>>i)&1)===1;
+   for(let i=0;i<=5;i++)set(8,i,bit(i));set(8,7,bit(6));set(8,8,bit(7));set(7,8,bit(8));for(let i=9;i<15;i++)set(14-i,8,bit(i));
+   for(let i=0;i<8;i++)set(size-1-i,8,bit(i));for(let i=8;i<15;i++)set(8,size-15+i,bit(i));set(8,size-8,true)};
+  drawFormat(0);
+  if(ver>=7){let r=ver;for(let i=0;i<12;i++)r=(r<<1)^((r>>>11)*0x1F25);const b=(ver<<12)|r;for(let i=0;i<18;i++){const bt=((b>>>i)&1)===1,a=size-11+i%3,c=Math.floor(i/3);set(a,c,bt);set(c,a,bt)}}
+  /* Daten im Zickzack */
+  let i=0;for(let right=size-1;right>=1;right-=2){if(right===6)right=5;for(let vert=0;vert<size;vert++)for(let j=0;j<2;j++){const x=right-j,up=((right+1)&2)===0,y=up?size-1-vert:vert;if(!fn[y][x]&&i<all.length*8){mod[y][x]=((all[i>>>3]>>>(7-(i&7)))&1)===1;i++}}}
+  const maskFn=[(x,y)=>(x+y)%2===0,(x,y)=>y%2===0,(x,y)=>x%3===0,(x,y)=>(x+y)%3===0,(x,y)=>(Math.floor(x/3)+Math.floor(y/2))%2===0,(x,y)=>x*y%2+x*y%3===0,(x,y)=>(x*y%2+x*y%3)%2===0,(x,y)=>((x+y)%2+x*y%3)%2===0];
+  const applyMask=m=>{for(let y=0;y<size;y++)for(let x=0;x<size;x++)if(!fn[y][x]&&maskFn[m](x,y))mod[y][x]=!mod[y][x]};
+  const penalty=()=>{let p=0;const runs=line=>{let s=0;let c=line[0],n=1;for(let k=1;k<=line.length;k++){if(k<line.length&&line[k]===c)n++;else{if(n>=5)s+=n-2;c=line[k];n=1}}return s};
+   const pat=line=>{let s=0;const L=line.map(b=>b?1:0).join('');for(const q of ['10111010000','00001011101'])for(let k=L.indexOf(q);k>=0;k=L.indexOf(q,k+1))s+=40;return s};
+   for(let y=0;y<size;y++){p+=runs(mod[y])+pat(mod[y])}for(let x=0;x<size;x++){const col=mod.map(r=>r[x]);p+=runs(col)+pat(col)}
+   for(let y=0;y<size-1;y++)for(let x=0;x<size-1;x++){const c=mod[y][x];if(c===mod[y][x+1]&&c===mod[y+1][x]&&c===mod[y+1][x+1])p+=3}
+   let dark=0;mod.forEach(r=>r.forEach(b=>dark+=b));const k=Math.ceil(Math.abs(dark*20-size*size*10)/(size*size))-1;p+=Math.max(0,k)*10;return p};
+  let best=0,bestP=Infinity;for(let m=0;m<8;m++){applyMask(m);drawFormat(m);const pp=penalty();if(pp<bestP){bestP=pp;best=m}applyMask(m)}
+  applyMask(best);drawFormat(best);
+  return {size,version:ver,get:(x,y)=>x>=0&&y>=0&&x<size&&y<size&&mod[y][x]}}
+ const ECC_FMT=[1,0,3,2];/* Formatbits nach Ordnungsindex L,M,Q,H */
+ function svg(text,opts={}){const q=encode(text,opts),b=opts.border??2,n=q.size+2*b;let d='';for(let y=0;y<q.size;y++)for(let x=0;x<q.size;x++)if(q.get(x,y))d+='M'+(x+b)+','+(y+b)+'h1v1h-1z';
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+n+' '+n+'" shape-rendering="crispEdges"'+(opts.size?' width="'+opts.size+'" height="'+opts.size+'"':'')+'><rect width="100%" height="100%" fill="'+(opts.light||'#fff')+'"/><path d="'+d+'" fill="'+(opts.dark||'#000')+'"/></svg>'}
+ root.classroomQr=encode;root.classroomQrSvg=svg;
+})(typeof window!=='undefined'?window:globalThis);
+;
+
+/* ==== noten/vocab-test.js ==== */
+/* 10.21: iPad-Vokabeltest (Latein). „＋ Test“ → „iPad-Vokabeltest“.
+   1. Testdatei (.cmvok, von Claude erstellt) laden → Vorschau Gruppe A/B, Einträge änderbar, QR-Code je Gruppe zum Ausgeben.
+      Im Link stehen nur die Formen – keine Lösungen. Schülerseite: ../vokabeltest.html
+   2. Abgaben (AirDrop-Dateien .json) einlesen → automatische Bewertung; nur fragliche Antworten zur Prüfung.
+   3. „Test anlegen“ → Rohpunkte-Test (A/B-Gruppen, Bewertungszeichen, Grenzen 90/80/70/60/50 %).
+   Regeln (Absprache): Grundform – Substantive Nom. Sg. + Genus (ein Genus genügt bei mehreren; „Pl.“ nicht nötig),
+   Verben Infinitiv + 1. Sg. Präs., Adjektive und Pronomen Nom. Sg. m.; unveränderliche Wörter nur Bedeutung. */
+(()=>{
+ const KEY='classroom-vocab-tests-v1',RATIOS={'1':90,'2':80,'3':70,'4':60,'5':50},SIGNS={1:'++',2:'+',3:'o',4:'-',5:'--',6:'---'};
+ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const store=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch{return {}}};
+ const persist=s=>{try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){alert('Speichern nicht möglich: '+e.message)}};
+ const isLatin=()=>{try{return currentSubject==='latein'||/latein/i.test(subjects?.[currentSubject]?.name||subjects?.[currentSubject]?.label||'')}catch{return false}};
+ const classLabel=()=>{try{const c=classesBySubject[currentSubject].find(c=>c.id===currentClassId);return (subjects?.[currentSubject]?.name||'Latein')+' '+(c?.label||'')}catch{return 'Latein'}};
+ const today=()=>new Date().toLocaleDateString('sv-SE');
+ /* ---------- Bewertung ---------- */
+ const normLat=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/j/g,'i');
+ const latTokens=s=>normLat(s).replace(/[^a-z]+/g,' ').trim().split(' ').filter(Boolean);
+ const GENUS_WORDS={m:'m',mask:'m',maskulin:'m',masculinum:'m',f:'f',fem:'f',feminin:'f',femininum:'f',n:'n',neutr:'n',neutrum:'n'};
+ const fold=s=>s.replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+ function normDe(s){let t=String(s||'').toLowerCase().replace(/\(\s*\+[^)]*\)/g,' ').replace(/[()]/g,'');t=fold(t).replace(/\b(etw|etwas|jdn|jdm|jmd|jmdn|jmdm|jemanden|jemandem|jemand)\b\.?/g,' ').replace(/[.!?"„“'’]/g,' ').replace(/-\s+/g,'').replace(/\s+/g,' ').trim();
+  t=t.replace(/^(der|die|das|den|dem|des|ein|eine|einen|einem|einer|eines)\s+/,'');return t.trim()}
+ const compact=s=>s.replace(/[\s-]+/g,'');
+ function lev(a,b){if(a===b)return 0;const m=a.length,n=b.length;if(Math.abs(m-n)>2)return 9;let p=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+ const typo=(a,b)=>{const l=Math.max(a.length,b.length);return l>=4&&lev(a,b)<=(l>=7?2:1)};
+ const maxOf=item=>item.kind==='x'?1:2;
+ function gradeLemma(item,ans){
+  if(item.kind==='x')return {p:0,max:0};
+  const toks=latTokens(ans.l);let ge=ans.ge||'';const rest=[];for(const t of toks){if(GENUS_WORDS[t]&&!(item.need||[]).map(normLat).includes(t)){if(!ge)ge=GENUS_WORDS[t];continue}if(t==='pl'||t==='plural')continue;rest.push(t)}
+  const need=(item.need||[]).map(normLat),also=(item.also||[]).map(normLat);
+  if(!rest.length)return {p:0,max:1,note:'leer'};
+  const present=need.filter(t=>rest.includes(t)),extras=rest.filter(t=>!need.includes(t)&&!also.includes(t)),missing=need.filter(t=>!rest.includes(t));
+  const typos=missing.filter(t=>extras.some(x=>typo(x,t)));const unknown=extras.filter(x=>!missing.some(t=>typo(x,t)));
+  let r;
+  if(present.length===need.length&&!extras.length)r={p:1};
+  else if(present.length===need.length)r={q:true,s:1,note:'zusätzlich: '+extras.join(', ')};
+  else if(present.length+typos.length===need.length&&!unknown.length)r={q:true,s:1,note:'Tippfehler?'};
+  else if(present.length||typos.length)r={q:true,s:.5,note:'unvollständig'};
+  else r={p:0,note:'falsch'};
+  if(item.kind==='n'){const ok=(item.genus||[]).includes(ge);if(!ok){const why=ge?'Genus falsch ('+ge+')':'Genus fehlt';if(r.p===1)r={p:.5,note:why};else if(r.q){r.s=Math.min(r.s,.5);r.note+=' · '+why}}}
+  return {...r,max:1,ge}}
+ function gradeMeaning(item,ans){
+  const raw=String(ans.m||'').trim();if(!raw)return {p:0,max:1,note:'leer'};
+  const exp=new Set();for(const m of item.meanings||[])for(const part of String(m).split(/[;,]/)){const n=normDe(part);if(n){exp.add(n);exp.add(compact(n))}}
+  const pieces=raw.split(/[,;\/]|\s+(?:oder|bzw\.?)\s+/i).map(normDe).filter(Boolean);
+  let hits=0,near=0,nearKind='',misses=[];
+  const bag=x=>x.split(' ').sort().join(' '),bags=new Set([...exp].map(bag));
+  for(const p of pieces){if(exp.has(p)||exp.has(compact(p))||bags.has(bag(p))){hits++;continue}let found='';for(const e of exp){if(typo(p,e)){found='typo';break}if(e.length>=4&&p.length>=4&&(e.includes(p)||p.includes(e)))found=found||'part'}if(found){near++;nearKind=nearKind==='typo'?'typo':found}else misses.push(p)}
+  if(hits&&!misses.length)return {p:1,max:1};
+  if(hits)return {q:true,s:1,max:1,note:'weitere Angabe: '+misses.join(', ')};
+  if(near)return {q:true,s:nearKind==='typo'?1:.5,max:1,note:nearKind==='typo'?'Tippfehler?':'ähnlich'};
+  return {p:0,max:1,note:'falsch'}}
+ function gradeAll(test,sub){const items=test.groups[sub.g]||[];return items.map((item,i)=>{const a=sub.a?.[i]||{};return {lemma:gradeLemma(item,a),meaning:gradeMeaning(item,a),ans:a}})}
+ window.classroomVocabGrade={gradeLemma,gradeMeaning,normDe,normLat};
+ /* ---------- Link für die Schüler ---------- */
+ function studentBase(){try{if(/github\.io$/.test(location.hostname)||/^https?:$/.test(location.protocol)&&!/^(localhost|127\.)/.test(location.hostname))return new URL('../vokabeltest.html',location.href).href}catch{}return 'https://togruber2024.github.io/classroom-manager-app/vokabeltest.html'}
+ const b64url=u=>{let s='';u.forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+ async function studentUrl(test,g){const payload={i:test.id,t:test.title,g,c:test.className||'',d:test.date||'',r:(test.groups[g]||[]).map(it=>[it.form,it.kind])};const bytes=new TextEncoder().encode(JSON.stringify(payload));
+  let hash;try{if(typeof CompressionStream!=='function')throw 0;const z=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());hash='z1.'+b64url(z)}catch{hash='j1.'+b64url(bytes)}
+  return studentBase()+'#'+hash}
+ /* ---------- Testdatei ---------- */
+ function parseLemmaText(kind,text){const t=String(text||'').trim();if(kind==='x')return {need:[],genus:[]};const genus=[];let s=t.replace(/\b([mfn])\b\.?(?:\s*\/\s*([mfn])\.?)?/g,(m,a,b)=>{genus.push(a);if(b)genus.push(b);return ' '}).replace(/\bPl\.?\b/gi,' ');
+  const need=s.split(/[,;]/).map(x=>x.trim()).filter(Boolean);return {need:kind==='n'||kind==='a'?need.slice(0,1):need,genus}}
+ const lemmaText=it=>it.kind==='x'?'':it.kind==='n'?(it.need?.[0]||'')+' '+(it.genus||[]).join('/')+'.':(it.need||[]).join(', ');
+ function normalizeTest(raw){if(!raw||raw.type!=='classroom-vokabeltest'||!raw.groups)throw new Error('Das ist keine Vokabeltest-Datei (.cmvok).');
+  const groups={};for(const [g,list] of Object.entries(raw.groups)){if(!Array.isArray(list)||!list.length)continue;groups[g]=list.map(x=>{const kind=['n','v','a','x'].includes(x.kind)?x.kind:'x';return {form:String(x.form||''),kind,need:Array.isArray(x.need)?x.need.map(String):parseLemmaText(kind,x.lemma).need,genus:kind==='n'?(x.genus||[]).map(String):[],also:(x.also||[]).map(String),meanings:(x.meanings||[]).map(String)}})}
+  if(!Object.keys(groups).length)throw new Error('Die Datei enthält keine Vokabeln.');
+  return {id:Math.random().toString(36).slice(2,8),title:String(raw.title||'Vokabeltest'),name:String(raw.name||raw.title||'Vokabeltest').slice(0,40),groups,date:today(),created:Date.now(),subject:currentSubject,classId:currentClassId,halfYearId:currentHalfYearId,className:classLabel(),subs:{}}}
+ /* ---------- Oberfläche ---------- */
+ const dlg=document.createElement('dialog');dlg.className='classroom-dialog vt-dialog';document.body.append(dlg);
+ const fileIn=document.createElement('input');fileIn.type='file';fileIn.hidden=true;document.body.append(fileIn);
+ let state=null;/* {test, g} */
+ const pick=(accept,multiple)=>new Promise(res=>{fileIn.accept=accept;fileIn.multiple=!!multiple;fileIn.value='';fileIn.onchange=()=>res([...fileIn.files||[]]);fileIn.click()});
+ const saveTest=t=>{const s=store();s[t.id]=t;persist(s)};
+ function openManager(){const s=store(),mine=Object.values(s).filter(t=>t.subject===currentSubject&&t.classId===currentClassId).sort((a,b)=>b.created-a.created);
+  if(!mine.length){loadFile();return}
+  dlg.innerHTML='<form method="dialog"><h2>iPad-Vokabeltests</h2><p class="vt-sub">'+esc(classLabel())+'</p><div class="vt-list">'+mine.map(t=>'<div class="vt-li"><div><b>'+esc(t.name)+'</b><div class="vt-sub">'+esc(t.title)+' · '+new Date(t.date+'T12:00').toLocaleDateString('de-DE')+' · '+Object.keys(t.subs||{}).length+' Abgaben'+(t.done?' · Test angelegt':'')+'</div></div><span><button type="button" class="vt-btn" data-open="'+t.id+'">Öffnen</button><button type="button" class="vt-btn vt-del" data-del="'+t.id+'" title="Entfernen">✕</button></span></div>').join('')+'</div><div class="dialog-actions"><button type="button" data-x>Schließen</button><button type="button" class="primary" data-new>Neue Testdatei laden …</button></div></form>';
+  dlg.querySelector('[data-x]').onclick=()=>dlg.close();dlg.querySelector('[data-new]').onclick=()=>{dlg.close();loadFile()};
+  dlg.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{state={test:store()[b.dataset.open],g:'A'};showTest()});
+  dlg.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{if(!confirm('Diesen iPad-Test mit seinen Abgaben entfernen? (Ein bereits angelegter Test in der Übersicht bleibt.)'))return;const s=store();delete s[b.dataset.del];persist(s);openManager()});
+  if(!dlg.open)dlg.showModal()}
+ async function loadFile(){const [f]=await pick('.cmvok,.json,application/json');if(!f)return;try{const t=normalizeTest(JSON.parse(await f.text()));saveTest(t);state={test:t,g:Object.keys(t.groups)[0]};showTest()}catch(e){alert('Vokabeltest: '+(e.message||e))}}
+ async function showTest(){const t=state.test,g=state.g,items=t.groups[g],groups=Object.keys(t.groups),url=await studentUrl(t,g);
+  const total=items.reduce((a,it)=>a+maxOf(it),0);let qr='';try{qr=classroomQrSvg(url,{ecc:'M',boost:false,dark:'#243247',border:3})}catch(e){qr='<p class="vt-warn">QR-Code nicht möglich: '+esc(e.message)+'</p>'}
+  dlg.innerHTML='<form method="dialog" class="vt-wide"><div class="vt-top"><div><h2>'+esc(t.title)+'</h2><div class="vt-sub">'+esc(t.className)+' · '+items.length+' Vokabeln je Gruppe · '+total+' Punkte (Grundform + Bedeutung je 1 P)</div></div>'+(groups.length>1?'<div class="vt-seg">'+groups.map(x=>'<button type="button" data-g="'+x+'" class="'+(x===g?'on':'')+'">Gruppe '+x+'</button>').join('')+'</div>':'')+'</div>'+
+   '<div class="vt-grid"><div class="vt-tab"><table><thead><tr><th>Form (Schüler sehen)</th><th>Grundform (Lösung)</th><th>Bedeutungen (Lösung)</th><th>P</th></tr></thead><tbody>'+items.map((it,i)=>'<tr><td><input class="vt-in vt-form" data-f="form" data-i="'+i+'" value="'+esc(it.form)+'"></td><td>'+(it.kind==='x'?'<span class="vt-sub">— unveränderlich</span>':'<input class="vt-in" data-f="lemma" data-i="'+i+'" value="'+esc(lemmaText(it))+'">')+'</td><td><input class="vt-in" data-f="meanings" data-i="'+i+'" value="'+esc(it.meanings.join('; '))+'"></td><td class="vt-c">'+maxOf(it)+'</td></tr>').join('')+'</tbody></table></div>'+
+   '<div><div class="vt-card vt-qr"><b>Gruppe '+esc(g)+' ausgeben</b><div class="vt-sub">Mit der iPad-Kamera scannen</div><div class="vt-qrimg">'+qr+'</div><div class="vt-row"><button type="button" class="vt-btn" data-beamer>Groß am Beamer</button><button type="button" class="vt-btn" data-copy>Link kopieren</button></div></div>'+
+   '<div class="vt-card"><b>Abgaben</b><div class="vt-sub" style="margin:4px 0 12px">'+Object.keys(t.subs||{}).length+' eingelesen. Die Schüler senden ihre Datei per AirDrop. Die Lösungen sind <b>nicht</b> im Link enthalten.</div><button type="button" class="vt-btn vt-pri" data-subs>Abgaben einlesen …</button>'+(Object.keys(t.subs||{}).length?'<button type="button" class="vt-btn" style="margin-top:8px;width:100%" data-review>Auswertung öffnen</button>':'')+'</div></div></div>'+
+   '<div class="dialog-actions"><button type="button" data-back>Alle iPad-Tests</button><button type="button" data-x>Schließen</button></div></form>';
+  dlg.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{state.g=b.dataset.g;showTest()});
+  dlg.querySelectorAll('.vt-in').forEach(inp=>inp.onchange=()=>{const it=items[+inp.dataset.i];if(inp.dataset.f==='form')it.form=inp.value.trim();else if(inp.dataset.f==='meanings')it.meanings=inp.value.split(';').map(x=>x.trim()).filter(Boolean);else{const p=parseLemmaText(it.kind,inp.value);it.need=p.need;if(it.kind==='n'&&p.genus.length)it.genus=p.genus}saveTest(t);if(inp.dataset.f==='form')showTest()});
+  dlg.querySelector('[data-x]').onclick=()=>dlg.close();dlg.querySelector('[data-back]').onclick=()=>openManager();
+  dlg.querySelector('[data-copy]').onclick=async e=>{try{await navigator.clipboard.writeText(url);e.target.textContent='Kopiert ✓'}catch{prompt('Link kopieren:',url)}};
+  dlg.querySelector('[data-beamer]').onclick=()=>beamer(t,g,qr);
+  dlg.querySelector('[data-subs]').onclick=()=>readSubs();
+  dlg.querySelector('[data-review]')?.addEventListener('click',()=>review());
+  if(!dlg.open)dlg.showModal()}
+ function beamer(t,g,qr){const o=document.createElement('div');o.className='vt-beamer';o.innerHTML='<div><h1>'+esc(t.title)+' · Gruppe '+esc(g)+'</h1><div class="vt-big">'+qr+'</div><p>Mit der Kamera scannen · Antippen zum Schließen</p></div>';o.onclick=()=>o.remove();dlg.append(o)}
+ async function readSubs(){const files=await pick('.json,application/json',true);if(!files.length)return;const t=state.test;let ok=0,other=0,bad=0;
+  for(const f of files){try{const j=JSON.parse(await f.text());if(j.type!=='classroom-vokabeltest-abgabe'){bad++;continue}if(j.i!==t.id){other++;continue}const key=(j.g||'')+'|'+String(j.name||'').trim().toLowerCase();t.subs??={};const old=t.subs[key];if(old&&old.ts>j.ts)continue;t.subs[key]={g:j.g,name:String(j.name||'').trim(),ts:j.ts,a:j.a||[],student:old?.student||'',over:old?.over||{}};ok++}catch{bad++}}
+  saveTest(t);if(other||bad)alert(ok+' Abgaben eingelesen.'+(other?'\n'+other+' Datei(en) gehören zu einem anderen Test.':'')+(bad?'\n'+bad+' Datei(en) konnten nicht gelesen werden.':''));review()}
+ function roster(){try{return (taskRosterForHalfYear(currentSubject,currentHalfYearId)||[]).map(s=>String(s.name||'').trim()).filter(Boolean)}catch{return []}}
+ const nameTokens=s=>fold(String(s||'').toLowerCase()).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z\s-]/g,' ').split(/[\s,]+/).filter(Boolean);
+ function matchName(typed,names){const tt=nameTokens(typed);if(!tt.length)return '';const scored=names.map(n=>{const nt=nameTokens(n.replace(',',' '));const hit=tt.filter(x=>nt.includes(x)).length;return {n,hit,all:hit===tt.length&&hit>=Math.min(2,nt.length)}});const full=scored.filter(s=>s.all);if(full.length===1)return full[0].n;const best=Math.max(0,...scored.map(s=>s.hit));const top=scored.filter(s=>s.hit===best&&best>0);return top.length===1?top[0].n:''}
+ function review(){const t=state.test,names=roster(),subs=Object.entries(t.subs||{});
+  for(const [,s] of subs)if(!s.student)s.student=matchName(s.name,names);
+  const totals={};for(const g of Object.keys(t.groups))totals[g]=t.groups[g].reduce((a,it)=>a+maxOf(it),0);
+  const val=(r,s,key)=>s.over?.[key]??(r.q?r.s:r.p);
+  const rows=subs.map(([k,s])=>{const res=gradeAll(t,s);let pts=0,qs=[];res.forEach((r,i)=>{for(const part of ['lemma','meaning']){const x=r[part];if(!x.max)continue;const key=i+':'+part;pts+=val(x,s,key);if(x.q&&s.over?.[key]==null)qs.push({i,part,x,key})}});return {k,s,res,pts,qs}});
+  const open=rows.flatMap(r=>r.qs.map(q=>({...q,row:r})));const auto=rows.reduce((a,r)=>a+r.res.reduce((b,x)=>b+(x.lemma.max&&!x.lemma.q?1:0)+(!x.meaning.q?1:0),0),0);
+  const assigned=new Set(rows.map(r=>r.s.student).filter(Boolean)),missing=names.filter(n=>!assigned.has(n));
+  const signOf=(pts,g)=>{const tot=totals[g]||1,r=pts/tot*100;for(const k of ['1','2','3','4','5'])if(r+1e-9>=RATIOS[k])return SIGNS[k];return SIGNS[6]};
+  const optList=sel=>'<option value="">— zuordnen —</option>'+names.map(n=>'<option'+(n===sel?' selected':'')+'>'+esc(n)+'</option>').join('');
+  const dup=[...assigned].filter(n=>rows.filter(r=>r.s.student===n).length>1);
+  dlg.innerHTML='<form method="dialog" class="vt-wide"><h2>'+esc(t.title)+' – Abgaben</h2><div class="vt-sub">'+rows.length+' Abgaben ('+Object.keys(t.groups).map(g=>'Gruppe '+g+': '+rows.filter(r=>r.s.g===g).length).join(' · ')+') · '+Object.keys(totals).map(g=>g+': '+totals[g]+' P').join(', ')+' · Grenzen 90 / 80 / 70 / 60 / 50 %</div>'+
+   '<div class="vt-sum"><div><b>'+rows.length+'</b>Abgaben</div><div><b class="vt-green">'+auto+'</b>Antworten automatisch bewertet</div><div class="vt-amber"><b>'+open.length+'</b>fragliche Antworten</div><div><b>'+missing.length+'</b>ohne Abgabe'+(missing.length?': '+esc(missing.slice(0,4).map(n=>n.split(',').reverse().join(' ').trim()).join(', '))+(missing.length>4?' …':''):'')+'</div></div>'+
+   '<div class="vt-grid2"><div>'+(open.length?'<h3>Bitte kurz prüfen</h3>'+open.slice(0,30).map((q,n)=>{const it=t.groups[q.row.s.g][q.i],a=q.row.res[q.i].ans;return '<div class="vt-q"><small>'+esc(q.row.s.name)+' · '+esc(q.row.s.g)+(q.i+1)+' <b>'+esc(it.form)+'</b> · '+(q.part==='lemma'?'Grundform':'Bedeutung')+'</small><div class="vt-ans">„'+esc(q.part==='lemma'?a.l:a.m)+'“'+(q.part==='lemma'&&it.kind==='n'?' · Genus '+esc(q.x.ge||'—'):'')+'</div><div class="vt-sub">'+esc(q.x.note||'')+' – Lösung: '+esc(q.part==='lemma'?lemmaText(it):it.meanings.join('; '))+'</div><div class="vt-row"><button type="button" class="vt-btn vt-ok" data-q="'+n+'" data-v="1">✓ richtig</button><button type="button" class="vt-btn vt-half" data-q="'+n+'" data-v="0.5">½ halb</button><button type="button" class="vt-btn vt-bad" data-q="'+n+'" data-v="0">✗ falsch</button></div></div>'}).join('')+(open.length>30?'<div class="vt-sub">+ '+(open.length-30)+' weitere</div>':''):'<div class="vt-card vt-done">✓ Keine fraglichen Antworten.</div>')+'</div>'+
+   '<div class="vt-tab"><table><thead><tr><th>Abgabe</th><th>Schüler:in</th><th>Gr.</th><th>Punkte</th><th>Erg.</th></tr></thead><tbody>'+rows.sort((a,b)=>(a.s.student||'~').localeCompare(b.s.student||'~','de')).map(r=>'<tr class="'+(r.s.student?'':'vt-open')+'"><td>'+esc(r.s.name||'—')+'</td><td><select data-st="'+esc(r.k)+'">'+optList(r.s.student)+'</select></td><td class="vt-c">'+esc(r.s.g)+'</td><td class="vt-c">'+String(r.pts).replace('.',',')+(r.qs.length?' <span class="vt-tag">?</span>':'')+'</td><td class="vt-c"><b>'+signOf(r.pts,r.s.g)+'</b></td></tr>').join('')+'</tbody></table>'+(dup.length?'<p class="vt-warn">Doppelt zugeordnet: '+esc(dup.join(', '))+'</p>':'')+'</div></div>'+
+   '<div class="dialog-actions"><button type="button" data-more>Weitere Abgaben einlesen …</button><button type="button" data-backt>Zurück</button><button type="submit" class="primary" data-make>'+(t.done?'Test erneut anlegen':'Test anlegen')+'</button></div></form>';
+  dlg.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const q=open[+b.dataset.q];q.row.s.over??={};q.row.s.over[q.key]=Number(b.dataset.v);saveTest(t);review()});
+  dlg.querySelectorAll('[data-st]').forEach(sel=>sel.onchange=()=>{t.subs[sel.dataset.st].student=sel.value;saveTest(t);review()});
+  dlg.querySelector('[data-more]').onclick=()=>readSubs();dlg.querySelector('[data-backt]').onclick=()=>showTest();
+  dlg.querySelector('form').onsubmit=e=>{e.preventDefault();if(dup.length){alert('Bitte doppelte Zuordnungen auflösen.');return}if(open.length&&!confirm(open.length+' fragliche Antworten sind noch offen. Mit dem Vorschlag (gelb) übernehmen?'))return;
+   if(t.done&&!confirm('Für diesen iPad-Test wurde schon ein Test angelegt. Noch einen anlegen?'))return;
+   const scores=new Map();rows.forEach(r=>{if(r.s.student)scores.set(r.s.student,{p:r.pts,g:r.s.g})});const ab=Object.keys(t.groups).length>1;
+   const go=()=>window.classroomCreateRawTest({label:t.name,system:'participation',abGroups:ab,init(task,data){task.date=t.date||today();const c=task.testDetail;const tot=Math.max(...Object.values(totals));Object.assign(c,{total:tot,pass:50,halfPoints:true,useSubject:false,manual:true,manualRatios:{...RATIOS},tendencies:false,source:'ipad-vokabeltest'});
+     if(ab){c.variants={};for(const g of ['A','B'])c.variants[g]={total:totals[g]??tot,pass:50,halfPoints:true,tendencies:false,manual:true}}
+     for(const st of data.students||[]){const n=String(st.name||'').trim(),x=scores.get(n);if(!x)continue;st.rawScores??={};st.rawScores[task.id]=String(x.p);if(ab){st.testGroups??={};st.testGroups[task.id]=x.g==='B'?'B':'A'}}}});
+   /* Der Test entsteht im gerade gewählten Quartal der Klasse, für die der iPad-Test ausgegeben wurde */
+   if(t.classId!==currentClassId&&!confirm('Achtung: Der iPad-Test wurde für '+t.className+' ausgegeben, gerade ist eine andere Klasse gewählt. Trotzdem hier anlegen?'))return;
+   go();t.done=true;saveTest(t);dlg.close()};
+  if(!dlg.open)dlg.showModal()}
+ /* Eintrag im Fenster „Test erstellen“ */
+ const place=()=>{const d=document.querySelector('dialog.test-create-dialog');if(!d)return;let b=d.querySelector('.vt-open-btn');if(!b){b=document.createElement('button');b.type='button';b.className='nav-import-btn vt-open-btn';b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M9 7.5h6M9 11h6M9 14.5h3.5"/></svg><span>iPad-Vokabeltest (Testdatei laden, ausgeben, auswerten)</span>';b.onclick=()=>{d.close();openManager()};const after=d.querySelector('.nav-import-btn:not(.vt-open-btn)')||d.querySelector('form>p')||d.querySelector('form>h2');after.after(b)}
+  const show=isLatin();if(b.hidden===show)b.hidden=!show};
+ document.addEventListener('click',()=>setTimeout(place,0),true);setTimeout(place,600);
+ window.classroomVocabTest={open:openManager,normalizeTest,studentUrl};
+ const st=document.createElement('style');st.textContent=`
+.vt-dialog{width:min(1180px,calc(100vw - 24px));max-height:calc(100dvh - 24px);box-sizing:border-box}
+.vt-dialog form{display:flex;flex-direction:column;gap:14px}.vt-dialog h2{margin:0}.vt-dialog h3{margin:0 0 10px}.vt-sub{color:#66758a;font-size:.88rem}
+.vt-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.vt-seg{display:inline-flex;padding:3px;gap:3px;background:#e7edf6;border-radius:12px}.vt-seg button{border:0;background:transparent;padding:8px 16px;border-radius:9px;font:inherit;font-size:.9rem;font-weight:600;color:#66758a;cursor:pointer}.vt-seg button.on{background:#fff;color:#2f5f9b;box-shadow:0 1px 3px #233d6022}
+.vt-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px}.vt-grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:20px;align-items:start}
+@media(max-width:900px){.vt-grid,.vt-grid2{grid-template-columns:1fr}}
+.vt-tab{border:1px solid #dce3ef;border-radius:14px;overflow:auto}.vt-tab table{width:100%;border-collapse:collapse;font-size:.92rem}.vt-tab th{position:sticky;top:0;background:#f6f8fc;text-align:left;font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:#66758a;padding:9px 10px;border-bottom:1px solid #dce3ef}.vt-tab td{padding:6px 10px;border-bottom:1px solid #eef2f7}.vt-c{text-align:center;white-space:nowrap}
+.vt-in{width:100%;height:36px;box-sizing:border-box;border:1px solid transparent;border-radius:8px;padding:0 8px;font:inherit;background:transparent;color:#243247}.vt-in:hover{border-color:#e1e7f0}.vt-in:focus{outline:none;border-color:#8fb0dc;background:#fff}.vt-form{font-weight:700;color:#2f5f9b}
+.vt-tab select{height:34px;border:1px solid #d6dde8;border-radius:8px;font:inherit;width:100%;min-width:140px;box-sizing:border-box}.vt-tab td:first-child{white-space:nowrap}.vt-open td{background:#fff8ec}
+.vt-card{border:1px solid #dce3ef;border-radius:14px;padding:16px;margin-bottom:14px}.vt-qr{text-align:center}.vt-qrimg svg{width:260px;height:260px;display:block;margin:10px auto}
+.vt-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}.vt-q .vt-row{justify-content:flex-start}
+.vt-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 14px;border:1px solid #d5deea;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:.9rem;font-weight:600;cursor:pointer}.vt-pri{width:100%;background:#2f5f9b;border-color:#2f5f9b;color:#fff}
+.vt-dialog button.vt-ok:not(#_){background:#e8f6ee;border-color:#9fd3b4;color:#1f7a45}.vt-dialog button.vt-half:not(#_){background:#fff6e5;border-color:#efcf9c;color:#9a6212}.vt-dialog button.vt-bad:not(#_){background:#fdecec;border-color:#efb4b4;color:#b4232a}.vt-dialog button.vt-pri:not(#_){background:#2f5f9b;border-color:#2f5f9b;color:#fff}.vt-del{color:#b4232a;margin-left:6px}
+.vt-list{display:flex;flex-direction:column;gap:8px}.vt-li{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid #dce3ef;border-radius:12px;padding:10px 14px}
+.vt-sum{display:flex;gap:12px;flex-wrap:wrap}.vt-sum>div{flex:1 1 160px;padding:12px 14px;border-radius:14px;background:#f6f8fc;border:1px solid #dce3ef;font-size:.9rem}.vt-sum b{display:block;font-size:1.45rem}.vt-green{color:#1f7a45}.vt-amber{background:#fffaf0!important;border-color:#efcf9c!important}.vt-amber b{color:#9a6212}
+.vt-q{padding:12px 14px;border:1px solid #efcf9c;background:#fffaf0;border-radius:14px;margin-bottom:10px}.vt-ans{font-size:1.05rem;font-weight:700;margin:4px 0 2px}.vt-q .vt-btn{min-height:36px}
+.vt-tag{display:inline-block;padding:0 7px;border-radius:999px;background:#fff3e2;color:#9a6212;font-size:.75rem;font-weight:700}.vt-warn{color:#b4232a;font-size:.88rem;margin:8px}.vt-done{color:#1f7a45;font-weight:600}
+.vt-beamer{position:fixed;inset:0;z-index:20;background:#fff;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer}.vt-beamer h1{margin:0 0 10px;font-size:2rem}.vt-big svg{width:min(78vh,78vw);height:min(78vh,78vw)}.vt-beamer p{color:#66758a}`;
+ document.head.append(st);
+})();
+;
+
 /* ==== noten/page-print.js ==== */
 // Print the visible page directly, including its current compact display.
 (()=>{
