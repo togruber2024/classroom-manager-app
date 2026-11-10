@@ -2922,9 +2922,13 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
   if(box&&box!==p){const y=box.scrollTop;box.style.height='';box.classList.remove('fit-box');p.scrollTop=y}
   box=p;if(!root.classList.contains('fit-panel'))root.classList.add('fit-panel');if(!p.classList.contains('fit-box'))p.classList.add('fit-box');
   if(document.scrollingElement.scrollTop)document.scrollingElement.scrollTop=0;
-  const top=p.getBoundingClientRect().top,h=Math.max(260,Math.round(innerHeight-top-GAP));
+  const top=p.getBoundingClientRect().top,h=Math.max(260,Math.round(innerHeight-top-gap()));
   if(Math.abs((parseFloat(p.style.height)||0)-h)>1){p.style.height=h+'px';try{window.classroomSizeWraps?.()}catch{}}
  }
+ /* 10.17: Abstand unten = Abstand links/rechts. Unter dem Rahmen liegt evtl. schon der Home-Balken-Abstand der App (iPad) */
+ function gap(){const m=document.querySelector('main');const side=m?parseFloat(getComputedStyle(m).paddingLeft)||GAP:GAP;
+  if(root.classList.contains('fs-view'))return side;let below=0;try{const fr=frameElement,pd=parent.document;if(fr&&pd){below=Math.max(0,pd.documentElement.clientHeight-fr.getBoundingClientRect().bottom)}}catch{}
+  return Math.max(4,Math.round(side-below))}
  window.classroomFitBox=()=>box&&root.classList.contains('fit-panel')?box:null;
  let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{fit()}catch(e){console.warn(e)}})};
  addEventListener('resize',run);
@@ -2948,25 +2952,37 @@ html.fit-panel body[data-module=noten] .panel.fit-box .table-wrap:not(#_){oversc
 ;
 
 /* ==== noten/fullscreen-view.js ==== */
-/* 10.16: Knopf „Vollbild“ rechts neben dem Schraffur-Schalter (Mac/iPad).
+/* 10.16/10.17: Knopf „Vollbild“ (nur Symbol) rechts neben dem Schraffur-Schalter (Mac/iPad).
    Vollbild gilt für den ganzen Noten-Bereich (Titel, Schalter, Tabelle) – so übersteht es jedes Neuzeichnen. */
 (function(){
  const root=document.documentElement;
  const IN='<path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/>';
  const OUT='<path d="M9 4v4a1 1 0 0 1-1 1H4M20 9h-4a1 1 0 0 1-1-1V4M15 20v-4a1 1 0 0 1 1-1h4M4 15h4a1 1 0 0 1 1 1v4"/>';
  const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement||null;
- const can=()=>!!(document.fullscreenEnabled||document.webkitFullscreenEnabled)&&!!(root.requestFullscreen||root.webkitRequestFullscreen);
- const isOn=()=>!!fsEl();
+ const canReal=()=>!!(document.fullscreenEnabled||document.webkitFullscreenEnabled)&&!!(root.requestFullscreen||root.webkitRequestFullscreen);
+ const can=()=>canReal()||canPseudo();
+  /* 10.17: Wo der Browser kein echtes Vollbild für den Bereich erlaubt (z. B. iPad-App), legt sich der Noten-Bereich über die ganze App */
+ let pseudo=false;
+ const pdoc=()=>{try{return frameElement&&parent.document}catch{return null}};
+ const canPseudo=()=>!!pdoc();
+ function setPseudo(on){const d=pdoc();if(!d)return;pseudo=on;
+  if(!d.getElementById('noten-fs-style')){const st=d.createElement('style');st.id='noten-fs-style';st.textContent='body.noten-fs .workspace{position:fixed!important;inset:0!important;z-index:9800!important;background:#f6f8fc;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);box-sizing:border-box}body.noten-fs .workspace>iframe:not(#view-noten){visibility:hidden}';d.head.append(st)}
+  d.body.classList.toggle('noten-fs',on);changed()}
+ const isOn=()=>!!fsEl()||pseudo;
  function toggle(){
   try{
-   if(isOn()){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}
-   else{const r=(root.requestFullscreen||root.webkitRequestFullscreen).call(root);r?.catch?.(e=>console.warn('Vollbild',e))}
-  }catch(e){console.warn('Vollbild',e)}
+   if(pseudo){setPseudo(false);return}
+   if(fsEl()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);return}
+   if(!canReal()){setPseudo(true);return}
+   const r=(root.requestFullscreen||root.webkitRequestFullscreen).call(root);r?.catch?.(()=>setPseudo(true));
+   /* Safari ohne Promise: wenn nach kurzer Zeit kein Vollbild da ist, Ersatz nehmen */
+   if(!r||!r.then)setTimeout(()=>{if(!fsEl()&&!pseudo)setPseudo(true)},400);
+  }catch(e){setPseudo(true)}
  }
  const vis=e=>!!e&&e.getClientRects().length>0;
  function paint(b){const on=isOn(),k=on?'on':'off';if(b.dataset.fs===k)return;b.dataset.fs=k;
-  b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+(on?OUT:IN)+'</svg><span>'+(on?'Beenden':'Vollbild')+'</span>';
-  b.title=on?'Vollbild beenden (Esc)':'Tabelle samt Kopfleiste im Vollbild anzeigen';b.setAttribute('aria-pressed',on?'true':'false')}
+  b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+(on?OUT:IN)+'</svg>';
+  b.title=on?'Vollbild beenden (Esc)':'Vollbild: Tabelle samt Kopfleiste';b.setAttribute('aria-label',on?'Vollbild beenden':'Vollbild');b.setAttribute('aria-pressed',on?'true':'false')}
  function place(){
   const show=can()&&!root.classList.contains('ph-lite');
   for(const b of document.querySelectorAll('.fs-btn'))if(!show||!vis(b.parentElement))b.remove();
@@ -2989,18 +3005,52 @@ html.fit-panel body[data-module=noten] .panel.fit-box .table-wrap:not(#_){oversc
  let watched=null,moves=0;const boxObs=new MutationObserver(()=>{if(++moves<40)run()});setInterval(()=>{moves=0},2000);
  let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{place()}catch(e){console.warn(e)}})};
  if(typeof classroomOnDomChange==='function')classroomOnDomChange(run);else new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
- const changed=()=>{root.classList.toggle('fs-view',isOn());run();setTimeout(()=>{dispatchEvent(new Event('resize'))},60)};
+ function changed(){root.classList.toggle('fs-view',isOn());run();setTimeout(()=>{dispatchEvent(new Event('resize'))},60)}
+ addEventListener('keydown',e=>{if(e.key==='Escape'&&pseudo&&!document.querySelector('dialog[open]')){e.preventDefault();setPseudo(false)}});
  document.addEventListener('fullscreenchange',changed);document.addEventListener('webkitfullscreenchange',changed);
  addEventListener('resize',run);run();setTimeout(run,800);
  window.classroomFullscreen={toggle,isOn};
  const st=document.createElement('style');st.textContent=`
-.fs-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:40px;padding:0 15px;border:1px solid #d5deea;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:.86rem;font-weight:600;line-height:1;cursor:pointer;white-space:nowrap;flex:none}
+.fs-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border:1px solid #d5deea;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:.86rem;font-weight:600;line-height:1;cursor:pointer;white-space:nowrap;flex:none}
 .fs-btn:hover{background:#f3f7fc}.fs-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
 html.ph-lite .fs-btn{display:none!important}
 html.fs-view,html.fs-view body{background:#f6f8fc}
 html.fs-view body[data-module=noten] main{padding:16px 16px 0!important;max-width:none!important}
 @media print{.fs-btn{display:none!important}}`;
  document.head.append(st);
+})();
+;
+
+/* ==== noten/rubber-band.js ==== */
+/* 10.17: Gummiband am Mac (Trackpad/Maus). Safari/Chrome am Mac federn nur die ganze Seite nach,
+   nicht Bereiche, die in sich scrollen. Seit die weiße Fläche fest steht (10.15), wird das hier nachgebildet:
+   Am oberen/unteren Ende zieht der Inhalt ein Stück mit und springt danach weich zurück. iPad/iPhone machen das selbst. */
+(function(){
+ const fine=matchMedia('(hover:hover) and (pointer:fine)');
+ const root=document.documentElement,MAX=70;
+ let target=null,off=0,timer=0,animating=false;
+ const scrollY=el=>el.scrollHeight-el.clientHeight>1&&/(auto|scroll)/.test(getComputedStyle(el).overflowY);
+ function chain(start){const out=[];for(let e=start;e&&e!==document.body;e=e.parentElement){if(e.nodeType===1&&(e.matches('.table-wrap')||e.classList.contains('fit-box'))&&scrollY(e))out.push(e)}return out}
+ function apply(el,y){for(const c of el.children)c.style.transform=y?'translateY('+y.toFixed(1)+'px)':''}
+ function release(){if(!target)return;const el=target;animating=true;
+  for(const c of el.children){c.style.transition='transform .42s cubic-bezier(.25,.9,.3,1)'}
+  apply(el,0);off=0;setTimeout(()=>{for(const c of el.children)c.style.transition='';animating=false;if(target===el)target=null},450)}
+ addEventListener('wheel',e=>{
+  if(!fine.matches||root.classList.contains('ph-lite')||e.ctrlKey||Math.abs(e.deltaX)>Math.abs(e.deltaY)||!e.deltaY)return;
+  const list=chain(e.target);if(!list.length)return;
+  const down=e.deltaY>0;
+  /* scrollt irgendein Bereich in dieser Richtung noch? Dann normal scrollen lassen */
+  if(list.some(el=>down?el.scrollTop<el.scrollHeight-el.clientHeight-1:el.scrollTop>0)){if(target&&!animating)release();return}
+  const el=list[0];
+  if(target&&target!==el){apply(target,0);off=0}
+  target=el;
+  /* Widerstand: je weiter gezogen, desto zäher */
+  const step=-e.deltaY*0.35*(1-Math.min(Math.abs(off)/MAX,0.95));
+  off=Math.max(-MAX,Math.min(MAX,off+step));
+  if(animating){for(const c of el.children)c.style.transition='';animating=false}
+  apply(el,off);
+  clearTimeout(timer);timer=setTimeout(release,110);
+ },{passive:true});
 })();
 ;
 

@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.16
+Stand: 10.11.2026 · Version 10.17
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1295,3 +1295,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.14: Würfel – lange drücken öffnet die Einstellungen erst beim Loslassen, kein Markieren mehr
 10.15: Mac/iPad – weiße Hauptfläche passt genau ins Fenster, kein äußeres Scrollen mehr
 10.16: Vollbild-Knopf (Mac/iPad), Gummiband-Effekt beim Scrollen der Tabellen
+10.17: Vollbild als Symbol und am iPad (Ersatz-Vollbild), Gummiband am Mac, Abstand unten = Seitenabstand
