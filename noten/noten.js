@@ -3399,6 +3399,23 @@ html.fs-view .fs-hide{display:none!important}
   /* Wiederholung an zweiter Stelle anzeigen */
   out.sections.sort((a,b)=>(a.name.startsWith('Lektion')?0:a.name==='Wiederholung'?1:2)-(b.name.startsWith('Lektion')?0:b.name==='Wiederholung'?1:2));
   return out}
+ /* 10.27: Eigene Wortlisten mit zwei Spalten („rex, regis m. | König“, „fugere (fugio, fugi) | fliehen“), z. B. WH-Vokabular des Kollegiums.
+    Text rechts daneben (eingescannte Übungen o. Ä.) wird ignoriert. */
+ function parseTwoColumn(pages,fileName){const out={lesson:'',title:'',sections:[]};const entries=[];let last=null;
+  for(const items of pages){const rows=rowsOf(items);
+   const pairs=rows.filter(r=>r.items.length>=2&&r.items[1].x-r.items[0].x>120);const left=mode(pairs.map(r=>r.items[0].x));if(left==null)continue;
+   const c2=mode(pairs.filter(r=>Math.abs(r.items[0].x-left)<6).map(r=>r.items.find(i=>i.x>left+120)?.x).filter(x=>x!=null));if(c2==null)continue;
+   for(const r of rows){const t=joinText(r.items);const lm=/Lektion\s+(\d+)/.exec(t);if(lm&&!out.lesson)out.lesson=lm[1];
+    if(Math.abs(r.items[0].x-left)>6)continue;
+    const L=r.items.filter(i=>i.x<c2-6),R=[];let end=null;for(const i of r.items){if(i.x<c2-6)continue;if(end==null&&Math.abs(i.x-c2)<12||end!=null&&i.x<=end+14){R.push(i);end=i.x+(i.w||i.s.length*5)}}
+    const lt=joinText(L),rt=joinText(R);if(!lt||!rt)continue;
+    if(/^(\.\.\.|…)/.test(lt)&&last){last.meaning+='; '+rt;continue}
+    let lemma,info;const m=/^([^\s,(]+)\s*(?:,\s*)?(.*)$/.exec(lt);lemma=m[1];info=m[2].replace(/\(i\)/g,'i').replace(/[()]/g,' ').replace(/\s+/g,' ').trim();
+    last={lemma,info,meaning:rt};entries.push(last)}}
+  if(!out.lesson){const fm=/L(?:ektion)?[\s_-]*(\d{1,2})\b/i.exec(fileName||'');if(fm)out.lesson=fm[1]}
+  if(entries.length)out.sections.push({name:'Wortliste'+(out.lesson?' zu Lektion '+out.lesson:''),entries});return out}
+ function parseAny(pages,fileName){const a=parseVocab(pages),b=parseTwoColumn(pages,fileName);const n=r=>r.sections.reduce((x,s)=>x+s.entries.length,0);const r=n(b)>n(a)?b:a;
+  /* Längenzeichen: für das ganze Dokument entscheiden, nicht je Wort */const all=r.sections.flatMap(s=>s.entries);const has=all.some(e=>MAC.test(e.lemma+e.info));all.forEach(e=>e.noMac=!has);return r}
  /* ---------- Formenlehre ---------- */
  const CASES=['Nom.','Gen.','Dat.','Akk.','Abl.'];
  const P=(sg,pl)=>({sg,pl});
@@ -3414,7 +3431,7 @@ html.fs-view .fs-hide{display:none!important}
  function nounParadigm(lemma,info){
   /* info: „flūminis n.“, „castrōrum n. Pl.“, „obsidis m., f.“, „nūntiī m.“ */
   const genPlGiven=(/Gen\.\s*Pl\.\s*:?\s*([^\s,;:)]+)/.exec(info)||[])[1]||'';info=info.replace(/\(?\s*Gen\.\s*Pl\.\s*:?\s*[^\s,;:)]+\s*\)?/,' ');
-  const genus=[...new Set((info.match(/\b([mfn])\.(?!\w)/g)||[]).map(x=>x[0]))];const pluralOnly=/\b[mfn]\.\s*Pl\./.test(info);
+  const genus=[...new Set((info.match(/\b([mfn])\.(?!\w)/g)||[]).map(x=>x[0]))];const pluralOnly=/\b[mfn]\.\s*Pl\./.test(info)||/(es|ēs|ae|a|i|ī)$/.test(lemma)&&/^[^\s,]+(um|rum)\b/.test(info.trim());
   const gen=(info.split(/[\s,]+/).find(w=>/^\p{L}{2,}$/u.test(w)&&!/^(Pl|m|f|n)$/.test(w))||'').trim();
   if(!gen||!genus.length)return null;
   const g=plain(gen),L=lemma,lp=plain(L);let decl,stem,forms={},unsure='';
@@ -3443,9 +3460,9 @@ html.fs-view .fs-hide{display:none!important}
  function adjParadigm(lemma,info){
   const L=lemma;let m=/^-\s*a\s*,\s*-\s*um\b/.exec(info)||/^-ae,\s*-a\s+Pl\./.exec(info);
   const forms={};const add=(g,num,list)=>list.forEach((f,i)=>{const k=CASES[i]+' '+num+' '+g;forms[k]=f});
-  if(/^-ae,\s*-a\s+Pl\./.test(info)){/* nōnnūllī */const st=L.replace(/ī$/,'');add('m','Pl.',END.om.pl.map(e=>st+e));add('f','Pl.',END.a.pl.map(e=>st+e));add('n','Pl.',END.on.pl.map(e=>st+e));return {kind:'a',lemma:L,forms,nomAlso:[st+'ae',st+'a'],pluralOnly:true}}
+  if(/^-ae,\s*-a\s+Pl\./.test(info)||/^-ae,\s*-a\s*$/.test(info)&&/i$|ī$/.test(L)){/* nōnnūllī */const st=L.replace(/[īi]$/,'');add('m','Pl.',END.om.pl.map(e=>st+e));add('f','Pl.',END.a.pl.map(e=>st+e));add('n','Pl.',END.on.pl.map(e=>st+e));return {kind:'a',lemma:L,forms,nomAlso:[st+'ae',st+'a'],pluralOnly:true}}
   const ao=/^-?\s*(\w*?)a\s*,\s*-?\s*(\w*?)um\b/u.exec(info);
-  if(ao&&/us$|er$/.test(plain(L))){let st;if(/us$/.test(plain(L)))st=L.slice(0,-2);else{const fem=(info.match(/^-?\s*([^\s,]+)/u)||[])[1]||'';st=fem&&!fem.startsWith('a')?L.slice(0,-2)+fem.replace(/a$/,'').replace(/^-/,''):L;if(/^-?era/.test(info))st=L;if(/^-?ra/.test(info))st=L.slice(0,-2)+'r'}
+  if(ao&&/us$|er$/.test(plain(L))){let st;if(/us$/.test(plain(L)))st=L.slice(0,-2);else{/* -er: „līber, -era, -erum“ behält das e; „noster, -tra“ / „pulcher, -chra“ verlieren es */st=/^-?\s*era\b/.test(info)?L:L.slice(0,-2)+'r'}
    add('m','Sg.',[L,...END.om.sg.slice(1).map(e=>st+e)]);add('m','Pl.',END.om.pl.map(e=>st+e));add('f','Sg.',END.a.sg.map(e=>st+e));add('f','Pl.',END.a.pl.map(e=>st+e));add('n','Sg.',END.on.sg.map(e=>st+e));add('n','Pl.',END.on.pl.map(e=>st+e));
    return {kind:'a',lemma:L,forms,nomAlso:[st+'a',st+'um'],adjAO:true}}
   /* 3. Deklination: „-e“ (fortis), „ācris, ācre“, „fēlīcis“ (Gen.) */
@@ -3525,7 +3542,7 @@ html.fs-view .fs-hide{display:none!important}
    /* regelmäßige Stammformen ergänzen (a-/i-Konjugation), wenn das Buch sie nicht mehr abdruckt */
    if(!dep&&!perf&&stems.length<=1){if(conj==='a'){perf=st+'āvī';ppp=ppp||st+'ātum'}else if(conj==='i'){perf=st+'īvī';ppp=ppp||st+'ītum'}}
   }
-  if(perf&&!(irr&&irr.t.perfList)){const pf=perf.replace(/ī$/,'');put(W('ī istī it imus istis ērunt').map(e=>pf+e),'perf','a','i');put(W('eram erās erat erāmus erātis erant').map(e=>pf+e),'plqpf','a','i');put(W('erim eris erit erimus eritis erint').map(e=>pf+e),'perf','a','k');put(W('issem issēs isset issēmus issētis issent').map(e=>pf+e),'plqpf','a','k')}
+  if(perf&&!(irr&&irr.t.perfList)){const pf=perf.replace(/[īi]$/,'');put(W('ī istī it imus istis ērunt').map(e=>pf+e),'perf','a','i');put(W('eram erās erat erāmus erātis erant').map(e=>pf+e),'plqpf','a','i');put(W('erim eris erit erimus eritis erint').map(e=>pf+e),'perf','a','k');put(W('issem issēs isset issēmus issētis issent').map(e=>pf+e),'plqpf','a','k')}
   else if(irr&&!perf&&irr.t.perf){const pf=irr.t.perf;perf=pf+'ī';put(W('ī istī it imus istis ērunt').map(e=>pf+e),'perf','a','i');put(W('eram erās erat erāmus erātis erant').map(e=>pf+e),'plqpf','a','i');put(W('erim eris erit erimus eritis erint').map(e=>pf+e),'perf','a','k');put(W('issem issēs isset issēmus issētis issent').map(e=>pf+e),'plqpf','a','k')}
   if(irr&&irr.key==='eō'){const pre=irr.pre;put(W('ierim ieris ierit ierimus ieritis ierint').map(e=>pre+e),'perf','a','k');put(W('īssem īssēs īsset īssēmus īssētis īssent').map(e=>pre+e),'plqpf','a','k')}
   /* Perfekt/Plusquamperfekt Passiv (bei Deponentien: aktive Bedeutung) aus PPP + esse */
@@ -3544,13 +3561,24 @@ html.fs-view .fs-hide{display:none!important}
   const intrans=!dep&&(!ppp||(irr&&!['ferō','dō'].includes(irr.key)));
   return {kind:'v',lemma:L,sg,forms,meta,ppp,pppForms,ppaForms,also:[perf,ppp].filter(Boolean),dep,semi,intrans,conj,irr:irr?.key||'',unsure}}
  const INDECL=/^(Konj|Subj|Adv|Präp|Interj|Partikel|Fragepartikel|Negation|Zahlw|indekl)/i;
- function analyze(e){const lemma=NFC(e.lemma).replace(/\s+/g,' ').trim(),info=NFC(e.info).trim();
+ const MAC=/[āēīōūȳĀĒĪŌŪ]/;
+ const stripMac=x=>typeof x==='string'?x.normalize('NFD').replace(/̄/g,'').normalize('NFC'):x;
+ function stripLex(l){/* Liste ohne Längenzeichen → auch die gebildeten Formen ohne */const m=o=>o&&Object.fromEntries(Object.entries(o).map(([k,v])=>[k,stripMac(v)]));
+  return {...l,forms:m(l.forms),pppForms:m(l.pppForms),ppaForms:m(l.ppaForms),also:(l.also||[]).map(stripMac),nomAlso:(l.nomAlso||[]).map(stripMac),ppp:stripMac(l.ppp),gen:stripMac(l.gen)}}
+ function expandInfo(lemma,info){/* „gaudium, -i n.“ → „gaudii n.“; „ira, -ae f.“ → „irae f.“; „parent(i)um“ → „parentium“ */
+  info=info.replace(/(\w)\(i\)(um)/g,'$1i$2');const m=/^-(ae|ī|i|ūs|us|eī|ei|is|ōrum|orum|ārum|arum)\b(.*)$/.exec(info);if(!m||!/[mfn]\./.test(info))return info;
+  const e=m[1],L=lemma;let st=L;if(/^(ae|ārum|arum)$/.test(e))st=L.replace(/(a|ae)$/,'');else if(/^(ī|i|ōrum|orum)$/.test(e))st=L.replace(/(us|um|ī|i|a)$/,'');else if(/^(ūs|us)$/.test(e))st=L.replace(/us$/,'');else if(/^(eī|ei)$/.test(e))st=L.replace(/ēs$|es$/,'');else if(e==='is')st=L.replace(/is$/,'');
+  return st+e+m[2]}
+ function analyze(e){const lemma=NFC(e.lemma).replace(/\s+/g,' ').trim();let info=NFC(e.info).trim();
+  if(e.noMac===true||e.noMac===undefined&&!MAC.test(lemma+info)){const r=analyze0(lemma,expandInfo(lemma,info),e);return r.kind==='?'||r.kind==='x'?r:stripLex(r)}
+  return analyze0(lemma,expandInfo(lemma,info),e)}
+ function analyze0(lemma,info,e){
   const base={lemma,info,meaning:NFC(e.meaning).replace(/\s+/g,' ').trim()};
-  if(!info||INDECL.test(info))return {...base,kind:'x'};
+  if(!info||INDECL.test(info)||/^(pro\s+)?\+\s*(Akk|Abl|Dat|Gen)\.?$/.test(info)||/\((Sg|Pl)\.\)|\/\s*\w+\s*\(Pl\.\)|^(Sg|Pl)\.\s*\//.test(info))return {...base,kind:'x'};
   if(/Pron/.test(info)){const p=pronParadigm(lemma.split(/[\s,]/)[0]);if(p)return {...base,...p};
    /* schon gebeugte Pronomen wie „quem?“ (Interrog.-Pron. Akk.): nur die Bedeutung abfragen */return {...base,kind:'x'}}
   const pr=pronParadigm(lemma);if(pr&&!/[mfn]\./.test(info))return {...base,...pr};
-  if(/^[^\s,]+(ō|or|m)\b/u.test(info)&&/(re|rī|ī|sse|lle)$/.test(plain(lemma).replace(/i$/,'ī'))||/^[^\s,]+(ō|or)\s*(,|$)/u.test(info)){const v=verbParadigm(lemma,info);if(v)return {...base,...v}}
+  if(/^[^\s,]+(ō|o|or|m)\b/u.test(info)&&/(re|rī|ī|sse|lle)$/.test(plain(lemma).replace(/i$/,'ī'))||/^[^\s,]+(ō|or)\s*(,|$)/u.test(info)){const v=verbParadigm(lemma,info);if(v)return {...base,...v}}
   if(/\b[mfn]\.(?!\w)/.test(info)){const n=nounParadigm(lemma,info);if(n)return {...base,...n}}
   const a=adjParadigm(lemma,info);if(a)return {...base,...a};
   const v=verbParadigm(lemma,info);if(v)return {...base,...v};
@@ -3588,7 +3616,7 @@ html.fs-view .fs-hide{display:none!important}
    /* im gemischten Test auch Partizipien, wenn bekannt und gewählt */
    const extra=[];if(o.focus!=='verbs'){if(o.mixPpp&&o.ppp)for(const k of Object.keys(lex.pppForms))if(nominalOk(k,o)&&lex.pppForms[k]!==lex.ppp)extra.push(k);if(o.mixPpa&&o.ppa)for(const k of Object.keys(lex.ppaForms))if(nominalOk(k,o))extra.push(k)}
    return [{...lex.forms,...lex.pppForms,...lex.ppaForms},[...keys,...extra.slice(0,Math.ceil(keys.length/6))]]}
-  if(lex.kind==='n')return [lex.forms,Object.keys(lex.forms).filter(k=>nominalOk(k,o)&&lex.forms[k]!==lex.lemma)];
+  if(lex.kind==='n')return [lex.forms,Object.keys(lex.forms).filter(k=>nominalOk(k,o)&&plain(lex.forms[k])!==plain(lex.lemma))];
   if(lex.kind==='a')return [lex.forms,Object.keys(lex.forms).filter(k=>nominalOk(k,o)&&lex.forms[k]!==lex.lemma&&!(lex.nomAlso||[]).includes(lex.forms[k]))];
   return [{},[]]}
  function chooseForm(lex,o,taken){const [src,keys]=candidates(lex,o);if(!keys.length)return null;
@@ -3625,7 +3653,7 @@ html.fs-view .fs-hide{display:none!important}
   /* keine neue Vokabel mehr: dieselbe Vokabel in anderer Form */
   if(old.lex&&old.kind!=='x'){taken.forms.add(plain(old.form));const it=toItem(old.lex,o,taken);if(it&&it.form!==old.form){groups[g][idx]=it;return true}}
   return false}
- root.classroomVocabPdf={pdfItems,parseVocab,analyze,draw,redrawOne,shortLabel,plain,learned,PONTES};
+ root.classroomVocabPdf={pdfItems,parseVocab,parseTwoColumn,parseAny,analyze,draw,redrawOne,shortLabel,plain,learned,PONTES};
 })(typeof window!=='undefined'?window:globalThis);
 ;
 
@@ -3765,8 +3793,8 @@ html.fs-view .fs-hide{display:none!important}
  let pdfState=null;
  async function fromPdf(){const [f]=await pick('application/pdf,.pdf');if(!f)return;
   dlg.innerHTML='<form method="dialog"><h2>Vokabel-PDF wird gelesen …</h2><p class="vt-sub">'+esc(f.name)+'</p></form>';if(!dlg.open)dlg.showModal();
-  try{const V=window.classroomVocabPdf,pages=await V.pdfItems(await f.arrayBuffer()),info=V.parseVocab(pages);
-   if(!info.sections.length)throw new Error('In dieser PDF wurde keine Vokabeltabelle gefunden.');
+  try{const V=window.classroomVocabPdf,pages=await V.pdfItems(await f.arrayBuffer()),info=V.parseAny(pages,f.name);
+   if(!info.sections.length)throw new Error('In dieser PDF wurde keine Vokabelliste gefunden.');
    const secs=info.sections.map((sec,i)=>({name:sec.name,on:i===0,lex:sec.entries.map(V.analyze)}));
    const ln=V.learned(info.lesson);pdfState={file:f.name,info,pages:pages.length,secs,name:'L'+(info.lesson||'')+' (Vok.)',count:10,groups:'AB',focus:'mixed',date:today(),draw:null,g:'A',learn:ln,ov:{tenses:new Set(ln.tenses),passive:ln.passive,passPerf:ln.passPerf,konj:ln.konj,ppp:ln.ppp,ppa:ln.ppa}};pdfSetup()}
   catch(e){console.error(e);dlg.close();alert('Vokabel-PDF: '+(e.message||e))}}
