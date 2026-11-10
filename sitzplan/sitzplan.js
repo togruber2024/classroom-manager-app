@@ -3177,7 +3177,7 @@ document.addEventListener('keydown',event=>{
   document.querySelectorAll('[data-hatching-toggle] input').forEach(input=>input.checked=enabled);
   // Alle Anzeige-Schalter einer Seite stehen in der oberen Zeile vor „Schraffuren“: 1. Quartal, Zeichen/Noten, Tendenzen.
   for(const title of document.querySelectorAll('.section-title')){const hatch=title.querySelector('[data-hatching-toggle]');if(!hatch)continue;
-   const wanted=['.previous-quarter-toggle','.task-participation-display','.task-tendency-toggle'].map(s=>title.querySelector(s)).filter(Boolean);
+   const wanted=['.previous-quarter-toggle','.task-participation-display']/* 10.51: „Tendenzen“ (Eingabe-Einstellung) bleibt unten bei den Extras */.map(s=>title.querySelector(s)).filter(Boolean);
    /* Umschalter-Segmente (seg-toggle) sitzen direkt bei ihrem Schalter und zählen hier nicht mit – sonst schieben sich die Skripte gegenseitig endlos hin und her. */let ok=true,node=hatch;for(let i=wanted.length-1;i>=0;i--){node=node.previousElementSibling;while(node&&node.matches('.seg-toggle,.hatch-seg'))node=node.previousElementSibling;if(node!==wanted[i]){ok=false;break}}
    if(!ok)for(const el of wanted)hatch.before(el)}
   // Schalter auf Seiten mit Noten immer zeigen; ohne Schraffur-Werte ausgegraut (8.45).
