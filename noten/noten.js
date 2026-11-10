@@ -5044,7 +5044,7 @@ html.fs-view .fs-hide{display:none!important}
    const heading=c.root.querySelector('.section-title')||c.root;
    let button=c.root.querySelector('[data-previous-quarter-button]');
    if(!button){button=document.createElement('label');button.className='toggle previous-quarter-toggle';button.dataset.previousQuarterButton=c.key;button.title='Eintragungen aus dem 1. Quartal zum Vergleich ein- oder ausblenden. Die aktuellen Berechnungen bleiben unverändert.';
-    const input=document.createElement('input');input.type='checkbox';input.setAttribute('role','switch');const caption=document.createElement('span');caption.textContent='1. Quartal';button.append(input,caption);
+    const input=document.createElement('input');input.type='checkbox';input.setAttribute('role','switch');const caption=document.createElement('span');caption.textContent='1. Quartal';caption.dataset.q='Q1';button.append(input,caption);input.setAttribute('aria-label','1. Quartal ein- oder ausblenden');
     placeButton(c,button);
     input.addEventListener('change',()=>{const open=input.checked;localStorage.setItem(c.key,String(open));show(c,button,open)});
     show(c,button,localStorage.getItem(c.key)==='true');
@@ -5230,7 +5230,7 @@ html.fs-view .fs-hide{display:none!important}
    const heading=c.root.querySelector('.section-title')||c.root;
    let button=c.root.querySelector('[data-next-quarter-button]');
    if(!button){button=document.createElement('label');button.className='toggle previous-quarter-toggle';button.dataset.nextQuarterButton=c.key;button.title='Eintragungen aus dem 2. Quartal rechts ein- oder ausblenden. Die Berechnungen des 1. Quartals bleiben unverändert.';
-    const input=document.createElement('input');input.type='checkbox';input.setAttribute('role','switch');const caption=document.createElement('span');caption.textContent='2. Quartal';button.append(input,caption);
+    const input=document.createElement('input');input.type='checkbox';input.setAttribute('role','switch');const caption=document.createElement('span');caption.textContent='2. Quartal';caption.dataset.q='Q2';button.append(input,caption);input.setAttribute('aria-label','2. Quartal ein- oder ausblenden');
     placeButton(c,button);
     input.addEventListener('change',()=>{const open=input.checked;localStorage.setItem(c.key,String(open));show(c,button,open)});
     show(c,button,localStorage.getItem(c.key)==='true');
@@ -6943,15 +6943,24 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
 
  /* ---------- Alle Notenspiegel der Klasse ---------- */
  function openList(){const n=N();if(!n||document.querySelector('dialog.nsv-sheet[open]'))return;const {exams,tests}=ownItems();const d=sheet('nsv-list-sheet');
-  function render(){const one=it=>{const mx=Math.max(1e-9,...[...it.counts.values()].map(c=>n.getPct()?(it.n?c/it.n:0):c));return n.card(it,it,mx).replace('nsv-card ref','nsv-card').replace(' · Bezug','')};
+  function render(){const one=it=>{const mx=Math.max(1e-9,...[...it.counts.values()].map(c=>n.getPct()?(it.n?c/it.n:0):c));return n.card(it,it,mx).replace('nsv-card ref','nsv-card').replace(' · Bezug','').replace('<div class="nsv-card">','<div class="nsv-card nsv-go" role="link" tabindex="0" data-go="'+n.esc(it.id)+'" title="Zur '+(it.taskId?'Test':'Arbeit')+'-Seite"><span class="nsv-goarrow" aria-hidden="true">'+GO+'</span>')};
    const sec=(t,xs)=>xs.length?`<div class="nsv-sec"><span>${t}</span><span>${xs.length}</span></div>${xs.map(one).join('')}`:'';
    d.innerHTML=`<div class="nsv-shead"><h2>Notenspiegel · ${n.esc(className())}</h2><button type="button" class="nsv-sbtn" data-cmp>Vergleichen</button><button type="button" class="nsv-x" data-x aria-label="Schließen">✕</button></div>
    <div class="nsv-sbody"><div class="nsv-center"><div class="mean-seg nsv-seg" role="radiogroup" aria-label="Darstellung"><button type="button" role="radio" data-m="n" aria-checked="${!n.getPct()}">Anzahl</button><button type="button" role="radio" data-m="p" aria-checked="${n.getPct()}">Prozent</button></div></div>
    ${sec(examWord(),exams)}${sec('Tests',tests)}${!exams.length&&!tests.length?`<p class="nsv-empty">Für ${n.esc(className())} gibt es noch keine Ergebnisse von ${examWord()} oder Tests.</p>`:''}</div>`;
    d.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{n.setPct(b.dataset.m==='p');const t=d.querySelector('.nsv-sbody').scrollTop;render();d.querySelector('.nsv-sbody').scrollTop=t});
-   d.querySelector('[data-x]').onclick=()=>d.close();d.querySelector('[data-cmp]').onclick=()=>{d.close();openPick()}}
+   d.querySelector('[data-x]').onclick=()=>d.close();d.querySelector('[data-cmp]').onclick=()=>{d.close();openPick()};
+   const items=new Map([...exams,...tests].map(x=>[x.id,x]));d.querySelectorAll('[data-go]').forEach(c=>{const go=()=>{const it=items.get(c.dataset.go);if(it){d.close();goTo(it)}};c.onclick=go;c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}}})}
   render();d.showModal()}
 
+ /* 10.44: Vom Notenspiegel direkt zur Arbeit bzw. zum Test (auch aus der Noten-Schnellansicht im Unterrichts-Manager) */
+ const GO='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 16 16 8M9.5 8H16v6.5"/></svg>';
+ function goTo(it){try{if(parent!==window&&typeof parent.selectView==='function')parent.selectView('noten')}catch{}
+  setTimeout(()=>{try{const groups=subjectExamGroups(currentSubject)||[],g=groups.find(x=>(x.pages||[]).includes(it.pageKey));
+   if(g){if(g.halfYearId&&g.halfYearId!==currentHalfYearId)currentHalfYearId=g.halfYearId;if(g.type==='tests'){const q=g.pages.indexOf(it.pageKey);const h=(classesBySubject[currentSubject]||[]).find(c=>c.id===currentClassId);if(h&&q>=0){h.sharedQuarterSelection??={};h.sharedQuarterSelection[currentHalfYearId]=q;try{persistClasses()}catch{}}}
+    else if(typeof openExamGroup==='function'){try{openExamGroup(g)}catch{}}}
+   let key=it.pageKey;if(it.taskId){try{const t=customPageValues(currentSubject,it.pageKey)?.tasks?.find(x=>x.id===it.taskId);if(t?.testDetail?.pageKey)key=t.testDetail.pageKey}catch{}}
+   try{renderAll()}catch{}setPage(key)}catch(e){console.warn('Notenspiegel → Seite',e)}},120)}
  /* ---------- Auswahl zum Vergleichen ---------- */
  let pick=null;
  function openPick(keep){const n=N();if(!n)return;const own=ownItems(),label=className(),subject=currentSubject;
@@ -7075,7 +7084,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .nsv-x:not(#_):not(#__){flex:none;box-sizing:border-box;width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;padding:0!important;margin:0!important;border-radius:50%!important;border:1px solid #cfd9e6;background:#fff;color:#2f5f9b;font-size:16px;line-height:1;display:inline-grid!important;place-items:center;text-align:center;cursor:pointer}
  .nsv-center{display:flex;justify-content:center;margin:2px 0 10px}
  .nsv-sec{display:flex;justify-content:space-between;font-size:12px;font-weight:750;color:#7a889c;text-transform:uppercase;letter-spacing:.05em;margin:10px 4px 8px}
- .nsv-sheet .nsv-card{background:#fff;margin-bottom:10px}
+ .nsv-sheet .nsv-card{background:#fff;margin-bottom:10px}.nsv-sheet .nsv-card.nsv-go{position:relative;cursor:pointer;transition:border-color .15s,box-shadow .15s}.nsv-sheet .nsv-card.nsv-go:hover,.nsv-sheet .nsv-card.nsv-go:focus-visible{border-color:#2f5f9b;box-shadow:0 0 0 1px #2f5f9b;outline:none}.nsv-goarrow{position:absolute;top:10px;right:10px;width:32px;height:32px;border:1px solid #d5deea;border-radius:10px;background:#fff;color:#2f5f9b;display:flex;align-items:center;justify-content:center}.nsv-go:hover .nsv-goarrow{background:#2f5f9b;border-color:#2f5f9b;color:#fff}.nsv-go .nsv-h{padding-right:40px}
  .nsv-prow{display:grid;grid-template-columns:24px 1fr 104px;align-items:center;gap:10px;width:100%;padding:9px 12px;border:1px solid #e3e9f1;border-radius:14px;margin:0 0 8px;background:#fff;font:inherit;text-align:left;color:inherit;cursor:pointer}
  .nsv-prow.dis{opacity:.45;cursor:default}.nsv-prow .nsv-sp{height:26px}
  .nsv-hint{font-size:12px;color:#7a889c;text-align:center;margin:6px 8px 4px}

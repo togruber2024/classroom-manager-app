@@ -1063,3 +1063,10 @@ body[data-module=noten] th.task-student-heading-with-weight .task-weight-menu-op
 
 /* 10.43: Seitenrand links/rechts wie unten (12 px) */
 @media (min-width:701px){.compact-navigation:not(.cm-x){margin-left:12px;margin-right:12px}body[data-module=noten] main{padding-left:12px;padding-right:12px}body[data-module=sitzplan]{padding-left:12px;padding-right:12px}}
+
+/* 10.44: „Auge 1./2. Quartal“ als Symbolknopf mit Q1/Q2-Plakette (Mac/iPad) */
+html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_):not(#__){position:relative;width:42px;min-width:42px;height:40px;min-height:40px;padding:0!important;gap:0!important;justify-content:center!important;border-radius:10px;overflow:visible}
+html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_):not(#__) input{flex:0 0 20px!important;width:20px!important;height:20px!important}
+html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_):not(#__) span{position:absolute!important;right:-7px;top:-8px;font-size:0!important;line-height:0}
+html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_):not(#__) span::after{content:attr(data-q);display:block;min-width:20px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#9aa9bd;color:#fff;font:800 10.5px/18px system-ui,-apple-system,sans-serif;text-align:center;letter-spacing:.01em}
+html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_):not(#__):has(input:checked) span::after{background:#2f5f9b}

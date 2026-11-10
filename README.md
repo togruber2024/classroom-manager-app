@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.43
+Stand: 10.11.2026 · Version 10.44
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1322,3 +1322,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.41: Seitenmenü per Griff vergrößern (mitwachsend), Rückgängig als Pfeil, Auffällig als Symbol
 10.42: Schülerliste bearbeiten in der Schülerübersicht (Bearbeiten-Modus), Namen in Tabellen nur Text, Drucker-Symbol
 10.43: Seitenrand links/rechts 12 px wie unten
+10.44: Notenspiegel-Karten führen zur Arbeit/zum Test, Quartals-Auge als Symbol mit Q1/Q2
