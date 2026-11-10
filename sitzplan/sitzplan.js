@@ -3287,6 +3287,17 @@ document.addEventListener('keydown',event=>{
  // Esc oder ein Klick/Tipp irgendwo außerhalb beendet die Suche: Hervorhebung weg, Name aus dem Suchfeld entfernt.
  document.addEventListener('pointerdown',e=>{if(open&&!wrap.contains(e.target))setOpen(false)},true);
  document.addEventListener('keydown',e=>{if(open&&e.key==='Escape'&&!wrap.contains(e.target)){e.preventDefault();setOpen(false)}},true);
+ /* 10.28: Direkt lostippen – ist der Sitzplan aktiv (angeklickt) und kein Eingabefeld/Fenster offen, startet ein Buchstabe die Suche */
+ document.addEventListener('keydown',e=>{
+  if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey||e.isComposing)return;
+  if(!/^[\p{L}]$/u.test(e.key))return;
+  const t=e.target,tag=(t?.tagName||'').toLowerCase();
+  if(t?.isContentEditable||tag==='input'||tag==='textarea'||tag==='select')return;
+  if(document.querySelector('dialog[open]')||document.documentElement.classList.contains('classroom-beamer'))return;
+  if(!button.isConnected||!button.getClientRects().length)return;
+  e.preventDefault();place();if(!open)setOpen(true);input.focus();input.value=(open&&input.value&&document.activeElement===input?input.value:'')+e.key;chosen=null;matches=[];active=-1;renderList();mark(true);grow();
+  try{input.setSelectionRange(input.value.length,input.value.length)}catch{}
+ });
  place();classroomOnDomChange(place);
  const style=document.createElement('style');style.textContent=
  '.student-finder{position:relative;display:inline-flex!important;align-items:stretch;flex:0 0 auto!important;width:auto!important;min-width:0;max-width:100%;border-radius:10px;box-sizing:border-box}'

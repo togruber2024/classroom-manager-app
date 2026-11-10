@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.27
+Stand: 10.11.2026 · Version 10.28
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1306,3 +1306,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.25: Vokabeltest – alle Tempora, Passiv, Konjunktiv, PPA; Vorbelegung nach Lehrgang Pontes 2020
 10.26: Vokabel-PDF – Zahlwörter, „Gen. Pl.“-Angaben und gebeugte Fragepronomen werden erkannt
 10.27: Vokabeltest – eigene zweispaltige Wortlisten (PDF) lesen, auch ohne Längenzeichen
+10.28: Sitzplan – Buchstaben tippen startet direkt „Schüler finden“
