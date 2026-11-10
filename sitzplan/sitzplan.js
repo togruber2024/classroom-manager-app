@@ -3994,6 +3994,43 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
 })();
 ;
 
+/* ==== sitzplan/fit-panels.js ==== */
+/* 10.19: Mac/iPad – Sitzplan-Fenster und Einstellungs-Spalte enden unten auf derselben Höhe wie die Noten-Schnellansicht
+   (12 px über dem unteren Rand). Die Seite selbst scrollt nicht mehr, gescrollt wird innerhalb der Fenster. */
+(function(){
+ const root=document.documentElement,GAP=12;
+ let boxes=[];
+ const phone=()=>{try{return parent.document.documentElement.classList.contains('is-phone')}catch{return innerWidth<600}};
+ const usable=()=>!phone()&&innerWidth>=700&&innerHeight>=420&&!root.classList.contains('classroom-beamer')&&!(document.fullscreenElement||document.webkitFullscreenElement);
+ /* nur ändern, was wirklich anders ist – sonst löst jedes remove() einen Beobachter aus (Endlosschleife) */
+ function clear(){for(const b of boxes){b.style.height='';b.classList.remove('sp-fit-box')}boxes=[];if(root.classList.contains('sp-fit'))root.classList.remove('sp-fit')}
+ function fit(){
+  if(!usable()){clear();return}
+  const list=[...document.querySelectorAll('.container>.panel,.container>.grid-container')].filter(e=>e.getClientRects().length);
+  if(!list.length){clear();return}
+  for(const b of boxes)if(!list.includes(b)){b.style.height='';b.classList.remove('sp-fit-box')}
+  boxes=list;if(!root.classList.contains('sp-fit'))root.classList.add('sp-fit');
+  if(document.scrollingElement.scrollTop)document.scrollingElement.scrollTop=0;
+  for(const b of list){if(!b.classList.contains('sp-fit-box'))b.classList.add('sp-fit-box');
+   const h=Math.max(240,Math.round(innerHeight-b.getBoundingClientRect().top-GAP));
+   if(Math.abs((parseFloat(b.style.height)||0)-h)>1)b.style.height=h+'px'}
+ }
+ let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{fit()}catch(e){console.warn(e)}})};
+ addEventListener('resize',run);window.visualViewport?.addEventListener('resize',run);
+ new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
+ new MutationObserver(run).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+ document.addEventListener('fullscreenchange',run);document.addEventListener('webkitfullscreenchange',run);
+ addEventListener('load',run);run();setTimeout(run,600);
+ const st=document.createElement('style');st.textContent=`
+html.sp-fit,html.sp-fit body{height:100%;overflow:hidden;overscroll-behavior:none}
+html.sp-fit body{padding-bottom:0!important;margin-bottom:0!important}
+html.sp-fit .container{align-items:start}
+html.sp-fit .sp-fit-box{overflow:auto;overscroll-behavior:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box;margin-bottom:0!important}
+@media print{html.sp-fit,html.sp-fit body{height:auto;overflow:visible}html.sp-fit .sp-fit-box{height:auto!important;overflow:visible}}`;
+ document.head.append(st);
+})();
+;
+
 /* ==== no-contacts.js ==== */
 /* Safari/iOS soll bei Schülernamen keine Einträge aus den eigenen Kontakten vorschlagen (Datenschutz, z. B. am Beamer).
    Namensfelder erhalten autocomplete="off" und ein name-Attribut, das Safari nicht als Kontaktfeld erkennt. */

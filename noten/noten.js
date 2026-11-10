@@ -2914,7 +2914,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
  let box=null;
  const usable=()=>!root.classList.contains('ph-lite')&&innerWidth>=700&&innerHeight>=420;
  const panels=()=>[...document.querySelectorAll('main>section.panel,main>div>section.panel')].filter(e=>e.getClientRects().length&&!e.closest('dialog'));
- function clear(){if(box){box.style.height='';box.classList.remove('fit-box');box=null}root.classList.remove('fit-panel')}
+ function clear(){if(box){box.style.height='';box.classList.remove('fit-box');box=null}if(root.classList.contains('fit-panel'))root.classList.remove('fit-panel')}
  function fit(){
   if(!usable()){clear();return}
   const list=panels();if(list.length!==1){clear();return}
@@ -2987,7 +2987,7 @@ html.fit-panel body[data-module=noten] .panel.fit-box .table-wrap:not(#_){oversc
   const show=can()&&!root.classList.contains('ph-lite');
   for(const b of document.querySelectorAll('.fs-btn'))if(!show||!vis(b.parentElement))b.remove();
   if(!show)return;
-  /* 10.18: überall gleiche Reihenfolge am Ende der Leiste: … · Vollbild · Auffällig · Drucken */
+  /* 10.19: überall gleiche Reihenfolge am Ende der Leiste: … · Auffällig · Drucken · Vollbild */
   const print=[...document.querySelectorAll('[data-page-print]')].find(vis);
   const hatch=[...document.querySelectorAll('.hatch-seg')].find(vis);
   const anchor=print||hatch;if(!anchor)return;
@@ -2995,7 +2995,7 @@ html.fit-panel body[data-module=noten] .panel.fit-box .table-wrap:not(#_){oversc
   if(!b){b=document.createElement('button');b.type='button';b.className='fs-btn';b.addEventListener('click',e=>{e.stopPropagation();toggle()});box.append(b)}
   paint(b);
   const setOrd=(e,o)=>{if(e&&e.style.getPropertyValue('order')!==o)e.style.setProperty('order',o,'important')};
-  if(print){const ew=box.querySelector(':scope>.ew-btn');setOrd(b,'28');setOrd(ew,'29');setOrd(print,'30')}
+  if(print){const ew=box.querySelector(':scope>.ew-btn');setOrd(ew,'28');setOrd(print,'29');setOrd(b,'30')}
   else setOrd(b,'98');
   hideIntro();
  }
