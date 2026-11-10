@@ -6943,7 +6943,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
 
  /* ---------- Alle Notenspiegel der Klasse ---------- */
  function openList(){const n=N();if(!n||document.querySelector('dialog.nsv-sheet[open]'))return;const {exams,tests}=ownItems();const d=sheet('nsv-list-sheet');
-  function render(){const one=it=>{const mx=Math.max(1e-9,...[...it.counts.values()].map(c=>n.getPct()?(it.n?c/it.n:0):c));return n.card(it,it,mx).replace('nsv-card ref','nsv-card').replace(' · Bezug','').replace('<div class="nsv-card">','<div class="nsv-card nsv-go" role="link" tabindex="0" data-go="'+n.esc(it.id)+'" title="Zur '+(it.taskId?'Test':'Arbeit')+'-Seite"><span class="nsv-goarrow" aria-hidden="true">'+GO+'</span>')};
+  function render(){const one=it=>{const mx=Math.max(1e-9,...[...it.counts.values()].map(c=>n.getPct()?(it.n?c/it.n:0):c));const h=n.card(it,it,mx).replace('nsv-card ref','nsv-card').replace(' · Bezug','');return onPhone()?h:h.replace('<div class="nsv-card">','<div class="nsv-card nsv-go" role="link" tabindex="0" data-go="'+n.esc(it.id)+'" title="Zur '+(it.taskId?'Test':'Arbeit')+'-Seite"><span class="nsv-goarrow" aria-hidden="true">'+GO+'</span>')};
    const sec=(t,xs)=>xs.length?`<div class="nsv-sec"><span>${t}</span><span>${xs.length}</span></div>${xs.map(one).join('')}`:'';
    d.innerHTML=`<div class="nsv-shead"><h2>Notenspiegel · ${n.esc(className())}</h2><button type="button" class="nsv-sbtn" data-cmp>Vergleichen</button><button type="button" class="nsv-x" data-x aria-label="Schließen">✕</button></div>
    <div class="nsv-sbody"><div class="nsv-center"><div class="mean-seg nsv-seg" role="radiogroup" aria-label="Darstellung"><button type="button" role="radio" data-m="n" aria-checked="${!n.getPct()}">Anzahl</button><button type="button" role="radio" data-m="p" aria-checked="${n.getPct()}">Prozent</button></div></div>
@@ -6954,6 +6954,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   render();d.showModal()}
 
  /* 10.44: Vom Notenspiegel direkt zur Arbeit bzw. zum Test (auch aus der Noten-Schnellansicht im Unterrichts-Manager) */
+ /* 10.46: am iPhone kein Sprung zur Arbeit (dort gibt es nur die Kartenansicht) */
+ const onPhone=()=>{try{return parent.document.documentElement.classList.contains('is-phone')}catch{return matchMedia('(max-width:540px)').matches}};
  const GO='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 16 16 8M9.5 8H16v6.5"/></svg>';
  function goTo(it){try{if(parent!==window&&typeof parent.selectView==='function')parent.selectView('noten')}catch{}
   setTimeout(()=>{try{const groups=subjectExamGroups(currentSubject)||[],g=groups.find(x=>(x.pages||[]).includes(it.pageKey));
