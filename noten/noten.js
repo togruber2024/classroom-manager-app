@@ -3372,7 +3372,7 @@ html.fs-view .fs-hide{display:none!important}
   const want=item.kind==='v'?need:need.slice(0,1);
   const found=want.filter(t=>rest.includes(t));let p=found.length;const miss=want.filter(t=>!rest.includes(t));
   const notes=[];if(!rest.length)notes.push('leer');else if(miss.length)notes.push('fehlt/falsch: '+miss.join(', '));
-  if(item.kind==='n'){const ok=rest.length&&(item.genus||[]).includes(ge);if(ok)p++;else notes.push(ge?'Genus falsch ('+ge+')':'Genus fehlt')}
+  if(item.kind==='n'){const ok=(item.genus||[]).includes(ge);/* 10.23: richtiges Genus zählt immer */if(ok)p++;else notes.push(ge?'Genus falsch ('+ge+')':'Genus fehlt')}
   return {p,max,ge,note:notes.join(' · ')}}
  function gradeMeaning(item,ans){
   const raw=String(ans.m||'').trim();if(!raw)return {p:0,max:1,note:'leer'};
