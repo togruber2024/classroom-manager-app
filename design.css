@@ -1060,3 +1060,6 @@ body[data-module=noten] .table-wrap>table:not(.compact-entry-table)>thead>tr>:fi
 
 /* 10.11: Schalter „% | x:y“ im Kopf „Schüler:in“ nicht bündig an der Spaltenlinie, sondern etwas nach links */
 body[data-module=noten] th.task-student-heading-with-weight .task-weight-menu-options>.mean-seg{position:relative;left:-16px}
+
+/* 10.43: Seitenrand links/rechts wie unten (12 px) */
+@media (min-width:701px){.compact-navigation:not(.cm-x){margin-left:12px;margin-right:12px}body[data-module=noten] main{padding-left:12px;padding-right:12px}body[data-module=sitzplan]{padding-left:12px;padding-right:12px}}
