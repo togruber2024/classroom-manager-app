@@ -2174,7 +2174,7 @@ window.addEventListener('resize',()=>{if(classroomDeferredRender.pending)setTime
 /* ==== noten/print-icon.js ==== */
 /* 10.42: „Drucken“ in den Tabellenleisten als Symbol (Drucker, Stil wie Auge/Glocke/Vollbild). Der Text bleibt für Vorlesen und Skripte erhalten. */
 (function(){
- const SVG='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 8V4.5h9V8"/><path d="M6.5 16.5H6A2.5 2.5 0 0 1 3.5 14v-3.5A2.5 2.5 0 0 1 6 8h12a2.5 2.5 0 0 1 2.5 2.5V14a2.5 2.5 0 0 1-2.5 2.5h-.5"/><path d="M7.5 13h9v6.5h-9z"/></svg>';
+ const SVG='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 8V4.5h9V8"/><path d="M6.5 16.5H6A2.5 2.5 0 0 1 3.5 14v-3.5A2.5 2.5 0 0 1 6 8h12a2.5 2.5 0 0 1 2.5 2.5V14a2.5 2.5 0 0 1-2.5 2.5h-.5"/><path d="M7.5 13h9v6.5h-9z"/></svg>';
  /* 10.47: auch „Notenspiegel“ als Symbol (Balken wie am iPhone) */
  const NS='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20v-8M10 20V6M15 20v-10M20 20v-5M3 20.5h18"/></svg>';
  function applyNs(){for(const b of document.querySelectorAll('button.notenspiegel-button,[data-task-action="notenspiegel"],[data-homework-action="notenspiegel"]')){if(b.querySelector(':scope>svg'))continue;if(b.textContent.trim()!=='Notenspiegel')continue;b.innerHTML=NS+'<span class="pi-lbl">Notenspiegel</span>';b.classList.add('pi-icon');b.setAttribute('aria-label','Notenspiegel');if(!b.title)b.title='Notenspiegel'}}
@@ -2191,7 +2191,7 @@ window.addEventListener('resize',()=>{if(classroomDeferredRender.pending)setTime
  if(typeof classroomOnDomChange==='function')classroomOnDomChange(apply);else new MutationObserver(apply).observe(document.documentElement,{childList:true,subtree:true});
  addEventListener('load',apply);apply();
  const st=document.createElement('style');st.textContent=
-  'button.pi-icon:not(#_){position:relative;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:42px;min-width:42px;padding:0!important}button.pi-icon>svg{width:20px;height:20px;flex:none}'
+  'button.pi-icon:not(#_){position:relative;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:42px;min-width:42px;padding:0!important}button.pi-icon>svg{width:20px;height:20px;flex:none}button.pi-icon:is(.page-print-button,.test-results-print,[data-page-print])>svg:not(#_){width:26px;height:26px}/* 10.54: Drucker größer */'
   +'[data-assessment-import]{display:none!important}'/* 10.47: Excel-Import entfällt */+'html:not(.ph-lite) body[data-module=noten] label.compact-view-toggle:not(#_):not(#__){width:42px;min-width:42px;height:40px;min-height:40px;padding:0!important;gap:0!important;justify-content:center!important;border-radius:10px}html:not(.ph-lite) body[data-module=noten] label.compact-view-toggle:not(#_):not(#__) input{flex:0 0 20px!important;width:20px!important;height:20px!important}html:not(.ph-lite) body[data-module=noten] label.compact-view-toggle:not(#_):not(#__) span{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}'+'button.pi-icon.pi-danger:not(#_){color:#b42318;border-color:#efb4b4}button.pi-icon.pi-danger:not(#_):hover{background:#fdecec;border-color:#e59a9a}'+'button.pi-icon .pi-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}';
  document.head.append(st);
 })();
@@ -4342,6 +4342,8 @@ html.fs-view .fs-hide{display:none!important}
   parent.postMessage({type:'classroom:theme-ready'},'*');
  }
 })();
+/* 10.54: Fokusrahmen nur bei Tastaturbedienung – nach Klick/Tipp (auch wenn ein Menü den Fokus zurückgibt) kein dicker Rahmen */
+(function(){try{const r=document.documentElement;addEventListener('pointerdown',()=>r.classList.add('cm-pointer'),true);addEventListener('keydown',e=>{if(e.key==='Tab'||/^Arrow/.test(e.key))r.classList.remove('cm-pointer')},true);const st=document.createElement('style');st.textContent='html.cm-pointer :is(button,a,[role=button],[role=menuitem],[role=radio],[role=tab],summary):focus-visible{outline:none!important}';(document.head||r).append(st)}catch{}})();
 ;
 
 /* ==== noten/excel-export.js ==== */

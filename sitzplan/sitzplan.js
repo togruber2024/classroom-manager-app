@@ -2618,6 +2618,8 @@ document.addEventListener('keydown',event=>{
   parent.postMessage({type:'classroom:theme-ready'},'*');
  }
 })();
+/* 10.54: Fokusrahmen nur bei Tastaturbedienung – nach Klick/Tipp (auch wenn ein Menü den Fokus zurückgibt) kein dicker Rahmen */
+(function(){try{const r=document.documentElement;addEventListener('pointerdown',()=>r.classList.add('cm-pointer'),true);addEventListener('keydown',e=>{if(e.key==='Tab'||/^Arrow/.test(e.key))r.classList.remove('cm-pointer')},true);const st=document.createElement('style');st.textContent='html.cm-pointer :is(button,a,[role=button],[role=menuitem],[role=radio],[role=tab],summary):focus-visible{outline:none!important}';(document.head||r).append(st)}catch{}})();
 ;
 
 /* ==== sitzplan/plan-zoom.js ==== */

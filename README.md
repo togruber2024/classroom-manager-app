@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.53
+Stand: 10.11.2026 · Version 10.54
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1332,3 +1332,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.51: Leisten nach Seitengruppen, Schuljahr 2/2−/2,3, Notentabelle per Symbol, Fortschritt oben bündig
 10.52: Auffällig neutral, orange mit Anzahl nur bei auffälligen Schüler:innen
 10.53: Teilnoten immer sichtbar und als Tendenz, Schalter entfallen, rundes × bei Auffällig, kein Fokusrahmen beim Öffnen
+10.54: Drucker-Symbol größer (26 px, feinere Linie), Fokusrahmen nur bei Tastaturbedienung
