@@ -3578,7 +3578,7 @@ document.addEventListener('keydown',event=>{
    start.textContent='Verteilen';
    let more=bar.querySelector('.plan-actions-more');
    if(!more){more=document.createElement('div');more.className='plan-actions-more';
-    more.innerHTML='<button type="button" class="btn btn-secondary plan-actions-more-toggle" aria-haspopup="menu" aria-expanded="false">Mehr <span aria-hidden="true">▾</span></button><div class="plan-actions-menu" role="menu"></div>';
+    more.innerHTML='<button type="button" class="btn btn-secondary plan-actions-more-toggle" aria-haspopup="menu" aria-expanded="false" aria-label="Mehr" title="Mehr"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="5.5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18.5" cy="12" r="2"/></svg><span class="cm-more-lbl">Mehr</span></button><div class="plan-actions-menu" role="menu"></div>';
     more.querySelector('.plan-actions-more-toggle').onclick=e=>{e.stopPropagation();const open=!more.classList.contains('open');closeMenu();if(open){more.classList.add('open');menuOpen=true;e.currentTarget.setAttribute('aria-expanded','true');const r=e.currentTarget.getBoundingClientRect(),m=more.querySelector('.plan-actions-menu');m.style.position='fixed';m.style.right=Math.max(8,innerWidth-r.right)+'px';m.style.left='auto';const h=m.offsetHeight;m.style.top=(r.top-h-6>8?r.top-h-6:r.bottom+6)+'px';m.style.bottom='auto'}};
    }
    const menu=more.querySelector('.plan-actions-menu');
@@ -3702,7 +3702,7 @@ document.addEventListener('keydown',event=>{
  function ensureMore(bar){
   let more=bar.querySelector(':scope > .zoom-more');
   if(!more){more=document.createElement('div');more.className='zoom-more';more.hidden=true;
-   more.innerHTML='<button type="button" class="zoom-more-toggle" aria-haspopup="menu" aria-expanded="false">Mehr <span aria-hidden="true">▾</span></button><div class="zoom-more-menu" role="menu"></div>';
+   more.innerHTML='<button type="button" class="zoom-more-toggle" aria-haspopup="menu" aria-expanded="false" aria-label="Mehr" title="Mehr"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="5.5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18.5" cy="12" r="2"/></svg><span class="cm-more-lbl">Mehr</span></button><div class="zoom-more-menu" role="menu"></div>';
    const toggle=more.querySelector('.zoom-more-toggle');
    toggle.onclick=e=>{e.stopPropagation();const was=more.classList.contains('open');close();if(was)return;more.classList.add('open');open=true;toggle.setAttribute('aria-expanded','true');const r=toggle.getBoundingClientRect(),m=more.querySelector('.zoom-more-menu');m.style.right=Math.max(8,innerWidth-r.right)+'px';m.style.left='auto';m.style.top=(r.bottom+6)+'px'};
    more.querySelector('.zoom-more-menu').onclick=()=>close();
@@ -3747,6 +3747,9 @@ document.addEventListener('keydown',event=>{
  setTimeout(schedule,500);
  window.classroomFitZoomBar=fit;
 })();
+
+/* 10.55: „Mehr“ als Symbol (drei Punkte) */
+(()=>{const st=document.createElement('style');st.textContent='body :is(.plan-actions-more-toggle,.zoom-more-toggle):not(#_):not(#__){display:inline-flex!important;align-items:center;justify-content:center;width:42px!important;min-width:42px!important;padding:0!important}body :is(.plan-actions-more-toggle,.zoom-more-toggle)>svg{width:22px;height:22px;flex:none}.cm-more-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}';document.head.append(st)})();
 ;
 
 /* ==== sitzplan/flicker-diag.js ==== */
