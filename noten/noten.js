@@ -2966,7 +2966,7 @@ html.fit-panel body[data-module=noten] .panel.fit-box .table-wrap:not(#_){oversc
  const pdoc=()=>{try{return frameElement&&parent.document}catch{return null}};
  const canPseudo=()=>!!pdoc();
  function setPseudo(on){const d=pdoc();if(!d)return;pseudo=on;
-  if(!d.getElementById('noten-fs-style')){const st=d.createElement('style');st.id='noten-fs-style';st.textContent='body.noten-fs .workspace{position:fixed!important;inset:0!important;z-index:9800!important;background:#f6f8fc;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);box-sizing:border-box}body.noten-fs .workspace>iframe:not(#view-noten){visibility:hidden}';d.head.append(st)}
+  if(!d.getElementById('noten-fs-style')){const st=d.createElement('style');st.id='noten-fs-style';st.textContent='body.noten-fs .workspace{position:fixed!important;inset:0!important;z-index:9800!important;background:#f6f8fc;padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);box-sizing:border-box}body.noten-fs .workspace>iframe:not(#view-noten){visibility:hidden}';d.head.append(st)}
   d.body.classList.toggle('noten-fs',on);changed()}
  const isOn=()=>!!fsEl()||pseudo;
  function toggle(){
@@ -2987,22 +2987,28 @@ html.fit-panel body[data-module=noten] .panel.fit-box .table-wrap:not(#_){oversc
   const show=can()&&!root.classList.contains('ph-lite');
   for(const b of document.querySelectorAll('.fs-btn'))if(!show||!vis(b.parentElement))b.remove();
   if(!show)return;
-  const hatch=[...document.querySelectorAll('.hatch-seg')].find(vis);
+  /* 10.18: überall gleiche Reihenfolge am Ende der Leiste: … · Vollbild · Auffällig · Drucken */
   const print=[...document.querySelectorAll('[data-page-print]')].find(vis);
-  const anchor=hatch||print;if(!anchor)return;
-  /* direkt hinter dem Schraffur-Schalter und seinem (versteckten) Schalter-Label – hatching.js erwartet das Label direkt hinter dem Schalter */
-  const after=()=>{const n=hatch.nextElementSibling;return n?.matches?.('[data-hatching-toggle]')?n:hatch};
+  const hatch=[...document.querySelectorAll('.hatch-seg')].find(vis);
+  const anchor=print||hatch;if(!anchor)return;
   const box=anchor.parentElement;let b=box.querySelector(':scope>.fs-btn');
-  if(!b){b=document.createElement('button');b.type='button';b.className='fs-btn';b.addEventListener('click',e=>{e.stopPropagation();toggle()});
-   if(hatch)after().after(b);else print.before(b)}
+  if(!b){b=document.createElement('button');b.type='button';b.className='fs-btn';b.addEventListener('click',e=>{e.stopPropagation();toggle()});box.append(b)}
   paint(b);
-  /* sichtbare Reihenfolge: direkt rechts vom Schraffur-Schalter, im Vollbild ganz rechts */
-  const ord=isOn()?'99':getComputedStyle(anchor).order;if(b.style.order!==ord)b.style.order=ord;
-  if(hatch&&!isOn()){/* Elemente mit gleicher order, die im DOM zwischen Schraffur und Knopf liegen, nicht dazwischenlassen */
-   if(b.previousElementSibling!==after())after().after(b)}
-  if(box!==watched){watched=box;boxObs.disconnect();boxObs.observe(box,{childList:true})}
+  const setOrd=(e,o)=>{if(e&&e.style.getPropertyValue('order')!==o)e.style.setProperty('order',o,'important')};
+  if(print){const ew=box.querySelector(':scope>.ew-btn');setOrd(b,'28');setOrd(ew,'29');setOrd(print,'30')}
+  else setOrd(b,'98');
+  hideIntro();
  }
- let watched=null,moves=0;const boxObs=new MutationObserver(()=>{if(++moves<40)run()});setInterval(()=>{moves=0},2000);
+ /* 10.18: Im Vollbild Erklärtext und Gewichtungsfelder zwischen Knopfleiste und Tabelle ausblenden */
+ function hideIntro(){
+  const on=isOn();const old=[...document.querySelectorAll('.fs-hide')];
+  if(!on){old.forEach(e=>e.classList.remove('fs-hide'));return}
+  const p=window.classroomFitBox?.()||[...document.querySelectorAll('main section.panel')].find(vis);if(!p)return;
+  const title=p.querySelector(':scope>.section-title');const w=[...p.querySelectorAll('.table-wrap')].find(vis);if(!title||!w)return;
+  let holder=w;while(holder.parentElement&&holder.parentElement!==p)holder=holder.parentElement;if(holder.parentElement!==p)return;
+  const want=new Set();for(let e=title.nextElementSibling;e&&e!==holder;e=e.nextElementSibling){if(!e.querySelector('table,button,select'))want.add(e)}
+  for(const e of old)if(!want.has(e))e.classList.remove('fs-hide');
+  for(const e of want)if(!e.classList.contains('fs-hide'))e.classList.add('fs-hide')}
  let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{place()}catch(e){console.warn(e)}})};
  if(typeof classroomOnDomChange==='function')classroomOnDomChange(run);else new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
  function changed(){root.classList.toggle('fs-view',isOn());run();setTimeout(()=>{dispatchEvent(new Event('resize'))},60)}
@@ -3015,41 +3021,50 @@ html.fit-panel body[data-module=noten] .panel.fit-box .table-wrap:not(#_){oversc
 .fs-btn:hover{background:#f3f7fc}.fs-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
 html.ph-lite .fs-btn{display:none!important}
 html.fs-view,html.fs-view body{background:#f6f8fc}
-html.fs-view body[data-module=noten] main{padding:16px 16px 0!important;max-width:none!important}
+html.fs-view body[data-module=noten] main{padding:12px 12px 0!important;max-width:none!important}
+html.fs-view .fs-hide{display:none!important}
 @media print{.fs-btn{display:none!important}}`;
  document.head.append(st);
 })();
 ;
 
 /* ==== noten/rubber-band.js ==== */
-/* 10.17: Gummiband am Mac (Trackpad/Maus). Safari/Chrome am Mac federn nur die ganze Seite nach,
-   nicht Bereiche, die in sich scrollen. Seit die weiße Fläche fest steht (10.15), wird das hier nachgebildet:
-   Am oberen/unteren Ende zieht der Inhalt ein Stück mit und springt danach weich zurück. iPad/iPhone machen das selbst. */
+/* 10.17/10.18: Gummiband am Mac (Trackpad/Maus). Safari/Chrome am Mac federn nur die ganze Seite nach,
+   nicht Bereiche, die in sich scrollen. Hier nachgebildet wie bei iOS: Am Ende zieht der Inhalt gebremst mit
+   und federt sofort weich zurück – auch während der Trackpad-Schwung noch läuft. iPad/iPhone machen das selbst.
+   Tabellen (Kompaktansicht) werden über einen Rand verschoben, weil Safari verschobene Tabellen mit festem Kopf nicht sauber zeichnet. */
 (function(){
  const fine=matchMedia('(hover:hover) and (pointer:fine)');
- const root=document.documentElement,MAX=70;
- let target=null,off=0,timer=0,animating=false;
- const scrollY=el=>el.scrollHeight-el.clientHeight>1&&/(auto|scroll)/.test(getComputedStyle(el).overflowY);
- function chain(start){const out=[];for(let e=start;e&&e!==document.body;e=e.parentElement){if(e.nodeType===1&&(e.matches('.table-wrap')||e.classList.contains('fit-box'))&&scrollY(e))out.push(e)}return out}
- function apply(el,y){for(const c of el.children)c.style.transform=y?'translateY('+y.toFixed(1)+'px)':''}
- function release(){if(!target)return;const el=target;animating=true;
-  for(const c of el.children){c.style.transition='transform .42s cubic-bezier(.25,.9,.3,1)'}
-  apply(el,0);off=0;setTimeout(()=>{for(const c of el.children)c.style.transition='';animating=false;if(target===el)target=null},450)}
+ const root=document.documentElement,MAX=90;
+ let el=null,off=0,raf=0,lastInput=0;
+ const canScrollY=e=>e.scrollHeight-e.clientHeight>1&&/(auto|scroll)/.test(getComputedStyle(e).overflowY);
+ function chain(start){const out=[];for(let e=start;e&&e!==document.body&&e!==root;e=e.parentElement){if(e.nodeType===1&&canScrollY(e))out.push(e)}return out}
+ function paint(target,y){
+  const kids=[...target.children];
+  if(kids.length===1&&kids[0].tagName==='TABLE'){const t=kids[0];
+   if(y>0){t.style.marginTop=y.toFixed(1)+'px';t.style.marginBottom=''}
+   else if(y<0){t.style.marginTop='';t.style.marginBottom=(-y).toFixed(1)+'px';target.scrollTop=target.scrollHeight}
+   else{t.style.marginTop='';t.style.marginBottom=''}
+  }else for(const c of kids)c.style.transform=y?'translateY('+y.toFixed(1)+'px)':''}
+ function tick(){
+  raf=0;if(!el)return;
+  /* Rückfederung: läuft immer, solange gezogen ist – nach dem letzten Impuls schneller */
+  const quiet=performance.now()-lastInput>60;
+  off*=quiet?0.80:0.93;
+  if(Math.abs(off)<0.4){off=0;paint(el,0);el=null;return}
+  paint(el,off);raf=requestAnimationFrame(tick)}
  addEventListener('wheel',e=>{
   if(!fine.matches||root.classList.contains('ph-lite')||e.ctrlKey||Math.abs(e.deltaX)>Math.abs(e.deltaY)||!e.deltaY)return;
   const list=chain(e.target);if(!list.length)return;
   const down=e.deltaY>0;
-  /* scrollt irgendein Bereich in dieser Richtung noch? Dann normal scrollen lassen */
-  if(list.some(el=>down?el.scrollTop<el.scrollHeight-el.clientHeight-1:el.scrollTop>0)){if(target&&!animating)release();return}
-  const el=list[0];
-  if(target&&target!==el){apply(target,0);off=0}
-  target=el;
-  /* Widerstand: je weiter gezogen, desto zäher */
-  const step=-e.deltaY*0.35*(1-Math.min(Math.abs(off)/MAX,0.95));
-  off=Math.max(-MAX,Math.min(MAX,off+step));
-  if(animating){for(const c of el.children)c.style.transition='';animating=false}
-  apply(el,off);
-  clearTimeout(timer);timer=setTimeout(release,110);
+  if(list.some(x=>down?x.scrollTop<x.scrollHeight-x.clientHeight-1:x.scrollTop>0))return;
+  const target=list[0];
+  if(el&&el!==target){paint(el,0);off=0}
+  el=target;lastInput=performance.now();
+  /* Bremse: je weiter gezogen, desto weniger bewegt sich der Inhalt */
+  const k=1-Math.min(Math.abs(off)/MAX,1);
+  off=Math.max(-MAX,Math.min(MAX,off-e.deltaY*0.22*k*k));
+  if(!raf)raf=requestAnimationFrame(tick);
  },{passive:true});
 })();
 ;
