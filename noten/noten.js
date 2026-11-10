@@ -8032,7 +8032,7 @@ return}
 /* 8.78: beide Dreifachschalter oben rechts gleich groß (Breite, Höhe, Knöpfe) */
 (()=>{const st=document.createElement('style');st.textContent='.pl-bar .pl-hatch:not(#_),.pl-bar .pl-mean:not(#_){box-sizing:border-box;width:150px;flex:none}.pl-bar :is(.pl-hatch,.pl-mean) button:not(#_):not(#__){flex:1 1 0;min-width:0;padding:0;height:32px;min-height:32px}';document.head.append(st)})();
 /* 8.79: Hinweise über den Karten („3× HA fehlend“ …) als Pille wie die übrigen Knöpfe */
-(()=>{const st=document.createElement('style');st.textContent='.pl-flags button:not(#_){border-radius:999px!important;padding:0 14px 0 6px;min-height:38px}';document.head.append(st)})();
+(()=>{const st=document.createElement('style');st.textContent='.pl-flags button:not(#_){border-radius:999px!important;padding:0 14px 0 6px;min-height:38px}'+/* 10.45: Zahl und Text mittig in der Pille (ob volle oder halbe Breite) */'.pl-flags>button:not(#_):not(#__){justify-content:center;text-align:center;padding:0 14px}.pl-flags.is-tight>button:not(#_):not(#__){padding:0 7px}';document.head.append(st)})();
 /* 8.81: Schnellansicht am Mac/iPad – ohne doppelten Rahmen, volle Breite der Spalte */
 (()=>{const st=document.createElement('style');st.textContent='html.cm-quick,html.cm-quick body{background:#fff}html.cm-quick body{margin:0;padding:0}html.cm-quick main,html.cm-quick .app,html.cm-quick .container{margin:0;padding:0;max-width:none}html.cm-quick [data-custom-panel]:not([hidden]){border:0;box-shadow:none;border-radius:0;margin:0;padding:12px 10px;background:#fff}';document.head.append(st)})();
 
