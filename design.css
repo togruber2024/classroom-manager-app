@@ -5,13 +5,13 @@ body {font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif; b
 button,input,select,textarea {font-family:inherit;}
 input[type=checkbox],input[type=radio] {accent-color:var(--green);}
 :focus-visible {outline:3px solid #8ba9d1; outline-offset:2px;}
-body[data-module=noten] main {max-width:1444px; padding:22px 22px 60px;}
+body[data-module=noten] main {max-width:none; padding:22px 22px 60px;}
 body[data-module=noten] .header-copy,body[data-module=noten] #intro {display:none;}
 body[data-module=noten] header {margin-bottom:14px;}
 body[data-module=noten] .header-main {justify-content:flex-end;}
 body[data-module=sitzplan] {padding:22px 22px 40px;}
 body[data-module=sitzplan] > h1,body[data-module=sitzplan] > .subtitle {display:none;}
-body[data-module=sitzplan] .container {max-width:1400px; gap:20px;}
+body[data-module=sitzplan] .container {max-width:none; gap:20px;}
 body[data-module=sitzplan] .panel,body[data-module=sitzplan] .grid-container {border-radius:18px; border-color:var(--line); box-shadow:0 3px 12px #233d6005; padding:22px;}
 body[data-module=sitzplan] .class-selector-box {background:var(--bg); border-radius:14px; padding:12px;}
 body[data-module=sitzplan] .btn {min-height:40px; border:1px solid transparent; border-radius:9px; padding:7px 12px; font-weight:650;}
