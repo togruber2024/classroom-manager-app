@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.59
+Stand: 10.11.2026 · Version 10.60
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1338,3 +1338,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.57: iPad-Vokabeltest offline: QR-Code „iPads vorbereiten“ mit Flugmodus-Anleitung, Test läuft ohne Internet
 10.58: Gruppen A/B aus dem Sitzplan im Vokabeltest-Fenster, Anleitung WLAN trennen statt Flugmodus
 10.59: Sitzplan im Vokabeltest immer aus Schülersicht mit Reihenabständen, „Smartboard“ statt „Beamer“
+10.60: Vokabeltest – Link für Jamf kopieren, Offline-Vorbereitung nur noch aufklappbar

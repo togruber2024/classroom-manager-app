@@ -39,7 +39,7 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
  addEventListener('hashchange',()=>location.reload());/* neuer QR-Code im selben Tab */
  async function offlineReady(){if(!swOk)return false;try{return !!(await caches.match(pageUrl))}catch{return false}}
  if(/^#vorbereiten/.test(location.hash)){
-  document.title='iPad vorbereiten · Vokabeltest';
+  document.title='iPad vorbereiten · Vokabeltest';try{localStorage.setItem('vt-prep-at',String(Date.now()))}catch{}
   app.innerHTML='<div class="card prep"><h1>iPad vorbereiten</h1><p class="st" id="st"><span class="spin"></span> Der Vokabeltest wird auf diesem iPad gespeichert …</p>'
    +'<ol class="steps" id="steps" hidden><li><b>Internet trennen.</b> Kontrollzentrum öffnen (oben rechts nach unten wischen) und auf das WLAN-Symbol tippen, sodass es nicht mehr blau ist. Bluetooth bleibt an. Hat dein iPad Mobilfunk: auch „Mobile Daten“ aus.<div class="net" id="net"></div></li>'
    +'<li><b>QR-Code deiner Gruppe scannen</b> (A oder B), sobald deine Lehrkraft ihn zeigt. Der Test öffnet sich ohne Internet.</li>'
@@ -70,7 +70,7 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
    '<input class="in" data-k="m" '+off+' placeholder="Bedeutung" value="'+esc(a.m)+'"></div>'}).join('')+
   '<div class="foot"><div style="display:flex;align-items:center;gap:12px"><div class="bar"><i id="bar"></i></div><span class="muted" id="cnt"></span></div><button class="btn" id="go">Abgeben</button></div></div>'+
   '<div class="done" id="done"><div class="card"><h2>Fast fertig!</h2><p class="muted" id="dmsg">Tippe auf „Per AirDrop senden“ und wähle das Gerät deiner Lehrkraft. Das geht ohne Internet.</p><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn" id="again">Per AirDrop senden</button><button class="btn sec" id="edit">Zurück zum Test</button></div></div></div>';
- {const bn=document.createElement('div');bn.className='netwarn';bn.hidden=true;bn.textContent='Bitte Internet trennen (WLAN im Kontrollzentrum antippen) – der Test läuft ohne Internet.';app.prepend(bn);const upd=async()=>{bn.hidden=!(navigator.onLine&&await offlineReady())};addEventListener('online',upd);addEventListener('offline',upd);upd()}
+ {const bn=document.createElement('div');bn.className='netwarn';bn.hidden=true;bn.textContent='Bitte Internet trennen (WLAN im Kontrollzentrum antippen) – der Test läuft ohne Internet.';app.prepend(bn);/* nur nach „iPads vorbereiten“ (letzte 6 Stunden) – mit Jamf bleiben die iPads online */const prepared=()=>{try{return Date.now()-Number(localStorage.getItem('vt-prep-at')||0)<6*3600e3}catch{return false}};const upd=async()=>{bn.hidden=!(navigator.onLine&&prepared()&&await offlineReady())};addEventListener('online',upd);addEventListener('offline',upd);upd()}
  const filled=a=>(a.l.trim()||a.m.trim())?1:0;
  const count=()=>{const n=test.r.filter(([f,k],i)=>{const a=draft.a[i];return k==='x'?a.m.trim():(a.l.trim()&&a.m.trim()&&(k!=='n'||a.ge))}).length;document.getElementById('cnt').textContent=n+' von '+test.r.length+' ausgefüllt';document.getElementById('bar').style.width=(100*n/test.r.length)+'%'};
  app.addEventListener('input',e=>{const t=e.target;if(t.id==='nm'){draft.name=t.value;save();return}const row=t.closest('.row');if(!row||!t.dataset.k)return;draft.a[+row.dataset.i][t.dataset.k]=t.value;save();count()});
