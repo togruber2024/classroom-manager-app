@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.38
+Stand: 10.11.2026 · Version 10.39
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1317,3 +1317,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.36: Pontes Salvē! als Lektion 0 (Kopfzeile „Vokabular S“), Spaltenerkennung ohne Übungsteil, Lektion 0 nur Nominativ
 10.37: Vokabeltest drucken (Schülerblätter mit Schreiblinien, kompakt 2 pro Blatt, Lösungsblatt), kein Autofokus in „Test erstellen“
 10.38: „Test erstellen“: Pontes vor Navigium, kein vorausgewählter Knopf
+10.39: iPad-Tests-Fenster: „Neuer Test …“ statt Testdatei/Vokabel-PDF
