@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.49
+Stand: 10.11.2026 · Version 10.50
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1328,3 +1328,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.47: Kompaktansicht und Notenspiegel als Symbol, Import entfällt
 10.48: Schülerübersicht- und Papierkorb-Symbol, Vokabular ergänzen, Fächer-Fenster Knopfgröße
 10.49: Bewertungsgrenzen als Karten (Automatisch/Manuell, ausreichend ab), Kopfleiste rund = Ansicht, eckig = Aktionen
+10.50: Kopfleisten global einheitlich (rund = Ansicht, eckig = Aktionen), Symbole Fortschritt/Übersicht/Tendenzen, Test-Seite ohne Import und + Schüler:in
