@@ -32,7 +32,7 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
  const fail=msg=>{app.innerHTML='<div class="card err"><h1>Vokabeltest</h1><p class="muted">'+esc(msg)+'</p></div>'};
  const b64=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u};
- /* 10.57: Offline-Speicher (Flugmodus während des Tests). QR-Code 1 „iPads vorbereiten“ öffnet #vorbereiten. */
+ /* 10.57: Offline-Speicher (Test ohne Internet). QR-Code 1 „iPads vorbereiten“ öffnet #vorbereiten. */
  const swOk='serviceWorker' in navigator&&'caches' in window;
  if(swOk){try{navigator.serviceWorker.register('vt-sw.js',{scope:'./vokabeltest.html'}).catch(()=>{})}catch{}}
  const pageUrl=location.href.split('#')[0].split('?')[0];
@@ -41,10 +41,10 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
  if(/^#vorbereiten/.test(location.hash)){
   document.title='iPad vorbereiten · Vokabeltest';
   app.innerHTML='<div class="card prep"><h1>iPad vorbereiten</h1><p class="st" id="st"><span class="spin"></span> Der Vokabeltest wird auf diesem iPad gespeichert …</p>'
-   +'<ol class="steps" id="steps" hidden><li><b>Flugmodus einschalten.</b> Kontrollzentrum öffnen (oben rechts nach unten wischen) und auf das Flugzeug ✈︎ tippen. WLAN muss aus sein.<div class="net" id="net"></div></li>'
+   +'<ol class="steps" id="steps" hidden><li><b>Internet trennen.</b> Kontrollzentrum öffnen (oben rechts nach unten wischen) und auf das WLAN-Symbol tippen, sodass es nicht mehr blau ist. Bluetooth bleibt an. Hat dein iPad Mobilfunk: auch „Mobile Daten“ aus.<div class="net" id="net"></div></li>'
    +'<li><b>QR-Code deiner Gruppe scannen</b> (A oder B), sobald deine Lehrkraft ihn zeigt. Der Test öffnet sich ohne Internet.</li>'
-   +'<li><b>Nach dem Abgeben:</b> Flugmodus wieder ausschalten und die Datei per AirDrop an deine Lehrkraft senden.</li></ol></div>';
-  const net=()=>{const n=document.getElementById('net');if(!n)return;const on=navigator.onLine;n.className='net '+(on?'on':'off');n.textContent=on?'Internet ist noch an – bitte Flugmodus einschalten.':'✓ Flugmodus ist an – jetzt den Test-QR-Code scannen.'};
+   +'<li><b>Nach dem Abgeben:</b> die Datei per AirDrop an deine Lehrkraft senden – das geht ohne Internet.</li></ol></div>';
+  const net=()=>{const n=document.getElementById('net');if(!n)return;const on=navigator.onLine;n.className='net '+(on?'on':'off');n.textContent=on?'Internet ist noch an – bitte WLAN im Kontrollzentrum antippen.':'✓ Kein Internet – jetzt den QR-Code deiner Gruppe scannen.'};
   addEventListener('online',net);addEventListener('offline',net);
   let tries=0;const check=async()=>{const ok=await offlineReady();const st=document.getElementById('st');
    if(ok){st.className='st ok';st.textContent='✓ Offline bereit';document.getElementById('steps').hidden=false;net();return}
@@ -69,8 +69,8 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
    '<span class="gen">'+['m','f','n'].map(g=>'<button type="button" data-g="'+g+'"'+(kind==='n'?'':' disabled')+(a.ge===g?' class="on"':'')+' aria-label="Genus '+g+'">'+g+'</button>').join('')+'</span>'+
    '<input class="in" data-k="m" '+off+' placeholder="Bedeutung" value="'+esc(a.m)+'"></div>'}).join('')+
   '<div class="foot"><div style="display:flex;align-items:center;gap:12px"><div class="bar"><i id="bar"></i></div><span class="muted" id="cnt"></span></div><button class="btn" id="go">Abgeben</button></div></div>'+
-  '<div class="done" id="done"><div class="card"><h2>Fast fertig!</h2><p class="muted" id="dmsg">Schalte den Flugmodus aus. Tippe dann auf „Per AirDrop senden“ und wähle das Gerät deiner Lehrkraft.</p><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn" id="again">Per AirDrop senden</button><button class="btn sec" id="edit">Zurück zum Test</button></div></div></div>';
- {const bn=document.createElement('div');bn.className='netwarn';bn.hidden=true;bn.textContent='Bitte Flugmodus einschalten – der Test läuft ohne Internet.';app.prepend(bn);const upd=async()=>{bn.hidden=!(navigator.onLine&&await offlineReady())};addEventListener('online',upd);addEventListener('offline',upd);upd()}
+  '<div class="done" id="done"><div class="card"><h2>Fast fertig!</h2><p class="muted" id="dmsg">Tippe auf „Per AirDrop senden“ und wähle das Gerät deiner Lehrkraft. Das geht ohne Internet.</p><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn" id="again">Per AirDrop senden</button><button class="btn sec" id="edit">Zurück zum Test</button></div></div></div>';
+ {const bn=document.createElement('div');bn.className='netwarn';bn.hidden=true;bn.textContent='Bitte Internet trennen (WLAN im Kontrollzentrum antippen) – der Test läuft ohne Internet.';app.prepend(bn);const upd=async()=>{bn.hidden=!(navigator.onLine&&await offlineReady())};addEventListener('online',upd);addEventListener('offline',upd);upd()}
  const filled=a=>(a.l.trim()||a.m.trim())?1:0;
  const count=()=>{const n=test.r.filter(([f,k],i)=>{const a=draft.a[i];return k==='x'?a.m.trim():(a.l.trim()&&a.m.trim()&&(k!=='n'||a.ge))}).length;document.getElementById('cnt').textContent=n+' von '+test.r.length+' ausgefüllt';document.getElementById('bar').style.width=(100*n/test.r.length)+'%'};
  app.addEventListener('input',e=>{const t=e.target;if(t.id==='nm'){draft.name=t.value;save();return}const row=t.closest('.row');if(!row||!t.dataset.k)return;draft.a[+row.dataset.i][t.dataset.k]=t.value;save();count()});
