@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.36
+Stand: 10.11.2026 · Version 10.37
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1315,3 +1315,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.34: Wiederholungsvokabular L5–31 als eigene Rubrik; Wendungen nur mit Bedeutung; deus; Abkürzungen -oris/-ii/-us; „Auffällig“ links neben „Drucken“ auf Test-Detailseiten
 10.35: Pontes-Rubrik mit zwei Reitern (Vokabular / Wiederholungsvokabular), Abbrechen, Navigium-Knopf umbenannt
 10.36: Pontes Salvē! als Lektion 0 (Kopfzeile „Vokabular S“), Spaltenerkennung ohne Übungsteil, Lektion 0 nur Nominativ
+10.37: Vokabeltest drucken (Schülerblätter mit Schreiblinien, kompakt 2 pro Blatt, Lösungsblatt), kein Autofokus in „Test erstellen“
