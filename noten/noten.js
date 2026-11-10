@@ -2913,7 +2913,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
  const root=document.documentElement,GAP=16;
  let box=null;
  const usable=()=>!root.classList.contains('ph-lite')&&innerWidth>=700&&innerHeight>=420;
- const panels=()=>[...document.querySelectorAll('main>section.panel,main>div>section.panel')].filter(e=>e.offsetParent&&!e.closest('dialog'));
+ const panels=()=>[...document.querySelectorAll('main>section.panel,main>div>section.panel')].filter(e=>e.getClientRects().length&&!e.closest('dialog'));
  function clear(){if(box){box.style.height='';box.classList.remove('fit-box');box=null}root.classList.remove('fit-panel')}
  function fit(){
   if(!usable()){clear();return}
@@ -2939,8 +2939,67 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
  const st=document.createElement('style');st.textContent=`
 html.fit-panel,html.fit-panel body{height:100%;overflow:hidden;overscroll-behavior:none}
 html.fit-panel body[data-module=noten] main{padding-bottom:0!important}
-html.fit-panel .panel.fit-box{overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;margin-bottom:0!important}
+/* 10.16: Gummiband in Fläche und Tabelle (außen bleibt fest) */
+html.fit-panel .panel.fit-box{overflow:auto;overscroll-behavior:auto;-webkit-overflow-scrolling:touch;margin-bottom:0!important}
+html.fit-panel body[data-module=noten] .panel.fit-box .table-wrap:not(#_){overscroll-behavior:auto}
 @media print{html.fit-panel,html.fit-panel body{height:auto;overflow:visible}html.fit-panel .panel.fit-box{height:auto!important;overflow:visible}}`;
+ document.head.append(st);
+})();
+;
+
+/* ==== noten/fullscreen-view.js ==== */
+/* 10.16: Knopf „Vollbild“ rechts neben dem Schraffur-Schalter (Mac/iPad).
+   Vollbild gilt für den ganzen Noten-Bereich (Titel, Schalter, Tabelle) – so übersteht es jedes Neuzeichnen. */
+(function(){
+ const root=document.documentElement;
+ const IN='<path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/>';
+ const OUT='<path d="M9 4v4a1 1 0 0 1-1 1H4M20 9h-4a1 1 0 0 1-1-1V4M15 20v-4a1 1 0 0 1 1-1h4M4 15h4a1 1 0 0 1 1 1v4"/>';
+ const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement||null;
+ const can=()=>!!(document.fullscreenEnabled||document.webkitFullscreenEnabled)&&!!(root.requestFullscreen||root.webkitRequestFullscreen);
+ const isOn=()=>!!fsEl();
+ function toggle(){
+  try{
+   if(isOn()){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}
+   else{const r=(root.requestFullscreen||root.webkitRequestFullscreen).call(root);r?.catch?.(e=>console.warn('Vollbild',e))}
+  }catch(e){console.warn('Vollbild',e)}
+ }
+ const vis=e=>!!e&&e.getClientRects().length>0;
+ function paint(b){const on=isOn(),k=on?'on':'off';if(b.dataset.fs===k)return;b.dataset.fs=k;
+  b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+(on?OUT:IN)+'</svg><span>'+(on?'Beenden':'Vollbild')+'</span>';
+  b.title=on?'Vollbild beenden (Esc)':'Tabelle samt Kopfleiste im Vollbild anzeigen';b.setAttribute('aria-pressed',on?'true':'false')}
+ function place(){
+  const show=can()&&!root.classList.contains('ph-lite');
+  for(const b of document.querySelectorAll('.fs-btn'))if(!show||!vis(b.parentElement))b.remove();
+  if(!show)return;
+  const hatch=[...document.querySelectorAll('.hatch-seg')].find(vis);
+  const print=[...document.querySelectorAll('[data-page-print]')].find(vis);
+  const anchor=hatch||print;if(!anchor)return;
+  /* direkt hinter dem Schraffur-Schalter und seinem (versteckten) Schalter-Label – hatching.js erwartet das Label direkt hinter dem Schalter */
+  const after=()=>{const n=hatch.nextElementSibling;return n?.matches?.('[data-hatching-toggle]')?n:hatch};
+  const box=anchor.parentElement;let b=box.querySelector(':scope>.fs-btn');
+  if(!b){b=document.createElement('button');b.type='button';b.className='fs-btn';b.addEventListener('click',e=>{e.stopPropagation();toggle()});
+   if(hatch)after().after(b);else print.before(b)}
+  paint(b);
+  /* sichtbare Reihenfolge: direkt rechts vom Schraffur-Schalter, im Vollbild ganz rechts */
+  const ord=isOn()?'99':getComputedStyle(anchor).order;if(b.style.order!==ord)b.style.order=ord;
+  if(hatch&&!isOn()){/* Elemente mit gleicher order, die im DOM zwischen Schraffur und Knopf liegen, nicht dazwischenlassen */
+   if(b.previousElementSibling!==after())after().after(b)}
+  if(box!==watched){watched=box;boxObs.disconnect();boxObs.observe(box,{childList:true})}
+ }
+ let watched=null,moves=0;const boxObs=new MutationObserver(()=>{if(++moves<40)run()});setInterval(()=>{moves=0},2000);
+ let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{place()}catch(e){console.warn(e)}})};
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(run);else new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
+ const changed=()=>{root.classList.toggle('fs-view',isOn());run();setTimeout(()=>{dispatchEvent(new Event('resize'))},60)};
+ document.addEventListener('fullscreenchange',changed);document.addEventListener('webkitfullscreenchange',changed);
+ addEventListener('resize',run);run();setTimeout(run,800);
+ window.classroomFullscreen={toggle,isOn};
+ const st=document.createElement('style');st.textContent=`
+.fs-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:40px;padding:0 15px;border:1px solid #d5deea;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:.86rem;font-weight:600;line-height:1;cursor:pointer;white-space:nowrap;flex:none}
+.fs-btn:hover{background:#f3f7fc}.fs-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+html.ph-lite .fs-btn{display:none!important}
+html.fs-view,html.fs-view body{background:#f6f8fc}
+html.fs-view body[data-module=noten] main{padding:16px 16px 0!important;max-width:none!important}
+@media print{.fs-btn{display:none!important}}`;
  document.head.append(st);
 })();
 ;
