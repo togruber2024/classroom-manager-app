@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.31
+Stand: 10.11.2026 · Version 10.32
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1310,3 +1310,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.29: Sitzplan – Suchmarkierung innerhalb der Kachel (kein Springen des Plans)
 10.30: Sitzplan – Suche ohne Flackern (Randbreite, kein scrollIntoView, Schutz in der Knopfzeile)
 10.31: Fenster unten einheitlich 12 px (Noten & Unterricht), Knopfzeile Sitzplan ohne Scrollleisten-Flackern
+10.32: Sitzplan-Knopfzeile friert bei Hin-und-Her ein, Diagnose-Hinweis, scrollbar-gutter

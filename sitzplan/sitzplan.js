@@ -3607,18 +3607,22 @@ document.addEventListener('keydown',event=>{
   if(assignEl&&!assignEl.__planWatch){assignEl.__planWatch=true;new MutationObserver(scheduleFit).observe(assignEl,{attributes:true,attributeFilter:['aria-pressed']})}
   const list=collapsibles(bar),beamer=document.documentElement.classList.contains('classroom-beamer');
   /* 9.75: Hat sich nichts geändert, was die Aufteilung beeinflusst, nichts anfassen (Probe-Umschalten löste sonst Beobachter-Schleifen aus) */
-  const sig=[bar.clientWidth,innerWidth,document.documentElement.className,forceFinder,finderEl?.dataset.open,assignEl?.getAttribute('aria-pressed'),...[...bar.children].map(c=>(c.id||String(c.className).replace(/\s*plan-actions-collapsed/g,''))+':'+c.textContent.length+':'+(c.disabled?1:0)+(c.hidden?1:0))].join('#');
+  /* 10.32: Zustand inkl. tatsächlich eingeklappter Knöpfe und Überlauf – baut der Sitzplan die Leiste neu auf, fällt das sonst nicht auf */
+  const base=()=>[bar.clientWidth,innerWidth,document.documentElement.className,forceFinder,finderEl?.dataset.open,assignEl?.getAttribute('aria-pressed'),...[...bar.children].map(c=>c.matches('.plan-actions-more')?'more':(c.id||String(c.className).replace(/\s*plan-actions-collapsed/g,''))+':'+c.textContent.length+':'+(c.disabled?1:0)+(c.hidden?1:0))].join('#'),bits=()=>[...bar.children].map(c=>c.classList.contains('plan-actions-collapsed')?1:0).join(''),post=()=>base()+'#'+bits()+'#'+(bar.scrollWidth>bar.clientWidth+1),sig=post(),same=bits()===lastBits;
   if(sig===lastSig)return;
   /* 10.31: Nur etwas breiter geworden (z. B. Scrollleiste verschwindet, weil die Leiste einzeilig wurde) → Aufteilung behalten, sonst Hin-und-Her */
-  const rest=sig.split('#').slice(2).join('#'),bw=bar.clientWidth;
-  if(rest===lastRest&&lastKey&&bw>=lastW&&bw-lastW<=40&&Date.now()-lastFlip<4000&&!(bar.scrollWidth>bw+1)){lastSig=sig;return}
+  const rest=base().split('#').slice(2).join('#'),bw=bar.clientWidth;
+  if(same&&rest===lastRest&&lastKey&&bw>=lastW&&bw-lastW<=40&&Date.now()-lastFlip<4000&&!(bar.scrollWidth>bw+1)){lastSig=sig;return}
+  /* 10.32: Nach erkanntem Hin-und-Her eingefroren: nur noch weiter einklappen, nie wieder aufklappen – bis sich wirklich etwas ändert */
+  if(freeze&&same){if(rest!==freeze.rest||Math.abs(bw-freeze.w)>40)freeze=null;else if(!(bar.scrollWidth>bw+1)){lastSig=sig;return}}
   for(const el of [...list,finderEl,assignEl].filter(Boolean))el.classList.remove('plan-actions-collapsed');bar.classList.remove('plan-actions-wrap');
-  const over=()=>bar.scrollWidth>bar.clientWidth+1,hidden=[];
+  // Trennstriche nur zwischen sichtbaren Gruppen – 10.32: schon beim Messen, sonst kommt ein Trennstrich (+20 px) erst danach dazu und die Leiste läuft über
+  const kids=[...bar.children],visible=el=>getComputedStyle(el).display!=='none';
+  const seps=()=>{for(const [i,sep] of kids.entries()){if(!sep.matches('.plan-actions-sep'))continue;let before=false,after=false;for(let j=i-1;j>=0&&!kids.at(j).matches('.plan-actions-sep');j--)if(visible(kids.at(j)))before=true;for(let j=i+1;j<kids.length&&!kids.at(j).matches('.plan-actions-sep');j++)if(visible(kids.at(j)))after=true;const off=!(before&&after);if(sep.classList.contains('plan-actions-collapsed')!==off)sep.classList.toggle('plan-actions-collapsed',off)}};
+  const over=()=>{seps();return bar.scrollWidth>bar.clientWidth+1},hidden=[];
   if(!beamer&&bar.clientWidth>0)for(const el of list){if(!over())break;el.classList.add('plan-actions-collapsed');hidden.push(el)}
   if(bar.clientWidth>0&&over())bar.classList.add('plan-actions-wrap');
-  // Trennstriche nur zwischen sichtbaren Gruppen.
-  const kids=[...bar.children],visible=el=>getComputedStyle(el).display!=='none';
-  for(const [i,sep] of kids.entries()){if(!sep.matches('.plan-actions-sep'))continue;let before=false,after=false;for(let j=i-1;j>=0&&!kids.at(j).matches('.plan-actions-sep');j--)if(visible(kids.at(j)))before=true;for(let j=i+1;j<kids.length&&!kids.at(j).matches('.plan-actions-sep');j++)if(visible(kids.at(j)))after=true;sep.classList.toggle('plan-actions-collapsed',!(before&&after))}
+  seps();
   hidden.sort((a,b)=>kids.indexOf(a)-kids.indexOf(b));
   const key=hidden.map(el=>el.id||label(el)).join('|');
   let box=menu.querySelector(':scope > .plan-actions-overflow');
@@ -3629,12 +3633,12 @@ document.addEventListener('keydown',event=>{
     const line=document.createElement('div');line.className='plan-actions-menu-sep';line.setAttribute('role','separator');menu.prepend(box,line)}
   }else for(const b of box.querySelectorAll('.plan-actions-proxy'))if(b.disabled!==!!b._target.disabled)b.disabled=!!b._target.disabled;
   if(key!==prevKey){prevKey=key;lastFlip=Date.now()}
-  lastSig=sig;lastRest=rest;lastW=bw;
+  lastSig=post();lastBits=bits();lastRest=rest;lastW=bw;
  }
- let lastSig='',lastRest='',lastW=0,lastFlip=0,prevKey='';
+ let lastBits='',lastSig='',lastRest='',lastW=0,lastFlip=0,prevKey='';
  /* 10.30: Schutz vor Hin- und Herspringen – ändert sich die Aufteilung mehr als 6× pro Sekunde, 1,5 s Pause */
- let fitRuns=[],fitPause=0;
- function scheduleFit(){if(fitPlanned)return;const now=Date.now();if(now<fitPause)return;fitRuns=fitRuns.filter(t=>now-t<1000);fitRuns.push(now);if(fitRuns.length>12){fitPause=now+1500;fitRuns=[];setTimeout(scheduleFit,1600);return}fitPlanned=true;requestAnimationFrame(fit)}
+ let fitRuns=[],fitPause=0,freeze=null;
+ function scheduleFit(){if(fitPlanned)return;const now=Date.now();if(now<fitPause)return;fitRuns=fitRuns.filter(t=>now-t<1000);fitRuns.push(now);if(fitRuns.length>12){fitPause=now+1500;fitRuns=[];const bar=grid.querySelector('.classroom-plan-actions');if(bar)freeze={w:bar.clientWidth,rest:lastRest};try{window.classroomFlickerNote?.('plan-actions')}catch{}setTimeout(scheduleFit,1600);return}fitPlanned=true;requestAnimationFrame(fit)}
  new ResizeObserver(scheduleFit).observe(grid);
  new MutationObserver(scheduleFit).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
  window.classroomFitPlanActions=fit;
@@ -3740,6 +3744,58 @@ document.addEventListener('keydown',event=>{
  if(document.readyState==='loading')addEventListener('DOMContentLoaded',schedule);else schedule();
  setTimeout(schedule,500);
  window.classroomFitZoomBar=fit;
+})();
+;
+
+/* ==== sitzplan/flicker-diag.js ==== */
+/* 10.32: Diagnose fürs Flackern der Knopfzeile (nur Mac/iPad-Größe). Springt „Verteilen“ ohne Fenster-Größenänderung
+   mehrfach pro Sekunde hin und her, werden 0,8 s lang die DOM-Änderungen mitgeschrieben – ohne Schülernamen.
+   Passiert das wiederholt, erscheint unten links ein Hinweis mit „Diagnose anzeigen“ zum Kopieren. */
+(function(){
+ const KEY='classroom-flicker-diag-v1';
+ let lastResize=0,xs=[],lastX=null,capturing=false,lastCapture=-1e9,detections=[],toastShown=false;
+ addEventListener('resize',()=>{lastResize=performance.now()});
+ const desc=el=>{if(!el||el.nodeType!==1)return el?.nodeName||'?';if(el.classList?.contains('cell'))return 'cell';const c=[...el.classList].filter(x=>!/^\d/.test(x)).slice(0,3).join('.');return el.tagName.toLowerCase()+(el.id?'#'+el.id:'')+(c?'.'+c:'')};
+ const short=v=>v==null?'∅':String(v).slice(0,90);
+ const btn=()=>{const bar=document.querySelector('.classroom-plan-actions');if(!bar)return null;return [...bar.querySelectorAll('button')].find(b=>b.textContent.trim()==='Verteilen')||null};
+ function state(){const bar=document.querySelector('.classroom-plan-actions'),g=bar?.closest('.grid-container');
+  return {bar:bar?{cw:bar.clientWidth,sw:bar.scrollWidth,h:bar.offsetHeight,cls:bar.className,kids:[...bar.children].map(c=>desc(c)+':'+Math.round(c.getBoundingClientRect().width)+(getComputedStyle(c).display==='none'?'(aus)':''))}:null,
+   grid:g?{cw:g.clientWidth,ow:g.offsetWidth,ch:g.clientHeight,sh:g.scrollHeight,sw:g.scrollWidth}:null,
+   win:[innerWidth,innerHeight,devicePixelRatio],html:document.documentElement.className,
+   finder:(()=>{const f=document.querySelector('.student-finder');return f?{open:f.dataset.open,hits:document.querySelectorAll('[data-finder-hit]').length,w:Math.round(f.getBoundingClientRect().width)}:null})()}}
+ function capture(xsSeen){capturing=true;lastCapture=performance.now();const counts=new Map();
+  const mo=new MutationObserver(list=>{for(const m of list){let k;if(m.type==='attributes'){const keep=m.attributeName==='class'||m.attributeName==='style'||m.attributeName==='hidden'||m.attributeName.startsWith('data-');k='attr '+m.attributeName+' @'+desc(m.target)+(keep?' | '+short(m.oldValue)+' → '+short(m.target.getAttribute(m.attributeName)):'')}
+   else if(m.type==='childList')k='child @'+desc(m.target)+' +'+[...m.addedNodes].map(desc).join(',')+' -'+[...m.removedNodes].map(desc).join(',');else continue;counts.set(k,(counts.get(k)||0)+1)}});
+  mo.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeOldValue:true});
+  const before=state();
+  setTimeout(()=>{mo.disconnect();capturing=false;
+   const rec={t:new Date().toISOString(),v:document.querySelector('script[src*="sitzplan.js"]')?.src.split('v=')[1]||'',ua:navigator.userAgent,xs:xsSeen,guard:notes.slice(),before,after:state(),changes:[...counts].sort((a,b)=>b[1]-a[1]).slice(0,40)};
+   try{const all=JSON.parse(localStorage.getItem(KEY)||'[]');all.push(rec);localStorage.setItem(KEY,JSON.stringify(all.slice(-3)))}catch{}
+   const now=performance.now();detections=detections.filter(t=>now-t<90000);detections.push(now);if(detections.length>=2)toast()},800)}
+ let notes=[];window.classroomFlickerNote=src=>{notes.push([new Date().toISOString().slice(11,23),src]);notes=notes.slice(-10)};
+ function tick(){requestAnimationFrame(tick);if(document.hidden)return;const b=btn();if(!b||!b.getClientRects().length){lastX=null;return}
+  const x=Math.round(b.getBoundingClientRect().left),now=performance.now();
+  if(lastX!==null&&x!==lastX){xs.push([now,x])}lastX=x;xs=xs.filter(e=>now-e[0]<1000);
+  if(xs.length>=6&&!capturing&&now-lastResize>1500&&now-lastCapture>15000){const seen=xs.map(e=>e[1]);xs=[];capture(seen)}}
+ requestAnimationFrame(tick);
+ function toast(){if(toastShown||document.querySelector('.fd-toast'))return;toastShown=true;
+  const t=document.createElement('div');t.className='fd-toast';t.setAttribute('role','status');
+  t.innerHTML='<span>Die Knopfzeile springt hin und her. Diagnose für Claude?</span><button type="button" class="fd-show">Diagnose anzeigen</button><button type="button" class="fd-x" aria-label="Schließen">×</button>';
+  t.querySelector('.fd-x').onclick=()=>t.remove();t.querySelector('.fd-show').onclick=()=>{t.remove();show()};document.body.append(t)}
+ function show(){const text=(()=>{try{return JSON.stringify(JSON.parse(localStorage.getItem(KEY)||'[]'))}catch{return '[]'}})();
+  const d=document.createElement('dialog');d.className='fd-dialog';
+  d.innerHTML='<h3>Diagnose Knopfzeile</h3><p>Enthält keine Schülernamen – nur Breiten, Klassen und Änderungen der Seite. Kopieren und Claude schicken.</p><textarea readonly></textarea><div class="fd-row"><button type="button" class="fd-copy">Kopieren</button><button type="button" class="fd-close">Schließen</button></div>';
+  const ta=d.querySelector('textarea');ta.value=text;d.querySelector('.fd-close').onclick=()=>{d.close();d.remove()};
+  d.querySelector('.fd-copy').onclick=async e=>{ta.focus();ta.select();let ok=false;try{await navigator.clipboard.writeText(text);ok=true}catch{try{ok=document.execCommand('copy')}catch{}}e.target.textContent=ok?'Kopiert ✓':'Bitte ⌘C drücken'};
+  document.body.append(d);d.showModal();ta.select()}
+ window.classroomFlickerDiag=show;
+ const st=document.createElement('style');st.textContent=
+  '.fd-toast{position:fixed;left:16px;bottom:16px;z-index:9990;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 32px);padding:8px 8px 8px 14px;background:#fff;border:1px solid #dce3ef;border-radius:12px;box-shadow:0 10px 30px #1c2b4626;font-size:14px;color:#243247}'
+  +'.fd-toast button,.fd-dialog button{height:40px;border-radius:10px;border:1px solid #c9d6ea;background:#fff;color:#2f5f9b;font:inherit;font-weight:600;padding:0 14px;cursor:pointer}'
+  +'.fd-toast .fd-show,.fd-dialog .fd-copy{background:#2f5f9b;border-color:#2f5f9b;color:#fff}.fd-toast .fd-x{width:40px;padding:0;font-size:20px}'
+  +'.fd-dialog{width:min(560px,calc(100vw - 32px));border:0;border-radius:16px;padding:20px;box-shadow:0 20px 50px #1c2b4640}.fd-dialog h3{margin:0 0 6px}.fd-dialog p{margin:0 0 10px;color:#66758a;font-size:14px}'
+  +'.fd-dialog textarea{width:100%;height:180px;box-sizing:border-box;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid #dce3ef;border-radius:10px;padding:8px}.fd-row{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}';
+ document.head.append(st);
 })();
 ;
 
@@ -4046,7 +4102,7 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
 html.sp-fit,html.sp-fit body{height:100%;overflow:hidden;overscroll-behavior:none}
 html.sp-fit body{padding-bottom:0!important;margin-bottom:0!important}
 html.sp-fit .container{align-items:start}
-html.sp-fit .grid-container.sp-fit-box{overflow-x:hidden!important}
+html.sp-fit .grid-container.sp-fit-box{overflow-x:hidden!important;scrollbar-gutter:stable}
 html.sp-fit .sp-fit-box{overflow:auto;overscroll-behavior:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box;margin-bottom:0!important}
 @media print{html.sp-fit,html.sp-fit body{height:auto;overflow:visible}html.sp-fit .sp-fit-box{height:auto!important;overflow:visible}}`;
  document.head.append(st);
