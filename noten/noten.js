@@ -2928,7 +2928,8 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
  /* 10.17: Abstand unten = Abstand links/rechts. Unter dem Rahmen liegt evtl. schon der Home-Balken-Abstand der App (iPad) */
  function gap(){const m=document.querySelector('main');const side=m?parseFloat(getComputedStyle(m).paddingLeft)||GAP:GAP;
   if(root.classList.contains('fs-view'))return side;let below=0;try{const fr=frameElement,pd=parent.document;if(fr&&pd){below=Math.max(0,pd.documentElement.clientHeight-fr.getBoundingClientRect().bottom)}}catch{}
-  return Math.max(4,Math.round(side-below))}
+  /* 10.31: einheitlich 12 px über dem Bildschirmrand (wie Unterrichts-Manager) */
+  return Math.max(4,Math.round(12-below))}
  window.classroomFitBox=()=>box&&root.classList.contains('fit-panel')?box:null;
  let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{fit()}catch(e){console.warn(e)}})};
  addEventListener('resize',run);

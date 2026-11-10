@@ -3609,6 +3609,9 @@ document.addEventListener('keydown',event=>{
   /* 9.75: Hat sich nichts geändert, was die Aufteilung beeinflusst, nichts anfassen (Probe-Umschalten löste sonst Beobachter-Schleifen aus) */
   const sig=[bar.clientWidth,innerWidth,document.documentElement.className,forceFinder,finderEl?.dataset.open,assignEl?.getAttribute('aria-pressed'),...[...bar.children].map(c=>(c.id||String(c.className).replace(/\s*plan-actions-collapsed/g,''))+':'+c.textContent.length+':'+(c.disabled?1:0)+(c.hidden?1:0))].join('#');
   if(sig===lastSig)return;
+  /* 10.31: Nur etwas breiter geworden (z. B. Scrollleiste verschwindet, weil die Leiste einzeilig wurde) → Aufteilung behalten, sonst Hin-und-Her */
+  const rest=sig.split('#').slice(2).join('#'),bw=bar.clientWidth;
+  if(rest===lastRest&&lastKey&&bw>=lastW&&bw-lastW<=40&&Date.now()-lastFlip<4000&&!(bar.scrollWidth>bw+1)){lastSig=sig;return}
   for(const el of [...list,finderEl,assignEl].filter(Boolean))el.classList.remove('plan-actions-collapsed');bar.classList.remove('plan-actions-wrap');
   const over=()=>bar.scrollWidth>bar.clientWidth+1,hidden=[];
   if(!beamer&&bar.clientWidth>0)for(const el of list){if(!over())break;el.classList.add('plan-actions-collapsed');hidden.push(el)}
@@ -3625,9 +3628,10 @@ document.addEventListener('keydown',event=>{
     for(const el of hidden){if(el.matches('.student-finder')){const b=proxy('Schüler finden',el);b.onclick=()=>{forceFinder=true;el.classList.remove('plan-actions-collapsed');el.querySelector('#studentSearchToggle')?.click();scheduleFit()};box.append(b);continue}if(el.matches('.classroom-roll-split')){for(const b of el.querySelectorAll(':scope > .btn')){const arrow=label(b);box.append(proxy('Rollen '+arrow+(arrow.includes('↓')?' (nach unten)':arrow.includes('↑')?' (nach oben)':''),b))}}else box.append(proxy(label(el),el))}
     const line=document.createElement('div');line.className='plan-actions-menu-sep';line.setAttribute('role','separator');menu.prepend(box,line)}
   }else for(const b of box.querySelectorAll('.plan-actions-proxy'))if(b.disabled!==!!b._target.disabled)b.disabled=!!b._target.disabled;
-  lastSig=sig;
+  if(key!==prevKey){prevKey=key;lastFlip=Date.now()}
+  lastSig=sig;lastRest=rest;lastW=bw;
  }
- let lastSig='';
+ let lastSig='',lastRest='',lastW=0,lastFlip=0,prevKey='';
  /* 10.30: Schutz vor Hin- und Herspringen – ändert sich die Aufteilung mehr als 6× pro Sekunde, 1,5 s Pause */
  let fitRuns=[],fitPause=0;
  function scheduleFit(){if(fitPlanned)return;const now=Date.now();if(now<fitPause)return;fitRuns=fitRuns.filter(t=>now-t<1000);fitRuns.push(now);if(fitRuns.length>12){fitPause=now+1500;fitRuns=[];setTimeout(scheduleFit,1600);return}fitPlanned=true;requestAnimationFrame(fit)}
@@ -4018,6 +4022,8 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
  const phone=()=>{try{return parent.document.documentElement.classList.contains('is-phone')}catch{return innerWidth<600}};
  const usable=()=>!phone()&&innerWidth>=700&&innerHeight>=420&&!root.classList.contains('classroom-beamer')&&!(document.fullscreenElement||document.webkitFullscreenElement);
  /* nur ändern, was wirklich anders ist – sonst löst jedes remove() einen Beobachter aus (Endlosschleife) */
+ /* 10.31: 12 px über dem Bildschirmrand – wie im Noten-Manager (Platz unter dem Rahmen abziehen) */
+ function gap(){let below=0;try{const fr=frameElement,pd=parent.document;if(fr&&pd)below=Math.max(0,pd.documentElement.clientHeight-fr.getBoundingClientRect().bottom)}catch{}return Math.max(4,Math.round(GAP-below))}
  function clear(){for(const b of boxes){b.style.height='';b.classList.remove('sp-fit-box')}boxes=[];if(root.classList.contains('sp-fit'))root.classList.remove('sp-fit')}
  function fit(){
   if(!usable()){clear();return}
@@ -4027,7 +4033,7 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
   boxes=list;if(!root.classList.contains('sp-fit'))root.classList.add('sp-fit');
   if(document.scrollingElement.scrollTop)document.scrollingElement.scrollTop=0;
   for(const b of list){if(!b.classList.contains('sp-fit-box'))b.classList.add('sp-fit-box');
-   const h=Math.max(240,Math.round(innerHeight-b.getBoundingClientRect().top-GAP));
+   const h=Math.max(240,Math.round(innerHeight-b.getBoundingClientRect().top-gap()));
    if(Math.abs((parseFloat(b.style.height)||0)-h)>1)b.style.height=h+'px'}
  }
  let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{fit()}catch(e){console.warn(e)}})};
