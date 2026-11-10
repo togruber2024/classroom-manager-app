@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.23
+Stand: 10.11.2026 · Version 10.24
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1302,3 +1302,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.21: iPad-Vokabeltest (Latein): Testdatei laden, QR-Code ausgeben, Schülerseite vokabeltest.html, Abgaben per AirDrop einlesen und automatisch bewerten
 10.22: Vokabeltest – 1 P je Wort/Genus/Bedeutung, keine halben Punkte, Tippfehler falsch, Platzhalter je Wortart
 10.23: Vokabeltest – richtiges Genus zählt immer 1 Punkt
+10.24: Vokabeltest aus der Vokabel-PDF (Formen werden gebildet, Schwerpunkte inkl. PPP)
