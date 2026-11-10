@@ -4202,3 +4202,41 @@ html.sp-fit .sp-fit-box{overflow:auto;overscroll-behavior:auto;-webkit-overflow-
  document.addEventListener('focusin',e=>{if(e.target.matches?.(sel))protect(e.target)},true);
 })();
 ;
+
+/* ==== sitzplan/sp-icons.js ==== */
+/* 10.56: Knöpfe über und unter dem Sitzplan als Symbole (Text bleibt als Hinweis und für Vorlesen erhalten).
+   Oben: Einpassen · 100 % · Bewertungen (Auge). Unten: Schüler zuweisen · Perspektive · Schüler finden · Zufallsauswahl · Zufallsgruppen.
+   „Verteilen“ (Hauptaktion) und der Seitenwechsel bleiben unverändert. Nicht am iPhone. */
+(function(){
+ const S=p=>'<svg class="spi" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
+ const IC={
+  fit:S('<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><rect x="8" y="8" width="8" height="8" rx="1.5"/>'),
+  reset:S('<rect x="3" y="4.5" width="18" height="15" rx="3"/><path d="M7.2 10.2l1.6-1.2v6.2M15.2 10.2l1.6-1.2v6.2"/><circle cx="12" cy="10.6" r=".75" fill="currentColor" stroke="none"/><circle cx="12" cy="14" r=".75" fill="currentColor" stroke="none"/>'),
+  assign:S('<circle cx="8" cy="7.5" r="2.8"/><path d="M3 18c.5-3 2.4-4.6 5-4.6M14 13h7M18 10l3 3-3 3"/>'),
+  rotate:S('<path d="M8 4v16M5 7l3-3 3 3M16 20V4M13 17l3 3 3-3"/>'),
+  find:S('<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5l5 5"/>'),
+  random:S('<rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/>'),
+  print:'<svg class="spi spi-pr" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 8V4.5h9V8"/><path d="M6.5 16.5H6A2.5 2.5 0 0 1 3.5 14v-3.5A2.5 2.5 0 0 1 6 8h12a2.5 2.5 0 0 1 2.5 2.5V14a2.5 2.5 0 0 1-2.5 2.5h-.5"/><path d="M7.5 13h9v6.5h-9z"/></svg>',
+  groups:S('<circle cx="7" cy="8" r="4"/><circle cx="17" cy="8" r="4"/><circle cx="12" cy="16.5" r="4"/>')};
+ const phone=()=>{const r=document.documentElement;try{if(parent!==window&&parent.document.documentElement.classList.contains('is-phone'))return true}catch{}return r.classList.contains('ph-lite')||r.classList.contains('is-phone')};
+ function icon(el,key,label){if(!el)return;const want=label||[...el.childNodes].filter(n=>!(n.nodeType===1&&n.matches('svg'))).map(n=>n.textContent).join('').trim();if(!want)return;const has=el.querySelector(':scope>svg.spi'),lbl=el.querySelector(':scope>.spi-lbl');if(has&&lbl&&lbl.textContent===want)return;
+  el.innerHTML=IC[key]+'<span class="spi-lbl">'+want.replace(/[<>&]/g,'')+'</span>';el.classList.add('spi-btn');if(!el.getAttribute('aria-label'))el.setAttribute('aria-label',want);if(!el.title)el.title=want}
+ let busy=false;
+ function apply(){if(busy)return;busy=true;try{const on=!phone();document.documentElement.classList.toggle('spi-on',on);if(!on)return;
+   icon(document.querySelector('[data-zoom-fit]'),'fit');icon(document.querySelector('[data-zoom-reset]'),'reset');
+   icon(document.querySelector('[data-assign-student]'),'assign');icon(document.getElementById('classroomRotateButton'),'rotate');
+   icon(document.getElementById('studentSearchToggle'),'find');icon(document.getElementById('randomStudentButton'),'random');icon(document.getElementById('randomGroupsButton'),'groups');
+   {const lab=e=>[...e.childNodes].filter(n=>!(n.nodeType===1&&n.matches('svg'))).map(n=>n.textContent).join('').replace(/\s+/g,' ').trim();const pr=[...document.querySelectorAll('.classroom-plan-actions > .btn')].find(b=>lab(b)==='Drucken');icon(pr,'print')}
+   const sw=document.querySelector('.plan-assess-switch');if(sw){sw.classList.add('spi-btn');if(!sw.title)sw.title='Bewertungen im Sitzplan ein- oder ausblenden'}
+  }catch(e){console.warn(e)}finally{busy=false}}
+ let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;apply()})};
+ new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true,characterData:true});addEventListener('load',run);apply();setTimeout(apply,600);
+ const st=document.createElement('style');st.textContent=
+  'html.spi-on .spi-btn:not(#_):not(#__){position:relative;display:inline-flex!important;align-items:center;justify-content:center;min-width:42px!important;width:42px!important;padding:0!important;gap:0!important}'
+  +'html.spi-on .spi-btn>svg.spi{width:22px;height:22px;flex:none}html.spi-on .spi-btn>svg.spi-pr{width:26px;height:26px}html.spi-on .spi-btn>.spi-lbl,html.spi-on label.plan-assess-switch.spi-btn>span{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}'
+  +'html.spi-on .spi-btn[aria-pressed=true]:not(#_):not(#__){background:#e8f0fb!important;border-color:#9bb6dc!important}'
+  /* „Schüler finden“ geöffnet: Lupe neben dem Eingabefeld */
+  +'html.spi-on .student-finder[data-open=true]>#studentSearchToggle.spi-btn:not(#_):not(#__){width:36px!important;min-width:36px!important}';
+ document.head.append(st);
+})();
+;
