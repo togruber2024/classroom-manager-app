@@ -8298,7 +8298,7 @@ return}
   ".qs-row{display:flex;align-items:flex-start;gap:8px}",
   ".qs-row>.qs-seq{flex:1;min-width:0;margin-top:0}",
   ".qs-sect>.qs-sh{min-height:22px}",
-  ".qs-sep{align-self:stretch;border-left:2px dashed #b9c9e0;margin:0 3px}",
+  ".qs-sep{align-self:flex-start;flex:none;width:5px;height:5px;margin:9.5px 3px 0;border-radius:50%;background:#9aa8bd}",
   ".qs-card:not(.q1-open) .qs-prev,.qs-card:not(.q1-open) .qs-sep,.qs-card:not(.q1-open) .qs-q1chip{display:none}",
   ".qs-sect .qs-sh .qs-v-h{display:none}",
   ".qs-card:not(.q1-open) .qs-sect.only-prev .qs-sh .qs-v-h{display:inline-flex}",

@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 11.11.2026 · Version 10.98
+Stand: 11.11.2026 · Version 10.99
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1377,3 +1377,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.96: iPhone quer – Stundenplan mit Überschrift; Noten: Tipp auf Namen springt genau zur Person, Q1/Q2/Halbjahr behalten die gewählte Person
 10.97: iPhone Noten quer – Halbjahr zeigt Q1 und Q2 getrennt durch gestrichelte Linie, ohne Prozentangaben
 10.98: iPhone Noten quer – Halbjahr trennt Q1 und Q2 mit einem kleinen grauen Punkt statt Linie
+10.99: Notenkarten – Punkt statt gestrichelter Linie zwischen Q1 und Q2
