@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f6f8fc"><meta name="robots" content="noindex">
+<title>Text-Trainer</title>
+<!-- 11.06: Text-Trainer des Classroom-Managers. Diese Seite enthält KEINEN Text: Text und Aufgaben kommen aus dem Link (#…)
+     oder aus einer Datei der Lehrkraft. Läuft nach dem Laden ohne Internet; nichts wird an einen Server geschickt. -->
+<style>
+:root{--blue:#2f5f9b;--ink:#243247;--mut:#66758a;--line:#dce3ef;--bg:#f6f8fc;--ok:#1f8a4c;--okbg:#e5f5ea;--bad:#c2410c;--badbg:#fdeee6;--pred:#2f5f9b;--subj:#1f8a4c;--obj:#b45309}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Segoe UI",sans-serif}
+body{padding:max(14px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left))}
+.wrap{max-width:1060px;margin:0 auto}button{font:inherit;color:inherit;cursor:pointer}
+h1{font-size:1.5rem;margin:4px 0 0}.muted{color:var(--mut)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.tabs button{min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--mut);font-weight:600}
+.tabs button.on{background:var(--blue);border-color:var(--blue);color:#fff}.tabs button i{font-style:normal;display:inline-block;min-width:22px;margin-left:6px;padding:0 6px;border-radius:9px;background:#eef2f8;color:var(--mut);font-size:.8rem}.tabs button.on i{background:#ffffff33;color:#fff}.tabs button i.ok{background:var(--okbg);color:var(--ok)}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:14px}
+.task{font-size:1.08rem;margin:0 0 10px}.hint{font-size:.9rem;color:var(--mut);margin-top:6px}
+.text{font-family:"Iowan Old Style","Palatino",Georgia,serif;font-size:1.3rem;line-height:2.05;user-select:none;-webkit-user-select:none}
+.w{display:inline;padding:2px 3px;border-radius:7px;cursor:pointer;transition:background .15s}
+.w.f{background:var(--okbg);color:var(--ok);font-weight:700}.w.x{background:var(--badbg);color:var(--bad)}.w.miss{box-shadow:inset 0 -3px 0 #f59e0b;background:#fff8e6}
+.w.hl{background:#fde7c2;color:#8a4b00;font-weight:700}.w.dim{color:#9aa6b6}
+.w.p{background:#e8f0fb;color:var(--pred);font-weight:700;box-shadow:inset 0 -3px 0 var(--pred)}.w.s{background:var(--okbg);color:var(--subj);font-weight:700;box-shadow:inset 0 -3px 0 var(--subj)}
+.w.g{text-decoration:underline dotted #9aa6b6;text-underline-offset:5px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}.row .sp{flex:1}
+.pri{min-height:48px;padding:0 20px;border:0;border-radius:12px;background:var(--blue);color:#fff;font-weight:650}.pri:disabled{opacity:.4}
+.sec{min-height:48px;padding:0 16px;border:1px solid #b9c6da;border-radius:12px;background:#fff;color:var(--blue)}.sec:disabled{opacity:.45}
+.lnk{border:0;background:none;color:var(--mut);text-decoration:underline;min-height:44px}
+.fb{margin-top:12px;padding:10px 14px;border-radius:12px;font-weight:600}.fb.ok{background:var(--okbg);color:var(--ok)}.fb.no{background:var(--badbg);color:var(--bad)}.fb.info{background:#eef3fa;color:#2f4f7a}
+.cnt{font-weight:800;color:var(--blue)}
+.ev{display:flex;align-items:center;gap:10px;min-height:54px;margin:0 0 8px;padding:8px 10px 8px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
+.ev .grip{flex:none;color:#9aa6b6;font-size:1.3rem;cursor:grab}.ev .nr{flex:none;width:28px;height:28px;border-radius:50%;background:#eef2f8;color:var(--mut);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem}
+.ev .tx{flex:1}.ev button{flex:none;width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--blue)}
+.ev.drag{box-shadow:0 10px 26px #1c2b4633;border-color:var(--blue);position:relative;z-index:5}.ev.ok{border-color:#7cc69a;background:var(--okbg)}.ev.no{border-color:#f0a982;background:var(--badbg)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.chip{min-height:48px;padding:0 16px;border:1px solid #cfd8e6;border-radius:24px;background:#fff;font-weight:600}
+.chip.ok{background:var(--okbg);border-color:#7cc69a;color:var(--ok)}.chip.no{background:var(--badbg);border-color:#f0a982;color:var(--bad)}.chip.used{opacity:.35}
+.nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.nav button{width:38px;height:38px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:.9rem;font-weight:600;color:var(--mut)}
+.nav button.on{border-color:var(--blue);color:var(--blue);box-shadow:0 0 0 2px #2f5f9b33}.nav button.r2{background:var(--okbg);color:var(--ok);border-color:#7cc69a}.nav button.r1{background:#fff8e6;color:#8a5a00;border-color:#f3cf8a}.nav button.r0{background:var(--badbg);color:var(--bad);border-color:#f0a982}
+.steps{display:flex;gap:6px;margin:0 0 12px;flex-wrap:wrap}.steps span{padding:4px 10px;border-radius:999px;background:#eef2f8;color:var(--mut);font-size:.85rem;font-weight:600}.steps span.on{background:var(--blue);color:#fff}.steps span.done{background:var(--okbg);color:var(--ok)}
+.clause{display:block}.clause.sub{margin-left:2.2em;padding-left:.8em;border-left:3px solid #c9d6ea}.clause .lab{display:block;font-family:-apple-system,Inter,sans-serif;font-size:.75rem;color:var(--mut);line-height:1.2;margin-top:6px}
+textarea{width:100%;min-height:96px;padding:12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;font-size:1.05rem;resize:vertical}
+.hbox{margin-top:10px;padding:10px 14px;border-radius:12px;background:#f4f7fc;border:1px solid #e1e8f2}.hbox b{color:var(--blue)}
+.build{min-height:52px;margin-top:8px;padding:8px;border:2px dashed #cfd8e6;border-radius:12px;display:flex;flex-wrap:wrap;gap:6px}.build .chip{min-height:40px}
+.model{margin-top:12px;padding:12px 14px;border-radius:12px;background:#eef6f0;border:1px solid #cfe7d7}.model b{display:block;color:var(--ok);font-size:.85rem;margin-bottom:2px}
+.rate{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.rate button{min-height:48px;padding:0 16px;border:1px solid #cfd8e6;border-radius:12px;background:#fff;font-weight:600}
+.pop{position:fixed;z-index:50;max-width:320px;padding:12px 14px;border-radius:14px;background:#fff;border:1px solid var(--line);box-shadow:0 14px 34px #1c2b4633;font-size:.95rem}.pop b{font-size:1.1rem}.pop .sec{min-height:40px;margin-top:8px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem;color:var(--mut);margin-top:8px}.legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+table{border-collapse:collapse;width:100%}td,th{padding:7px 8px;border-bottom:1px solid #eef1f6;text-align:left;font-size:.95rem}th{color:var(--mut);font-weight:650;font-size:.85rem}
+.empty{text-align:center;padding:40px 20px}
+@media (max-width:700px){.text{font-size:1.15rem}}
+</style></head><body><div class="wrap" id="app"></div><input type="file" id="file" accept=".cmtext,.json,application/json" hidden>
+<script>
+'use strict';
+const $=s=>document.querySelector(s),app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const clean=w=>w.replace(/[.,:;!?„“"]/g,'');
+let ac=null;const beep=ok=>{try{ac??=new (window.AudioContext||window.webkitAudioContext)();const g=ac.createGain(),o=ac.createOscillator();o.frequency.value=ok?880:240;g.gain.value=.05;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.12)}catch{}};
+const ls={get:k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+let T=null,ST=null,tab='pp',cur=0;
+const key=()=>'cm-texttrainer-'+(T?.title||'');
+const save=()=>ls.set(key(),ST);
+/* ---------- Laden: Link (#z1.… / #j1.…) oder Datei ---------- */
+const fromB64=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
+async function fromHash(h){const m=/^#?(z1|j1)\.(.+)$/.exec(h||'');if(!m)return null;const u=fromB64(m[2]);const bytes=m[1]==='z1'?new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()):u;return JSON.parse(new TextDecoder().decode(bytes))}
+function valid(t){return t&&t.type==='classroom-text-trainer'&&Array.isArray(t.s)&&t.s.length}
+function start(t){T=t;ST=ls.get(key())||{pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};ls.set('cm-texttrainer-last',t);render()}
+async function init(){let t=null;try{t=await fromHash(location.hash)}catch(e){console.warn(e)}
+ if(!valid(t))t=ls.get('cm-texttrainer-last');if(valid(t))return start(t);
+ app.innerHTML='<div class="card empty"><h1>Text-Trainer</h1><p class="muted">Hier ist noch kein Text geladen. Öffne den Link deiner Lehrkraft oder lade die Datei, die sie dir geschickt hat.</p><button class="pri" data-load>Datei laden …</button></div>';$('[data-load]').onclick=()=>$('#file').click()}
+$('#file').onchange=async()=>{const f=$('#file').files?.[0];if(!f)return;try{const t=JSON.parse(await f.text());if(!valid(t))throw 0;start(t)}catch{alert('Diese Datei ist kein Text für den Text-Trainer.')}};
+/* ---------- Hilfen für Wörter ---------- */
+const words=si=>T.s[si].t.split(' ');
+function textHtml(cls){return T.s.map((s,si)=>words(si).map((w,i)=>'<span class="w '+(cls?cls(si,i)||'':'')+'" data-s="'+si+'" data-i="'+i+'">'+esc(w)+'</span>').join(' ')).join(' ')}
+/* ---------- Kopf und Reiter ---------- */
+const TABS=[['pp','Passiv-Jäger'],['ev','Zeitstrahl'],['pr','Wer ist gemeint?'],['tr','Übersetzen'],['res','Auswertung']];
+function badge(k){if(k==='pp')return (ST.pp.length)+'/'+T.pp.length;if(k==='ev')return ST.evOk?'✓':'';if(k==='pr')return Object.keys(ST.pr).length+'/'+T.pron.length;if(k==='tr')return Object.values(ST.sent).filter(x=>x.r!=null).length+'/'+T.s.length;return ''}
+function badgeOk(k){if(k==='pp')return ST.pp.length===T.pp.length;if(k==='ev')return !!ST.evOk;if(k==='pr')return Object.keys(ST.pr).length===T.pron.length;if(k==='tr')return Object.values(ST.sent).filter(x=>x.r!=null).length===T.s.length;return false}
+function render(){closePop();app.innerHTML='<h1>'+esc(T.title)+'</h1><div class="muted">'+esc(T.sub||'')+'</div><div class="tabs">'+TABS.map(([k,l])=>'<button data-tab="'+k+'" class="'+(k===tab?'on':'')+'">'+l+(badge(k)?'<i class="'+(badgeOk(k)?'ok':'')+'">'+badge(k)+'</i>':'')+'</button>').join('')+'</div><div id="body"></div>';
+ app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render();scrollTo(0,0)});({pp:renderPP,ev:renderEV,pr:renderPR,tr:renderTR,res:renderRes})[tab]($('#body'))}
+const refreshTabs=()=>app.querySelectorAll('[data-tab]').forEach(b=>{const k=b.dataset.tab,v=badge(k);let i=b.querySelector('i');if(v){if(!i){i=document.createElement('i');b.append(i)}i.textContent=v;i.className=badgeOk(k)?'ok':''}});
+/* ---------- 1 Passiv-Jäger ---------- */
+function ppIdx(si,i){return T.pp.findIndex(([s,ws])=>s===si&&ws.includes(i))}
+function renderPP(b){const found=new Set(ST.pp);const cls=(si,i)=>{const k=ppIdx(si,i);if(k>=0&&found.has(k))return 'f';if(k>=0&&ST.ppDone)return 'miss';return ''};
+ b.innerHTML='<div class="card"><p class="task">Tippe alle Formen im <b>Perfekt</b> und <b>Plusquamperfekt Passiv</b> an (PPP + Form von esse). Gefunden: <span class="cnt" id="ppc">'+found.size+' von '+T.pp.length+'</span></p><div class="hint">Vorsicht: Nicht jede Form auf -erat oder -ērunt ist Passiv. Ein Infinitiv wie „positam esse“ zählt hier nicht.</div></div><div class="card text" id="tx">'+textHtml(cls)+'</div><div class="row"><span class="muted" id="ppm">'+(ST.ppMiss?ST.ppMiss+' Fehlgriff'+(ST.ppMiss>1?'e':''):'')+'</span><div class="sp"></div><button class="sec" data-show '+(ST.ppDone?'disabled':'')+'>Fehlende zeigen</button></div><div id="fb"></div>';
+ b.querySelector('#tx').onclick=e=>{const w=e.target.closest('.w');if(!w)return;const si=+w.dataset.s,i=+w.dataset.i,k=ppIdx(si,i);
+  if(k>=0){if(!found.has(k)){found.add(k);ST.pp=[...found];save();for(const j of T.pp[k][1])b.querySelector('.w[data-s="'+si+'"][data-i="'+j+'"]').className='w f';beep(true);$('#ppc').textContent=found.size+' von '+T.pp.length;refreshTabs();
+   if(found.size===T.pp.length)$('#fb').innerHTML='<div class="fb ok">✓ Alle '+T.pp.length+' Formen gefunden!</div>'}return}
+  if(w.classList.contains('f'))return;ST.ppMiss++;save();beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700);$('#ppm').textContent=ST.ppMiss+' Fehlgriff'+(ST.ppMiss>1?'e':'')};
+ b.querySelector('[data-show]').onclick=()=>{ST.ppDone=true;save();render()}}
+/* ---------- 2 Zeitstrahl ---------- */
+function renderEV(b){if(!ST.ev||ST.ev.length!==T.ev.length){let o;do{o=shuffle(T.ev.map((_,i)=>i))}while(o.every((x,i)=>x===i));ST.ev=o;save()}
+ b.innerHTML='<div class="card"><p class="task">Bringe die Ereignisse in die Reihenfolge, in der sie <b>passiert</b> sind – nicht in der Reihenfolge des Textes. Ziehe die Karten oder nutze die Pfeile.</p><div class="hint">Tipp: Das Plusquamperfekt zeigt, was schon vorher geschehen war.</div></div><div id="list"></div><div class="row"><div class="sp"></div><button class="pri" data-chk>Prüfen</button></div><div id="fb"></div>';
+ const list=b.querySelector('#list');let marks=null;
+ const draw=()=>{list.innerHTML=ST.ev.map((e,p)=>'<div class="ev'+(marks?(marks[p]?' ok':' no'):'')+'" data-p="'+p+'"><span class="grip">⋮⋮</span><span class="nr">'+(p+1)+'</span><span class="tx">'+esc(T.ev[e])+'</span><button data-up="'+p+'" aria-label="nach oben">↑</button><button data-dn="'+p+'" aria-label="nach unten">↓</button></div>').join('')};
+ const move=(a,c)=>{if(c<0||c>=ST.ev.length)return;const x=ST.ev.splice(a,1)[0];ST.ev.splice(c,0,x);marks=null;save();draw()};
+ list.onclick=e=>{const u=e.target.closest('[data-up]'),d=e.target.closest('[data-dn]');if(u)move(+u.dataset.up,+u.dataset.up-1);if(d)move(+d.dataset.dn,+d.dataset.dn+1)};
+ let dr=null;list.addEventListener('pointerdown',e=>{const ev=e.target.closest('.ev');if(!ev||e.target.closest('button'))return;dr={el:ev,p:+ev.dataset.p,y:e.clientY};ev.classList.add('drag');ev.setPointerCapture(e.pointerId)});
+ list.addEventListener('pointermove',e=>{if(!dr)return;const dy=e.clientY-dr.y;dr.el.style.transform='translateY('+dy+'px)';const h=dr.el.offsetHeight+8,steps=Math.round(dy/h);dr.target=Math.max(0,Math.min(ST.ev.length-1,dr.p+steps))});
+ list.addEventListener('pointerup',()=>{if(!dr)return;const {p,target}=dr;dr.el.style.transform='';dr.el.classList.remove('drag');dr=null;if(target!=null&&target!==p)move(p,target)});
+ draw();
+ b.querySelector('[data-chk]').onclick=()=>{marks=ST.ev.map((e,p)=>e===p);const n=marks.filter(Boolean).length;if(ST.evFirst==null)ST.evFirst=n;if(n===T.ev.length)ST.evOk=true;save();draw();beep(n===T.ev.length);refreshTabs();
+  $('#fb').innerHTML=n===T.ev.length?'<div class="fb ok">✓ Alles in der richtigen Reihenfolge!</div>':'<div class="fb no">'+n+' von '+T.ev.length+' Karten stehen richtig. Verschiebe die roten und prüfe noch einmal.</div>'}}
+/* ---------- 3 Wer ist gemeint? ---------- */
+function renderPR(b){const open=T.pron.findIndex((_,k)=>ST.pr[k]==null);const k=open<0?T.pron.length-1:open;showPR(b,k)}
+function showPR(b,k){const [si,wi,ans]=T.pron[k];const done=ST.pr[k]!=null;
+ b.innerHTML='<div class="card"><p class="task">Auf wen bezieht sich das markierte Wort? <span class="muted">('+(k+1)+' von '+T.pron.length+')</span></p><div class="text">'+words(si).map((w,i)=>'<span class="w '+(i===wi?'hl':'')+'">'+esc(w)+'</span>').join(' ')+'</div>'
+  +'<div class="chips">'+T.people.map(p=>'<button class="chip" data-p="'+esc(p)+'">'+esc(p)+'</button>').join('')+'</div><div id="fb"></div><div class="row"><button class="sec" data-prev '+(k?'':'disabled')+'>‹ Zurück</button><div class="sp"></div><button class="pri" data-next>'+(k<T.pron.length-1?'Weiter ›':'Fertig')+'</button></div></div>'
+  +'<div class="card"><div class="muted" style="font-size:.85rem;margin-bottom:4px">Zusammenhang</div><div class="text" style="font-size:1.05rem;line-height:1.8">'+[si-1,si,si+1].filter(x=>x>=0&&x<T.s.length).map(x=>x===si?'<b>'+esc(T.s[x].t)+'</b>':esc(T.s[x].t)).join(' ')+'</div></div>';
+ const mark=()=>{const got=ST.pr[k];if(got==null)return;b.querySelectorAll('[data-p]').forEach(c=>{if(c.dataset.p===ans)c.classList.add('ok');else if(c.dataset.p===got)c.classList.add('no')});$('#fb').innerHTML=got===ans?'<div class="fb ok">✓ Richtig: '+esc(ans)+'</div>':'<div class="fb no">Gemeint ist: '+esc(ans)+'</div>'};
+ b.querySelectorAll('[data-p]').forEach(c=>c.onclick=()=>{if(ST.pr[k]!=null)return;ST.pr[k]=c.dataset.p;save();beep(c.dataset.p===ans);mark();refreshTabs()});mark();
+ b.querySelector('[data-prev]').onclick=()=>showPR(b,k-1);b.querySelector('[data-next]').onclick=()=>{if(k<T.pron.length-1)showPR(b,k+1);else{tab='tr';render()}}}
+/* ---------- 4 Übersetzen ---------- */
+const STEPS=['Prädikat','Subjekt','Gliedsätze','Übersetzen'];
+function sstate(si){return ST.sent[si]??={step:0,p:[],s:[],g:[],miss:0,h:0,look:0,tx:'',r:null,bld:null}}
+function renderTR(b){cur=Math.min(cur,T.s.length-1);
+ b.innerHTML='<div class="nav">'+T.s.map((_,i)=>{const x=ST.sent[i];return '<button data-n="'+i+'" class="'+(i===cur?'on ':'')+(x&&x.r!=null?'r'+x.r:'')+'">'+(i+1)+'</button>'}).join('')+'</div><div id="sb"></div>';
+ b.querySelectorAll('[data-n]').forEach(x=>x.onclick=()=>{cur=+x.dataset.n;renderTR(b)});showSent(b.querySelector('#sb'),cur)}
+function showSent(b,si){const S=T.s[si],X=sstate(si),ws=words(si);if(X.step===2&&!S.g.length)X.step=3;if(X.step===1&&X.s===true)X.step=2;
+ const need={0:S.p,1:S.su}[X.step];
+ const inSub=i=>S.g.findIndex(([a,c])=>i>=a&&i<=c);
+ const wcls=i=>{let c=[];if(X.p.includes(i))c.push('p');if(X.s!==true&&Array.isArray(X.s)&&X.s.includes(i))c.push('s');if(X.step===3&&S.w[i])c.push('g');return c.join(' ')};
+ const wspan=i=>'<span class="w '+wcls(i)+'" data-i="'+i+'">'+esc(ws[i])+'</span>';
+ let txt;if(X.g.length||X.step===3&&S.g.length&&X.g.length){/* eingerückte Darstellung */const parts=[];let mainBuf=[];const flush=()=>{if(mainBuf.length){parts.push('<span class="clause">'+mainBuf.map(wspan).join(' ')+'</span>');mainBuf=[]}};
+  for(let i=0;i<ws.length;i++){const g=inSub(i);if(g>=0&&X.g.includes(g)){flush();const [a,c,l]=S.g[g];parts.push('<span class="clause sub"><span class="lab">'+esc(l)+'</span>'+Array.from({length:c-a+1},(_,j)=>wspan(a+j)).join(' ')+'</span>');i=c}else mainBuf.push(i)}flush();txt=parts.join('')}
+ else txt=ws.map((_,i)=>wspan(i)).join(' ');
+ const steps='<div class="steps">'+STEPS.map((l,i)=>(i===2&&!S.g.length)?'':'<span class="'+(i===X.step?'on':i<X.step?'done':'')+'">'+(i+1)+' '+l+'</span>').join('')+'</div>';
+ const task=['Tippe das <b>Prädikat</b> an – alle Wörter, die dazugehören (auch die Form von esse).','Tippe das <b>Subjekt</b> an. Steckt es nur im Prädikat? Dann tippe auf den Knopf darunter.','Tippe in jeden <b>Gliedsatz</b> – er wird eingerückt. So siehst du, was zum Hauptsatz gehört.','<b>Übersetze</b> den Satz. Gepunktet unterstrichene Wörter kannst du nachschlagen – überlege aber zuerst selbst.'][X.step];
+ b.innerHTML='<div class="card">'+steps+'<p class="task">'+task+'</p><div class="text" id="st">'+txt+'</div>'
+  +(X.step===1?'<div class="row"><button class="sec" data-nosub>Subjekt steckt im Prädikat</button></div>':'')
+  +(X.step<3?'<div class="row"><span class="muted" id="left"></span><div class="sp"></div><button class="lnk" data-solve>Lösung zeigen</button></div>':'')
+  +'<div class="legend"><span style="--c:#2f5f9b">Prädikat</span><span style="--c:#1f8a4c">Subjekt</span></div><div id="fb"></div></div>'
+  +(X.step===3?'<div class="card" id="trc"></div>':'');
+ const left=()=>{const l=$('#left');if(!l||!need)return;const got=X.step===0?X.p:X.s;const n=need.filter(i=>!(got||[]).includes(i)).length;l.textContent=n?'Noch '+n+' Wort'+(n>1?'e':''):''};left();
+ const fb=(ok,t)=>{$('#fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'">'+t+'</div>'};
+ const advance=()=>{X.step++;save();setTimeout(()=>showSent(b,si),X.step===3?250:450)};
+ b.querySelector('#st').onclick=e=>{const w=e.target.closest('.w');if(!w)return;const i=+w.dataset.i;
+  if(X.step===0){if(S.p.includes(i)){if(!X.p.includes(i)){X.p.push(i);w.classList.add('p');beep(true);save();left();if(S.p.every(x=>X.p.includes(x))){fb(true,'✓ Prädikat gefunden.');advance()}}}else{X.miss++;save();beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700);fb(false,'Das ist nicht das Prädikat. Suche die finite Verbform'+(S.p.length>1?' (es sind '+S.p.length+' Wörter)':'')+'.')}}
+  else if(X.step===1){if(!S.su.length){X.miss++;save();beep(false);fb(false,'Hier gibt es kein eigenes Subjekt-Wort – es steckt im Prädikat.');return}
+   if(S.su.includes(i)){X.s=Array.isArray(X.s)?X.s:[];if(!X.s.includes(i)){X.s.push(i);w.classList.add('s');beep(true);save();left();if(S.su.every(x=>X.s.includes(x))){fb(true,'✓ Subjekt gefunden.');advance()}}}else{X.miss++;save();beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700);fb(false,'Das ist nicht das Subjekt. Frage: Wer oder was '+(S.p.length?'„'+esc(clean(ws[S.p[0]]))+'“':'tut etwas')+'? Achte auf den Nominativ.')}}
+  else if(X.step===2){const g=inSub(i);if(g>=0&&!X.g.includes(g)){X.g.push(g);beep(true);save();if(X.g.length===S.g.length){X.step=3;save()}showSent(b,si);if(X.step===3)fb(true,'✓ Alle Gliedsätze eingerückt.')}else if(g<0){X.miss++;save();beep(false);fb(false,'Dieses Wort gehört zum Hauptsatz. Gliedsätze beginnen oft mit quī/quae/quod, quia, quamquam, sī …')}}
+  else if(X.step===3&&S.w[i])lookup(w,si,i)};
+ b.querySelector('[data-nosub]')?.addEventListener('click',()=>{if(S.su.length){X.miss++;save();beep(false);fb(false,'Doch – hier steht ein Subjekt im Nominativ. Suche es im Satz.');return}X.s=true;beep(true);save();fb(true,'✓ Richtig, das Subjekt steckt im Prädikat.');advance()});
+ b.querySelector('[data-solve]')?.addEventListener('click',()=>{X.h++;if(X.step===0)X.p=[...S.p];else if(X.step===1)X.s=S.su.length?[...S.su]:true;else X.g=S.g.map((_,k)=>k);X.step++;save();showSent(b,si)});
+ if(X.step===3)renderTranslate($('#trc'),si)}
+function renderTranslate(c,si){const S=T.s[si],X=sstate(si);const H=S.h;
+ c.innerHTML='<textarea id="ta" placeholder="Deine Übersetzung …">'+esc(X.tx)+'</textarea>'
+  +'<div class="row"><button class="sec" data-h="1">Hilfe 1</button><button class="sec" data-h="2">Hilfe 2</button><button class="sec" data-h="3">Hilfe 3: Bausteine</button><div class="sp"></div><button class="pri" data-cmp>Vergleichen</button></div><div id="hl"></div><div id="cmp"></div>';
+ const ta=c.querySelector('#ta');ta.oninput=()=>{X.tx=ta.value;save()};
+ const used=X.hu||(X.hu=[]);
+ const showH=()=>{const hl=c.querySelector('#hl');hl.innerHTML=used.filter(n=>n<3).map(n=>'<div class="hbox"><b>Hilfe '+n+':</b> '+esc(H[n-1])+'</div>').join('');if(used.includes(3))hl.insertAdjacentHTML('beforeend','<div class="hbox"><b>Hilfe 3:</b> Tippe die Bausteine in der richtigen Reihenfolge an.<div class="chips" id="bk"></div><div class="build" id="bd"></div></div>');if(used.includes(3))buildPuzzle(c,si);c.querySelectorAll('[data-h]').forEach(x=>x.disabled=used.includes(+x.dataset.h))};
+ c.querySelectorAll('[data-h]').forEach(x=>x.onclick=()=>{const n=+x.dataset.h;if(!used.includes(n)){used.push(n);X.h++;save()}showH()});showH();
+ const showCmp=()=>{const box=c.querySelector('#cmp');box.innerHTML='<div class="model"><b>Musterübersetzung</b>'+esc(S.de)+'</div><div class="muted" style="margin-top:10px">Wie gut passt deine Übersetzung?</div><div class="rate"><button data-r="2">✓ Passt</button><button data-r="1">≈ Teilweise</button><button data-r="0">✗ Noch nicht</button></div>';
+  box.querySelectorAll('[data-r]').forEach(r=>{if(X.r!=null&&+r.dataset.r===X.r)r.style.borderColor='#2f5f9b';r.onclick=()=>{X.r=+r.dataset.r;save();refreshTabs();if(cur<T.s.length-1){cur++;renderTR($('#body'));scrollTo({top:0,behavior:'smooth'})}else{tab='res';render()}}})};
+ c.querySelector('[data-cmp]').onclick=()=>{if(!X.tx.trim()&&!confirm('Du hast noch nichts geschrieben. Trotzdem die Musterübersetzung zeigen?'))return;X.cmp=true;save();showCmp()};if(X.cmp)showCmp()}
+function buildPuzzle(c,si){const S=T.s[si],X=sstate(si),parts=S.h[2];X.bld??={order:shuffle(parts.map((_,i)=>i)),pick:[]};const P=X.bld;
+ const bk=c.querySelector('#bk'),bd=c.querySelector('#bd');
+ const draw=()=>{bk.innerHTML=P.order.map(i=>'<button class="chip'+(P.pick.includes(i)?' used':'')+'" data-k="'+i+'" '+(P.pick.includes(i)?'disabled':'')+'>'+esc(parts[i])+'</button>').join('');
+  bd.innerHTML=P.pick.map((i,j)=>'<button class="chip '+(i===j?'ok':'no')+'" data-u="'+j+'">'+esc(parts[i])+'</button>').join('')||'<span class="muted">Hier entsteht der Satz …</span>';
+  bk.querySelectorAll('[data-k]').forEach(x=>x.onclick=()=>{const i=+x.dataset.k;P.pick.push(i);beep(i===P.pick.length-1);save();draw()});
+  bd.querySelectorAll('[data-u]').forEach(x=>x.onclick=()=>{P.pick.splice(+x.dataset.u);save();draw()})};draw()}
+/* Wort-Lupe: erst selbst bestimmen, dann auflösen */
+let popEl=null;function closePop(){popEl?.remove();popEl=null}
+function lookup(w,si,i){closePop();const [lem,mean,form]=T.s[si].w[i],X=sstate(si);const r=w.getBoundingClientRect();
+ popEl=document.createElement('div');popEl.className='pop';popEl.innerHTML='<b>'+esc(clean(w.textContent))+'</b><div class="muted" style="margin-top:4px">Überlege zuerst: Welche Wortart? Welche Form? Welche Grundform?</div><button class="sec" data-rv>Auflösen</button>';
+ document.body.append(popEl);const pw=popEl.offsetWidth;popEl.style.left=Math.max(8,Math.min(innerWidth-pw-8,r.left))+'px';popEl.style.top=(r.bottom+8+popEl.offsetHeight>innerHeight?r.top-popEl.offsetHeight-8:r.bottom+8)+'px';
+ popEl.querySelector('[data-rv]').onclick=()=>{X.look++;save();popEl.innerHTML='<b>'+esc(clean(w.textContent))+'</b><div style="margin-top:4px">'+esc(form)+' von <b style="font-size:1rem">'+esc(lem)+'</b></div><div>„'+esc(mean)+'“</div>'}}
+addEventListener('pointerdown',e=>{if(popEl&&!popEl.contains(e.target)&&!e.target.closest('.w.g'))closePop()},true);addEventListener('scroll',closePop,{passive:true});
+/* ---------- 5 Auswertung ---------- */
+function renderRes(b){const sents=T.s.map((_,i)=>ST.sent[i]||{});const rated=sents.filter(x=>x.r!=null);const prOk=T.pron.filter((p,k)=>ST.pr[k]===p[2]).length;
+ const lab={2:'✓ passt',1:'≈ teilweise',0:'✗ noch nicht'};const talk=sents.map((x,i)=>({x,i})).filter(({x})=>x.r===0||x.r===1||(x.h||0)>=3);
+ b.innerHTML='<div class="card"><p class="task"><b>Deine Auswertung</b></p><table><tr><th>Übung</th><th>Ergebnis</th></tr>'
+  +'<tr><td>Passiv-Jäger</td><td>'+ST.pp.length+' von '+T.pp.length+' gefunden'+(ST.ppMiss?' · '+ST.ppMiss+' Fehlgriffe':'')+'</td></tr>'
+  +'<tr><td>Zeitstrahl</td><td>'+(ST.evFirst==null?'noch offen':'im ersten Versuch '+ST.evFirst+' von '+T.ev.length+' richtig'+(ST.evOk?' · gelöst':''))+'</td></tr>'
+  +'<tr><td>Wer ist gemeint?</td><td>'+prOk+' von '+T.pron.length+' richtig</td></tr>'
+  +'<tr><td>Übersetzen</td><td>'+rated.length+' von '+T.s.length+' Sätzen · '+rated.filter(x=>x.r===2).length+' passen · '+sents.reduce((a,x)=>a+(x.h||0),0)+' Hilfen · '+sents.reduce((a,x)=>a+(x.look||0),0)+' Wörter nachgeschlagen</td></tr></table></div>'
+  +(talk.length?'<div class="card"><p class="task"><b>Diese Sätze solltest du dir noch einmal ansehen</b></p>'+talk.map(({x,i})=>'<div style="margin:6px 0"><button class="sec" data-go="'+i+'">Satz '+(i+1)+'</button> <span class="muted">'+(x.r!=null?lab[x.r]:'')+((x.h||0)>=3?' · viele Hilfen':'')+'</span></div>').join('')+'</div>':'')
+  +'<div class="row"><button class="lnk" data-reset>Alles zurücksetzen</button></div>';
+ b.querySelectorAll('[data-go]').forEach(x=>x.onclick=()=>{cur=+x.dataset.go;tab='tr';render()});
+ b.querySelector('[data-reset]').onclick=()=>{if(!confirm('Alle Eingaben zu diesem Text löschen und neu beginnen?'))return;ST={pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};save();tab='pp';cur=0;render()}}
+addEventListener('hashchange',init);
+init();
+</script></body></html>
