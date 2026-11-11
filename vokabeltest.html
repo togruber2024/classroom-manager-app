@@ -26,26 +26,47 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
 .done{position:fixed;inset:0;background:#f6f8fcf2;display:none;align-items:center;justify-content:center;padding:20px;z-index:5}.done.on{display:flex}.done .card{max-width:520px;padding:28px;text-align:center}.done h2{margin:0 0 8px}
 .err{padding:30px;max-width:640px;margin:40px auto;text-align:center}
 @media (max-width:760px){.row{grid-template-columns:28px 1fr;gap:8px}.row.head{display:none}.row>.n{grid-row:span 4}.gen{justify-content:flex-start}}
-.prep{padding:22px 24px;max-width:640px;margin:0 auto}.prep h1{margin-bottom:10px}.st{font-weight:650;font-size:1.05rem;display:flex;align-items:center;gap:10px}.st.ok{color:#1f7a45;font-size:1.35rem}.st.bad{color:#b42318}.spin{width:18px;height:18px;border:3px solid #cfd9e6;border-top-color:#2f5f9b;border-radius:50%;animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}.steps{margin:16px 0 0;padding-left:22px}.steps li{margin:0 0 14px}.net{margin-top:8px;padding:8px 12px;border-radius:10px;font-weight:650;font-size:.95rem}.net.on{background:#fff4e5;color:#8a4b0a}.net.off{background:#e7f6ec;color:#1f7a45}.netwarn{position:sticky;top:0;z-index:5;margin:0 0 12px;padding:10px 14px;border-radius:12px;background:#fff4e5;color:#8a4b0a;font-weight:650;text-align:center}.netwarn[hidden]{display:none}</style></head><body>
+.prep{padding:22px 24px;max-width:640px;margin:0 auto}.prep h1{margin-bottom:10px}.st{font-weight:650;font-size:1.05rem;display:flex;align-items:center;gap:10px}.st.ok{color:#1f7a45;font-size:1.35rem}.st.bad{color:#b42318}.spin{width:18px;height:18px;border:3px solid #cfd9e6;border-top-color:#2f5f9b;border-radius:50%;animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}.steps{margin:16px 0 0;padding-left:22px}.steps li{margin:0 0 14px}.net{margin-top:8px;padding:8px 12px;border-radius:10px;font-weight:650;font-size:.95rem}.net.on{background:#fff4e5;color:#8a4b0a}.net.off{background:#e7f6ec;color:#1f7a45}.netwarn{position:sticky;top:0;z-index:5;margin:0 0 12px;padding:10px 14px;border-radius:12px;background:#fff4e5;color:#8a4b0a;font-weight:650;text-align:center}.netwarn[hidden]{display:none}.done .card{max-height:calc(100vh - 40px);overflow:auto}.dok{display:inline-flex;gap:8px;align-items:center;background:#dff3e6;color:#2c7a4b;font-weight:700;padding:6px 14px;border-radius:20px}.done .qn{font-weight:700;color:#2f5f9b;margin-top:8px}.qrbox{margin:14px auto 6px;width:min(320px,70vw)}.qrbox svg{width:100%;height:auto;display:block}.qrbox.big{width:min(560px,86vw,62vh)}.done .acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+</style></head><body>
 <div id="app"></div>
+<script src="qr-code.js"></script>
 <script>
 (async()=>{
  const app=document.getElementById('app');
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
  const fail=msg=>{app.innerHTML='<div class="card err"><h1>Vokabeltest</h1><p class="muted">'+esc(msg)+'</p></div>'};
+ /* 10.75: Abgabe als QR-Code – die Lehrkraft scannt ihn in der App („Abgaben scannen“). Kein AirDrop, keine Datei. */
+ const toB64=u=>{let x='';for(let i=0;i<u.length;i+=0x8000)x+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(x).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+ async function packCodes(body){const raw=new TextEncoder().encode(JSON.stringify(body));let data;
+  try{data='z'+toB64(new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()))}catch{data='j'+toB64(raw)}
+  const CH=650,n=Math.max(1,Math.ceil(data.length/CH)),id=Math.random().toString(36).slice(2,6);
+  return Array.from({length:n},(_,k)=>'CMA1/'+id+'/'+(k+1)+'/'+n+'/'+data.slice(k*CH,(k+1)*CH))}
+ async function qrDone(body,send){const done=document.getElementById('done'),card=done.querySelector('.card');let codes=[],k=0,big=false;
+  try{codes=await packCodes(body)}catch{}
+  const draw=()=>{let svg='';try{if(codes.length&&window.classroomQrSvg)svg=classroomQrSvg(codes[k],{ecc:'M',boost:false,dark:'#1d2b3d',border:3})}catch{svg=''}
+   card.innerHTML='<span class="dok">✓ Abgegeben</span><h2 style="margin-top:12px">'+esc(body.name)+'</h2><div class="muted">'+esc(body.t||'')+' · Gruppe '+esc(body.g)+'</div>'
+    +(svg?(codes.length>1?'<div class="qn">Code '+(k+1)+' von '+codes.length+'</div>':'')+'<div class="qrbox'+(big?' big':'')+'">'+svg+'</div><p class="muted">Zeig diesen Code deiner Lehrkraft.'+(codes.length>1?' Nach dem Scannen auf „Nächster Code“ tippen.':' Lass die Seite offen, bis er gescannt ist.')+'</p>'
+     :'<p class="muted">Der QR-Code kann auf diesem iPad nicht angezeigt werden. Bitte die Datei per AirDrop senden.</p>')
+    +'<div class="acts">'+(svg&&codes.length>1?'<button class="btn" id="qnext">'+(k+1<codes.length?'Nächster Code':'Wieder Code 1')+'</button>':'')+(svg?'<button class="btn sec" id="qbig">'+(big?'Code kleiner':'Code größer anzeigen')+'</button>':'')
+    +'<button class="btn '+(svg?'sec':'')+'" id="again">Als Datei senden (AirDrop)</button><button class="btn sec" id="edit">Zurück zum Test</button></div><p class="muted" id="dmsg" style="margin-top:10px"></p>';
+   card.querySelector('#qnext')?.addEventListener('click',()=>{k=(k+1)%codes.length;draw()});
+   card.querySelector('#qbig')?.addEventListener('click',()=>{big=!big;draw()});
+   card.querySelector('#again').onclick=async()=>{if(await send())card.querySelector('#again').textContent='Datei noch einmal senden'};
+   card.querySelector('#edit').onclick=()=>done.classList.remove('on')};
+  draw();done.classList.add('on')}
  const b64=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u};
  /* 10.57: Offline-Speicher (Test ohne Internet). QR-Code 1 „iPads vorbereiten“ öffnet #vorbereiten. */
  const swOk='serviceWorker' in navigator&&'caches' in window;
  if(swOk){try{navigator.serviceWorker.register('vt-sw.js',{scope:'./vokabeltest.html'}).catch(()=>{})}catch{}}
  const pageUrl=location.href.split('#')[0].split('?')[0];
  addEventListener('hashchange',()=>location.reload());/* neuer QR-Code im selben Tab */
- async function offlineReady(){if(!swOk)return false;try{return !!(await caches.match(pageUrl))}catch{return false}}
+ async function offlineReady(){if(!swOk)return false;try{return !!(await caches.match(pageUrl))&&!!(await caches.match(new URL('qr-code.js',pageUrl).href))}catch{return false}}
  if(/^#vorbereiten/.test(location.hash)){
   document.title='iPad vorbereiten · Vokabeltest';try{localStorage.setItem('vt-prep-at',String(Date.now()))}catch{}
   app.innerHTML='<div class="card prep"><h1>iPad vorbereiten</h1><p class="st" id="st"><span class="spin"></span> Der Vokabeltest wird auf diesem iPad gespeichert …</p>'
    +'<ol class="steps" id="steps" hidden><li><b>Internet trennen.</b> Kontrollzentrum öffnen (oben rechts nach unten wischen) und auf das WLAN-Symbol tippen, sodass es nicht mehr blau ist. Bluetooth bleibt an. Hat dein iPad Mobilfunk: auch „Mobile Daten“ aus.<div class="net" id="net"></div></li>'
    +'<li><b>QR-Code deiner Gruppe scannen</b> (A oder B), sobald deine Lehrkraft ihn zeigt. Der Test öffnet sich ohne Internet.</li>'
-   +'<li><b>Nach dem Abgeben:</b> die Datei per AirDrop an deine Lehrkraft senden – das geht ohne Internet.</li></ol></div>';
+   +'<li><b>Nach dem Abgeben:</b> den QR-Code deiner Lehrkraft zeigen – sie scannt ihn. Das geht ohne Internet.</li></ol></div>';
   const net=()=>{const n=document.getElementById('net');if(!n)return;const on=navigator.onLine;n.className='net '+(on?'on':'off');n.textContent=on?'Internet ist noch an – bitte WLAN im Kontrollzentrum antippen.':'✓ Kein Internet – jetzt den QR-Code deiner Gruppe scannen.'};
   addEventListener('online',net);addEventListener('offline',net);
   let tries=0;const check=async()=>{const ok=await offlineReady();const st=document.getElementById('st');
@@ -92,12 +113,13 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
   count();
   const ascii=x=>String(x||'').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/Ä/g,'Ae').replace(/Ö/g,'Oe').replace(/Ü/g,'Ue').replace(/ß/g,'ss').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
   const fileName=()=>'Grammatiktest_'+ascii((test.t||'').replace(/^Grammatiktest\s*/i,'')).slice(0,40)+'_'+test.g+'_'+(ascii(draft.name)||'ohne_Name')+'.json';
-  async function send(){const body={type:'classroom-vokabeltest-abgabe',v:1,k:'gr',i:test.i,g:test.g,t:test.t,name:draft.name.trim(),ts:new Date().toISOString(),a:draft.a};
+  const makeBody=()=>({type:'classroom-vokabeltest-abgabe',v:1,k:'gr',i:test.i,g:test.g,t:test.t,name:draft.name.trim(),ts:new Date().toISOString(),a:draft.a});let sentBody=null;
+  async function send(){const body=sentBody||makeBody();
    const file=new File([JSON.stringify(body)],fileName(),{type:'application/json'});
    try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:fileName()});return true}}catch(e){if(e?.name==='AbortError')return false}
    const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
    document.getElementById('dmsg').textContent='Die Datei „'+file.name+'“ wurde gespeichert. Schicke sie an deine Lehrkraft (z. B. per AirDrop aus der Dateien-App).';return true}
-  document.getElementById('go').onclick=()=>{if(!draft.name.trim()){alert('Bitte zuerst deinen Namen eintragen.');document.getElementById('nm').focus();return}const open=test.q.filter((it,i)=>!full(it,draft.a[i])).length;if(!confirm((open?open+' Aufgabe'+(open>1?'n sind':' ist')+' noch nicht fertig. ':'')+'Test jetzt abgeben?'))return;draft.sent=true;save();document.getElementById('done').classList.add('on')};
+  document.getElementById('go').onclick=()=>{if(!draft.name.trim()){alert('Bitte zuerst deinen Namen eintragen.');document.getElementById('nm').focus();return}const open=test.q.filter((it,i)=>!full(it,draft.a[i])).length;if(!confirm((open?open+' Aufgabe'+(open>1?'n sind':' ist')+' noch nicht fertig. ':'')+'Test jetzt abgeben?'))return;draft.sent=true;save();sentBody=makeBody();qrDone(sentBody,send)};
   document.getElementById('again').onclick=async()=>{if(await send()){document.querySelector('#done h2').textContent='Abgegeben ✓';document.getElementById('again').textContent='Noch einmal senden'}};
   document.getElementById('edit').onclick=()=>document.getElementById('done').classList.remove('on')}
  const off='autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"';
@@ -118,8 +140,9 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
  /* Dateiname nur aus einfachen Zeichen – AirDrop, Dateien-App und Browser kommen damit überall zurecht */
  const ascii=x=>String(x||'').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/Ä/g,'Ae').replace(/Ö/g,'Oe').replace(/Ü/g,'Ue').replace(/ß/g,'ss').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
  const fileName=()=>'Vokabeltest_'+ascii((test.t||'').replace(/^Vokabeltest\s*/i,''))+'_'+test.g+'_'+(ascii(draft.name)||'ohne_Name')+'.json';
+ const makeBody=()=>({type:'classroom-vokabeltest-abgabe',v:1,i:test.i,g:test.g,t:test.t,name:draft.name.trim(),ts:new Date().toISOString(),a:draft.a.map(a=>({l:a.l.trim(),ge:a.ge,m:a.m.trim()}))});let sentBody=null;
  async function send(){
-  const body={type:'classroom-vokabeltest-abgabe',v:1,i:test.i,g:test.g,t:test.t,name:draft.name.trim(),ts:new Date().toISOString(),a:draft.a.map(a=>({l:a.l.trim(),ge:a.ge,m:a.m.trim()}))};
+  const body=sentBody||makeBody();
   const file=new File([JSON.stringify(body)],fileName(),{type:'application/json'});
   try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:fileName()});return true}}catch(e){if(e?.name==='AbortError')return false}
   const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
@@ -128,7 +151,7 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
   if(!draft.name.trim()){alert('Bitte zuerst deinen Namen eintragen.');document.getElementById('nm').focus();return}
   const empty=test.r.filter(([f,k],i)=>!filled(draft.a[i])).length;
   if(!confirm((empty?empty+' Vokabel'+(empty>1?'n sind':' ist')+' noch leer. ':'')+'Test jetzt abgeben?'))return;
-  draft.sent=true;save();document.getElementById('done').classList.add('on')};/* Teilen braucht einen frischen Tipp – daher eigener Knopf */
+  draft.sent=true;save();sentBody=makeBody();qrDone(sentBody,send)};/* Teilen braucht einen frischen Tipp – daher eigener Knopf */
  document.getElementById('again').onclick=async()=>{if(await send()){document.querySelector('#done h2').textContent='Abgegeben ✓';document.getElementById('again').textContent='Noch einmal senden'}};
  document.getElementById('edit').onclick=()=>document.getElementById('done').classList.remove('on');
 })();

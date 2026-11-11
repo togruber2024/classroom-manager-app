@@ -1,5 +1,5 @@
-const CACHE='classroom-manager-v1074';
-const ASSETS=["./","./index.html","./Start.html","./app.js","./design.css","./manifest.webmanifest","./icon.svg","./icon-192.png","./icon-512.png","./apple-touch-icon.png","./noten/index.html","./noten/noten.js","./sitzplan/index.html","./sitzplan/sitzplan.js","./vendor/pdfjs.js","./vendor/pdfjs-worker.js"];
+const CACHE='classroom-manager-v1075';
+const ASSETS=["./","./index.html","./Start.html","./app.js","./design.css","./manifest.webmanifest","./icon.svg","./icon-192.png","./icon-512.png","./apple-touch-icon.png","./noten/index.html","./noten/noten.js","./sitzplan/index.html","./sitzplan/sitzplan.js","./vendor/pdfjs.js","./vendor/pdfjs-worker.js","./vendor/jsqr.js"];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil((async()=>{
  for(const key of await caches.keys())if((key.startsWith('classroom-manager-v')||key.startsWith('classroom-preview-'))&&key!==CACHE)await caches.delete(key);
