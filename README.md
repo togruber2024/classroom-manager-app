@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 11.11.2026 · Version 10.71
+Stand: 11.11.2026 · Version 10.72
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1350,3 +1350,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.69: Vokabeltest – Smartboard-Vollbild mit Abstand oben, passt ganz auf den Bildschirm
 10.70: Kopfleiste – Rahmen um „Backup“ einheitlich, keine doppelte Trennlinie
 10.71: Vokabeltest – Kasten „So wird bewertet“ (Sitzplan, Smartboard, Schülerseite), Gruppen-Pille im Vollbild, zusammengeschriebene Verbformen erkannt
+10.72: Grammatik-Tests – Reiter „Grammatik“ (Themen je Lektion aus eigener Datei), Tabellen, Bestimmen, Bilden, Umwandeln, Konjugieren; iPad-Ausgabe und Auswertung
