@@ -4114,7 +4114,7 @@ html.fs-view .fs-hide{display:none!important}
   const urls={};for(const x of groups)urls[x]=await studentUrl(t,x);const base=urls[groups[0]].split('#')[0],qrs={};for(const x of groups)qrs[x]=qrOf(urls[x]);const qrPrep=qrOf(base+'#vorbereiten');
   const total=items.reduce((a,it)=>a+maxOf(it),0),nSubs=Object.keys(t.subs||{}).length;
   const tabBtn=(k,l)=>'<button type="button" role="tab" data-tab="'+k+'" aria-selected="'+(tab===k)+'">'+l+'</button>';
-  const qrCard=x=>'<div class="vt-card vt-qr vt-qr2"><b>'+(groups.length>1?'<b class="vg vg'+esc(x)+'">'+esc(x)+'</b> Gruppe '+esc(x):'Test ausgeben')+'</b><button type="button" class="vt-qrimg vt-qrtap" data-bigqr="'+esc(x)+'" title="Groß zeigen">'+qrs[x]+'</button><button type="button" class="vt-btn" data-bigqr="'+esc(x)+'">Groß zeigen</button></div>';
+  const qrCard=x=>'<div class="vt-card vt-qr vt-qr2"><b>'+(groups.length>1?'<b class="vg vg'+esc(x)+'">'+esc(x)+'</b> Gruppe '+esc(x):'Test ausgeben')+'</b><button type="button" class="vt-qrimg vt-qrtap" data-bigqr="'+esc(x)+'" title="Antippen: groß zeigen">'+qrs[x]+'</button></div>';
   const isG=t.kind==='grammar';let body='';
   if(tab==='vok'&&isG)body=grammarSolutions(t,g,groups,items,total);
   else if(tab==='aus')body='<div class="vt-aus"><div class="vt-aus-plan">'+(seatMapHtml(t)||'<div class="vt-card vt-seats"><b>Gruppen im Sitzplan</b><div class="vt-sub">Nur eine Gruppe – kein Sitzplan nötig.</div></div>')+rulesHtml(t)+'</div><div class="vt-aus-side">'
@@ -7952,7 +7952,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const qlList=ql.querySelector('.qsl-list'),qlScroll=ql.querySelector('.qsl-scroll'),qlSeg=ql.querySelector('.qsl-seg');let qlTimer=0,qlBusy=false,qlCur='';
  const landOn=()=>LAND.matches&&mode()==='cards'&&!!document.querySelector('.qs-cards>.qs-card');
  function qlMark(name,scrollList){qlCur=name;for(const it of qlList.children){const on=it.dataset.n===name;it.classList.toggle('on',on);if(on&&scrollList){const r=it.getBoundingClientRect(),lr=qlList.getBoundingClientRect();if(r.top<lr.top+4||r.bottom>lr.bottom-4)qlList.scrollTop+=r.top-lr.top-(lr.height-r.height)/2}}}
- function qlBuild(){if(qlBusy)return;const on=landOn();document.documentElement.classList.toggle('qs-land',on);ql.hidden=!on;if(!on)return;
+ function qlBuild(){if(qlBusy)return;const on=landOn();document.documentElement.classList.toggle('qs-land',on);ql.hidden=!on;/* Kopfleiste der App im Querformat ausblenden */try{const pd=parent.document;if(!pd.getElementById('qs-land-top-css')){const st=pd.createElement('style');st.id='qs-land-top-css';st.textContent='html.qs-land-top body .app-header:not(#_):not(#__):not(#___){display:none!important}';pd.head.append(st)}const was=pd.documentElement.classList.contains('qs-land-top');const vis=!!frameElement&&frameElement.getClientRects().length>0;pd.documentElement.classList.toggle('qs-land-top',on&&vis);if(was!==(on&&vis))setTimeout(()=>parent.dispatchEvent(new Event('resize')),30)}catch{}if(!on)return;
   const box=[...document.querySelectorAll('.qs-cards')].find(b=>b.closest('.panel')&&b.querySelector('.qs-card')&&b.closest('.panel').offsetParent!==null)||document.querySelector('.qs-cards');const panel=box?.closest('.panel,[data-custom-panel]')||box?.parentElement;if(!box||!panel)return;
   qlBusy=true;const keep=qlScroll.scrollTop,wasOpen=!sheet.hidden,saved=detail;
   try{
@@ -7964,7 +7964,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
     it.onclick=()=>{const sec=qlScroll.querySelector('.qsl-sec[data-n="'+CSS.escape(name)+'"]');if(sec){qlScroll.scrollTop=sec.offsetTop-2;qlMark(name,false)}};qlList.append(it);
     detail={panel,name};renderDetail();const sec=document.createElement('section');sec.className='qsl-sec';sec.dataset.n=name;sec.title='Antippen zum Bearbeiten';
     const h=document.createElement('h4');const hn=document.createElement('b');hn.textContent=name;h.append(hn);if(big)h.append(big.cloneNode(true));sec.append(h);
-    const body=sheet.querySelector('.qd-body');for(const ch of body.children){if(ch.matches('.qd-note')&&!ch.querySelector('.qd-note-view'))continue;sec.append(ch.cloneNode(true))}
+    /* 10.92: kompakt wie in der Vorschau – je Zeile Bezeichnung + Zeichen, Hausaufgaben/Material als ✕ */
+    const body=sheet.querySelector('.qd-body'),hj=document.querySelector('.pl-seg.pl-view [aria-pressed=true]')?.dataset.view==='hj';
+    const short=t=>t.replace(/^Mündliche Mitarbeit/,'Mündl. Mitarbeit').replace(/ fehlend$/,'').trim();
+    const note=body.querySelector('.qd-note-view span')?.textContent.trim();if(note){const n=document.createElement('div');n.className='qsl-note';n.textContent=note;sec.append(n)}
+    for(const sc of body.querySelectorAll('.qs-sect')){const lab=sc.querySelector(':scope>.qs-sh .qs-sh-l')?.textContent.trim();if(!lab)continue;const seq=sc.querySelector(':scope>.qs-row .qs-seq, :scope>.qs-seq');
+     if(seq){const r=document.createElement('div');r.className='qsl-row';const l=document.createElement('span');l.className='qsl-l';l.textContent=short(lab);const c=document.createElement('span');c.className='qsl-c';for(const q of seq.querySelectorAll('.qs-sq>i,.qs-sq>b')){const x=q.cloneNode(true);x.classList.add('qsl-m');c.append(x)}if(!c.children.length)c.textContent='–';r.append(l,c);sec.append(r);continue}
+     if(sc.matches('.qs-miss')){const nEl=sc.querySelector(hj?'.qs-cnt-h':'.qs-cnt-q')||sc.querySelector('.qs-miss-n');const n=Number(nEl?.textContent)||0;const r=document.createElement('div');r.className='qsl-row';const l=document.createElement('span');l.className='qsl-l';l.textContent=short(lab);const c=document.createElement('span');c.className='qsl-c'+(n?' qsl-x':'');c.textContent=n?(n>6?'✕ × '+n:'✕ '.repeat(n).trim()):'–';r.append(l,c);sec.append(r)}}
     sec.onclick=()=>openDetail(panel,name);frag.append(sec)}
    qlScroll.replaceChildren(frag);
   }finally{detail=saved;if(wasOpen&&saved)renderDetail();else{sheet.hidden=true;detail=null}qlBusy=false}
@@ -7975,7 +7981,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  LAND.addEventListener?.('change',()=>{qlSig='';qlLater()});addEventListener('resize',()=>window.classroomCardsLandAuto());
  sheet.addEventListener('click',e=>{if(e.target.closest('.qd-close')&&LAND.matches)setTimeout(qlBuild,50)});
  let qlSig='';const sigNow=()=>{const b=document.querySelector('.qs-cards');return (b?b.textContent:'')+'|'+(document.querySelector('.pl-seg.pl-view [aria-pressed=true]')?.textContent||'')+'|'+LAND.matches};
- window.classroomCardsLandAuto=()=>{if(qlBusy)return;const g=sigNow();if(g===qlSig&&!ql.hidden===landOn())return;qlSig=g;qlLater()};
+ window.classroomCardsLandAuto=force=>{if(qlBusy)return;if(force)qlSig='';const g=sigNow();if(g===qlSig&&!ql.hidden===landOn())return;qlSig=g;qlLater()};
  /* Halbjahresnote aus der Halbjahresübersicht lesen (die Seite wird dazu unsichtbar aufgebaut, höchstens alle 3 s) */
  let semAt=0,semKey='';
  function halfYearNote(name){try{if(!window.classroomRenderSummary)return null;const sem=subjectExamGroups(currentSubject).find(g=>g.type==='semester'&&g.halfYearId===currentHalfYearId),key=sem?.pages?.[0];if(!key||key===activePage)return null;
@@ -8385,7 +8391,7 @@ return}
 ].join('');document.head.append(st)})();
 
 /* 10.91: iPhone quer – Namen links, alle Details rechts */
-(()=>{const st=document.createElement('style');st.textContent='.qsl{position:fixed;inset:6px;z-index:9700;display:flex;gap:8px;background:#f4f7fb}.qsl[hidden]{display:none}html.qs-land body{overflow:hidden!important}'
+(()=>{const st=document.createElement('style');st.textContent='.qsl{position:fixed;inset:0;padding:6px;box-sizing:border-box;z-index:9700;display:flex;gap:8px;background:#f4f7fb}.qsl[hidden]{display:none}html.qs-land body{overflow:hidden!important}'
  +'.qsl-list{width:38%;max-width:300px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding:2px;-webkit-overflow-scrolling:touch}'
  +'.qsl-it{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;width:100%;min-height:36px;padding:3px 5px 3px 11px;border:1px solid #dce3ef;border-radius:10px;background:#fff;color:#243247;font:inherit;text-align:left;cursor:pointer}.qsl-it b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qsl-it.on{outline:3px solid #2f5f9b;outline-offset:-2px;background:#f4f8fe}'
  +'.qsl-it .qs-big,.qsl-sec h4 .qs-big{flex:none;min-width:36px;height:27px;font-size:14.5px!important;display:inline-flex;align-items:center;justify-content:center}'
@@ -8393,7 +8399,7 @@ return}
  +'.qsl-seg{display:flex;gap:6px;padding:7px 10px;border-bottom:1px solid #eef1f6;flex:none}.qsl-seg:empty{display:none}.qsl-seg button{border:0;border-radius:8px;background:#eef2f8;color:#66758a;font:inherit;font-size:13px;padding:5px 12px;cursor:pointer}.qsl-seg button.on{background:#2f5f9b;color:#fff;font-weight:700}'
  +'.qsl-scroll{flex:1;overflow-y:auto;padding:0 12px 40vh;-webkit-overflow-scrolling:touch}'
  +'.qsl-sec{padding:6px 0 12px;border-bottom:1px dashed #dce3ef;cursor:pointer}.qsl-sec h4{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 -12px 4px;padding:6px 12px;background:#fff;font-size:15px}'
- +'.qsl-sec :is(input,select,textarea,button){pointer-events:none}.qsl-sec .qd-note-add{display:none}';document.head.append(st)})();
+ +'.qsl-row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px}.qsl-l{width:118px;flex:none;color:#66758a}.qsl-c{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.qsl-x{color:#b42318;font-weight:700;letter-spacing:1px}'+'.qsl-m{display:inline-flex!important;align-items:center;justify-content:center;min-width:28px;height:22px;padding:0 5px;border-radius:6px;font-style:normal;font-weight:800;font-size:12px;box-sizing:border-box}.qsl-note{margin:0 0 4px;padding:4px 8px;border-radius:8px;background:#fff8dc;color:#6b5a1e;font-size:12px}';document.head.append(st)})();
 ;
 
 /* ==== noten/mean-guard.js ==== */
