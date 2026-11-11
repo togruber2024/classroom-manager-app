@@ -3582,6 +3582,9 @@ document.addEventListener('keydown',event=>{
  const label=el=>(el?.textContent||'').replace(/\s+/g,' ').trim();
  function separator(){const s=document.createElement('span');s.className='plan-actions-sep';s.setAttribute('aria-hidden','true');return s}
  function closeMenu(){menuOpen=false;document.querySelectorAll('.plan-actions-more').forEach(m=>{m.classList.remove('open');m.querySelector('.plan-actions-more-toggle')?.setAttribute('aria-expanded','false')})}
+ /* 10.78: „Alle Namen vom Plan nehmen …“ – Tische bleiben, Klassenliste und Bewertungen bleiben, rückgängig möglich */
+ function clearButton(){let clr=document.getElementById('classroomClearNamesButton');if(clr)return clr;clr=document.createElement('button');clr.type='button';clr.id='classroomClearNamesButton';clr.className='btn';clr.dataset.beamerHide='1';clr.title='Alle Namen vom Sitzplan nehmen. Tische, Pult, Klassenliste und Bewertungen bleiben erhalten; „Rückgängig“ holt die Namen zurück.';
+  clr.innerHTML='<svg class="pa-mi-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.4 2.8-5.3 5.5-5.3s4.9 1.9 5.5 5.3"/><path d="M16 9.5h5"/></svg>Alle Namen vom Plan nehmen …';clr.onclick=()=>clearNames();return clr}
  function arrange(){
   const bar=grid.querySelector('.classroom-plan-actions');if(!bar||busy)return;
   const items=[...bar.querySelectorAll('button')];
@@ -3590,10 +3593,12 @@ document.addEventListener('keydown',event=>{
    roll=bar.querySelector('.classroom-roll-split'),persp=document.getElementById('classroomRotateButton'),print=byText('Drucken'),
    save=bar.querySelector('.grid-save-button'),reset=document.getElementById('classroomResetButton'),start=document.getElementById('classroomStartButton'),legacy=document.getElementById('studentSearchInput'),groupsBtn=window.classroomRandomGroupsButton||null;
   if(!start)return;
-  const expected=[assign,'sep',persp,finder,random,groupsBtn,'sep',roll,'sep',print,'more','right'].filter(Boolean);
+  /* 11.01: Vorlage speichern, Zurücksetzen, Alle Namen vom Plan nehmen stehen als Symbolknöpfe in der Zeile; nur bei Platzmangel wandern sie (zuerst) ins Menü „Mehr“ */
+  const clr=clearButton();
+  const expected=[assign,'sep',persp,finder,random,groupsBtn,'sep',roll,'sep',print,'sep',save,reset,clr,'more','right'].filter(Boolean);
   const right0=bar.querySelector(':scope > .plan-actions-right'),more0=bar.querySelector(':scope > .plan-actions-more'),current=[...bar.children].filter(c=>c!==legacy&&!c.matches('.plan-actions-sep'));
   const want=expected.map(x=>x==='more'?more0:x==='right'?right0:x).filter(x=>x!=='sep');
-  if(right0&&more0&&right0.lastElementChild===start&&(!save||more0.contains(save))&&(!reset||more0.contains(reset))&&start.textContent==='Verteilen'&&current.length===want.length&&current.every((c,i)=>c===want[i]))return;
+  if(right0&&more0&&right0.lastElementChild===start&&start.textContent==='Verteilen'&&current.length===want.length&&current.every((c,i)=>c===want[i]))return;
   busy=true;
   try{
    start.textContent='Verteilen';
@@ -3603,14 +3608,9 @@ document.addEventListener('keydown',event=>{
     more.querySelector('.plan-actions-more-toggle').onclick=e=>{e.stopPropagation();const open=!more.classList.contains('open');closeMenu();if(open){more.classList.add('open');menuOpen=true;e.currentTarget.setAttribute('aria-expanded','true');const r=e.currentTarget.getBoundingClientRect(),m=more.querySelector('.plan-actions-menu');m.style.position='fixed';m.style.right=Math.max(8,innerWidth-r.right)+'px';m.style.left='auto';const h=m.offsetHeight;m.style.top=(r.top-h-6>8?r.top-h-6:r.bottom+6)+'px';m.style.bottom='auto'}};
    }
    const menu=more.querySelector('.plan-actions-menu');
-   for(const b of [save,reset].filter(Boolean)){b.setAttribute('role','menuitem');if(b===reset&&!/…$/.test(label(b)))b.textContent='Zurücksetzen …';/* 10.67: Symbole im Menü – Ablage (speichern) und Radiergummi (zurücksetzen) */if(!b.querySelector(':scope>.pa-mi-ic'))b.insertAdjacentHTML('afterbegin','<svg class="pa-mi-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(b===reset?'<path d="M14.5 4.5 20 10l-8.5 8.5H7L4 15.5z"/><path d="m9.5 9.5 5.5 5.5"/><path d="M11.5 18.5H20"/>':'<path d="M12 3.5v9"/><path d="m8.5 9 3.5 3.5L15.5 9"/><path d="M4 13.5v4.5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4.5"/><path d="M4 13.5h4l1 2h6l1-2h4"/>')+'</svg>');menu.append(b)}
-   /* 10.78: „Alle Namen vom Plan nehmen …“ – Tische bleiben, Klassenliste und Bewertungen bleiben, rückgängig möglich */
-   {let clr=document.getElementById('classroomClearNamesButton');if(!clr){clr=document.createElement('button');clr.type='button';clr.id='classroomClearNamesButton';clr.className='btn';clr.setAttribute('role','menuitem');clr.dataset.beamerHide='1';clr.title='Alle Namen vom Sitzplan nehmen. Tische, Pult, Klassenliste und Bewertungen bleiben erhalten; „Rückgängig“ holt die Namen zurück.';
-     clr.innerHTML='<svg class="pa-mi-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.4 2.8-5.3 5.5-5.3s4.9 1.9 5.5 5.3"/><path d="M16 9.5h5"/></svg>Alle Namen vom Plan nehmen …';
-     clr.onclick=()=>clearNames()}
-    if(reset&&reset.parentElement===menu){if(reset.nextElementSibling!==clr)reset.after(clr)}else if(clr.parentElement!==menu)menu.append(clr)}
-   /* 10.83: Vorlage speichern, Zurücksetzen, Alle Namen vom Plan nehmen – nur als Symbole (Name als Infotext) */
-   for(const b of [save,reset,menu.querySelector('#classroomClearNamesButton')].filter(Boolean)){b.classList.add('pa-icon-only');const t=label(b).replace(/\s+/g,' ').trim();if(t&&b.getAttribute('aria-label')!==t)b.setAttribute('aria-label',t);if(!b.title)b.title=t;}
+   for(const b of [save,reset].filter(Boolean)){b.removeAttribute('role');if(b===reset&&!/…$/.test(label(b)))b.textContent='Zurücksetzen …';/* 10.67: Symbole – Ablage (speichern) und Radiergummi (zurücksetzen) */if(!b.querySelector(':scope>.pa-mi-ic'))b.insertAdjacentHTML('afterbegin','<svg class="pa-mi-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(b===reset?'<path d="M14.5 4.5 20 10l-8.5 8.5H7L4 15.5z"/><path d="m9.5 9.5 5.5 5.5"/><path d="M11.5 18.5H20"/>':'<path d="M12 3.5v9"/><path d="m8.5 9 3.5 3.5L15.5 9"/><path d="M4 13.5v4.5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4.5"/><path d="M4 13.5h4l1 2h6l1-2h4"/>')+'</svg>')}
+   /* 10.83: nur als Symbole (Name als Infotext) */
+   for(const b of [save,reset,clr].filter(Boolean)){b.classList.add('pa-tool');const t=label(b).replace(/\s+/g,' ').trim();if(t&&b.getAttribute('aria-label')!==t)b.setAttribute('aria-label',t);if(!b.title)b.title=t;}
    menu.onclick=()=>closeMenu();
    let right=bar.querySelector(':scope > .plan-actions-right');if(!right){right=document.createElement('div');right.className='plan-actions-right'}
    right.append(start);
@@ -3625,9 +3625,9 @@ document.addEventListener('keydown',event=>{
  // Reihenfolge beim Einklappen: zuletzt „Schüler finden“ (nicht während der Suche) und „Schüler zuweisen“ (nicht während des Zuweisens).
  let forceFinder=false;
  function collapsibles(bar){const finder=bar.querySelector(':scope > .student-finder'),assign=bar.querySelector(':scope > [data-assign-student]');
-  return [[...bar.querySelectorAll(':scope > .btn')].find(b=>label(b)==='Drucken'),bar.querySelector(':scope > .classroom-roll-split'),window.classroomRandomGroupsButton,document.getElementById('randomStudentButton'),document.getElementById('classroomRotateButton'),
+  return [document.getElementById('classroomClearNamesButton'),document.getElementById('classroomResetButton'),bar.querySelector(':scope > .grid-save-button'),[...bar.querySelectorAll(':scope > .btn')].find(b=>label(b)==='Drucken'),bar.querySelector(':scope > .classroom-roll-split'),window.classroomRandomGroupsButton,document.getElementById('randomStudentButton'),document.getElementById('classroomRotateButton'),
    finder&&finder.dataset.open!=='true'&&!forceFinder?finder:null,assign&&assign.getAttribute('aria-pressed')!=='true'?assign:null].filter(el=>el&&el.parentElement===bar)}
- function proxy(text,target){const b=document.createElement('button');b.type='button';b.className='plan-actions-proxy';b.setAttribute('role','menuitem');b.textContent=text;b.disabled=!!target.disabled;b.onclick=()=>target.click();b._target=target;return b}
+ function proxy(text,target){const b=document.createElement('button');b.type='button';b.className='plan-actions-proxy'+(/^(classroomResetButton|classroomClearNamesButton)$/.test(target.id)?' pa-danger':'');b.setAttribute('role','menuitem');b.textContent=text;const ic=target.querySelector?.(':scope>.pa-mi-ic');if(ic)b.prepend(ic.cloneNode(true));b.disabled=!!target.disabled;b.onclick=()=>target.click();b._target=target;return b}
  function fit(){
   fitPlanned=false;const bar=grid.querySelector('.classroom-plan-actions');if(!bar||!bar.dataset.arranged)return;
   const menu=bar.querySelector(':scope > .plan-actions-more .plan-actions-menu');if(!menu)return;
@@ -3649,8 +3649,8 @@ document.addEventListener('keydown',event=>{
   // Trennstriche nur zwischen sichtbaren Gruppen – 10.32: schon beim Messen, sonst kommt ein Trennstrich (+20 px) erst danach dazu und die Leiste läuft über
   const kids=[...bar.children],visible=el=>getComputedStyle(el).display!=='none';
   const seps=()=>{for(const [i,sep] of kids.entries()){if(!sep.matches('.plan-actions-sep'))continue;let before=false,after=false;for(let j=i-1;j>=0&&!kids.at(j).matches('.plan-actions-sep');j--)if(visible(kids.at(j)))before=true;for(let j=i+1;j<kids.length&&!kids.at(j).matches('.plan-actions-sep');j++)if(visible(kids.at(j)))after=true;const off=!(before&&after);if(sep.classList.contains('plan-actions-collapsed')!==off)sep.classList.toggle('plan-actions-collapsed',off)}};
-  const over=()=>{seps();return bar.scrollWidth>bar.clientWidth+1},hidden=[];
-  if(!beamer&&bar.clientWidth>0)for(const el of list){if(!over())break;el.classList.add('plan-actions-collapsed');hidden.push(el)}
+  const over=()=>{seps();return bar.scrollWidth>bar.clientWidth+1},hidden=[],moreBox=menu.closest('.plan-actions-more');moreBox.classList.add('plan-actions-collapsed');
+  if(!beamer&&bar.clientWidth>0)for(const el of list){if(!over())break;moreBox.classList.remove('plan-actions-collapsed');el.classList.add('plan-actions-collapsed');hidden.push(el)}
   if(bar.clientWidth>0&&over())bar.classList.add('plan-actions-wrap');
   seps();
   hidden.sort((a,b)=>kids.indexOf(a)-kids.indexOf(b));
@@ -3688,17 +3688,16 @@ document.addEventListener('keydown',event=>{
   +'.plan-actions-more-toggle{gap:6px}.plan-actions-more-toggle span{font-size:.75em}'
   +'.plan-actions-menu{display:none;position:fixed;z-index:1000;min-width:210px;padding:6px;background:#fff;border:1px solid #dce3ef;border-radius:12px;box-shadow:0 12px 30px #1c2b4626}'
   +'.plan-actions-more.open .plan-actions-menu{display:block}'
-  +'body[data-module=sitzplan] .plan-actions-menu>button{display:block!important;width:100%!important;height:auto!important;min-height:0!important;margin:0!important;padding:9px 12px!important;border:0!important;border-radius:8px!important;background:none!important;color:var(--primary,#2f5f9b)!important;text-align:left!important;font:inherit;font-weight:500;box-shadow:none!important;cursor:pointer}'
-  +'body[data-module=sitzplan] .plan-actions-menu>button:hover{background:#f3f6fb!important}'
-  +'body[data-module=sitzplan] .plan-actions-menu>#classroomResetButton,body[data-module=sitzplan] .plan-actions-menu>#classroomClearNamesButton{color:#b42318!important}'
+  +'body[data-module=sitzplan] .classroom-plan-actions>.pa-tool:not(.plan-actions-collapsed):not(#_):not(#__):not(#___){display:inline-flex!important;align-items:center;justify-content:center;box-sizing:border-box;width:40px!important;min-width:40px!important;height:40px!important;padding:0!important;font-size:0!important;gap:0!important;flex:none;background:#fff!important;border:1px solid #a8bdd8!important;border-radius:10px!important;color:#2f5f9b!important;box-shadow:none!important}'
+  +'body[data-module=sitzplan] .classroom-plan-actions>.pa-tool:hover:not(#_):not(#__):not(#___){background:#f3f6fb!important}body[data-module=sitzplan] .classroom-plan-actions>:is(#classroomResetButton,#classroomClearNamesButton).pa-tool:not(#_):not(#__):not(#___){color:#b42318!important}body[data-module=sitzplan] .classroom-plan-actions>.pa-tool:disabled{opacity:.45}.pa-tool>.pa-mi-ic{width:22px;height:22px;flex:none}'
   +'body[data-module=sitzplan] .classroom-roll-split:has(.btn:disabled){opacity:.45;filter:grayscale(1);cursor:not-allowed}body[data-module=sitzplan] .classroom-roll-split:has(.btn:disabled)>.btn{background:#fff!important;color:inherit}body[data-module=sitzplan] .classroom-roll-split:has(.btn:disabled)>.classroom-roll-caption{opacity:1!important}'
   +'.classroom-beamer .plan-actions-more,.classroom-beamer .plan-actions-sep{display:none!important}'
   +'@media(max-width:700px){.plan-actions-sep{display:none}}'
   +'body[data-module=sitzplan] .classroom-plan-actions{flex-wrap:nowrap!important}body[data-module=sitzplan] .classroom-plan-actions.plan-actions-wrap{flex-wrap:wrap!important}'
   +'body[data-module=sitzplan] .classroom-plan-actions>.plan-actions-collapsed{display:none!important}'
-  +'.plan-actions-menu:has(>.pa-icon-only){min-width:0!important}.plan-actions-menu>button.pa-icon-only:not(#_):not(#__):not(#___){display:inline-flex!important;width:44px!important;height:44px!important;padding:0!important;justify-content:center;font-size:0!important;gap:0;vertical-align:top}.plan-actions-menu>button.pa-icon-only .pa-mi-ic{width:22px!important;height:22px!important}'+'.plan-actions-menu>button:not(#_):not(#__){display:flex!important;align-items:center;gap:10px;text-align:left}.plan-actions-menu .pa-mi-ic{width:20px;height:20px;flex:none}.plan-actions-menu-sep{height:1px;margin:5px 6px;background:#e3e9f2}'
-  +'body[data-module=sitzplan] .plan-actions-menu .plan-actions-proxy{display:block!important;width:100%!important;height:auto!important;min-height:0!important;margin:0!important;padding:9px 12px!important;border:0!important;border-radius:8px!important;background:none!important;color:var(--primary,#2f5f9b)!important;text-align:left!important;font:inherit;font-weight:500;box-shadow:none!important;cursor:pointer;white-space:nowrap}'
-  +'body[data-module=sitzplan] .plan-actions-menu .plan-actions-proxy:hover{background:#f3f6fb!important}body[data-module=sitzplan] .plan-actions-menu .plan-actions-proxy:disabled{opacity:.45;cursor:not-allowed}';
+  +'.plan-actions-menu-sep{height:1px;margin:5px 6px;background:#e3e9f2}.plan-actions-menu-sep:last-child{display:none}'
+  +'body[data-module=sitzplan] .plan-actions-menu .plan-actions-proxy{display:flex!important;align-items:center;gap:10px;width:100%!important;height:auto!important;min-height:0!important;margin:0!important;padding:9px 12px!important;border:0!important;border-radius:8px!important;background:none!important;color:var(--primary,#2f5f9b)!important;text-align:left!important;font:inherit;font-weight:500;box-shadow:none!important;cursor:pointer;white-space:nowrap}'
+  +'body[data-module=sitzplan] .plan-actions-menu .plan-actions-proxy:hover{background:#f3f6fb!important}body[data-module=sitzplan] .plan-actions-menu .plan-actions-proxy:disabled{opacity:.45;cursor:not-allowed}body[data-module=sitzplan] .plan-actions-menu .plan-actions-proxy.pa-danger{color:#b42318!important}.plan-actions-proxy>.pa-mi-ic{width:20px;height:20px;flex:none}';
  document.head.append(style);
  arrange();
  new MutationObserver(()=>{if(!busy){arrange();scheduleFit()}}).observe(grid,{childList:true,subtree:true});

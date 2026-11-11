@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 11.11.2026 · Version 11.00
+Stand: 11.11.2026 · Version 11.01
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1379,3 +1379,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.98: iPhone Noten quer – Halbjahr trennt Q1 und Q2 mit einem kleinen grauen Punkt statt Linie
 10.99: Notenkarten – Punkt statt gestrichelter Linie zwischen Q1 und Q2
 11.00: Sitzplan – Ausblenden-Knopf als quadratischer Farbfeld-Knopf (grün mit rotem Rahmen, ausgeblendet weiß mit orangem Rand); alte Pillen- und Orange-Regeln dafür entfernt
+11.01: Sitzplan – Vorlage speichern, Zurücksetzen und Namen entfernen direkt in der Leiste, „Mehr“ nur bei Platzmangel; alte Menü-Regeln entfernt
