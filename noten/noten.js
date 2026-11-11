@@ -4213,7 +4213,7 @@ html.fs-view .fs-hide{display:none!important}
  async function unpack(data){const u=fromB64(data.slice(1));const bytes=data[0]==='z'?new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()):u;return JSON.parse(new TextDecoder().decode(bytes))}
  function scoreOf(t,sub){const res=gradeAll(t,sub);let pts=0;res.forEach((r,i)=>{for(const part of ['lemma','meaning']){const x=r[part];if(!x.max)continue;pts+=sub.over?.[i+':'+part]??(x.q?x.s:x.p)}});
   const tot=(t.groups[sub.g]||[]).reduce((a,it)=>a+maxOf(it),0)||1,r=pts/tot*100;let sign=SIGNS[6];for(const k of ['1','2','3','4','5'])if(r+1e-9>=RATIOS[k]){sign=SIGNS[k];break}return {pts:Math.round(pts*2)/2,tot,sign}}
- function scan(){const t=state.test,names=roster();const o=document.createElement('div');o.className='vt-scan';
+ function scan(){const t=state.test,all=roster(),absent=new Set(vtAbsentNames(t).map(a=>matchName(a,all)||a)),names=all.filter(n=>!absent.has(n)),absentList=all.filter(n=>absent.has(n));const o=document.createElement('div');o.className='vt-scan';
   o.innerHTML='<div class="vs-in"><div class="vs-hd"><h2>Abgaben scannen · '+esc(t.title)+'</h2><span class="vs-cnt" data-cnt></span></div>'
    +'<div class="vs-cam"><video playsinline muted autoplay></video><div class="vs-frame"></div><div class="vs-msg" data-msg>Kamera wird gestartet …</div><div class="vs-toast" data-toast hidden></div></div>'
    +'<div class="vs-list" data-list></div><div class="vs-miss" data-miss hidden></div>'
@@ -4227,7 +4227,7 @@ html.fs-view .fs-hide{display:none!important}
   const missing=()=>{const got=new Set(subsOf().map(x=>x.student||matchName(x.name,names)).filter(Boolean));return names.filter(n=>!got.has(n))};
   const upd=()=>{const n=subsOf().length;$('[data-cnt]').textContent=names.length?n+' von '+names.length:n+' Abgabe'+(n===1?'':'n');
    $('[data-list]').innerHTML=seen.length?seen.map(x=>'<div class="vs-r"><span class="vs-ok">✓</span><b>'+esc(x.name)+'</b><span class="vs-g">'+esc(x.sign)+'</span><span class="vs-p">'+String(x.pts).replace('.',',')+'/'+x.tot+' P</span></div>').join(''):'<div class="vt-sub">Noch nichts gescannt. Halte die Kamera auf den QR-Code auf dem Schüler-iPad.</div>';
-   const mi=$('[data-miss]');if(!mi.hidden){const m=missing();mi.innerHTML=m.length?'<b>Noch offen ('+m.length+'):</b> '+esc(m.map(x=>x.split(',').reverse().join(' ').trim()).join(', ')):'<b>Alle haben abgegeben.</b>'}};
+   const mi=$('[data-miss]');if(!mi.hidden){const m=missing();mi.innerHTML=(m.length?'<b>Noch offen ('+m.length+'):</b> '+esc(m.map(x=>x.split(',').reverse().join(' ').trim()).join(', ')):'<b>Alle haben abgegeben.</b>')+(absentList.length?'<div class="vt-sub" style="margin-top:4px">Abwesend laut Sitzplan, nicht mitgezählt: '+esc(absentList.map(x=>x.split(',').reverse().join(' ').trim()).join(', '))+'</div>':'')}};
   async function handle(txt){const now=Date.now();if(txt===lastTxt&&now-lastAt<4000)return;lastTxt=txt;lastAt=now;
    const m=/^CMA1\/([a-z0-9]+)\/(\d+)\/(\d+)\/(.+)$/s.exec(txt);if(!m){beep(false);toast('Das ist kein Abgabe-Code.',false);return}
    const [,id,k,n,data]=m;(parts[id]??={n:+n,d:{}}).d[+k]=data;const got=Object.keys(parts[id].d).length;
@@ -4554,6 +4554,11 @@ function vtSeatGrid(t){try{const subj=t.subject||currentSubject,cls=t.classId||c
  const links=JSON.parse(localStorage.getItem('classroom-manager-linked-classes-v1')||'{}');const sn=links[gid]?.storageName||('NM:'+encodeURIComponent(gid));let grid=null;
  try{const sp=parent.document.getElementById('view-sitzplan')?.contentWindow;if(sp&&sp.eval('typeof aktuelleKlasse!=="undefined"?aktuelleKlasse:""')===sn)grid=JSON.parse(JSON.stringify(sp.eval('gridData')))}catch{}
  if(!grid)grid=JSON.parse(localStorage.getItem('sitzplan_'+sn.replace(/\s+/g,'_')+'_grid')||'null');return Array.isArray(grid)?grid:null}catch{return null}}
+/* 11.04: im Sitzplan als abwesend markierte Schüler:innen (nur wenn der Sitzplan gerade diese Klasse zeigt) */
+function vtAbsentNames(t){try{const subj=t.subject||currentSubject,cls=t.classId||currentClassId;const model=JSON.parse(localStorage.getItem('classroom-manager-common-v2')||'{}');const gid=model.sourceClasses?.[subj+'::'+cls];if(!gid)return [];
+ const links=JSON.parse(localStorage.getItem('classroom-manager-linked-classes-v1')||'{}');const sn=links[gid]?.storageName||('NM:'+encodeURIComponent(gid));
+ const sp=parent.document.getElementById('view-sitzplan')?.contentWindow;if(!sp||sp.eval('typeof aktuelleKlasse!=="undefined"?aktuelleKlasse:""')!==sn)return [];
+ return (sp.eval('typeof schuelerEinzel!=="undefined"?schuelerEinzel:[]')||[]).filter(x=>x&&x.abwesend&&String(x.name||'').trim()).map(x=>String(x.name).trim())}catch{return []}}
 /* 10.71: „So wird bewertet“ – für die Schüler unter dem Sitzplan und am Smartboard */
 function rulesHtml(t,big){if(t.kind==='grammar')return '<div class="vt-card vt-rules'+(big?' big':'')+'"><b class="vr-t">So wird bewertet</b><div class="vr-two"><div><div class="vr-h">Formen – genau</div><div class="vr-ex"><span class="vr-ok">✓</span><i>quibus</i></div><div class="vr-ex"><span class="vr-no">✗</span><i>quibos</i> → 0 P</div><div class="vr-n">j = i · Längenzeichen (ā) nicht nötig</div></div><div><div class="vr-h">Punkte</div><div class="vr-ex"><span class="vr-hf">½</span>Form in m, f, n gleich (z. B. <i>cuius</i>) → je ½ P</div><div class="vr-ex"><span class="vr-ok">✓</span>Bestimmen: je Merkmal 1 P</div><div class="vr-n">Mehrdeutige Formen: jede richtige Bestimmung zählt</div></div></div></div>';const lat=Object.values(t.groups||{}).some(l=>l.some(it=>it.kind&&it.kind!=='x'));
  const ex=(c,txt)=>'<div class="vr-ex"><span class="vr-'+c+'">'+({ok:'✓',hf:'½',no:'✗'})[c]+'</span>'+txt+'</div>';

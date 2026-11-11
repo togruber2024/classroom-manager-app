@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 11.11.2026 · Version 11.03
+Stand: 11.11.2026 · Version 11.04
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1382,3 +1382,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.01: Sitzplan – Vorlage speichern, Zurücksetzen und Namen entfernen direkt in der Leiste, „Mehr“ nur bei Platzmangel; alte Menü-Regeln entfernt
 11.02: iPad-Test „Ausgeben“ – gleichmäßige Abstände zwischen QR-Codes, „Beide QR-Codes groß zeigen“ und Jamf-Kasten
 11.03: iPad-Tests – Anleitung, interaktive Übungen (uebungen.html, eigene Übungssätze), Alle löschen; Sitzplan-Leiste ohne Trennstriche, Drucken neben Vorlage speichern
+11.04: Abgaben scannen – „Wer fehlt noch?“ lässt im Sitzplan abwesende Schüler:innen aus
