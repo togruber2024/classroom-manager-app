@@ -121,7 +121,7 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
  function css(seed){
   /* 8.21: echte Zufallsfarben je Einschalten (Zufallsgenerator mit großem Startwert statt nur 5 verschobener Muster) */
   let t=(seed>>>0)||1;const rnd=()=>{t+=0x6D2B79F5;let x=Math.imul(t^t>>>15,t|1);x^=x+Math.imul(x^x>>>7,x|61);return ((x^x>>>14)>>>0)/4294967296},pick=()=>PAL[Math.floor(rnd()*5)];
-  let rules=NAME+','+NAME+'::placeholder,html.classroom-privacy '+T+' tbody :is(td,th):first-child,html.classroom-privacy .room-grid .cell,html.classroom-privacy .classroom-quick-heading,html.classroom-privacy .student-finder-list,html.classroom-privacy #randomStudentStatus,html.classroom-privacy .student-overview .so-list ol,html.classroom-privacy .student-overview .so-list ol *,html.classroom-privacy .student-overview .so-profile :is(h2,h3,p,span,td,th,li,strong,em),html.classroom-privacy .parent-mail-text,html.classroom-privacy [data-parent-mail-student]{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:0 0 7px rgba(36,51,71,.75)!important;-webkit-user-select:none!important;user-select:none!important}'
+  let rules=NAME+','+NAME+'::placeholder,html.classroom-privacy '+T+' tbody :is(td,th):first-child,html.classroom-privacy .room-grid .cell,html.classroom-privacy .classroom-quick-heading,html.classroom-privacy .student-finder-list,html.classroom-privacy #randomStudentStatus,html.classroom-privacy .student-overview .so-list ol,html.classroom-privacy .student-overview .so-list ol *,html.classroom-privacy .student-overview .so-profile :is(h2,h3,p,span,td,th,li,strong,em),html.classroom-privacy [data-parent-mail-student]{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:0 0 7px rgba(36,51,71,.75)!important;-webkit-user-select:none!important;user-select:none!important}'
   +'html.classroom-privacy '+T+' tbody :is(td,th):first-child :is(input,button),html.classroom-privacy [data-student-name]{pointer-events:none!important}'
   +GRADE+'{box-shadow:none!important;outline:0!important;color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:0 0 8px rgba(36,51,71,.6)!important;background-image:none!important;border-color:transparent!important;pointer-events:none!important;filter:saturate(.8)}'
   +'html.classroom-privacy '+T+' tbody td{color:transparent!important;text-shadow:0 0 7px rgba(36,51,71,.6)!important;background-color:transparent!important;background-image:none!important}'
@@ -141,7 +141,7 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
   for(let j=0;j<3;j++)for(let k=0;k<5;k++)rules+='html.classroom-privacy .so-section:nth-of-type(3n+'+(j+1)+') :nth-child(5n+'+(k+1)+')>.so-val,html.classroom-privacy .so-section:nth-of-type(3n+'+(j+1)+') .so-val:nth-child(5n+'+(k+1)+'){background-color:'+pick()+'!important}';
   // iPhone-Karten und Detailblatt (Noten): Namen unscharf, Noten unkenntlich mit Zufallsfarben
   rules+='html.classroom-privacy :is(.qs-name,.qd-title b,.qs-stand,.qs-note,.tt-row b,.tt-last b){color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:0 0 7px rgba(36,51,71,.75)!important;-webkit-user-select:none!important;user-select:none!important}'
-   +'html.classroom-privacy :is(.qs-big,.qs-val i,.qs-sq i,.qs-q1chip i,.qd-val,.qs-miss-n,.qs-chip i){color:transparent!important;text-shadow:0 0 8px rgba(36,51,71,.6)!important;background-image:none!important;box-shadow:none!important;border-color:transparent!important}'
+   +'html.classroom-privacy :is(.qs-big,.qs-val i,.qs-sq i,.qs-q1chip i,.qs-miss-n,.qs-chip i){color:transparent!important;text-shadow:0 0 8px rgba(36,51,71,.6)!important;background-image:none!important;box-shadow:none!important;border-color:transparent!important}'
    +'html.classroom-privacy :is(.qs-card,.qd-panel){pointer-events:none!important}html.classroom-privacy .qd-head{pointer-events:auto!important}';
   for(let a=0;a<5;a++){rules+='html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-big,html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-q1chip i{background-color:'+pick()+'!important}';
    for(let c=0;c<4;c++)rules+='html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-sect:nth-child(4n+'+(c+1)+') .qs-val i:not(.qs-none),html.classroom-privacy .qd-sec:nth-child(5n+'+(a+1)+') .qd-item:nth-child(4n+'+(c+1)+') .qd-val,html.classroom-privacy .qd-sec:nth-child(5n+'+(a+1)+') .qd-row:nth-child(4n+'+(c+1)+') .qd-val{background-color:'+pick()+'!important}'
@@ -3412,7 +3412,7 @@ document.addEventListener('keydown',event=>{
   if(active){if(isOpen())tog.click()}
   else{try{parent.localStorage.setItem('classroom-quickview-v1',k==='notes'?'1':'0')}catch{}if(!isOpen())tog.click()}
   try{parent.classroomQuickLayout?.()}catch{}setTimeout(()=>{try{parent.classroomQuickLayout?.()}catch{}sync()},380);sync()});
- new MutationObserver(sync).observe(tog,{attributes:true,attributeFilter:['aria-expanded']});setInterval(sync,1000);sync();
+ new MutationObserver(sync).observe(tog,{attributes:true,attributeFilter:['aria-expanded']});setInterval(()=>{if(!document.hidden)sync()},1000);sync();
  const st=document.createElement('style');st.textContent='.classroom-plan-zoom>.classroom-sidebar-toggle,.classroom-plan-zoom>.plan-quick-notes{display:none!important}.plan-col-pair{display:inline-flex;flex:none;border:1px solid #dce3ef;border-radius:12px;overflow:hidden;background:#fff}.plan-col-pair button{width:46px;height:42px;min-height:0;padding:0;margin:0;border:0!important;border-radius:0!important;background:#fff!important;color:#2f5f9b;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:none!important}.plan-col-pair button+button{border-left:1px solid #dce3ef!important}.plan-col-pair button[aria-pressed=true]{background:#eaf0fa!important}html.ph-lite .plan-col-pair,.classroom-beamer .plan-col-pair{display:none!important}';document.head.append(st)})();
 /* 8.94: Abstand zwischen linker Spalte und Klassenraum = Abstand zur Navigationsleiste darüber (10 px) */
 (()=>{const st=document.createElement('style');st.textContent='html:not(.ph-lite) body[data-module=sitzplan] .container:not(#_){column-gap:10px}';document.head.append(st)})();
@@ -3476,7 +3476,7 @@ document.addEventListener('keydown',event=>{
   '.classroom-beamer .classroom-beamer-button{background:var(--primary,#2f5f9b)!important;border-color:var(--primary,#2f5f9b)!important;color:#fff!important}'
   +'.classroom-beamer .room-grid .classroom-seat-assessed{background:#fff!important;background-image:none!important;color:#24334b!important}'
   +'.classroom-beamer .room-grid .classroom-seat-homework-missing::after{display:none!important}'
-  +'.classroom-beamer body[data-module=sitzplan] .container>.panel,.classroom-beamer .classroom-sidebar-toggle,.classroom-beamer .classroom-quick,.classroom-beamer .classroom-mode-switch,.classroom-beamer label:has(#classroomEditRoom),.classroom-beamer .room-header+.info-text,.classroom-beamer [data-beamer-hide],.classroom-beamer .classroom-plan-zoom>button:not(.classroom-beamer-button):not([data-zoom-minus]):not([data-zoom-plus]):not([data-zoom-fit]){display:none!important}'
+  +'.classroom-beamer body[data-module=sitzplan] .container>.panel,.classroom-beamer .classroom-sidebar-toggle,.classroom-beamer .classroom-quick,.classroom-beamer label:has(#classroomEditRoom),.classroom-beamer .room-header+.info-text,.classroom-beamer [data-beamer-hide],.classroom-beamer .classroom-plan-zoom>button:not(.classroom-beamer-button):not([data-zoom-minus]):not([data-zoom-plus]):not([data-zoom-fit]){display:none!important}'
   +'.classroom-beamer body[data-module=sitzplan] .container{grid-template-columns:minmax(0,1fr)!important}'
   +'.classroom-beamer #roomGrid .cell{cursor:default!important}.classroom-beamer .classroom-absent{opacity:1!important;filter:none!important;text-decoration:none!important}';
  document.head.append(style);
@@ -3983,7 +3983,7 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
 (()=>{const start=()=>{const bar=document.querySelector('.pl-seatbar');if(!bar)return false;const date=bar.querySelector('.pl-date');
  const dm=document.createElement('span');dm.className='pl-date-dm';date?.prepend(dm);
  const sync=()=>{const v=(typeof classroomDate!=='undefined'&&classroomDate.value)||'',m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v);const t=m?(+m[3])+'.'+(+m[2])+'.':'Datum';if(dm.textContent!==t)dm.textContent=t};
- sync();try{classroomDate.addEventListener('change',sync)}catch{}setInterval(sync,2000);
+ sync();try{classroomDate.addEventListener('change',sync)}catch{}setInterval(()=>{if(!document.hidden)sync()},2000);
  const more=document.createElement('button');more.type='button';more.className='pl-more';more.textContent='⋯';more.setAttribute('aria-label','Datum und Perspektive');more.setAttribute('aria-expanded','false');document.body.append(more);
  const set=on=>{document.documentElement.classList.toggle('pl-more-open',on);more.setAttribute('aria-expanded',String(on))};
  more.onclick=e=>{e.stopPropagation();set(!document.documentElement.classList.contains('pl-more-open'))};
@@ -4207,7 +4207,7 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
  }
  let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{fit()}catch(e){console.warn(e)}})};
  addEventListener('resize',run);window.visualViewport?.addEventListener('resize',run);window.classroomFitPanels=run;
- new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
+ /* 10.95: gemeinsamer Beobachter */if(typeof classroomOnDomChange==='function')classroomOnDomChange(run);else new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true});
  new MutationObserver(run).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
  document.addEventListener('fullscreenchange',run);document.addEventListener('webkitfullscreenchange',run);
  addEventListener('load',run);run();setTimeout(run,600);
@@ -4271,7 +4271,7 @@ html.sp-fit .sp-fit-box{overflow:auto;overscroll-behavior:auto;-webkit-overflow-
    const sw=document.querySelector('.plan-assess-switch');if(sw){sw.classList.add('spi-btn');if(!sw.title)sw.title='Bewertungen im Sitzplan ein- oder ausblenden'}
   }catch(e){console.warn(e)}finally{busy=false}}
  let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;apply()})};
- new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true,characterData:true});addEventListener('load',run);apply();setTimeout(apply,600);
+ /* 10.95: gemeinsamer Beobachter */if(typeof classroomOnDomChange==='function')classroomOnDomChange(run);else new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true,characterData:true});addEventListener('load',run);apply();setTimeout(apply,600);
  const st=document.createElement('style');st.textContent=
   'html.spi-on .spi-btn:not(#_):not(#__){position:relative;display:inline-flex!important;align-items:center;justify-content:center;min-width:42px!important;width:42px!important;padding:0!important;gap:0!important}'
   +'html.spi-on .spi-btn>svg.spi{width:22px;height:22px;flex:none}html.spi-on .spi-btn>svg.spi-pr{width:26px;height:26px}html.spi-on .spi-btn>.spi-lbl,html.spi-on label.plan-assess-switch.spi-btn>span{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}'
