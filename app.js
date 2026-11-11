@@ -1939,7 +1939,8 @@ window.addEventListener('message',event=>{
   return applyLesson(lesson,'Stundenplan');
  }
  // Zuletzt unterrichtete Lerngruppe (heute bis jetzt, sonst die letzten Schultage)
- function lastLesson(){const n=new Date();for(let back=0;back<14;back++){const d=new Date(n);d.setDate(n.getDate()-back);const day=d.getDay();if(day<1||day>5)continue;const t=plan(d);const lim=back?24*60:n.getHours()*60+n.getMinutes();let best=null;for(const [i,s] of t.slots.entries()){const a=mins(s.start);if(a===null||a>lim)continue;const e=t.days[day]?.[i];if(e?.ref)best={...e,date:dateStr(d)}}if(best)return best}return null}
+ /* 10.80: „Zuletzt“ = die letzte ANDERE Klasse – die gerade laufende (auch die 2. Stunde einer Doppelstunde) zählt nicht */
+ function lastLesson(){const n=new Date();let cur='';try{cur=lessonNow()?.ref||''}catch{}for(let back=0;back<14;back++){const d=new Date(n);d.setDate(n.getDate()-back);const day=d.getDay();if(day<1||day>5)continue;const t=plan(d);const lim=back?24*60:n.getHours()*60+n.getMinutes();let best=null;for(const [i,s] of t.slots.entries()){const a=mins(s.start);if(a===null||a>lim)continue;const e=t.days[day]?.[i];if(e?.ref&&e.ref!==cur)best={...e,date:dateStr(d)}}if(best)return best}return null}
  // „Aktuell“ (iPhone-Leiste): laufende Stunde, sonst die zuletzt unterrichtete Lerngruppe
  /* „Aktuell“ (iPhone-Leiste): läuft gerade eine Stunde, direkt in deren Sitzplan (mit Datum und Raum);
     sonst Übersicht für heute und den nächsten Schultag mit „Zuletzt“ (8.01). */
