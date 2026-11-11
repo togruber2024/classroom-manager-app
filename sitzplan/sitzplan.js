@@ -3603,6 +3603,11 @@ document.addEventListener('keydown',event=>{
    }
    const menu=more.querySelector('.plan-actions-menu');
    for(const b of [save,reset].filter(Boolean)){b.setAttribute('role','menuitem');if(b===reset&&!/…$/.test(label(b)))b.textContent='Zurücksetzen …';/* 10.67: Symbole im Menü – Ablage (speichern) und Radiergummi (zurücksetzen) */if(!b.querySelector(':scope>.pa-mi-ic'))b.insertAdjacentHTML('afterbegin','<svg class="pa-mi-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(b===reset?'<path d="M14.5 4.5 20 10l-8.5 8.5H7L4 15.5z"/><path d="m9.5 9.5 5.5 5.5"/><path d="M11.5 18.5H20"/>':'<path d="M12 3.5v9"/><path d="m8.5 9 3.5 3.5L15.5 9"/><path d="M4 13.5v4.5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4.5"/><path d="M4 13.5h4l1 2h6l1-2h4"/>')+'</svg>');menu.append(b)}
+   /* 10.78: „Alle Namen vom Plan nehmen …“ – Tische bleiben, Klassenliste und Bewertungen bleiben, rückgängig möglich */
+   {let clr=document.getElementById('classroomClearNamesButton');if(!clr){clr=document.createElement('button');clr.type='button';clr.id='classroomClearNamesButton';clr.className='btn';clr.setAttribute('role','menuitem');clr.dataset.beamerHide='1';clr.title='Alle Namen vom Sitzplan nehmen. Tische, Pult, Klassenliste und Bewertungen bleiben erhalten; „Rückgängig“ holt die Namen zurück.';
+     clr.innerHTML='<svg class="pa-mi-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.4 2.8-5.3 5.5-5.3s4.9 1.9 5.5 5.3"/><path d="M16 9.5h5"/></svg>Alle Namen vom Plan nehmen …';
+     clr.onclick=()=>clearNames()}
+    if(reset&&reset.parentElement===menu){if(reset.nextElementSibling!==clr)reset.after(clr)}else if(clr.parentElement!==menu)menu.append(clr)}
    menu.onclick=()=>closeMenu();
    let right=bar.querySelector(':scope > .plan-actions-right');if(!right){right=document.createElement('div');right.className='plan-actions-right'}
    right.append(start);
@@ -3682,7 +3687,7 @@ document.addEventListener('keydown',event=>{
   +'.plan-actions-more.open .plan-actions-menu{display:block}'
   +'body[data-module=sitzplan] .plan-actions-menu>button{display:block!important;width:100%!important;height:auto!important;min-height:0!important;margin:0!important;padding:9px 12px!important;border:0!important;border-radius:8px!important;background:none!important;color:var(--primary,#2f5f9b)!important;text-align:left!important;font:inherit;font-weight:500;box-shadow:none!important;cursor:pointer}'
   +'body[data-module=sitzplan] .plan-actions-menu>button:hover{background:#f3f6fb!important}'
-  +'body[data-module=sitzplan] .plan-actions-menu>#classroomResetButton{color:#b42318!important}'
+  +'body[data-module=sitzplan] .plan-actions-menu>#classroomResetButton,body[data-module=sitzplan] .plan-actions-menu>#classroomClearNamesButton{color:#b42318!important}'
   +'body[data-module=sitzplan] .classroom-roll-split:has(.btn:disabled){opacity:.45;filter:grayscale(1);cursor:not-allowed}body[data-module=sitzplan] .classroom-roll-split:has(.btn:disabled)>.btn{background:#fff!important;color:inherit}body[data-module=sitzplan] .classroom-roll-split:has(.btn:disabled)>.classroom-roll-caption{opacity:1!important}'
   +'.classroom-beamer .plan-actions-more,.classroom-beamer .plan-actions-sep{display:none!important}'
   +'@media(max-width:700px){.plan-actions-sep{display:none}}'
@@ -3770,6 +3775,18 @@ document.addEventListener('keydown',event=>{
 
 /* 10.55: „Mehr“ als Symbol (drei Punkte) */
 (()=>{const st=document.createElement('style');st.textContent='body :is(.plan-actions-more-toggle,.zoom-more-toggle):not(#_):not(#__){display:inline-flex!important;align-items:center;justify-content:center;width:42px!important;min-width:42px!important;padding:0!important}body :is(.plan-actions-more-toggle,.zoom-more-toggle)>svg{width:22px;height:22px;flex:none}.cm-more-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}';document.head.append(st)})();
+
+/* 10.78: alle Namen vom Plan nehmen (aktueller Raum) */
+async function clearNames(){
+ if(typeof gridData==='undefined')return;
+ const named=v=>v&&v!=='X'&&v!=='PULT';const n=gridData.reduce((a,z)=>a+z.filter(named).length,0);
+ if(!n){(window.classroomAlert||alert)('Auf dem Plan stehen keine Namen.');return}
+ const ok=window.classroomConfirm?await classroomConfirm(n+' Name'+(n===1?'':'n')+' vom Plan nehmen? Die Tische bleiben stehen; Klassenliste und Bewertungen bleiben erhalten. Mit „Rückgängig“ kommen die Namen zurück.'):confirm('Alle Namen vom Plan nehmen?');
+ if(!ok)return;
+ merkeSitzplanFuerUndo();
+ gridData=gridData.map(z=>z.map(v=>named(v)?'X':v));
+ initGrid();datenSpeichern();
+}
 ;
 
 /* ==== sitzplan/flicker-diag.js ==== */
