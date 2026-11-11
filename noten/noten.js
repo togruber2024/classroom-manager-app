@@ -3867,7 +3867,7 @@ html.fs-view .fs-hide{display:none!important}
   const all=Object.values(lessons).flatMap(l=>l.sections[0].entries);const has=all.some(e=>MAC.test(e.lemma+e.info));all.forEach(e=>e.noMac=!has);return lessons}
  const isWh=pages=>pages.some(p=>p.some(i=>/WH-?\s*Vokabular\s+zu\s+Lektion/i.test(i.s)));
  const lessonOrder=k=>/^T/.test(k)?100+ +k.slice(1):+k;
- const lessonLabel=k=>/^T/.test(k)?'Transitio '+k.slice(1):k==='0'?'Salvē! (Lektion 0)':'Lektion '+k;
+ const lessonLabel=k=>/^T/.test(k)?'Transitio '+k.slice(1):k==='0'?'Salvē! (S)':'Lektion '+k;
  root.classroomVocabPdf={pageKey,parseBook,parseWhBook,isWh,lessonOrder,lessonLabel,pdfItems,parseVocab,parseTwoColumn,parseAny,analyze,draw,redrawOne,shortLabel,plain,learned,PONTES,nounParadigm,adjParadigm,pronParadigm,verbParadigm,CASES};
 })(typeof window!=='undefined'?window:globalThis);
 ;
@@ -4218,7 +4218,7 @@ html.fs-view .fs-hide{display:none!important}
    dlg.querySelector('[data-x]').onclick=()=>dlg.close();dlg.querySelector('[data-mgr]').onclick=()=>openManager();dlg.querySelector('[data-imp]').onclick=()=>importBook();bindTabs();if(!dlg.open)dlg.showModal();return}
   const keys=keysOf(l);bookSel=new Set([...bookSel].filter(k=>l.lessons[k]));
   const cnt=k=>l.lessons[k].sections.filter(x=>!/^(Wiederholung|Übungen)$/.test(x.name)).reduce((a,x)=>a+x.entries.length,0);
-  const chip=k=>'<button type="button" class="vt-les'+(bookSel.has(k)?' on':'')+'" data-les="'+esc(k)+'" title="'+esc(V.lessonLabel(k)+(l.lessons[k].title?' – '+l.lessons[k].title:''))+'"><b>'+esc(/^T/.test(k)?k:'L'+k)+'</b><small>'+cnt(k)+'</small></button>';
+  const chip=k=>'<button type="button" class="vt-les'+(bookSel.has(k)?' on':'')+'" data-les="'+esc(k)+'" title="'+esc(V.lessonLabel(k)+(l.lessons[k].title?' – '+l.lessons[k].title:''))+'"><b>'+esc(lesTag(k))+'</b><small>'+cnt(k)+'</small></button>';
   const sel=[...bookSel].sort((a,b)=>V.lessonOrder(a)-V.lessonOrder(b));
   dlg.innerHTML='<form method="dialog" class="vt-mid"><h2>'+TITLE+'</h2><div class="vt-tabrow">'+tabs()+'<button type="button" class="vt-btn" data-mgr>iPad-Tests &amp; Auswertung …</button></div>'+'<div class="vt-folder"><div class="vt-sub">'+(cur==='wh'?'Lektion wählen, deren Wiederholungsvokabular abgefragt wird – auch mehrere. Die Zahl zeigt die Vokabeln der Liste.':'Lektion wählen – auch mehrere (z. B. L14, L15, L16). Die Zahl zeigt die neuen Vokabeln der Lektion.')+'</div>'+(note?'<div class="vt-note">'+esc(note)+'</div>':'')+
    '<div class="vt-lesgrid">'+keys.map(chip).join('')+'</div>'+
@@ -4276,11 +4276,11 @@ html.fs-view .fs-hide{display:none!important}
   const pages=(what==='l'?[]:groups.map(g=>sheet(g,false))).concat(what==='s'||what==='c'?[]:groups.map(g=>sheet(g,true)));
   const w=window.open('','_blank');if(!w){alert('Bitte Pop-ups für den Druck erlauben.');return}w.document.write('<!doctype html><html lang="de"><head><meta charset="utf-8"><title>'+esc(t.title)+'</title><style>'+css+'</style></head><body>'+pages.join('')+'</body></html>');w.document.close();setTimeout(()=>{w.focus();w.print()},300)}
  function fromBook(keys){const l=lib(),V=window.classroomVocabPdf;const secs=[];
-  const wh=cur==='wh';for(const k of keys){const les=l.lessons[k],tag=/^T/.test(k)?k:'L'+k;for(const sec of les.sections){const main=wh||!/^(Wiederholung|Übungen)$/.test(sec.name);secs.push({name:tag+' · '+(wh?'Wiederholungsvokabular':main?V.lessonLabel(k):sec.name),on:main,lex:sec.entries.map(V.analyze)})}}
+  const wh=cur==='wh';for(const k of keys){const les=l.lessons[k],tag=lesTag(k);for(const sec of les.sections){const main=wh||!/^(Wiederholung|Übungen)$/.test(sec.name);secs.push({name:tag+' · '+(wh?'Wiederholungsvokabular':main?V.lessonLabel(k):sec.name),on:main,lex:sec.entries.map(V.analyze)})}}
   const last=keys.at(-1),tags=keys.map(k=>/^T/.test(k)?k:'L'+k),range=keys.length===1?tags[0]:keys.length===2?tags.join(' + '):tags[0]+'–'+tags.at(-1);
   const contiguous=keys.every((k,i)=>!i||V.lessonOrder(k)===V.lessonOrder(keys[i-1])+1);
   const name=keys.length<=2||contiguous?range:tags.join(', ');
-  const label=keys.length===1?V.lessonLabel(last):keys.every(k=>!/^T/.test(k))?'Lektion '+(keys.length<=2||contiguous?keys[0]+(keys.length===2?' + ':'–')+last:keys.join(', ')):name;
+  const label=keys.length===1?V.lessonLabel(last):keys.every(k=>!/^T/.test(k)&&k!=='0')?'Lektion '+(keys.length<=2||contiguous?keys[0]+(keys.length===2?' + ':'–')+last:keys.join(', ')):name;
   /* Wiederholung zu Beginn von Lektion N: Grammatik bis Lektion N−1 */const lnKey=wh&&/^\d+$/.test(last)?String(Math.max(1,+last-1)):last;
   const ln=V.learned(lnKey);pdfState={book:true,file:B().title,info:{lesson:lnKey,title:keys.length===1?l.lessons[last].title:'',label:wh?'Wiederholung zu '+label:label},pages:0,secs,name:(wh?'WH ':'')+name+' (Vok.)',count:10,groups:'AB',focus:'mixed',date:today(),draw:null,g:'A',learn:ln,ov:{tenses:new Set(ln.tenses),passive:ln.passive,passPerf:ln.passPerf,konj:ln.konj,ppp:ln.ppp,ppa:ln.ppa}};pdfSetup()}
  const lexPool=()=>{const seen=new Set(),out=[];for(const s of pdfState.secs)if(s.on)for(const l of s.lex){const k=window.classroomVocabPdf.plain(l.lemma);if(!seen.has(k)){seen.add(k);out.push(l)}}return out};
