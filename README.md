@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 10.11.2026 · Version 10.64
+Stand: 11.11.2026 · Version 10.65
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1343,3 +1343,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.62: Vokabeltest – Deutsch 1 Buchstabe falsch = ½ Punkt Abzug, Latein streng; Auffällig-Zahl wie an der Glocke
 10.63: Vokabeltest – Tische wie im Sitzplan-Manager, Reihenabstand = Tischhöhe; QR-Code einzeln groß zeigen; Klett-Fenster neu angeordnet; Auffällig-Zahl kleiner und rund
 10.64: Klassenarbeit – zweispaltige Ergebnistabelle: Kopf und Spalten wieder bündig
+10.65: Fächervergleich – „Fächer im Überblick“ im Profil der Schülerübersicht; „Fächer vergleichen“ (Quartal, Halbjahr, Klassenarbeit) für die ganze Klasse

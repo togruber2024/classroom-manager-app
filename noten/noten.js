@@ -4512,6 +4512,21 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
   }
   return out;
  }
+ /* 10.65: Fächervergleich – je Fach dieser Klasse: Quartals- und Halbjahresnoten (aus den Übersichten) und alle Klassenarbeiten */
+ function compareData(keys){
+  const sheets=collect(keys),out=[];
+  for(const key of keys){const [subject,classId]=key.split('::'),item=(classesBySubject[subject]||[]).find(c=>c.id===classId);if(!item)continue;
+   const system=classGradingSystem(item)==='gradePoints'?'gradePoints':'grades',hys=[];
+   for(const sheet of sheets){if(sheet.classKey!==key)continue;let title='',header=[],cur=null;
+    for(const row of sheet.rows){
+     if(row.kind==='title'){title=String(row.cells[0]?.v||'');const parts=title.split(' · ');cur=/· Halbjahresübersicht/.test(title)?{label:parts[2]||'',quarters:[],students:{}}:null;if(cur)hys.push(cur)}
+     else if(row.kind==='header'&&cur){header=row.cells.slice(1).map(c=>({label:String(c.v??''),summary:!!c.summary}));cur.quarters=header.filter(h=>/^Quartalsnote/.test(h.label)).map(h=>h.label.replace(/^Quartalsnote\s*·?\s*/,'')||'Quartal')}
+     else if(row.kind==='data'&&cur){const name=String(row.cells[0]?.v||'').trim();if(!name)continue;const q=[];let calc=null,man=null;row.cells.slice(1).forEach((c,i)=>{const h=header[i];if(!h)return;const g=typeof c.grade==='number'&&Number.isFinite(c.grade)?c.grade:null;if(/^Quartalsnote/.test(h.label))q.push(g);else if(/^Halbjahresnote/.test(h.label)){if(h.summary)calc=g;else man=g}});cur.students[name]={q,hj:man??calc}}
+    }}
+   let exams=[];try{exams=window.classroomExamValues?.(subject,classId)||[]}catch(e){console.warn(e)}
+   out.push({key,subject,subjectLabel:subjects[subject]?.label||subject,classLabel:item.label||'',system,halfYears:hys,exams});
+  }
+  return out}
  // Notenfarben genau wie in den Tabellen (abhängig von der Farbgestaltung).
  function palette(){const out=[''];for(let g=1;g<=6;g++){const e=document.createElement('span');e.className='compact-cell-value g'+g;e.style.cssText='position:absolute;left:-9999px';document.body.append(e);const c=getComputedStyle(e);out.push({bg:c.backgroundColor,fg:c.color});e.remove()}return out}
  let memo={key:'',raw:'',sheets:null};
@@ -4555,6 +4570,7 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
   const msg=event.data;if(event.source!==parent||!msg?.id)return;
   try{
    if(msg.type==='classroom:student-profile'){saveCurrentSubject();reply(msg,{blocks:blocksFor(collect(msg.keys||null),msg.keys||null,msg.name),palette:palette()})}
+   else if(msg.type==='classroom:subject-compare'){saveCurrentSubject();reply(msg,{subjects:compareData(msg.keys||[]),palette:palette()})}
    else if(msg.type==='classroom:archive-sheets'){const sheets=withArchive(msg.values||{},()=>window.classroomExcelExport.collect(true));reply(msg,{sheets:sheets.map(s=>({name:s.name,label:s.label,subjectLabel:s.subjectLabel,classKey:s.classKey,rows:s.rows}))})}
    else if(msg.type==='classroom:new-school-year'){reply(msg,newSchoolYear(msg.plan||{}))}
    else if(msg.type==='classroom:select-class'){
@@ -4985,6 +5001,13 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
  classroomHooks.add('setPage','exam-overview: Klassenarbeitsseiten',{before(){restore()},after(){navigation();combine();overview()}});
  classroomHooks.add('renderAll','exam-overview: Klassenarbeitsseiten',{before(){restore()},after(){navigation();combine();overview()}});
  classroomHooks.add('buildCustomSubjectPanels','exam-overview: Seiten zurücklegen',{before(){restore()}});
+ /* 10.65: Fächervergleich – Ergebnisse aller Klassenarbeiten/Klausuren einer Klasse (Fach + Klasse), ohne Neuzeichnen */
+ window.classroomExamValues=(subject,classId)=>{const s0=currentSubject,c0=currentClassId;try{currentSubject=subject;currentClassId=classId;
+   const all=subjectExamGroups(subject),hy=id=>all.find(g=>g.type==='halfYear'&&g.id===id)?.label||'';
+   return all.filter(g=>!excluded.has(g.type)).map(g=>{const key=resultKey(g),data=customPagesFor(subject).some(p=>p.key===key)?taskPageData(subject,key):null,system=taskGradeSystem(subject,key);const values={};
+     for(const st of data?.students||[]){const name=(st.name||'').trim();if(!name)continue;let v=null;if(system==='grades')try{v=fineValue(data,st)}catch{}if(v===null)try{const r=taskStudentResult(data,st,false);v=r===null||!Number.isFinite(Number(r))?null:Number(r)}catch{}if(v!==null)values[name]=v}
+     return {id:g.id,label:g.label||'',date:g.examDate||'',topic:(data&&customPageValues(subject,key).examTopic||'').trim(),halfYear:hy(g.halfYearId),system,values}})}
+  finally{currentSubject=s0;currentClassId=c0}};
  navigation();combine();overview();
 })();
 (()=>{const K='classroom-hatch-style-v1',get=()=>{try{return localStorage.getItem(K)==='frame'?'frame':'hatch'}catch{return 'hatch'}};const st=document.createElement('style');st.textContent='html.hatch-frame body .participation-between-1-2.g1{--hf:#b9e18f}html.hatch-frame body .participation-between-1-2.g2{--hf:#5ccc8f}html.hatch-frame body .participation-between-2-3.g2{--hf:#fff65c}html.hatch-frame body .participation-between-2-3.g3{--hf:#b9e18f}html.hatch-frame body .participation-between-3-4.g3{--hf:#ffd65c}html.hatch-frame body .participation-between-3-4.g4{--hf:#fff65c}html.hatch-frame body .participation-between-4-5.g4{--hf:#ec5f55}html.hatch-frame body .participation-between-4-5.g5{--hf:#ffd65c}html.hatch-frame body .participation-between-5-6.g5{--hf:#d65c5c}html.hatch-frame body .participation-between-5-6.g6{--hf:#f68880}html.hatch-frame body[data-module] [class*=participation-between-]:not(#_):not(.task-raw-score):not(.grade-four-fail){background-image:none!important;box-shadow:inset 0 0 0 3px var(--hf,transparent),inset 0 0 0 4px #fff!important}.hatch-seg{margin:0!important;align-self:center}.hatch-seg button{display:inline-flex!important;align-items:center;justify-content:center;min-width:42px;padding:0 8px!important}.hs-sw{display:block;width:22px;height:15px;border-radius:4px;background:#b9e18f}.hs-white{background:#fff;box-shadow:inset 0 0 0 1.5px #b9c6d8}.hs-hatch{background:repeating-linear-gradient(135deg,#5ccc8f 0 4px,#b9e18f 4px 8px)}.hs-frame{box-shadow:inset 0 0 0 2.5px #5ccc8f,inset 0 0 0 3.5px #fff}';document.head.append(st);
