@@ -4,6 +4,7 @@
 <!-- 10.21: Schülerseite für den iPad-Vokabeltest des Classroom-Managers. Der Test steht im Link (#…), die Lösungen NICHT.
      „Abgeben“ erzeugt eine kleine Datei, die per AirDrop an die Lehrkraft geht. Es wird nichts an einen Server geschickt. -->
 <style>
+.vr{padding:14px 18px;margin:0 0 14px;font-size:.92rem;line-height:1.45}.vr-t{display:block;color:#2f5f9b;margin-bottom:6px}.vr-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}.vr-h{font-weight:700;margin-bottom:3px}.vr-ex{display:flex;gap:8px;align-items:center;margin:3px 0}.vr-ex>span{flex:none;display:inline-flex;width:22px;height:22px;border-radius:6px;align-items:center;justify-content:center;font-weight:800;font-size:13px}.vr-ok{background:#dff3e6;color:#2c7a4b}.vr-no{background:#fde3df;color:#b42318}.vr-hf{background:#fff4d6;color:#8a6a0a}.vr-n{color:#66758a;font-size:.8rem;margin-top:5px}
 *{box-sizing:border-box}html,body{margin:0}body{font:17px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;color:#243247;background:#f6f8fc;padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left));-webkit-text-size-adjust:100%}
 .card{background:#fff;border:1px solid #dce3ef;border-radius:18px;box-shadow:0 1px 3px #233d600d}
 h1{font-size:1.45rem;margin:0;letter-spacing:-.02em}.muted{color:#66758a}
@@ -61,9 +62,12 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
  try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&Array.isArray(d.a)&&d.a.length===test.r.length)draft=d}catch{}
  const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(draft))}catch{}};
  const hint='Grundform: bei Substantiven Nom. Sg. und Genus · bei Verben Infinitiv und 1. Pers. Sg. Präs. · bei Adjektiven und Pronomen Nom. Sg. m. — Längenzeichen sind nicht nötig.';
+ /* 10.71: So wird bewertet – wie im Classroom-Manager */
+ const rules=()=>{const lat=test.r.some(([,k])=>k&&k!=='x'),ex=(c,t)=>'<div class="vr-ex"><span class="vr-'+c+'">'+({ok:'✓',hf:'½',no:'✗'})[c]+'</span>'+t+'</div>';
+  return '<div class="card vr"><b class="vr-t">So wird bewertet</b><div class="vr-two">'+(lat?'<div><div class="vr-h">Latein – genau</div>'+ex('ok','<i>amicus</i> · m')+ex('no','<i>amikus</i> → 0 P')+'<div class="vr-n">j = i · Längenzeichen (ā) nicht nötig · Formen mit Komma oder Leerzeichen trennen</div></div>':'')+'<div><div class="vr-h">Deutsch – 1 Fehler erlaubt</div>'+ex('ok','Freund')+ex('hf','Freunt → ½ P Abzug')+ex('no','Frunt → 0 P')+'<div class="vr-n">Eine richtige Bedeutung reicht · Groß-/Kleinschreibung egal</div></div></div></div>'};
  const off='autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"';
  app.innerHTML='<div class="card hd"><div><h1>'+esc(test.t||'Vokabeltest')+' · Gruppe '+esc(test.g)+'</h1><div class="muted" style="font-size:.9rem">'+esc([test.c,test.d?new Date(test.d+'T12:00').toLocaleDateString('de-DE'):''].filter(Boolean).join(' · '))+'</div></div><label class="name"><span class="muted">Name</span><input id="nm" '+off.replace('autocapitalize="off"','autocapitalize="words"')+' placeholder="Vorname Nachname" value="'+esc(draft.name)+'"></label></div>'+
-  '<div class="hint">'+esc(hint)+'</div><div class="card rows"><div class="row head"><span>Nr</span><span>Form</span><span>Grundform</span><span>Genus</span><span>Bedeutung(en)</span></div>'+
+  '<div class="hint">'+esc(hint)+'</div>'+rules()+'<div class="card rows"><div class="row head"><span>Nr</span><span>Form</span><span>Grundform</span><span>Genus</span><span>Bedeutung(en)</span></div>'+
   test.r.map(([form,kind],i)=>{const a=draft.a[i];return '<div class="row" data-i="'+i+'"><span class="n">'+(i+1)+'</span><span class="form">'+esc(form)+'</span>'+
    (kind==='x'?'<input class="in" disabled placeholder="— (unveränderlich)">':'<input class="in" data-k="l" '+off+' placeholder="'+({n:'Nom. Sg.',v:'Inf. Präs., 1. Ps. Sg. Präs.',a:'Nom. Sg. m.'}[kind]||'Grundform')+'" value="'+esc(a.l)+'">')+
    '<span class="gen">'+['m','f','n'].map(g=>'<button type="button" data-g="'+g+'"'+(kind==='n'?'':' disabled')+(a.ge===g?' class="on"':'')+' aria-label="Genus '+g+'">'+g+'</button>').join('')+'</span>'+
