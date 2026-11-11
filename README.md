@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 11.11.2026 · Version 10.69
+Stand: 11.11.2026 · Version 10.70
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1348,3 +1348,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.67: Sitzplan – Symbol Gruppen (2 × 2 Karten), Symbole für Vorlage speichern und Zurücksetzen im Menü; 30 px zwischen runden und eckigen Knöpfen
 10.68: Einheitliche Bedienelemente (Ecken, Ränder, Löschen, Schalter als Knopf, Segmente, Auswahllisten); Vokabeltest-Smartboard-Ansichten im Vollbild
 10.69: Vokabeltest – Smartboard-Vollbild mit Abstand oben, passt ganz auf den Bildschirm
+10.70: Kopfleiste – Rahmen um „Backup“ einheitlich, keine doppelte Trennlinie
