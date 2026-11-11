@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 11.11.2026 · Version 10.66
+Stand: 11.11.2026 · Version 10.67
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1345,3 +1345,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.64: Klassenarbeit – zweispaltige Ergebnistabelle: Kopf und Spalten wieder bündig
 10.65: Fächervergleich – „Fächer im Überblick“ im Profil der Schülerübersicht; „Fächer vergleichen“ (Quartal, Halbjahr, Klassenarbeit) für die ganze Klasse
 10.66: Klassenarbeit – „＋ Aufgabe“ quadratisch im Tabellenkopf; Tendenzen-Schalter nur bei direkt benoteten Aufgaben; doppelter Abstand zwischen runden und eckigen Knöpfen
+10.67: Sitzplan – Symbol Gruppen (2 × 2 Karten), Symbole für Vorlage speichern und Zurücksetzen im Menü; 30 px zwischen runden und eckigen Knöpfen
