@@ -3147,7 +3147,7 @@ html.fit-panel body[data-module=noten] .panel.fit-box .table-wrap:not(#_){oversc
  window.classroomFullscreen={toggle,isOn};
  const st=document.createElement('style');st.textContent=`
 .fs-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border:1px solid #d5deea;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:.86rem;font-weight:600;line-height:1;cursor:pointer;white-space:nowrap;flex:none}
-.fs-btn:hover{background:#f3f7fc}.fs-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.fs-btn:hover{background:#f3f7fc}/* 10.87: Vollbild aktiv = blau ausgefüllt */html body .fs-btn[aria-pressed=true]:not(#_):not(#__):not(#___){background:#2f5f9b!important;border-color:#2f5f9b!important;color:#fff!important}.fs-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
 html.ph-lite .fs-btn{display:none!important}
 html.fs-view,html.fs-view body{background:#f6f8fc}
 html.fs-view body[data-module=noten] main{padding:12px 12px 0!important;max-width:none!important}
@@ -7882,7 +7882,15 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   pnl.addEventListener('touchstart',e=>{if(e.target.closest('input'))return;x0=e.touches[0].clientX;y0=e.touches[0].clientY;dy=0;down=!body.contains(e.target)||body.scrollTop<=0;pnl.style.transition='none'},{passive:true});
   pnl.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,ddy=e.changedTouches[0].clientY-y0;x0=null;pnl.style.transition='transform .18s ease';
    pnl.style.transform='';if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(ddy)*1.5)step(dx<0?1:-1)},{passive:true})}
- function openDetail(panel,name){detail={panel,name};renderDetail();sheet.hidden=false;sheet.querySelector('.qd-body').scrollTop=0}
+ function openDetail(panel,name){detail={panel,name};renderDetail();sheet.hidden=false;sheet.querySelector('.qd-body').scrollTop=0;landMark()}
+ /* 10.87: iPhone quer – links die Liste (nur Name und Note), rechts die Details der gewählten Person; Tipp links wechselt die Person */
+ const LAND=matchMedia('(max-height:500px) and (orientation:landscape) and (pointer:coarse)');let landClosed=false;
+ const landSync=()=>{const on=LAND.matches&&mode()==='cards';document.documentElement.classList.toggle('qs-land',on);if(!on)landClosed=false};
+ function landMark(){for(const c of document.querySelectorAll('.qs-cards>.qs-card'))c.classList.toggle('qs-sel',!!detail&&!sheet.hidden&&c.querySelector('.qs-name')?.textContent.trim()===detail.name)}
+ function landAuto(){landSync();if(!document.documentElement.classList.contains('qs-land')||landClosed||(detail&&!sheet.hidden))return;const card=[...document.querySelectorAll('.qs-cards>.qs-card')].find(c=>c.offsetParent);if(card)card.click()}
+ LAND.addEventListener?.('change',()=>{landClosed=false;landSync();setTimeout(landAuto,350)});landSync();
+ sheet.addEventListener('click',e=>{if(e.target.closest('.qd-close')&&LAND.matches){landClosed=true;setTimeout(landMark,0)}});
+ window.classroomCardsLandAuto=()=>setTimeout(landAuto,60);addEventListener('resize',()=>setTimeout(landAuto,120));
  /* Halbjahresnote aus der Halbjahresübersicht lesen (die Seite wird dazu unsichtbar aufgebaut, höchstens alle 3 s) */
  let semAt=0,semKey='';
  function halfYearNote(name){try{if(!window.classroomRenderSummary)return null;const sem=subjectExamGroups(currentSubject).find(g=>g.type==='semester'&&g.halfYearId===currentHalfYearId),key=sem?.pages?.[0];if(!key||key===activePage)return null;
@@ -8083,7 +8091,7 @@ return}
     const ft=document.createElement('div');ft.className='qs-ft';ft.append(t);if(edits.childElementCount)ft.append(edits);card.append(ft)}
    else if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;/* 9.85: auch in der Noten-Seitenleiste am Mac öffnet ein Klick in den Notenbereich die Notenbesprechung (Klick auf den Namen klappt ein/aus) */if(document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch()&&(card.classList.contains('qs-folded')||e.target.closest('.qs-top')))return;openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card){if(document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch())card.click();else openDetail(panel,name)}};frag.append(card);
   }
-  box.replaceChildren(frag);fixUnstriped(box);/* 9.67: Sortierung A–Z | Note */setTimeout(()=>window.classroomPerfSort?.(),0);/* Schraffur „Aus“ sofort anwenden, nicht erst über den Beobachter (8.15) */window.classroomUnstripe?.(box);
+  box.replaceChildren(frag);window.classroomCardsLandAuto?.();landMark?.();fixUnstriped(box);/* 9.67: Sortierung A–Z | Note */setTimeout(()=>window.classroomPerfSort?.(),0);/* Schraffur „Aus“ sofort anwenden, nicht erst über den Beobachter (8.15) */window.classroomUnstripe?.(box);
   if(detail?.panel===panel&&!sheet.hidden&&!sheet.contains(document.activeElement))renderDetail();
  }
  new MutationObserver(list=>{if(list.some(m=>!m.target.closest?.('.qs-cards,.qs-phone-bar,.qs-detail,.qs-wt')))schedule()}).observe(document.body,{subtree:true,childList:true,characterData:true});
@@ -8290,6 +8298,12 @@ return}
  '.qs-detail .qd-navs{grid-area:navs;display:flex;gap:6px}.qs-detail .qd-nav{width:38px;height:36px;border-radius:999px;font-size:20px}',
  '.qs-detail .qd-title{grid-area:title;text-align:left}.qs-detail .qd-title b{font-size:19px}'
 ].join('');document.head.append(st)})();
+
+/* 10.87: iPhone quer – Liste + Details nebeneinander */
+(()=>{const st=document.createElement('style');st.textContent='html.qs-land body .qs-cards:not(#_){max-width:calc(40vw - 46px)!important;margin-right:auto!important;grid-template-columns:1fr!important}html.qs-land body .panel.qs-cards-on>*:not(#_){max-width:calc(40vw - 46px)!important;box-sizing:border-box;flex-wrap:wrap!important}html.qs-land body .panel.qs-cards-on>*>*:not(#_){flex-wrap:wrap!important;min-width:0}html.qs-land body .pl-bar .pl-row:not(#_):not(#__){display:flex!important;flex-wrap:wrap!important;gap:8px!important;grid-template-columns:none!important}'
+ +'html.qs-land .qs-cards>.qs-card>:not(.qs-top){display:none!important}html.qs-land .qs-cards>.qs-card{padding-top:8px!important;padding-bottom:8px!important}'
+ +'html.qs-land .qs-cards>.qs-card.qs-sel{outline:3px solid #2f5f9b;outline-offset:-1px}'
+ +'html.qs-land .qs-detail:not([hidden]){left:40vw!important}html.qs-land .qs-detail .qd-back{display:none!important}';document.head.append(st)})();
 ;
 
 /* ==== noten/mean-guard.js ==== */
