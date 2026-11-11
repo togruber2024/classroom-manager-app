@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 11.11.2026 · Version 10.90
+Stand: 11.11.2026 · Version 10.91
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1369,3 +1369,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.88: Latein-Datenbank exportieren/importieren (.cmlatein) – zusammenführen oder ersetzen, ohne Schülerdaten
 10.89: Datenbank-Fenster (Export/Import) kompakter mit Karten, Symbolen und Anzahl
 10.90: Hilfe – Reiter und Überschrift „Neu“ orange wie die Versions-Marken
+10.91: iPhone quer – Noten: links Namen, rechts alle Schüler untereinander, Markierung läuft mit; Q1/Q2/Halbjahr oben rechts

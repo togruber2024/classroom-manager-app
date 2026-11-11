@@ -7944,15 +7944,38 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   pnl.addEventListener('touchstart',e=>{if(e.target.closest('input'))return;x0=e.touches[0].clientX;y0=e.touches[0].clientY;dy=0;down=!body.contains(e.target)||body.scrollTop<=0;pnl.style.transition='none'},{passive:true});
   pnl.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,ddy=e.changedTouches[0].clientY-y0;x0=null;pnl.style.transition='transform .18s ease';
    pnl.style.transform='';if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(ddy)*1.5)step(dx<0?1:-1)},{passive:true})}
- function openDetail(panel,name){detail={panel,name};renderDetail();sheet.hidden=false;sheet.querySelector('.qd-body').scrollTop=0;landMark()}
- /* 10.87: iPhone quer – links die Liste (nur Name und Note), rechts die Details der gewählten Person; Tipp links wechselt die Person */
- const LAND=matchMedia('(max-height:500px) and (orientation:landscape) and (pointer:coarse)');let landClosed=false;
- const landSync=()=>{const on=LAND.matches&&mode()==='cards';document.documentElement.classList.toggle('qs-land',on);if(!on)landClosed=false};
- function landMark(){for(const c of document.querySelectorAll('.qs-cards>.qs-card'))c.classList.toggle('qs-sel',!!detail&&!sheet.hidden&&c.querySelector('.qs-name')?.textContent.trim()===detail.name)}
- function landAuto(){landSync();if(!document.documentElement.classList.contains('qs-land')||landClosed||(detail&&!sheet.hidden))return;const card=[...document.querySelectorAll('.qs-cards>.qs-card')].find(c=>c.offsetParent);if(card)card.click()}
- LAND.addEventListener?.('change',()=>{landClosed=false;landSync();setTimeout(landAuto,350)});landSync();
- sheet.addEventListener('click',e=>{if(e.target.closest('.qd-close')&&LAND.matches){landClosed=true;setTimeout(landMark,0)}});
- window.classroomCardsLandAuto=()=>setTimeout(landAuto,60);addEventListener('resize',()=>setTimeout(landAuto,120));
+ function openDetail(panel,name){detail={panel,name};renderDetail();sheet.hidden=false;sheet.querySelector('.qd-body').scrollTop=0}
+ /* 10.91: iPhone quer – links nur die Namen, rechts alle Schüler untereinander (Ansicht der Detailseite, ohne Bearbeiten).
+    Beim Scrollen rechts wird links der Name markiert; Tipp links springt rechts hin; Tipp rechts öffnet die Detailseite zum Bearbeiten. */
+ const LAND=matchMedia('(max-height:500px) and (orientation:landscape) and (pointer:coarse)');
+ const ql=document.createElement('div');ql.className='qsl';ql.hidden=true;ql.innerHTML='<div class="qsl-list" role="list"></div><div class="qsl-right"><div class="qsl-seg" role="radiogroup" aria-label="Ansicht"></div><div class="qsl-scroll"></div></div>';document.body.append(ql);
+ const qlList=ql.querySelector('.qsl-list'),qlScroll=ql.querySelector('.qsl-scroll'),qlSeg=ql.querySelector('.qsl-seg');let qlTimer=0,qlBusy=false,qlCur='';
+ const landOn=()=>LAND.matches&&mode()==='cards'&&!!document.querySelector('.qs-cards>.qs-card');
+ function qlMark(name,scrollList){qlCur=name;for(const it of qlList.children){const on=it.dataset.n===name;it.classList.toggle('on',on);if(on&&scrollList){const r=it.getBoundingClientRect(),lr=qlList.getBoundingClientRect();if(r.top<lr.top+4||r.bottom>lr.bottom-4)qlList.scrollTop+=r.top-lr.top-(lr.height-r.height)/2}}}
+ function qlBuild(){if(qlBusy)return;const on=landOn();document.documentElement.classList.toggle('qs-land',on);ql.hidden=!on;if(!on)return;
+  const box=[...document.querySelectorAll('.qs-cards')].find(b=>b.closest('.panel')&&b.querySelector('.qs-card')&&b.closest('.panel').offsetParent!==null)||document.querySelector('.qs-cards');const panel=box?.closest('.panel,[data-custom-panel]')||box?.parentElement;if(!box||!panel)return;
+  qlBusy=true;const keep=qlScroll.scrollTop,wasOpen=!sheet.hidden,saved=detail;
+  try{
+   /* Quartal-Schalter aus der Leiste übernehmen */
+   const seg=document.querySelector('.pl-seg.pl-view');qlSeg.replaceChildren();if(seg)for(const ob of seg.querySelectorAll('button')){const b=document.createElement('button');b.type='button';b.textContent=ob.textContent;b.className=ob.getAttribute('aria-pressed')==='true'?'on':'';b.title=ob.textContent+' anzeigen';b.onclick=()=>{ob.click();qlSig='';setTimeout(()=>window.classroomCardsLandAuto(),350)};qlSeg.append(b)}
+   const cards=[...box.querySelectorAll(':scope>.qs-card')];qlList.replaceChildren();const frag=document.createDocumentFragment();
+   for(const c of cards){const name=c.querySelector('.qs-name')?.textContent.trim();if(!name)continue;
+    const it=document.createElement('button');it.type='button';it.className='qsl-it';it.dataset.n=name;it.setAttribute('role','listitem');const nb=document.createElement('b');nb.textContent=name;it.append(nb);const big=c.querySelector('.qs-big');if(big)it.append(big.cloneNode(true));
+    it.onclick=()=>{const sec=qlScroll.querySelector('.qsl-sec[data-n="'+CSS.escape(name)+'"]');if(sec){qlScroll.scrollTop=sec.offsetTop-2;qlMark(name,false)}};qlList.append(it);
+    detail={panel,name};renderDetail();const sec=document.createElement('section');sec.className='qsl-sec';sec.dataset.n=name;sec.title='Antippen zum Bearbeiten';
+    const h=document.createElement('h4');const hn=document.createElement('b');hn.textContent=name;h.append(hn);if(big)h.append(big.cloneNode(true));sec.append(h);
+    const body=sheet.querySelector('.qd-body');for(const ch of body.children){if(ch.matches('.qd-note')&&!ch.querySelector('.qd-note-view'))continue;sec.append(ch.cloneNode(true))}
+    sec.onclick=()=>openDetail(panel,name);frag.append(sec)}
+   qlScroll.replaceChildren(frag);
+  }finally{detail=saved;if(wasOpen&&saved)renderDetail();else{sheet.hidden=true;detail=null}qlBusy=false}
+  qlScroll.scrollTop=keep;qlSync()}
+ function qlSync(){const secs=[...qlScroll.querySelectorAll('.qsl-sec')];if(!secs.length)return;const y=qlScroll.scrollTop+8;let cur=secs[0];for(const s of secs){if(s.offsetTop<=y)cur=s;else break}if(qlScroll.scrollTop+qlScroll.clientHeight>=qlScroll.scrollHeight-2)cur=secs.at(-1);if(cur.dataset.n!==qlCur)qlMark(cur.dataset.n,true)}
+ qlScroll.addEventListener('scroll',()=>requestAnimationFrame(qlSync),{passive:true});
+ const qlLater=()=>{clearTimeout(qlTimer);qlTimer=setTimeout(qlBuild,300)};
+ LAND.addEventListener?.('change',()=>{qlSig='';qlLater()});addEventListener('resize',()=>window.classroomCardsLandAuto());
+ sheet.addEventListener('click',e=>{if(e.target.closest('.qd-close')&&LAND.matches)setTimeout(qlBuild,50)});
+ let qlSig='';const sigNow=()=>{const b=document.querySelector('.qs-cards');return (b?b.textContent:'')+'|'+(document.querySelector('.pl-seg.pl-view [aria-pressed=true]')?.textContent||'')+'|'+LAND.matches};
+ window.classroomCardsLandAuto=()=>{if(qlBusy)return;const g=sigNow();if(g===qlSig&&!ql.hidden===landOn())return;qlSig=g;qlLater()};
  /* Halbjahresnote aus der Halbjahresübersicht lesen (die Seite wird dazu unsichtbar aufgebaut, höchstens alle 3 s) */
  let semAt=0,semKey='';
  function halfYearNote(name){try{if(!window.classroomRenderSummary)return null;const sem=subjectExamGroups(currentSubject).find(g=>g.type==='semester'&&g.halfYearId===currentHalfYearId),key=sem?.pages?.[0];if(!key||key===activePage)return null;
@@ -8153,7 +8176,7 @@ return}
     const ft=document.createElement('div');ft.className='qs-ft';ft.append(t);if(edits.childElementCount)ft.append(edits);card.append(ft)}
    else if(edits.childElementCount)card.append(edits);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',name+' – alle Einträge anzeigen');card.onclick=e=>{if(e.target.closest('input,label,.qs-mail'))return;/* 9.85: auch in der Noten-Seitenleiste am Mac öffnet ein Klick in den Notenbereich die Notenbesprechung (Klick auf den Namen klappt ein/aus) */if(document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch()&&(card.classList.contains('qs-folded')||e.target.closest('.qs-top')))return;openDetail(panel,name)};card.onkeydown=e=>{if(e.key==='Enter'&&e.target===card){if(document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch())card.click();else openDetail(panel,name)}};frag.append(card);
   }
-  box.replaceChildren(frag);window.classroomCardsLandAuto?.();landMark?.();fixUnstriped(box);/* 9.67: Sortierung A–Z | Note */setTimeout(()=>window.classroomPerfSort?.(),0);/* Schraffur „Aus“ sofort anwenden, nicht erst über den Beobachter (8.15) */window.classroomUnstripe?.(box);
+  box.replaceChildren(frag);window.classroomCardsLandAuto?.();fixUnstriped(box);/* 9.67: Sortierung A–Z | Note */setTimeout(()=>window.classroomPerfSort?.(),0);/* Schraffur „Aus“ sofort anwenden, nicht erst über den Beobachter (8.15) */window.classroomUnstripe?.(box);
   if(detail?.panel===panel&&!sheet.hidden&&!sheet.contains(document.activeElement))renderDetail();
  }
  new MutationObserver(list=>{if(list.some(m=>!m.target.closest?.('.qs-cards,.qs-phone-bar,.qs-detail,.qs-wt')))schedule()}).observe(document.body,{subtree:true,childList:true,characterData:true});
@@ -8361,11 +8384,16 @@ return}
  '.qs-detail .qd-title{grid-area:title;text-align:left}.qs-detail .qd-title b{font-size:19px}'
 ].join('');document.head.append(st)})();
 
-/* 10.87: iPhone quer – Liste + Details nebeneinander */
-(()=>{const st=document.createElement('style');st.textContent='html.qs-land body .qs-cards:not(#_){max-width:calc(40vw - 46px)!important;margin-right:auto!important;grid-template-columns:1fr!important}html.qs-land body .panel.qs-cards-on>*:not(#_){max-width:calc(40vw - 46px)!important;box-sizing:border-box;flex-wrap:wrap!important}html.qs-land body .panel.qs-cards-on>*>*:not(#_){flex-wrap:wrap!important;min-width:0}html.qs-land body .pl-bar .pl-row:not(#_):not(#__){display:flex!important;flex-wrap:wrap!important;gap:8px!important;grid-template-columns:none!important}'
- +'html.qs-land .qs-cards>.qs-card>:not(.qs-top){display:none!important}html.qs-land .qs-cards>.qs-card{padding-top:8px!important;padding-bottom:8px!important}'
- +'html.qs-land .qs-cards>.qs-card.qs-sel{outline:3px solid #2f5f9b;outline-offset:-1px}'
- +'html.qs-land .qs-detail:not([hidden]){left:40vw!important}html.qs-land .qs-detail .qd-back{display:none!important}';document.head.append(st)})();
+/* 10.91: iPhone quer – Namen links, alle Details rechts */
+(()=>{const st=document.createElement('style');st.textContent='.qsl{position:fixed;inset:6px;z-index:9700;display:flex;gap:8px;background:#f4f7fb}.qsl[hidden]{display:none}html.qs-land body{overflow:hidden!important}'
+ +'.qsl-list{width:38%;max-width:300px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding:2px;-webkit-overflow-scrolling:touch}'
+ +'.qsl-it{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;width:100%;min-height:36px;padding:3px 5px 3px 11px;border:1px solid #dce3ef;border-radius:10px;background:#fff;color:#243247;font:inherit;text-align:left;cursor:pointer}.qsl-it b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qsl-it.on{outline:3px solid #2f5f9b;outline-offset:-2px;background:#f4f8fe}'
+ +'.qsl-it .qs-big,.qsl-sec h4 .qs-big{flex:none;min-width:36px;height:27px;font-size:14.5px!important;display:inline-flex;align-items:center;justify-content:center}'
+ +'.qsl-right{flex:1;min-width:0;display:flex;flex-direction:column;background:#fff;border:1px solid #dce3ef;border-radius:16px;overflow:hidden}'
+ +'.qsl-seg{display:flex;gap:6px;padding:7px 10px;border-bottom:1px solid #eef1f6;flex:none}.qsl-seg:empty{display:none}.qsl-seg button{border:0;border-radius:8px;background:#eef2f8;color:#66758a;font:inherit;font-size:13px;padding:5px 12px;cursor:pointer}.qsl-seg button.on{background:#2f5f9b;color:#fff;font-weight:700}'
+ +'.qsl-scroll{flex:1;overflow-y:auto;padding:0 12px 40vh;-webkit-overflow-scrolling:touch}'
+ +'.qsl-sec{padding:6px 0 12px;border-bottom:1px dashed #dce3ef;cursor:pointer}.qsl-sec h4{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 -12px 4px;padding:6px 12px;background:#fff;font-size:15px}'
+ +'.qsl-sec :is(input,select,textarea,button){pointer-events:none}.qsl-sec .qd-note-add{display:none}';document.head.append(st)})();
 ;
 
 /* ==== noten/mean-guard.js ==== */
