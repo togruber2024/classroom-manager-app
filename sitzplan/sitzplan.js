@@ -3608,6 +3608,8 @@ document.addEventListener('keydown',event=>{
      clr.innerHTML='<svg class="pa-mi-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.4 2.8-5.3 5.5-5.3s4.9 1.9 5.5 5.3"/><path d="M16 9.5h5"/></svg>Alle Namen vom Plan nehmen …';
      clr.onclick=()=>clearNames()}
     if(reset&&reset.parentElement===menu){if(reset.nextElementSibling!==clr)reset.after(clr)}else if(clr.parentElement!==menu)menu.append(clr)}
+   /* 10.83: Vorlage speichern, Zurücksetzen, Alle Namen vom Plan nehmen – nur als Symbole (Name als Infotext) */
+   for(const b of [save,reset,menu.querySelector('#classroomClearNamesButton')].filter(Boolean)){b.classList.add('pa-icon-only');const t=label(b).replace(/\s+/g,' ').trim();if(t&&b.getAttribute('aria-label')!==t)b.setAttribute('aria-label',t);if(!b.title)b.title=t;}
    menu.onclick=()=>closeMenu();
    let right=bar.querySelector(':scope > .plan-actions-right');if(!right){right=document.createElement('div');right.className='plan-actions-right'}
    right.append(start);
@@ -3693,7 +3695,7 @@ document.addEventListener('keydown',event=>{
   +'@media(max-width:700px){.plan-actions-sep{display:none}}'
   +'body[data-module=sitzplan] .classroom-plan-actions{flex-wrap:nowrap!important}body[data-module=sitzplan] .classroom-plan-actions.plan-actions-wrap{flex-wrap:wrap!important}'
   +'body[data-module=sitzplan] .classroom-plan-actions>.plan-actions-collapsed{display:none!important}'
-  +'.plan-actions-menu>button:not(#_):not(#__){display:flex!important;align-items:center;gap:10px;text-align:left}.plan-actions-menu .pa-mi-ic{width:20px;height:20px;flex:none}.plan-actions-menu-sep{height:1px;margin:5px 6px;background:#e3e9f2}'
+  +'.plan-actions-menu:has(>.pa-icon-only){min-width:0!important}.plan-actions-menu>button.pa-icon-only:not(#_):not(#__):not(#___){display:inline-flex!important;width:44px!important;height:44px!important;padding:0!important;justify-content:center;font-size:0!important;gap:0;vertical-align:top}.plan-actions-menu>button.pa-icon-only .pa-mi-ic{width:22px!important;height:22px!important}'+'.plan-actions-menu>button:not(#_):not(#__){display:flex!important;align-items:center;gap:10px;text-align:left}.plan-actions-menu .pa-mi-ic{width:20px;height:20px;flex:none}.plan-actions-menu-sep{height:1px;margin:5px 6px;background:#e3e9f2}'
   +'body[data-module=sitzplan] .plan-actions-menu .plan-actions-proxy{display:block!important;width:100%!important;height:auto!important;min-height:0!important;margin:0!important;padding:9px 12px!important;border:0!important;border-radius:8px!important;background:none!important;color:var(--primary,#2f5f9b)!important;text-align:left!important;font:inherit;font-weight:500;box-shadow:none!important;cursor:pointer;white-space:nowrap}'
   +'body[data-module=sitzplan] .plan-actions-menu .plan-actions-proxy:hover{background:#f3f6fb!important}body[data-module=sitzplan] .plan-actions-menu .plan-actions-proxy:disabled{opacity:.45;cursor:not-allowed}';
  document.head.append(style);

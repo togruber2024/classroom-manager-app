@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 11.11.2026 · Version 10.82
+Stand: 11.11.2026 · Version 10.83
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1361,3 +1361,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.80: „Zuletzt“ überspringt die laufende Klasse (auch bei Doppelstunden)
 10.81: Stundenplan als Wochenraster mit Blöcken – Doppelstunden als ein Block, Bearbeiten per kleinem Fenster
 10.82: Pause nach der Stunde zählt zur Stunde (Jetzt/Zuletzt/Automatik); voller Name im Bewertungsfenster am Mac; Infotext der Bewertungszeichen
+10.83: Klassenkürzel-Pillen an Jetzt/Zuletzt-Uhr; Menü „Mehr“ beim Sitzplan nur mit Symbolen
