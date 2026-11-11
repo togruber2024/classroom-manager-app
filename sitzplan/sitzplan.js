@@ -3595,7 +3595,7 @@ document.addEventListener('keydown',event=>{
   if(!start)return;
   /* 11.01: Vorlage speichern, Zurücksetzen, Alle Namen vom Plan nehmen stehen als Symbolknöpfe in der Zeile; nur bei Platzmangel wandern sie (zuerst) ins Menü „Mehr“ */
   const clr=clearButton();
-  const expected=[assign,'sep',persp,finder,random,groupsBtn,'sep',roll,'sep',print,'sep',save,reset,clr,'more','right'].filter(Boolean);
+  /* 11.03: ohne Trennstriche; Drucken rechts neben „Vorlage speichern“ */const expected=[assign,persp,finder,random,groupsBtn,roll,save,print,reset,clr,'more','right'].filter(Boolean);
   const right0=bar.querySelector(':scope > .plan-actions-right'),more0=bar.querySelector(':scope > .plan-actions-more'),current=[...bar.children].filter(c=>c!==legacy&&!c.matches('.plan-actions-sep'));
   const want=expected.map(x=>x==='more'?more0:x==='right'?right0:x).filter(x=>x!=='sep');
   if(right0&&more0&&right0.lastElementChild===start&&start.textContent==='Verteilen'&&current.length===want.length&&current.every((c,i)=>c===want[i]))return;
@@ -3625,7 +3625,7 @@ document.addEventListener('keydown',event=>{
  // Reihenfolge beim Einklappen: zuletzt „Schüler finden“ (nicht während der Suche) und „Schüler zuweisen“ (nicht während des Zuweisens).
  let forceFinder=false;
  function collapsibles(bar){const finder=bar.querySelector(':scope > .student-finder'),assign=bar.querySelector(':scope > [data-assign-student]');
-  return [document.getElementById('classroomClearNamesButton'),document.getElementById('classroomResetButton'),bar.querySelector(':scope > .grid-save-button'),[...bar.querySelectorAll(':scope > .btn')].find(b=>label(b)==='Drucken'),bar.querySelector(':scope > .classroom-roll-split'),window.classroomRandomGroupsButton,document.getElementById('randomStudentButton'),document.getElementById('classroomRotateButton'),
+  return [document.getElementById('classroomClearNamesButton'),document.getElementById('classroomResetButton'),[...bar.querySelectorAll(':scope > .btn')].find(b=>label(b)==='Drucken'),bar.querySelector(':scope > .grid-save-button'),bar.querySelector(':scope > .classroom-roll-split'),window.classroomRandomGroupsButton,document.getElementById('randomStudentButton'),document.getElementById('classroomRotateButton'),
    finder&&finder.dataset.open!=='true'&&!forceFinder?finder:null,assign&&assign.getAttribute('aria-pressed')!=='true'?assign:null].filter(el=>el&&el.parentElement===bar)}
  function proxy(text,target){const b=document.createElement('button');b.type='button';b.className='plan-actions-proxy'+(/^(classroomResetButton|classroomClearNamesButton)$/.test(target.id)?' pa-danger':'');b.setAttribute('role','menuitem');b.textContent=text;const ic=target.querySelector?.(':scope>.pa-mi-ic');if(ic)b.prepend(ic.cloneNode(true));b.disabled=!!target.disabled;b.onclick=()=>target.click();b._target=target;return b}
  function fit(){
