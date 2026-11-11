@@ -7956,14 +7956,14 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function qlMark(name,scrollList){qlCur=name;for(const it of qlList.children){const on=it.dataset.n===name;it.classList.toggle('on',on);if(on&&scrollList){const r=it.getBoundingClientRect(),lr=qlList.getBoundingClientRect();if(r.top<lr.top+4||r.bottom>lr.bottom-4)qlList.scrollTop+=r.top-lr.top-(lr.height-r.height)/2}}}
  function qlBuild(){if(qlBusy)return;const on=landOn();document.documentElement.classList.toggle('qs-land',on);ql.hidden=!on;/* Kopfleiste der App im Querformat ausblenden */try{const pd=parent.document;if(!pd.getElementById('qs-land-top-css')){const st=pd.createElement('style');st.id='qs-land-top-css';st.textContent='html.qs-land-top body .app-header:not(#_):not(#__):not(#___){display:none!important}';pd.head.append(st)}const was=pd.documentElement.classList.contains('qs-land-top');const vis=!!frameElement&&frameElement.getClientRects().length>0;pd.documentElement.classList.toggle('qs-land-top',on&&vis);if(was!==(on&&vis))setTimeout(()=>parent.dispatchEvent(new Event('resize')),30)}catch{}if(!on)return;
   const box=[...document.querySelectorAll('.qs-cards')].find(b=>b.closest('.panel')&&b.querySelector('.qs-card')&&b.closest('.panel').offsetParent!==null)||document.querySelector('.qs-cards');const panel=box?.closest('.panel,[data-custom-panel]')||box?.parentElement;if(!box||!panel)return;
-  qlBusy=true;const keep=qlScroll.scrollTop,wasOpen=!sheet.hidden,saved=detail;
+  qlBusy=true;const keepName=qlCur,keepSec=keepName&&qlScroll.querySelector('.qsl-sec[data-n="'+CSS.escape(keepName)+'"]'),keepOff=keepSec?Math.max(0,qlScroll.scrollTop-keepSec.offsetTop):0,keep=qlScroll.scrollTop,wasOpen=!sheet.hidden,saved=detail;
   try{
    /* Quartal-Schalter aus der Leiste übernehmen */
    const seg=document.querySelector('.pl-seg.pl-view');qlSeg.replaceChildren();if(seg)for(const ob of seg.querySelectorAll('button')){const b=document.createElement('button');b.type='button';b.textContent=ob.textContent;b.className=ob.getAttribute('aria-pressed')==='true'?'on':'';b.title=ob.textContent+' anzeigen';b.onclick=()=>{ob.click();qlSig='';setTimeout(()=>window.classroomCardsLandAuto(),350)};qlSeg.append(b)}
    const cards=[...box.querySelectorAll(':scope>.qs-card')];qlList.replaceChildren();const frag=document.createDocumentFragment();
    for(const c of cards){const name=c.querySelector('.qs-name')?.textContent.trim();if(!name)continue;
     const it=document.createElement('button');it.type='button';it.className='qsl-it';it.dataset.n=name;it.setAttribute('role','listitem');const nb=document.createElement('b');nb.textContent=name;it.append(nb);const big=c.querySelector('.qs-big');if(big)it.append(big.cloneNode(true));
-    it.onclick=()=>{const sec=qlScroll.querySelector('.qsl-sec[data-n="'+CSS.escape(name)+'"]');if(sec){qlScroll.scrollTop=sec.offsetTop-2;qlMark(name,false)}};qlList.append(it);
+    it.onclick=()=>{const sec=qlScroll.querySelector('.qsl-sec[data-n="'+CSS.escape(name)+'"]');if(sec){qlScroll.scrollTop=sec.offsetTop;qlMark(name,false)}};qlList.append(it);
     detail={panel,name};renderDetail();const sec=document.createElement('section');sec.className='qsl-sec';sec.dataset.n=name;sec.title='Antippen zum Bearbeiten';
     const h=document.createElement('h4');const hn=document.createElement('b');hn.textContent=name;h.append(hn);if(big)h.append(big.cloneNode(true));sec.append(h);
     /* 10.92: kompakt wie in der Vorschau – je Zeile Bezeichnung + Zeichen, Hausaufgaben/Material als ✕ */
@@ -7976,8 +7976,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
     sec.onclick=()=>openDetail(panel,name);frag.append(sec)}
    qlScroll.replaceChildren(frag);
   }finally{detail=saved;if(wasOpen&&saved)renderDetail();else{sheet.hidden=true;detail=null}qlBusy=false}
-  qlScroll.scrollTop=keep;qlSync()}
- function qlSync(){const secs=[...qlScroll.querySelectorAll('.qsl-sec')];if(!secs.length)return;const y=qlScroll.scrollTop+8;let cur=secs[0];for(const s of secs){if(s.offsetTop<=y)cur=s;else break}if(qlScroll.scrollTop+qlScroll.clientHeight>=qlScroll.scrollHeight-2)cur=secs.at(-1);if(cur.dataset.n!==qlCur)qlMark(cur.dataset.n,true)}
+  /* gleiche Person oben halten (auch nach Q1/Q2/Halbjahr) */const ns=keepName&&qlScroll.querySelector('.qsl-sec[data-n="'+CSS.escape(keepName)+'"]');if(ns){qlScroll.scrollTop=ns.offsetTop+Math.min(keepOff,Math.max(0,ns.offsetHeight-40));qlCur='';qlMark(keepName,true)}else qlScroll.scrollTop=keep;qlSync()}
+ function qlSync(){const secs=[...qlScroll.querySelectorAll('.qsl-sec')];if(!secs.length||!qlScroll.clientHeight)return;const y=qlScroll.scrollTop+8;let cur=secs[0];for(const s of secs){if(s.offsetTop<=y)cur=s;else break}if(qlScroll.scrollTop+qlScroll.clientHeight>=qlScroll.scrollHeight-2)cur=secs.at(-1);if(cur.dataset.n!==qlCur)qlMark(cur.dataset.n,true)}
  qlScroll.addEventListener('scroll',()=>requestAnimationFrame(qlSync),{passive:true});
  const qlLater=()=>{clearTimeout(qlTimer);qlTimer=setTimeout(qlBuild,300)};
  LAND.addEventListener?.('change',()=>{qlSig='';qlLater()});addEventListener('resize',()=>window.classroomCardsLandAuto());
@@ -8399,7 +8399,7 @@ return}
  +'.qsl-it .qs-big,.qsl-sec h4 .qs-big{flex:none;min-width:36px;height:27px;font-size:14.5px!important;display:inline-flex;align-items:center;justify-content:center}'
  +'.qsl-right{flex:1;min-width:0;display:flex;flex-direction:column;background:#fff;border:1px solid #dce3ef;border-radius:16px;overflow:hidden}'
  +'.qsl-seg{display:flex;gap:6px;padding:7px 10px;border-bottom:1px solid #eef1f6;flex:none}.qsl-seg:empty{display:none}.qsl-seg button{border:0;border-radius:8px;background:#eef2f8;color:#66758a;font:inherit;font-size:13px;padding:5px 12px;cursor:pointer}.qsl-seg button.on{background:#2f5f9b;color:#fff;font-weight:700}'
- +'.qsl-scroll{flex:1;overflow-y:auto;padding:0 12px 40vh;-webkit-overflow-scrolling:touch}'
+ +'.qsl-scroll{position:relative;flex:1;overflow-y:auto;padding:0 12px 40vh;-webkit-overflow-scrolling:touch}'
  +'.qsl-sec{padding:6px 0 12px;border-bottom:1px dashed #dce3ef;cursor:pointer}.qsl-sec h4{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 -12px 4px;padding:6px 12px;background:#fff;font-size:15px}'
  +'.qsl-row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px}.qsl-l{width:118px;flex:none;color:#66758a}.qsl-c{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.qsl-x{color:#b42318;font-weight:700;letter-spacing:1px}'+'.qsl-m{display:inline-flex!important;align-items:center;justify-content:center;min-width:28px;height:22px;padding:0 5px;border-radius:6px;font-style:normal;font-weight:800;font-size:12px;box-sizing:border-box}.qsl-note{margin:0 0 4px;padding:4px 8px;border-radius:8px;background:#fff8dc;color:#6b5a1e;font-size:12px}';document.head.append(st)})();
 ;

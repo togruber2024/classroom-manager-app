@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 11.11.2026 · Version 10.95
+Stand: 11.11.2026 · Version 10.96
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1374,3 +1374,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.93: Hilfe – „Neu“ nur orange, solange neue Einträge noch nicht angesehen wurden
 10.94: iPad-Test – „Beide QR-Codes groß zeigen“
 10.95: Aufräumen – gemeinsamer DOM-Beobachter statt 6 eigener, Zeitgeber pausieren im Hintergrund, 126 ungenutzte Stilregeln entfernt
+10.96: iPhone quer – Stundenplan mit Überschrift; Noten: Tipp auf Namen springt genau zur Person, Q1/Q2/Halbjahr behalten die gewählte Person
