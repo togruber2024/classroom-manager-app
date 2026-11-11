@@ -1992,7 +1992,12 @@ window.addEventListener('message',event=>{
  /* ---------- Automatisch wählen ---------- */
  const today=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')};
  const mins=s=>{const [h,m]=String(s||'').split(':').map(Number);return Number.isFinite(h)&&Number.isFinite(m)?h*60+m:null};
- function lessonNow(){const t=plan(),n=new Date(),day=n.getDay(),now=n.getHours()*60+n.getMinutes();if(day<1||day>5)return null;for(const [i,s] of t.slots.entries()){const a=mins(s.start),b=mins(s.end);if(a===null||b===null)continue;if(now>=a-10&&now<b){const e=t.days[day]?.[i];if(e?.ref)return {...e,key:today()+':'+i}}}return null}
+ /* 10.82: Die Pause NACH einer Stunde gehört noch zu dieser Stunde (bis zum Beginn der nächsten; nach der letzten 20 Minuten).
+    10 Minuten vorher gilt nur, wenn davor keine eigene Stunde liegt (erste Stunde oder nach einer Freistunde). */
+ function lessonNow(){const t=plan(),n=new Date(),day=n.getDay(),now=n.getHours()*60+n.getMinutes();if(day<1||day>5)return null;
+  for(const [i,s] of t.slots.entries()){const a=mins(s.start),b=mins(s.end);if(a===null||b===null)continue;const e=t.days[day]?.[i];if(!e?.ref)continue;
+   const prev=i>0&&t.days[day]?.[i-1]?.ref,next=i+1<t.slots.length?mins(t.slots[i+1].start):null,from=prev?a:a-10,to=next!==null&&next>b?next:b+20;
+   if(now>=from&&now<to)return {...e,key:today()+':'+i}}return null}
  function toast(text,undo,more){document.querySelector('.tt-toast')?.remove();const bar=document.createElement('div');bar.className='tt-toast';bar.setAttribute('role','status');bar.innerHTML=`<span>${esc(text)}</span>${undo?'<button type="button" class="tt-undo">Rückgängig</button>':''}${more?'<button type="button" class="tt-more">'+esc(more.label)+'</button>':''}<button type="button" class="tt-toast-x" aria-label="Hinweis schließen">×</button>`;document.body.append(bar);bar.querySelector('.tt-toast-x').onclick=()=>bar.remove();if(undo)bar.querySelector('.tt-undo').onclick=()=>{bar.remove();undo()};if(more)bar.querySelector('.tt-more').onclick=()=>{bar.remove();more.run()};setTimeout(()=>bar.remove(),12000)}
  async function selectRoom(name){if(!name)return;for(let i=0;i<20;i++){await new Promise(r=>setTimeout(r,250));try{const sel=classroomSeats.contentWindow.document.getElementById('classroomRoomSelect');if(!sel)continue;const opt=[...sel.options].find(o=>o.textContent.trim().toLocaleLowerCase('de')===name.toLocaleLowerCase('de'));if(!opt)return;if(sel.value!==opt.value){sel.value=opt.value;sel.dispatchEvent(new Event('change',{bubbles:true}))}return}catch{}}}
  async function apply(force=false){
@@ -2022,6 +2027,7 @@ window.addEventListener('message',event=>{
   document.querySelector('.tt-sheet')?.remove();
   const t=plan(),labels=new Map(classOptions().map(o=>[o.ref,o.label])),n=new Date(),nowM=n.getHours()*60+n.getMinutes();
   const total=Object.values(load().days||{}).reduce((a,d)=>a+Object.values(d||{}).filter(e=>e?.ref||e?.A?.ref||e?.B?.ref).length,0)+Object.values(t.days).reduce((a,d)=>a+Object.values(d||{}).filter(e=>e?.ref&&e.learned).length,0);
+  const nowIdx=(()=>{try{const k=lessonNow()?.key;return k?Number(k.split(':').pop()):null}catch{return null}})();
   const sh=document.createElement('div');sh.className='tt-sheet';
   let html='<div class="tt-back"></div><section class="tt-panel" role="dialog" aria-label="Stundenplan"><div class="tt-grab"></div><div class="tt-head"><b>Stundenplan</b><button type="button" class="tt-x" aria-label="Schließen">✕</button></div><div class="tt-body">';
   const lessons=[];
@@ -2034,8 +2040,8 @@ window.addEventListener('message',event=>{
     html+=`<h4>${isToday?'Heute · '+fmtD(d):(dateStr(d)===dateStr(tom)?'Morgen · '+fmtD(d):FULL[d.getDay()]+', '+dm)}${wk}</h4>`;
     if(!list.length)html+='<p class="tt-none">Kein Unterricht eingetragen</p>';
     /* 9.03: Doppelstunden (direkt aufeinander, gleiche Klasse und gleicher Raum) als eine Zeile mit durchgehender Zeit */const merged=[];for(const x of list){const p=merged.at(-1);if(p&&p.last.i+1===x.i&&p.e.ref===x.e.ref&&(p.e.room||'')===(x.e.room||'')&&(p.e.week||'')===(x.e.week||''))p.last=x;else merged.push({...x,first:x,last:x})}
-    for(const x of merged){x.s={start:x.first.s.start,end:x.last.s.end};const a=mins(x.s.start),b=mins(x.s.end),past=isToday&&b!==null&&b<nowM,cur=isToday&&a!==null&&b!==null&&nowM>=a-10&&nowM<b;lessons.push({...x.e,date:dateStr(d)});const span=x.first.i===x.last.i?(x.first.i+1)+'. Std':(x.first.i+1)+'.–'+(x.last.i+1)+'. Std';
-     html+=`<button type="button" class="tt-row${past?' is-past':''}${cur?' is-now':''}" data-i="${lessons.length-1}"><time>${esc(x.s.start||'')}–${esc(x.s.end||'')}<small class="tt-span">${span}</small></time><b>${esc(labels.get(x.e.ref)||x.e.ref)}${x.e.week?'<i class="tt-tag tt-wk-'+x.e.week.toLowerCase()+'">'+x.e.week+'</i>':''}</b><span>${esc(roomText(x.e.room))}</span></button>`}}
+    for(const x of merged){x.s={start:x.first.s.start,end:x.last.s.end};const a=mins(x.s.start),b=mins(x.s.end),past=isToday&&b!==null&&b<nowM,cur=isToday&&nowIdx!==null&&nowIdx>=x.first.i&&nowIdx<=x.last.i;lessons.push({...x.e,date:dateStr(d)});const span=x.first.i===x.last.i?(x.first.i+1)+'. Std':(x.first.i+1)+'.–'+(x.last.i+1)+'. Std';
+     html+=`<button type="button" class="tt-row${past&&!cur?' is-past':''}${cur?' is-now':''}" data-i="${lessons.length-1}"><time>${esc(x.s.start||'')}–${esc(x.s.end||'')}<small class="tt-span">${span}</small></time><b>${esc(labels.get(x.e.ref)||x.e.ref)}${x.e.week?'<i class="tt-tag tt-wk-'+x.e.week.toLowerCase()+'">'+x.e.week+'</i>':''}</b><span>${esc(roomText(x.e.room))}</span></button>`}}
   }
   html+='</div></section>';sh.innerHTML=html;document.body.append(sh);
   const close=()=>sh.remove();sh.querySelector('.tt-x').onclick=close;sh.querySelector('.tt-edit')?.addEventListener('click',()=>{close();openEditor()});sh.querySelector('.tt-back').onclick=close;
@@ -2617,7 +2623,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   // Keep existing, detailed hints such as the active layout-picker return action.
   if(button.title&&!button.dataset.buttonHelp)return button.title;
   if(button.matches('[role=tab],.subject-tab,.page-tab'))return '„'+text+'“ öffnen.';
-  if(button.matches('.classroom-rating-choice'))return text==='∅'?'Die mündliche Bewertung für diese Person und dieses Datum leeren.':'Die mündliche Mitarbeit mit „'+text+'“ bewerten.';
+  if(button.matches('.classroom-rating-choice')){/* 10.82: Zeichen sind Grafiken – Text aus data-rating-symbol */const sym=(button.dataset.ratingSymbol||text||'').trim();return !sym||sym==='∅'?'Die mündliche Bewertung für diese Person und dieses Datum leeren.':'Die mündliche Mitarbeit mit „'+sym+'“ bewerten.'}
   if(button.matches('[data-zoom-minus]'))return 'Den Sitzplan verkleinern.';
   if(button.matches('[data-zoom-plus]'))return 'Den Sitzplan vergrößern.';
   if(button.matches('[data-zoom-fit]'))return 'Den Sitzplan an die verfügbare Breite anpassen.';

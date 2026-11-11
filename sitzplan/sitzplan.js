@@ -2273,7 +2273,7 @@ function quickReadValues(){
 function classroomOpenStudent(name,point){
  if(quickPending)return;quickStatus.classList.remove('cq-ok');
  classroomRefreshLesson();const group=classroomCurrentGroup();quickPerson=group?.students.find(s=>!s.deleted&&ClassroomCore.normalize(s.name)===ClassroomCore.normalize(name));if(!quickPerson)return;
- document.getElementById('classroomQuickName').textContent=classroomShortSeatName(name);classroomQuick.title=quickPerson.name;classroomQuick.hidden=false;quickReadValues();
+ document.getElementById('classroomQuickName').textContent=qeFullName(quickPerson.name||name);/* 10.82: auch am Mac voller Name */classroomQuick.title=quickPerson.name;classroomQuick.hidden=false;quickReadValues();
  const cell=[...document.querySelectorAll('.room-grid .cell')].find(c=>gridData[Number(c.dataset.row)]?.[Number(c.dataset.col)]===name),rect=cell?.getBoundingClientRect();
  const anchorX=point?.x??rect?.left??8,anchorY=point?.y??rect?.top??8;
  homeworkButton.style.removeProperty('width');homeworkButton.style.removeProperty('min-height');
@@ -3113,7 +3113,7 @@ document.addEventListener('keydown',event=>{
   // Keep existing, detailed hints such as the active layout-picker return action.
   if(button.title&&!button.dataset.buttonHelp)return button.title;
   if(button.matches('[role=tab],.subject-tab,.page-tab'))return '„'+text+'“ öffnen.';
-  if(button.matches('.classroom-rating-choice'))return text==='∅'?'Die mündliche Bewertung für diese Person und dieses Datum leeren.':'Die mündliche Mitarbeit mit „'+text+'“ bewerten.';
+  if(button.matches('.classroom-rating-choice')){/* 10.82: Zeichen sind Grafiken – Text aus data-rating-symbol */const sym=(button.dataset.ratingSymbol||text||'').trim();return !sym||sym==='∅'?'Die mündliche Bewertung für diese Person und dieses Datum leeren.':'Die mündliche Mitarbeit mit „'+sym+'“ bewerten.'}
   if(button.matches('[data-zoom-minus]'))return 'Den Sitzplan verkleinern.';
   if(button.matches('[data-zoom-plus]'))return 'Den Sitzplan vergrößern.';
   if(button.matches('[data-zoom-fit]'))return 'Den Sitzplan an die verfügbare Breite anpassen.';
