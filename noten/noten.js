@@ -4741,20 +4741,25 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
  rose:{label:'Rosé',accent:'#9b5270',dark:'#7e3e59',bg:'#fcf6f8',pale:'#f7e7ee',tabs:'#f1e3e9',line:'#ead9e1',border:'#cfa1b5',ink:'#402b34',muted:'#876d78'}
  });
  let current='blue';try{current=localStorage.getItem(key)||'blue'}catch{}if(!palettes[current])current='blue';
- let originalCss=null;
+ let originalCss=null,seen=new WeakSet(),txCss='',rootCss='',tx=null;
+ /* 11.07: Stile nur einmal einlesen und umfärben; später eingefügte Stile werden nur noch angehängt (vorher bei jedem neuen Stil alles neu – kostete am iPhone ~1/5 der Startzeit) */
+ const own=sheet=>sheet.ownerNode?.id==='classroomThemeStyle'||sheet.ownerNode?.hasAttribute?.('data-privacy');
+ const cssOf=sheets=>sheets.map(sheet=>{seen.add(sheet.ownerNode||sheet);try{return [...sheet.cssRules].map(rule=>rule.cssText).join('\n')}catch{return ''}}).join('\n');
  function apply(name){
   if(!palettes[name])return;current=name;const p=palettes[name];
-  if(originalCss===null){originalCss=[...document.styleSheets].filter(sheet=>sheet.ownerNode?.id!=='classroomThemeStyle'&&!sheet.ownerNode?.hasAttribute?.('data-privacy')/* 8.21: Datenschutz-Zufallsfarben nicht einfrieren */).map(sheet=>{try{return [...sheet.cssRules].map(rule=>rule.cssText).join('\n')}catch{return ''}}).join('\n')}
+  if(originalCss===null){seen=new WeakSet();originalCss=cssOf([...document.styleSheets].filter(sheet=>!own(sheet)/* 8.21: Datenschutz-Zufallsfarben nicht einfrieren */))}
   const colors={'#2f5f9b':p.accent,'#244c80':p.dark,'#f6f8fc':p.bg,'#eaf0fa':p.pale,'#e7edf6':p.tabs,'#dce3ef':p.line,'#dce3df':p.line,'#a8bdd8':p.border,'#a8bfdc':p.border,'#b9cbe4':p.border,'#cbd6e5':p.line,'#d7e2f1':p.line,'#e4e8ee':p.tabs,'#e5edf9':p.pale,'#eef3fb':p.pale,'#f7f9fc':p.bg,'#f3f6fb':p.bg,'#243247':p.ink,'#24334b':p.ink,'#243247':p.ink,'#66758a':p.muted,'#405671':p.accent,'#8ba9d1':p.border,'#86acf0':p.border,'#bac9de':p.border,'#eaf1fb':p.pale,'#eef4fc':p.pale,'#d3e1f4':p.line,'#9fb8da':p.border,'#b9c6d8':p.border,'#8fb0dc':p.border,'#b9cde8':p.border,'#36557d':p.dark,'#d6dde8':p.line,'#e3e8f0':p.line,'#e6ebf3':p.line,'#edf1f6':p.line,'#f8fafd':p.bg,'#f6f8fc':p.bg,'#8794a7':p.muted,'#c5d3e6':p.border,'#e9edf3':p.tabs,'#abc1df':p.border};
   const expanded={};for(const [from,to] of Object.entries(colors)){expanded[from]=to;expanded[from+'20']=to+'20';expanded[from+'30']=to+'30';expanded[from+'55']=to+'55'}
   let style=document.getElementById('classroomThemeStyle');if(!style){style=document.createElement('style');style.id='classroomThemeStyle';document.head.append(style)}
-  style.textContent=originalCss.replace(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/gi,(match,r,g,b)=>{const hex='#'+[r,g,b].map(value=>Number(value).toString(16).padStart(2,'0')).join('');return expanded[hex]||match}).replace(/#[\da-f]{3,8}\b/gi,color=>expanded[color.toLowerCase()]||color)+`\n:root{--green:${p.accent};--primary:${p.accent};--primary-hover:${p.dark};--primary-color:${p.accent};--bg:${p.bg};--bg-color:${p.bg};--pale:${p.pale};--line:${p.line};--border-color:${p.line};--ink:${p.ink};--text-main:${p.ink};--muted:${p.muted}}`;
+  tx=css=>css.replace(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/gi,(match,r,g,b)=>{const hex='#'+[r,g,b].map(value=>Number(value).toString(16).padStart(2,'0')).join('');return expanded[hex]||match}).replace(/#[\da-f]{3,8}\b/gi,color=>expanded[color.toLowerCase()]||color);rootCss=`\n:root{--green:${p.accent};--primary:${p.accent};--primary-hover:${p.dark};--primary-color:${p.accent};--bg:${p.bg};--bg-color:${p.bg};--pale:${p.pale};--line:${p.line};--border-color:${p.line};--ink:${p.ink};--text-main:${p.ink};--muted:${p.muted}}`;
+  txCss=tx(originalCss);style.textContent=txCss+rootCss;
   if(style.nextElementSibling)document.head.append(style);document.documentElement.dataset.theme=name;
   document.querySelectorAll('[data-theme-choice]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.themeChoice===name)));
  }
  apply(current);
  /* Später eingefügte Stile (z. B. aus Zusatzmodulen) ebenfalls umfärben, sonst bleiben blaue Flächen. */
- let restyle=0;new MutationObserver(ms=>{if(!ms.some(m=>[...m.addedNodes].some(n=>(n.tagName==='STYLE'&&n.id!=='classroomThemeStyle')||(n.tagName==='LINK'&&/stylesheet/.test(n.rel||'')))))return;cancelAnimationFrame(restyle);restyle=requestAnimationFrame(()=>{originalCss=null;apply(current)})}).observe(document.head,{childList:true});
+ let restyle=0;new MutationObserver(ms=>{if(!ms.some(m=>[...m.addedNodes].some(n=>(n.tagName==='STYLE'&&n.id!=='classroomThemeStyle')||(n.tagName==='LINK'&&/stylesheet/.test(n.rel||'')))))return;cancelAnimationFrame(restyle);restyle=requestAnimationFrame(addNew)}).observe(document.head,{childList:true});
+ function addNew(){if(!tx)return;const fresh=[...document.styleSheets].filter(sheet=>!own(sheet)&&!seen.has(sheet.ownerNode||sheet));if(!fresh.length)return;const css=cssOf(fresh);originalCss+='\n'+css;txCss+='\n'+tx(css);const style=document.getElementById('classroomThemeStyle');if(!style)return;style.textContent=txCss+rootCss;if(style.nextElementSibling)document.head.append(style)}
  if(window===parent){
   const mark=document.querySelector('.brand-mark');
   if(mark){const button=document.createElement('button');button.type='button';button.className=mark.className;button.innerHTML=mark.innerHTML;button.setAttribute('aria-label','Farbgestaltung ändern');button.title='Farbgestaltung';mark.replaceWith(button);

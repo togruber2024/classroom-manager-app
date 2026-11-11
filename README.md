@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 11.11.2026 · Version 11.06
+Stand: 11.11.2026 · Version 11.07
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1385,3 +1385,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.04: Abgaben scannen – „Wer fehlt noch?“ lässt im Sitzplan abwesende Schüler:innen aus
 11.05: Sitzplan – Ausblenden-Knopf ohne hellen Schein, nur oranger Rahmen
 11.06: Text-Trainer für Lektionstexte (texttrainer.html ohne Inhalt; Text per privater .cmtext-Datei und Link)
+11.07: Leistung – alte Flacker-Diagnose (60×/s) abgeschaltet, Farbgestaltung färbt neue Stile nur noch an statt alles neu
