@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 11.11.2026 · Version 10.76
+Stand: 11.11.2026 · Version 10.77
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1355,3 +1355,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 10.74: Grammatik-Tests: Erkennen statt Aufsagen (Herkunft, Bestimmen, Tempus zuordnen); neu Adverbien, Abl. abs., Gerundium, Gerundivum
 10.75: Abgaben per QR-Code scannen (Schüler-iPad zeigt Code, Lehrer-iPad scannt) – ohne AirDrop
 10.76: iPhone-Bewerten springt automatisch zum nächsten Schüler ohne Bewertung, voller Name; Datenschutz-Auge aktiv orange
+10.77: Knopf „Aktuelle Klasse“ (Uhr) links neben der Hilfe am Mac/iPad
