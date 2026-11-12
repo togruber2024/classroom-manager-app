@@ -6,7 +6,14 @@
 const S=(k,t,d,min,type,own,book)=>({k,t,d,min,type,own,book:book===undefined?k:book});
 const LP={
  l16a:{lesson:'16',title:'L16 · Wie die Römer an Vorbildern lernten',short:'Sachinfo exempla',sub:'Latein · Lektion 16 · Sachinfo',bookId:'pontes-l16',
-  steps:[
+  text:'lie',steps:[
+   S('lie','Wie die Römer an Vorbildern lernten','Sachinfo lesen · Sätze antippen',4,'read',{h:'Wie die Römer an Vorbildern lernten',task:'Lies den Text. Tippe dann zu jeder Frage den Satz an, in dem die Antwort steht.',src:'Eigener Lesetext (ohne Buchdatei)',
+    paras:[['Die Römer erzählten sich gern Geschichten von Menschen, die für Rom Großes geleistet hatten.','Solche Vorbilder nannten sie exempla (Singular: exemplum = „Beispiel“, „Vorbild“).'],
+     ['Um 500 v. Chr. griff der Etruskerkönig Porsenna Rom an.','Horatius Cocles verteidigte allein die Tiberbrücke, bis die Römer sie hinter ihm eingerissen hatten.','Dann sprang er in voller Rüstung in den Tiber und schwamm zurück nach Rom.','Später schlich sich der junge Mucius ins Lager der Etrusker, um Porsenna zu töten.','Er wurde gefangen und hielt zum Beweis seines Mutes seine rechte Hand ins Feuer.','Porsenna ließ ihn beeindruckt frei; seitdem trug Mucius den Beinamen Scaevola, „Linkshänder“.','Schließlich schlossen Rom und Porsenna Frieden, und die Römer mussten Geiseln stellen, darunter das Mädchen Cloelia.','Sie floh mit den anderen Mädchen aus dem Lager und schwamm durch den Tiber nach Rom.','Zur Ehre erhielt sie ein Reiterstandbild an der Via Sacra.'],
+     ['Ob alles wirklich so geschah, weiß niemand: Es sind Sagen aus der Frühzeit Roms, die der Geschichtsschreiber Livius aufgeschrieben hat.'],
+     ['Vor allem die Adelsfamilien pflegten solche exempla.','Starb ein berühmter Adliger, erzählte ein Sohn bei der Begräbnisfeier von den Taten des Toten und seiner Vorfahren.','Der Grieche Polybios hielt diese Reden für ein Erfolgsgeheimnis Roms: Sie spornten die Jugend an, für das Vaterland alles zu ertragen.','Auch Redner vor Gericht nutzten exempla, denn Beispiele aus der Geschichte galten als überzeugende Beweise.']],
+    qs:[['Was bedeutet das Wort exemplum?',1],['Woher hat Mucius seinen Beinamen?',7],['Wie ehrten die Römer Cloelia?',10],['Sind die Geschichten sicher wahr?',11],['Warum hielt Polybios die Begräbnisreden für wichtig?',14],['Wozu nutzten Redner exempla?',15]],
+    done:'Jetzt kennst du die drei Helden – weiter geht es mit den Stationen.'}),
    S('hel','Drei Helden, drei Taten','Cloelia, Horatius, Mucius · zuordnen',3,'sorter',{h:'Wer hat was getan?',task:'Ziehe jede Tat zum passenden Helden.',cats:['Cloelia','Horatius Cocles','Mucius Scaevola'],
     items:[['verteidigte eine Tiberbrücke gegen die Etrusker',1],['sprang in voller Rüstung in den Tiber und schwamm nach Rom',1],['schlich sich ins Lager, um Porsenna zu töten',2],['hielt seine rechte Hand ins Feuer',2],['erhielt den Beinamen „Linkshänder“',2],['floh mit den Mädchen aus dem Lager der Etrusker',0],['bekam ein Reiterstandbild an der Via Sacra',0]],done:'Alle drei gelten als exempla: Vorbilder für Mut und Einsatz für Rom.'},null),
    S('exe','Was ist ein exemplum?','Aussagen wischen',2,'swiper',{h:'Stimmt die Aussage?',task:'Wische nach rechts (stimmt) oder links (stimmt nicht).',l:'stimmt nicht',r:'stimmt',
@@ -63,9 +70,10 @@ function labels(st,d){const o=d||st.own;if(!o)return [];switch(st.type){
  case 'tarn':return o.words.map(w=>[w[0],w[1]?'PPP ← '+w[1]:'kein PPP']);
  case 'wheels':return o.forms.map(f=>[f[0],TP[f[1]]+', '+NU[f[2]]+', '+TE[f[3]]+(f[4]?' – „'+f[4]+'“':'')]);
  case 'build':return o.items.map(it=>[it[0],it[1]+it[2][it[3]]+(it[7]?' '+it[7]:'')+' '+it[4][it[5]]]);
+ case 'read':{const T=o.paras.flat();return o.qs.map(q=>[q[0],T[q[1]]])}
  case 'arrow':return o.items.map(it=>[it.s.map((w,i)=>i===it.gap?'___':w).join(' '),it.opt[it.ans]+' → '+it.s[[].concat(it.ref)[0]].replace(/[,.]$/,'')]);
  default:return []}}
-const C={hel:'Helden',exe:'exemplum',seq:'Reihenfolge',ppp:'PPP',mem:'Memory',whl:'Formen',bau:'Baukasten',end:'Satzenden',tar:'Getarnt',wor:'Wortarten',cha:'Chaos',arr:'Relativ',sgl:'Satzglied',tab:'Kasus',adj:'Adjektiv',aci:'AcI',deu:'Fremdwörter',rel:'Unterschied',pan:'Pantomime'};
+const C={lie:'Lesen',hel:'Helden',exe:'exemplum',seq:'Reihenfolge',ppp:'PPP',mem:'Memory',whl:'Formen',bau:'Baukasten',end:'Satzenden',tar:'Getarnt',wor:'Wortarten',cha:'Chaos',arr:'Relativ',sgl:'Satzglied',tab:'Kasus',adj:'Adjektiv',aci:'AcI',deu:'Fremdwörter',rel:'Unterschied',pan:'Pantomime'};
 for(const P of Object.values(LP))for(const st of P.steps)st.c=C[st.k]||st.k;
 window.LP=LP;window.lpLabels=labels;
 })();

@@ -46,6 +46,8 @@ select.gap{min-height:40px;padding:0 8px;margin:0 2px;border:1px solid #b9c6da;b
 body.has-who .wrap{padding-top:58px}
 .qrfull{position:fixed;inset:0;z-index:60;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:20px;text-align:center}.qrfull .nm{font-size:2.2rem;font-weight:800;line-height:1.1}.qrfull .qn{display:inline-block;background:#eaf0fa;color:#2f5f9b;font-weight:700;border-radius:999px;padding:3px 12px}.qprog{display:flex;gap:6px;justify-content:center}.qprog i{width:30px;height:6px;border-radius:3px;background:#dce3ef}.qprog i.on{background:#2f9e44}.qrfull svg{width:min(78vw,62vh,520px);height:auto;display:block}
 .names{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:12px}.names button{min-height:50px;border:1px solid #cfd8e6;border-radius:12px;background:#fff;font-weight:650;font-size:1rem}.names button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.rdt p{line-height:1.75;margin:0 0 10px}.rs{cursor:pointer;border-radius:6px;padding:1px 2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}.rdt:not(.lock) .rs:hover{background:#fff4e0}.rs.no{background:var(--badbg);color:var(--bad);text-decoration:line-through}.rs.ok{background:var(--okbg);color:var(--ok);font-weight:650}.rs.sol{outline:2px solid var(--ok);background:var(--okbg)}.rdt.lock .rs{cursor:default}.rdq{position:sticky;top:6px;z-index:5;box-shadow:0 6px 18px rgba(30,50,80,.08)}
+.txbtn{min-height:40px!important;padding:0 14px!important}.txsheet{position:fixed;inset:0;z-index:55;background:rgba(20,30,50,.35);display:flex;justify-content:flex-end}.txin{background:#fff;width:min(560px,100%);height:100%;overflow:auto;padding:18px 20px;box-shadow:-10px 0 30px rgba(0,0,0,.15)}.txin p{line-height:1.7}
 @media print{#who,.qrfull{display:none!important}}
 
 .step.start{border:2px solid var(--blue);background:#f1f6fd}.step.start .n{background:var(--blue);color:#fff}.go{display:block;width:max-content;margin:2px 0 3px;padding:1px 8px;border-radius:999px;background:var(--blue);color:#fff;font-size:.72rem;font-weight:700;vertical-align:middle}
@@ -139,8 +141,8 @@ const KEY='cm-lp-'+UQ;let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)||'{}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ST))}catch{}try{updWho()}catch{}};
 let CURK=null;function goStep(k){const x=STEPS.find(y=>y[0]===k);if(!x)return home();CURK=k;x[4]();scrollTo(0,0)}
 function frame(inner){const i=CURK?STEPS.findIndex(x=>x[0]===CURK):-1,x=STEPS[i],nx=i>=0?STEPS[i+1]:null,done=CURK&&ST[CURK];
- app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+(i>=0?(i+1)+' · '+esc(x[1]):'')+'</b></div>'+inner+(i>=0?'<div class="row nextrow"><button class="sec" data-home2>‹ Übersicht</button><div class="sp"></div>'+(nx?'<button class="'+(done?'pri':'sec')+'" data-nextst>Weiter: '+esc(nx[1])+' ›</button>':'<button class="'+(done?'pri':'sec')+'" data-home3>Fertig: zur Übersicht ›</button>')+'</div>':'');
- app.querySelector('[data-home]').onclick=home;for(const s of ['[data-home2]','[data-home3]']){const h=app.querySelector(s);if(h)h.onclick=home}const n=app.querySelector('[data-nextst]');if(n)n.onclick=()=>goStep(nx[0])}
+ app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+(i>=0?(i+1)+' · '+esc(x[1]):'')+'</b>'+(P.text&&CURK!==P.text?'<button class="sec txbtn" data-txt>📖 Text</button>':'')+'</div>'+inner+(i>=0?'<div class="row nextrow"><button class="sec" data-home2>‹ Übersicht</button><div class="sp"></div>'+(nx?'<button class="'+(done?'pri':'sec')+'" data-nextst>Weiter: '+esc(nx[1])+' ›</button>':'<button class="'+(done?'pri':'sec')+'" data-home3>Fertig: zur Übersicht ›</button>')+'</div>':'');
+ app.querySelector('[data-home]').onclick=home;for(const s of ['[data-home2]','[data-home3]']){const h=app.querySelector(s);if(h)h.onclick=home}const n=app.querySelector('[data-nextst]');if(n)n.onclick=()=>goStep(nx[0]);const tb=app.querySelector('[data-txt]');if(tb)tb.onclick=textSheet}
 const fb=(ok,txt)=>'<div class="fb '+(ok?'ok':'no')+'">'+txt+'</div>';
 const fin=(k,p,t,x)=>{if(!ST[k]){ST[k]={p,t};if(x&&x.length)ST[k].x=x}save()};
 const keep=(k,f)=>{const top=scrollY;f();if(CURK===k)scrollTo(0,top)};
@@ -310,7 +312,23 @@ function wPant(st,o){const k=st.k;let w=null,t=0,tm=null;
   app.querySelector('[data-new]').onclick=()=>{const L=o.words;w=L[Math.random()*L.length|0];t=60;clearInterval(tm);tm=setInterval(()=>{t--;if(t<=0)clearInterval(tm);if(CURK===k)draw()},1000);if(!ST[k]){ST[k]={};save()}draw()};
   const h=app.querySelector('[data-hide]');if(h)h.onclick=()=>{w=null;clearInterval(tm);draw()}};draw()}
 
-const WID={sorter:wSorter,swiper:wSwiper,quiz:wQuiz,pairs:wPairs,order:wOrder,tarn:wTarn,memory:wMemory,wheels:wWheels,build:wBuild,arrow:wArrow,pant:wPant};
+/* ===== 11.40: Text lesen – zu jeder Frage den passenden Satz antippen (2 Versuche, nur der erste zählt) ===== */
+function wRead(st,o){const k=st.k,A=ST[k+'A']??=[],N=o.qs.length,T=o.paras.flat();let qi=0;while(qi<N-1&&A[qi]&&A[qi].e)qi++;
+ const draw=()=>keep(k,()=>{const q=o.qs[qi],a=A[qi]||{w:[]},ok=a.r===q[1],end=!!a.e;let n=0;
+  const txt=o.paras.map(pa=>'<p>'+pa.map(()=>{const i=n++;const c=end&&i===q[1]?(ok?' ok':' sol'):a.w.includes(i)?' no':'';return '<span class="rs'+c+'" data-si="'+i+'">'+md(T[i])+'</span>'}).join(' ')+'</p>').join('');
+  frame('<div class="card">'+head(o)+'</div><div class="card rdq"><div class="prog"><span>Frage '+(qi+1)+' von '+N+'</span><div class="bar"><i style="width:'+(A.filter(x=>x&&x.e).length/N*100)+'%"></i></div></div><p class="qlat" style="margin:4px 0 0">'+md(q[0])+'</p>'
+   +(end?fb(ok&&!a.w.length,ok?(a.w.length?'✓ Jetzt stimmt es – Punkte gibt es nur beim ersten Versuch.':'✓ Richtig!'):'✗ Gemeint ist der grün umrandete Satz.')+'<div class="row"><button class="sec" data-pq '+(qi?'':'disabled')+'>‹</button><div class="sp"></div>'+(qi<N-1?'<button class="pri" data-nq>Nächste Frage ›</button>':'')+'</div>'
+    :a.w.length?fb(0,'✗ Das steht in diesem Satz nicht. <b>Ein</b> zweiter Versuch (ohne Punkte).'):'<p class="muted" style="margin:8px 0 0">Tippe im Text unten auf den passenden Satz.</p>')+'</div>'
+   +'<div class="card rdt'+(end?' lock':'')+'"><div class="muted" style="font-size:.8rem;margin-bottom:6px">'+esc(o.src||'')+'</div>'+txt+'</div>'
+   +(A.filter(x=>x&&x.e).length===N&&ST[k]?fb(ST[k].p===N,(ST[k].p===N?'⭐ Alles richtig! ':ST[k].p+' von '+N+' beim ersten Versuch richtig. ')+md(o.done||'')):''));
+  if(!end)app.querySelectorAll('[data-si]').forEach(b=>b.onclick=()=>{const i=+b.dataset.si,r=A[qi]??={w:[]};if(r.w.includes(i))return;if(i===q[1]){r.r=i;r.e=1}else{r.w.push(i);if(r.w.length>=2)r.e=1}
+   if(A.filter(x=>x&&x.e).length===N)fin(k,o.qs.filter((q,j)=>A[j].r===q[1]&&!A[j].w.length).length,N,o.qs.map((q,j)=>A[j].r===q[1]&&!A[j].w.length?-1:j).filter(j=>j>=0));else save();draw()});
+  const nq=app.querySelector('[data-nq]');if(nq)nq.onclick=()=>{qi++;draw()};const pq=app.querySelector('[data-pq]');if(pq)pq.onclick=()=>{qi--;draw()}});draw()}
+/* 📖 Text: der Lesetext des Pakets bleibt an jeder Station mit einem Tipp erreichbar */
+function textSheet(){const st=P.steps.find(x=>x.k===P.text);if(!st)return;const o=DATA(st);const d=document.createElement('div');d.className='txsheet';
+ d.innerHTML='<div class="txin"><div class="row" style="margin:0 0 8px"><b style="flex:1;font-size:1.1rem">📖 '+esc(o.h||st.t)+'</b><button class="sec" data-x>Schließen</button></div><div class="muted" style="font-size:.8rem;margin-bottom:6px">'+esc(o.src||'')+'</div>'+o.paras.map(pa=>'<p>'+pa.map(md).join(' ')+'</p>').join('')+'</div>';
+ d.onclick=e=>{if(e.target===d||e.target.closest('[data-x]'))d.remove()};document.body.append(d)}
+const WID={read:wRead,sorter:wSorter,swiper:wSwiper,quiz:wQuiz,pairs:wPairs,order:wOrder,tarn:wTarn,memory:wMemory,wheels:wWheels,build:wBuild,arrow:wArrow,pant:wPant};
 const STEPS=P?P.steps.map(st=>[st.k,st.t,st.d,st.min,()=>WID[st.type](st,DATA(st))]):[];
 const TOTMIN=Math.round(STEPS.reduce((a,s)=>a+s[3],0));
 
@@ -319,6 +337,7 @@ function pdfBlocks(){const nm=ST.name||ST.me||'',sc=P.steps.filter(s=>s.type!=='
  const out=[{t:'h1',s:P.title},{t:'sub',s:P.sub+(ST.cls?' · '+ST.cls:'')+' · '+(nm?nm+' · ':'')+new Date().toLocaleDateString('de-DE')},
   {t:'box',s:'**Meine Ergebnisse:** '+tot+' von '+max+' Punkten · '+STEPS.filter(s=>ST[s[0]]).length+' von '+STEPS.length+' Stationen'},
   {t:'table',w:[.7,.3],head:['Station','Punkte (erster Versuch)'],rows:sc.map(s=>[s.t,ST[s.k]?.p!=null?ST[s.k].p+' von '+ST[s.k].t:'–'])}];
+ {const ts=P.text&&P.steps.find(x=>x.k===P.text);if(ts){const o=DATA(ts);out.push({t:'h2',s:'Material: '+(o.h||ts.t)});for(const pa of o.paras)out.push({t:'p',s:pa.join(' ')});if(o.src)out.push({t:'p',s:o.src,sz:8,col:'#5c6b80'})}}
  for(const s of sc){const L=lpLabels(s,DATA(s));if(!L.length)continue;out.push({t:'h2',s:s.t+' ('+s.d.split(' · ')[0]+')'},{t:'table',w:[.55,.45],head:['Aufgabe','Lösung'],rows:L.map(([q,a])=>[q,a])})}
  if(BOOK)out.push({t:'p',s:BOOK.source||'',sz:8,col:'#5c6b80'});return out}
 let pdfBusy=false;
