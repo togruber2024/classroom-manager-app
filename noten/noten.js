@@ -4553,7 +4553,8 @@ html.fs-view .fs-hide{display:none!important}
  const UNITS={'bs-stadt':{title:'Städte im Wandel',sub:'Erdkunde · Stadtentwicklung am Beispiel Braunschweig',file:'stadtentwicklung.html',
   cols:[['ein','Einstieg'],['info','Phasen'],['mod','Modelle'],['zeit','Zeitreise'],['sort','Detektiv'],['find','Karte'],['quiz','Warum?'],['line','Zeitstrahl'],['end','Urkunde']],
   book:[['bz','Karten'],['bf','Aufg. 1'],['bb','Profi'],['bfe_all','Aufg. 2A'],['bp','Aufg. 2B'],['bs','Ausschnitt']],
-  qs:['Was liegt im Zentrum der mittelalterlichen Stadt?','Warum sternförmige Festungen?','Warum lagen Fabriken im Osten?','Was bedeutet Suburbanisierung?']}};
+  qs:['Was liegt im Zentrum der mittelalterlichen Stadt?','Warum sternförmige Festungen?','Warum lagen Fabriken im Osten?','Was bedeutet Suburbanisierung?']},
+  'welthandel':{title:'Welthandel',sub:'Erdkunde Klasse 9 · Welche Rolle spielt der Handel?',file:'welthandel.html',cols:[['ein','Einstieg'],['wis','Wissen'],['dia','Diagramm'],['exp','Exporte'],['str','Ströme'],['bue','Bündnisse'],['cr','Chancen'],['pol','Politik'],['end','Ergebnis']],book:[],qs:[]}};
  const leAll=()=>{try{return JSON.parse(localStorage.getItem(LE_KEY)||'{}')||{}}catch{return {}}};
  const leSave=a=>{try{localStorage.setItem(LE_KEY,JSON.stringify(a))}catch(e){alert('Speichern nicht möglich: '+e.message)}};
  const leId=u=>currentSubject+'::'+currentClassId+'::'+u;

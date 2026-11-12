@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f6f8fc"><meta name="robots" content="noindex">
+<title>Welthandel – Welche Rolle spielt der Handel?</title>
+<!-- 11.18: Lerneinheit des Classroom-Managers (Erdkunde, Klasse 9). Eigene Texte, eigene Diagramme nach Daten von WTO und Weltbank.
+     Optional lädt die Lehrkraft-Datei (.cmeinheit, privat, nicht im Repo) Schulbuchmaterial – gespeichert nur lokal in IndexedDB. -->
+<style>
+:root{--blue:#2f5f9b;--ink:#243247;--mut:#66758a;--line:#dce3ef;--bg:#f6f8fc;--ok:#1f8a4c;--okbg:#e5f5ea;--bad:#c2410c;--badbg:#fdeee6;--m:#2f5f9b;--f:#7c3aed;--i:#b45309;--h:#1f8a4c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Segoe UI",sans-serif}
+body{padding:max(14px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left))}
+.wrap{max-width:1080px;margin:0 auto}button{font:inherit;color:inherit;cursor:pointer}
+h1{font-size:1.55rem;margin:4px 0 0}h2{font-size:1.2rem;margin:0 0 6px}.muted{color:var(--mut)}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:14px}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:12px}.top .sp{flex:1}
+.back{min-height:44px;padding:0 14px;border:1px solid #b9c6da;border-radius:10px;background:#fff;color:var(--blue)}
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;align-items:center}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:6px}
+.step{display:flex;gap:12px;align-items:center;min-height:78px;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:#fff;text-align:left}
+.step:hover{background:#f4f8fe}.step .n{flex:none;width:40px;height:40px;border-radius:12px;background:#eaf0fa;color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800}.step b{display:block}.step small{color:var(--mut)}.step .st{margin-left:auto;flex:none;font-size:.85rem;color:var(--mut)}.step .st.done{color:var(--ok);font-weight:700}
+.map{width:100%;height:auto;display:block;border-radius:14px;background:#f3ecd8;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.map text{font:600 11px -apple-system,Inter,sans-serif;fill:#3d4a5c;pointer-events:none}.map .big{font-size:13px;font-weight:800}
+.era{opacity:0;transition:opacity .45s}.era.on{opacity:1}
+.hot{cursor:pointer}.hot circle.hc{fill:#fff;stroke:var(--blue);stroke-width:2.5}.hot text.ht{fill:var(--blue);font-size:12px;font-weight:800;text-anchor:middle}
+.hot.seen circle.hc{fill:var(--blue)}.hot.seen text.ht{fill:#fff}
+.slider{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}.slider button{min-height:54px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:700;color:var(--mut)}.slider button small{display:block;font-weight:500;font-size:.75rem}.slider button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+input[type=range]{width:100%;margin:14px 0 2px;accent-color:var(--blue);height:30px}
+.info{min-height:120px;padding:14px 16px;border-radius:14px;background:#eef3fa;border:1px solid #d3e0f2}.info b{color:var(--blue)}
+.two{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;align-items:start}
+.cols{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}.col{min-height:210px;padding:10px;border:2px dashed #cfd8e6;border-radius:14px;background:#fbfcfe;display:flex;flex-direction:column;gap:6px}.col.tgt{border-color:var(--blue);background:#f1f6fd}.col h3{margin:0 0 4px;font-size:.85rem;color:var(--c);text-transform:uppercase;letter-spacing:.4px}
+.pool{display:flex;flex-wrap:wrap;gap:8px}.chip{min-height:46px;padding:6px 14px;border:1px solid #cfd8e6;border-radius:12px;background:#fff;font-weight:600;font-size:.95rem;text-align:left}.chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}.chip.ok{background:var(--okbg);border-color:#7cc69a;color:var(--ok)}.chip.no{background:var(--badbg);border-color:#f0a982;color:var(--bad)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}.row .sp{flex:1}
+.pri{min-height:48px;padding:0 20px;border:0;border-radius:12px;background:var(--blue);color:#fff;font-weight:650}.pri:disabled{opacity:.4}
+.sec{min-height:48px;padding:0 16px;border:1px solid #b9c6da;border-radius:12px;background:#fff;color:var(--blue)}
+.fb{margin-top:12px;padding:10px 14px;border-radius:12px;font-weight:600}.fb.ok{background:var(--okbg);color:var(--ok)}.fb.no{background:var(--badbg);color:var(--bad)}.fb.info{background:#eef3fa;color:#2f4f7a}
+.opt{display:block;width:100%;min-height:52px;margin:0 0 8px;padding:10px 14px;border:1px solid #cfd8e6;border-radius:12px;background:#fff;text-align:left;font-size:1rem}.opt.ok{background:var(--okbg);border-color:#7cc69a;color:var(--ok);font-weight:700}.opt.no{background:var(--badbg);border-color:#f0a982;color:var(--bad)}
+.ev{display:flex;align-items:center;gap:10px;min-height:54px;margin:0 0 8px;padding:8px 10px 8px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}.ev .tx{flex:1}.ev .yr{flex:none;font-weight:800;color:var(--ok);min-width:70px;text-align:right}.ev button{flex:none;width:42px;height:42px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--blue)}.ev.ok{background:var(--okbg);border-color:#7cc69a}.ev.no{background:var(--badbg);border-color:#f0a982}
+.prog{display:flex;align-items:center;gap:10px;margin-bottom:10px;color:var(--mut);font-size:.9rem}.bar{flex:1;height:8px;border-radius:4px;background:#e6ebf3;overflow:hidden}.bar i{display:block;height:100%;background:var(--blue)}
+.find{position:relative}.find .ping{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;border:3px solid var(--bad);pointer-events:none}.find .ping.ok{border-color:var(--ok);background:#1f8a4c33}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#fff4e0;color:#8a5a00;font-weight:700}
+textarea{width:100%;min-height:90px;padding:12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit}
+#printBox{display:none}
+.slot{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:3px solid #fff;background:var(--blue);color:#fff;font-weight:800;padding:0;box-shadow:0 1px 4px #0005}.slot.full{background:#7c8ea8}.slot.ok{background:var(--ok)}.slot.no{background:var(--bad)}
+select.gap{min-height:40px;padding:0 8px;margin:0 2px;border:1px solid #b9c6da;border-radius:10px;background:#fff;font:inherit;color:var(--blue);font-weight:650}select.gap.ok{border-color:#7cc69a;background:var(--okbg);color:var(--ok)}select.gap.no{border-color:#f0a982;background:var(--badbg);color:var(--bad)}
+
+#who{position:fixed;top:max(10px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));z-index:50;display:flex;align-items:center;gap:8px;min-height:52px;padding:5px 6px 5px 12px;border:1px solid #b9c6da;border-radius:14px;background:#fff;box-shadow:0 2px 10px #1c2b461a;text-align:left}#who[hidden]{display:none}#who b{display:block;font-size:.95rem;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#who small{display:block;font-size:.72rem;color:var(--ok);font-weight:700}#who svg{width:42px;height:42px;display:block}#who.noname small{color:var(--blue)}
+body.has-who .wrap{padding-top:58px}
+.qrfull{position:fixed;inset:0;z-index:60;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:20px;text-align:center}.qrfull .nm{font-size:2.2rem;font-weight:800;line-height:1.1}.qrfull svg{width:min(78vw,62vh,520px);height:auto;display:block}
+.names{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:12px}.names button{min-height:50px;border:1px solid #cfd8e6;border-radius:12px;background:#fff;font-weight:650;font-size:1rem}.names button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+@media print{#who,.qrfull{display:none!important}}
+
+.step.start{border:2px solid var(--blue);background:#f1f6fd}.step.start .n{background:var(--blue);color:#fff}.go{display:block;width:max-content;margin:2px 0 3px;padding:1px 8px;border-radius:999px;background:var(--blue);color:#fff;font-size:.72rem;font-weight:700;vertical-align:middle}
+.ph{display:grid;grid-template-columns:1fr 1.1fr;gap:18px;align-items:start}.ph ul{margin:6px 0 10px;padding-left:20px}.ph li{margin-bottom:6px}
+.why{padding:10px 14px;border-radius:12px;background:#fff8e6;border:1px solid #f0dca8;margin:8px 0}.why b{color:#8a5a00}
+.term{min-height:40px;padding:4px 12px;margin:0 6px 6px 0;border:1px solid #b9c6da;border-radius:999px;background:#fff;color:var(--blue);font-weight:650;font-size:.92rem}.term.on{background:var(--blue);color:#fff}
+.def{padding:10px 14px;border-radius:12px;background:#eef3fa;margin:4px 0 8px;font-size:.95rem}
+.dots{display:flex;gap:8px;justify-content:center}.dots i{width:10px;height:10px;border-radius:50%;background:#d3dbe8}.dots i.on{background:var(--blue)}.dots i.ok{background:var(--ok)}
+.yrs{display:inline-block;padding:2px 10px;border-radius:999px;background:#eaf0fa;color:var(--blue);font-weight:700;font-size:.85rem}
+.verm{padding:10px 14px;border-radius:12px;background:#f4f6fa;border-left:4px solid var(--blue);margin:6px 0 10px}
+@media (max-width:820px){.ph{grid-template-columns:1fr}}
+
+.bk{margin-top:18px}.bk h2{display:flex;align-items:center;gap:8px}.bksrc{font-size:.8rem;color:var(--mut);margin-top:6px}
+.bkload{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px;padding:12px 14px;border:1px dashed #b9c6da;border-radius:14px;color:var(--mut);font-size:.92rem}
+.lnk{border:0;background:none;color:var(--blue);text-decoration:underline;min-height:44px;padding:0 6px}
+.bm{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#fff;touch-action:pan-x pan-y pinch-zoom}.bm.zoom{overflow:auto;max-height:78vh}
+.bmin{display:grid;width:100%}.bm.zoom .bmin{width:220%}
+.bml{grid-area:1/1;position:relative;opacity:0;transition:opacity .5s;pointer-events:none}.bml.on{opacity:1;pointer-events:auto}.bml img{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.bh{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;opacity:.92;border-radius:50%;border:3px solid #fff;background:var(--blue);color:#fff;font-weight:800;font-size:15px;line-height:1;box-shadow:0 1px 4px #0005;padding:0}.bh.seen{background:var(--ok)}
+.bmbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.leg{margin-top:10px;max-width:100%;border-radius:10px;border:1px solid var(--line)}
+.photo{width:100%;border-radius:12px;display:block}.cap{font-size:.85rem;color:var(--mut);margin-top:4px}
+.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}.thumb{position:relative;padding:6px;border:2px solid var(--line);border-radius:14px;background:#fff;text-align:center;font-size:.85rem;font-weight:700}.thumb img{width:100%;display:block;border-radius:8px}.thumb.tgt{border-color:var(--blue)}.thumb.ok{border-color:#7cc69a;background:var(--okbg)}.thumb.no{border-color:#f0a982;background:var(--badbg)}
+.thumb .let{position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:10px;background:var(--blue);color:#fff;font-size:1.2rem;display:flex;align-items:center;justify-content:center}
+.m4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.m4 .chip{text-align:center;font-size:1.1rem}.m4txt{margin-top:10px;padding:12px 14px;border-radius:12px;background:#f6f1e6;font-size:.95rem}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:650;color:var(--mut)}.tabs button.on{background:var(--blue);color:#fff;border-color:var(--blue)}.tabs button.done::after{content:' ✓'}
+.snip{position:relative;width:100%;max-width:440px;aspect-ratio:1;margin:0 auto;overflow:hidden;border-radius:16px;border:1px solid var(--line)}.snip img{position:absolute;width:250%;max-width:none}
+.eras4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+@media (max-width:820px){.thumbs,.m4,.eras4{grid-template-columns:repeat(2,1fr)}}
+#printBox .bkimgs{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-width:520px}#printBox .bkimgs img{width:100%}
+
+@media (max-width:820px){.hero,.two{grid-template-columns:1fr}.cols{grid-template-columns:repeat(2,1fr)}}
+@media print{@page{margin:14mm}body{background:#fff;padding:0}.wrap{display:none}#printBox{display:block;font:11pt/1.45 -apple-system,Inter,sans-serif;color:#000}#printBox h1{font-size:18pt;margin:0 0 4px}#printBox h2{font-size:12.5pt;color:#2f5f9b;border-bottom:1px solid #c9d3e3;margin:14px 0 6px}#printBox .map{max-width:520px}#printBox table{border-collapse:collapse;width:100%}#printBox td,#printBox th{border:1px solid #c9d3e3;padding:4px 6px;font-size:10pt;vertical-align:top}.urk{border:2px solid #2f5f9b;border-radius:10px;padding:10px 14px;margin-top:12px}}
+.col h3{color:var(--blue)}
+.cols.c5{grid-template-columns:repeat(5,1fr)}.cols.c3{grid-template-columns:repeat(3,1fr)}.cols.c2{grid-template-columns:repeat(2,1fr)}.cols.c2 .chip,.cols.c3 .chip{font-weight:500}
+.trip{display:grid;gap:8px;margin-top:8px}.tstep{display:flex;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:#fbfcfe}.tstep .ti{font-size:1.6rem;width:40px;text-align:center}.tstep small{display:block;color:var(--mut)}
+.chart{width:100%;height:auto;display:block;margin:6px 0}.chart .ax{font:12px -apple-system,Inter,sans-serif;fill:#66758a}.chart .lb{font:700 14px -apple-system,Inter,sans-serif}
+.hbars{display:grid;gap:6px;margin-top:10px}.hb{display:grid;grid-template-columns:110px 1fr 54px;align-items:center;gap:8px;font-size:.92rem}.hb i{display:block;height:18px;border-radius:5px;background:#9cc3e6}.hb b{text-align:right}
+.hb2{grid-template-columns:150px 1fr 54px 92px;padding:6px;border:1px solid transparent;border-radius:10px;cursor:pointer}.hb2:hover{background:#f4f8fe}.hb2 em{font-style:normal;font-size:.82rem;color:var(--mut);display:flex;align-items:center;gap:5px}.hb2 em s{display:inline-block;height:8px;border-radius:4px;background:#d9622b;max-width:44px;text-decoration:none}
+.tblw{overflow:auto;margin-top:8px}.tbl{border-collapse:collapse;width:100%;font-size:.86rem}.tbl th,.tbl td{border-bottom:1px solid #e6ebf3;padding:6px 6px;text-align:right;white-space:nowrap}.tbl th{background:#f6f8fc;color:#4d5d73;font-size:.78rem}
+.seg5{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}.seg5 button{min-height:52px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:.86rem;font-weight:600;color:var(--mut)}.seg5 button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+details summary{cursor:pointer;color:var(--blue);font-weight:600;min-height:40px;display:flex;align-items:center}
+@media (max-width:820px){.cols.c5{grid-template-columns:repeat(2,1fr)}.cols.c3{grid-template-columns:1fr}.hb2{grid-template-columns:120px 1fr 50px}.hb2 em{grid-column:1/-1}.seg5{grid-template-columns:repeat(2,1fr)}}
+</style></head><body><button type="button" id="who" hidden aria-label="Abgabe-QR zeigen"></button><div class="wrap" id="app"></div><div id="printBox"></div>
+<script src="qr-code.js"></script>
+<script>
+'use strict';
+const $=s=>document.querySelector(s),app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const md=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const beep=()=>{};/* keine Töne im Klassenraum */
+const KEY='cm-welthandel-v1';let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch{}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ST))}catch{}try{updWho()}catch{}};
+function frame(title,inner){app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+esc(title)+'</b></div>'+inner;app.querySelector('[data-home]').onclick=home;scrollTo(0,0)}
+const fb=(ok,txt)=>'<div class="fb '+(ok?'ok':'no')+'">'+txt+'</div>';
+const fmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+
+/* ---------- Fachbegriffe ---------- */
+const GLOSS={Welthandel:'Austausch von Waren und Dienstleistungen zwischen den Staaten der Erde.',Export:'Ausfuhr: Waren oder Dienstleistungen werden ins Ausland verkauft.',Import:'Einfuhr: Waren oder Dienstleistungen werden aus dem Ausland gekauft.',Globalisierung:'Die weltweite Verflechtung von Wirtschaft, Politik, Kultur und Umwelt nimmt zu.',Lieferkette:'Alle Schritte vom Rohstoff bis zum fertigen Produkt beim Kunden – oft über viele Länder verteilt.',Index:'Eine Messzahl: Ein Startjahr wird gleich 100 gesetzt, spätere Werte zeigen die Veränderung (200 = doppelt so viel).',preisbereinigt:'Die Werte sind um Preissteigerungen (Inflation) bereinigt – man vergleicht also echte Mengen, nicht nur Preise.',Bruttoinlandsprodukt:'Wert aller Waren und Dienstleistungen, die in einem Jahr in einem Land (oder weltweit) hergestellt werden.',Binnenhandel:'Handel innerhalb eines Wirtschaftsraumes (z. B. zwischen Staaten Europas).',Wirtschaftsbündnis:'Zusammenschluss von Staaten, die ihre Wirtschaft enger verbinden und den Handel untereinander erleichtern.',Freihandelszone:'Gebiet, in dem die Mitgliedsstaaten untereinander auf Handelshemmnisse wie Zölle verzichten.',Zoll:'Abgabe, die beim Einführen von Waren an den Staat gezahlt werden muss – macht ausländische Waren teurer.',WTO:'Welthandelsorganisation (World Trade Organization): koordiniert seit 1995 die Regeln des Welthandels; 164 Mitglieder.',Subvention:'Geld vom Staat für bestimmte Unternehmen oder Branchen, damit sie günstiger produzieren können.',Triade:'Die drei großen Wirtschaftsräume der Erde: Nordamerika, Europa und Ost-/Südostasien.'};
+const terms=(ks,cur)=>'<div style="margin-top:6px">'+ks.map(k=>'<button class="term'+(cur===k?' on':'')+'" data-k="'+k+'">'+k+'</button>').join('')+'</div>'+(cur?'<div class="def"><b>'+esc(cur)+':</b> '+esc(GLOSS[cur])+'</div>':'');
+
+/* ---------- Daten (WTO, Weltbank; vereinfacht) ---------- */
+const M1=[[1950,100,100],[1960,212,155],[1970,481,266],[1980,804,393],[1990,1171,561],[2000,2183,752],[2008,3265,null],[2009,2920,null],[2010,3323,1013],[2019,4260,1310],[2020,4041,1278],[2022,4481,1396]];
+const EXP=[['China',3594,'A'],['USA',2065,'N'],['Deutschland',1655,'E'],['Niederlande',966,'E'],['Japan',747,'A'],['Südkorea',684,'A'],['Italien',657,'E'],['Belgien',633,'E'],['Frankreich',618,'E'],['Hongkong',610,'A']];
+const REG={N:'Nordamerika',E:'Europa',A:'Asien'};
+const VOL=[['Europa und Zentralasien',7317,69.5],['Ostasien und Ozeanien',6009,50.9],['Nordamerika',2090,30.1],['Lateinamerika',998,14.3],['Naher Osten und Nordafrika',924,12.8],['Südasien',348,7.4],['Subsahara-Afrika',241,26.1]];
+
+/* ---------- Schulbuch-Material: private Datei (.cmeinheit), nur lokal im Gerät ---------- */
+let BOOK=null;const UID='welthandel';
+const IDB=(mode,fn)=>new Promise((res,rej)=>{try{const r=indexedDB.open('cm-lerneinheiten',1);r.onupgradeneeded=()=>r.result.createObjectStore('u');r.onerror=()=>rej(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('u',mode),q=fn(tx.objectStore('u'));tx.oncomplete=()=>{res(q&&q.result);db.close()};tx.onerror=()=>rej(tx.error)}}catch(e){rej(e)}});
+const bookOk=u=>!!(u&&u.type==='classroom-lerneinheit'&&u.id===UID);
+async function bookInit(){try{const u=await IDB('readonly',st=>st.get(UID));if(bookOk(u)){BOOK=u;if(!app.querySelector('.top'))home()}}catch{}}
+function bookPick(){const i=document.createElement('input');i.type='file';i.style.display='none';document.body.append(i);
+ i.onchange=async()=>{const f=i.files[0];i.remove();if(!f)return;try{const u=JSON.parse(await f.text());if(!bookOk(u))throw 0;BOOK=u;try{await IDB('readwrite',st=>st.put(u,UID))}catch{}home()}catch{alert('Diese Datei passt nicht zu dieser Lerneinheit.')}};i.click()}
+async function bookDrop(){if(!confirm('Schulbuch-Material von diesem Gerät entfernen? (Deine Ergebnisse bleiben.)'))return;BOOK=null;try{await IDB('readwrite',st=>st.delete(UID))}catch{}home()}
+const bimg=(k,cls)=>BOOK&&BOOK.img&&BOOK.img[k]?'<img class="'+(cls||'photo')+'" src="'+BOOK.img[k].src+'" alt=""><div class="cap"><b>'+esc(BOOK.img[k].m)+'</b> '+esc(BOOK.img[k].t)+'</div>':'';
+const zoomBox=(k,id)=>'<div class="bm" id="'+id+'"><div class="bmin"><img src="'+BOOK.img[k].src+'" alt="'+esc(BOOK.img[k].t)+'" draggable="false" style="display:block;width:100%"></div></div><div class="bmbar"><button class="sec" data-zoom="'+id+'">🔍 Vergrößern</button></div><div class="cap"><b>'+esc(BOOK.img[k].m)+'</b> '+esc(BOOK.img[k].t)+'</div>';
+function wireZoom(){app.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=()=>{const m=$('#'+b.dataset.zoom),z=m.classList.toggle('zoom');b.textContent=z?'↙︎ Verkleinern':'🔍 Vergrößern'})}
+/* Schreibaufgabe mit Lösungsvorschlag (nur mit Schulbuch-Datei) */
+function writeBox(key,label,ph,solKey){const sol=BOOK&&BOOK.sol&&BOOK.sol[solKey];return '<div class="card"><b>'+label+'</b><textarea data-w="'+key+'" placeholder="'+esc(ph)+'">'+esc((ST.w||{})[key]||'')+'</textarea>'
+ +(sol?'<div class="row" style="margin-top:8px"><button class="sec" data-sol="'+solKey+'">Mit dem Lösungsvorschlag vergleichen</button><span class="muted" style="font-size:.85rem" data-solh="'+solKey+'"></span></div><div data-solb="'+solKey+'"></div>':'')+'</div>'}
+function wireWrite(){app.querySelectorAll('[data-w]').forEach(t=>t.oninput=()=>{(ST.w??={})[t.dataset.w]=t.value;save()});
+ app.querySelectorAll('[data-sol]').forEach(b=>b.onclick=()=>{const k=b.dataset.sol,box=app.querySelector('[data-solb="'+k+'"]'),t=b.closest('.card').querySelector('textarea');if(box.innerHTML){box.innerHTML='';b.textContent='Mit dem Lösungsvorschlag vergleichen';return}
+  if((t.value||'').trim().length<80){app.querySelector('[data-solh="'+k+'"]').textContent='Schreibe zuerst selbst mindestens drei Sätze.';return}
+  const s=BOOK.sol[k];box.innerHTML='<div class="m4txt"><b>'+esc(BOOK.solsrc||'Lösungsvorschlag')+':</b> '+(Array.isArray(s)?'<ul style="margin:6px 0 0;padding-left:20px">'+s.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':esc(s))+'<div class="muted" style="margin-top:6px;font-size:.88rem">Vergleiche: Was hast du auch? Was fehlt dir? Ergänze deinen Text.</div></div>';b.textContent='Lösungsvorschlag ausblenden'})}
+function wireTerms(redraw){app.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>redraw(b.dataset.k))}
+
+/* ---------- 1 Einstieg ---------- */
+function runEin(){frame('Einstieg','<div class="two"><div class="card"><h2>Die Reise eines Smartphones</h2><div class="trip">'+[['⛏️','Rohstoffe','Lithium, Kobalt, Kupfer, Seltene Erden – z. B. aus Chile, dem Kongo, Australien, China'],['🏭','Bauteile','Chips, Display und Akku – z. B. aus Taiwan, Südkorea, Japan'],['🔧','Montage','Zusammenbau – z. B. in China, Indien oder Vietnam'],['🚢','Transport','Containerschiff: bis zu 20.000 km Seeweg nach Europa'],['🛒','Verkauf','Händler in Deutschland – und du']].map(([i,t,d],k)=>'<div class="tstep"><span class="ti">'+i+'</span><div><b>'+(k+1)+'. '+t+'</b><small>'+d+'</small></div></div>').join('')+'</div><p class="muted" style="font-size:.85rem;margin:8px 0 0">Vereinfachtes Beispiel; die Länder wechseln je nach Hersteller.</p></div>'
+ +'<div><div class="card"><h2>Welche Rolle spielt der Handel?</h2><p style="margin-top:0">Vor 5000 Jahren fand der meiste Handel im Umkreis weniger Kilometer statt. Heute stecken in fast jedem Produkt Teile aus vielen Ländern.</p><p><b>Überlege:</b> Wer gewinnt durch den Welthandel – und wer vielleicht nicht? Ist mehr Handel immer gut?</p><b>Meine Vermutung</b><textarea id="vm" placeholder="Ich vermute, dass vom Welthandel vor allem … profitieren, weil …">'+esc(ST.verm||'')+'</textarea><p class="muted" style="font-size:.9rem;margin:6px 0 0">Am Ende prüfst du deine Vermutung.</p><div class="row"><div class="sp"></div><button class="pri" data-go>Weiter: Grundwissen ›</button></div></div></div></div>');
+ $('#vm').oninput=e=>{ST.verm=e.target.value;if(ST.verm.trim().length>3&&!ST.ein)ST.ein={};save()};app.querySelector('[data-go]').onclick=runWis}
+
+/* ---------- 2 Grundwissen: Was wird gehandelt? ---------- */
+const CATS=['Rohstoffe','Agrarprodukte','Industrieprodukte','Dienstleistungen','Finanzprodukte & Ideen'];
+const GOODS=[['Erdöl',0],['Eisenerz',0],['Kupfer',0],['Kaffee',1],['Sojabohnen',1],['Bananen',1],['Autos',2],['Smartphones',2],['Maschinen',2],['Telefondienste',3],['Software-Wartung',3],['Urlaubsreisen',3],['Aktien',4],['Patente',4],['Lizenzen für Filme',4]];
+function runWis(){let pick=null,mk=null,term=null;const pl=ST.wisP||{};
+ const draw=()=>{frame('Grundwissen','<div class="card"><h2>Was wird weltweit gehandelt?</h2><p style="margin:0">Tippe eine Karte an und dann die passende Gruppe. <b>'+Object.keys(pl).length+' von '+GOODS.length+'</b> eingeordnet.</p><div class="pool" style="margin-top:12px">'+GOODS.map((g,i)=>pl[i]==null?'<button class="chip'+(pick===i?' on':'')+'" data-c="'+i+'">'+esc(g[0])+'</button>':'').join('')+'</div>'
+  +'<div class="cols c5">'+CATS.map((c,e)=>'<div class="col'+(pick!=null?' tgt':'')+'" data-col="'+e+'"><h3>'+c+'</h3>'+GOODS.map((g,i)=>pl[i]===e?'<button class="chip'+(mk?(g[1]===e?' ok':' no'):'')+'" data-back="'+i+'">'+esc(g[0])+'</button>':'').join('')+'</div>').join('')+'</div>'
+  +'<div class="row"><div class="sp"></div><button class="pri" data-chk '+(Object.keys(pl).length<GOODS.length?'disabled':'')+'>Prüfen</button></div><div id="fbx">'+(mk?(mk===GOODS.length?fb(1,'⭐ Alles richtig! Gehandelt werden nicht nur Waren, sondern auch Dienstleistungen, Finanzprodukte und Ideen.'):fb(0,mk+' von '+GOODS.length+' richtig. Tippe rote Karten an, um sie zurückzulegen.')):'')+'</div></div>'
+  +'<div class="card"><b>Wichtige Fachbegriffe – tippe sie an:</b>'+terms(['Welthandel','Export','Import','Globalisierung','Lieferkette','Binnenhandel'],term)+'</div>');
+  app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{pick=+b.dataset.c;draw()});
+  app.querySelectorAll('[data-col]').forEach(c=>c.onclick=e=>{if(e.target.closest('[data-back]')||pick==null)return;pl[pick]=+c.dataset.col;ST.wisP=pl;pick=null;mk=null;save();draw()});
+  app.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{delete pl[+b.dataset.back];mk=null;save();draw()});
+  wireTerms(k=>{term=term===k?null:k;draw()});
+  app.querySelector('[data-chk]').onclick=()=>{mk=GOODS.filter((g,i)=>pl[i]===g[1]).length;if(!ST.wis||mk===GOODS.length)ST.wis={p:Math.max(ST.wis?.p||0,mk),t:GOODS.length};if(ST.wis.p<mk)ST.wis.p=mk;save();draw()}};draw()}
+
+/* ---------- 3 Diagramm (M1) ---------- */
+function chartSvg(sel){const W=640,H=360,L=54,R=18,T=16,B=40,x=y=>L+(y-1950)/(2022-1950)*(W-L-R),yv=v=>H-B-(v/5000)*(H-T-B);
+ let g='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Diagramm Welthandel und Weltwirtschaftsleistung">';
+ for(let v=0;v<=5000;v+=1000)g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yv(v)+'" y2="'+yv(v)+'" stroke="#e3e8f0"/><text x="'+(L-8)+'" y="'+(yv(v)+4)+'" text-anchor="end" class="ax">'+fmt(v)+'</text>';
+ for(let y=1950;y<=2020;y+=10)g+='<text x="'+x(y)+'" y="'+(H-B+20)+'" text-anchor="middle" class="ax">'+y+'</text>';
+ const path=k=>M1.filter(r=>r[k]!=null).map((r,i)=>(i?'L':'M')+x(r[0]).toFixed(1)+' '+yv(r[k]).toFixed(1)).join(' ');
+ g+='<path d="'+path(1)+'" stroke="#2f5f9b" stroke-width="3.5" fill="none"/><path d="'+path(2)+'" stroke="#d9622b" stroke-width="3.5" fill="none"/>';
+ g+='<text x="'+x(1992)+'" y="'+yv(2300)+'" class="lb" fill="#2f5f9b">Welthandel (Exporte)</text><text x="'+x(1996)+'" y="'+yv(400)+'" class="lb" fill="#d9622b">Weltwirtschaftsleistung (BIP)</text>';
+ M1.forEach((r,i)=>{for(const k of [1,2])if(r[k]!=null)g+='<circle cx="'+x(r[0])+'" cy="'+yv(r[k])+'" r="'+(sel===i?7:4.5)+'" fill="#fff" stroke="'+(k===1?'#2f5f9b':'#d9622b')+'" stroke-width="2.5"/>';g+='<rect x="'+(x(r[0])-9)+'" y="'+T+'" width="18" height="'+(H-T-B)+'" fill="transparent" data-pt="'+i+'" style="cursor:pointer"/>'});
+ return g+'</svg>'}
+const DQ=[['Lies ab: Welchen Indexwert hatte der Welthandel im Jahr 1990?',['1.171','561','2.183'],0,'Blaue Linie bei 1990: 1.171 – also fast das Zwölffache von 1950.'],
+ ['Um das Wievielfache ist der Welthandel von 1950 bis 2022 gestiegen?',['etwa das 4-Fache','etwa das 14-Fache','etwa das 45-Fache'],2,'4.481 : 100 ≈ 45 – der Welthandel hat sich preisbereinigt fast verfünfundvierzigfacht.'],
+ ['Und die Weltwirtschaftsleistung (BIP) im selben Zeitraum?',['etwa das 14-Fache','etwa das 45-Fache','etwa das 3-Fache'],0,'1.396 : 100 ≈ 14 – das BIP wuchs deutlich langsamer als der Handel.'],
+ ['Was zeigen die Einbrüche 2009 und 2020?',['Krisen (Finanzkrise, Corona-Pandemie) treffen den Welthandel stark.','Die Produktion wuchs damals schneller als der Handel.','Die WTO hat den Handel verboten.'],0,'Der Welthandel reagiert empfindlich auf weltweite Krisen – die Produktion schwankt viel weniger.'],
+ ['Warum wächst der Handel viel schneller als die Produktion?',['Produktionsketten werden über viele Länder aufgeteilt – Teile werden mehrfach über Grenzen transportiert.','Es werden weniger Waren hergestellt.','Weil alle Länder gleich viel exportieren.'],0,'Gründe: sinkende Transportkosten (Container, große Schiffe), unterschiedliche Löhne, Internet und bessere Kommunikation.'],
+ ['Was bedeutet „Index 1950 = 100“?',['Der Wert von 1950 wird gleich 100 gesetzt; 200 bedeutet eine Verdopplung.','Es gab 1950 genau 100 Exportländer.','100 Milliarden Dollar Exporte.'],0,'Ein Index zeigt Veränderungen – keine absoluten Werte.']];
+function runDia(){let sel=null,qi=0,ans=ST.diaA||[],term=null;
+ const draw=()=>{const r=sel!=null?M1[sel]:null,q=DQ[qi],a=ans[qi];
+  frame('Diagramm lesen','<div class="two"><div class="card"><b>Welthandel und Weltwirtschaftsleistung seit 1950</b><div class="muted" style="font-size:.85rem">reale Entwicklung, Index 1950 = 100 · nach Daten der WTO, vereinfacht</div>'+chartSvg(sel)+'<div class="info" style="min-height:0">'+(r?'<b>'+r[0]+':</b> Welthandel <b>'+fmt(r[1])+'</b>'+(r[2]!=null?' · Weltwirtschaftsleistung <b style="color:#b4501f">'+fmt(r[2])+'</b>':'')+(r[0]===2019?' (ungefähr)':''):'Tippe auf einen Punkt im Diagramm, um die Werte zu sehen.')+'</div>'
+  +(BOOK&&BOOK.img.m1?'<details style="margin-top:10px"><summary>Original aus dem Schulbuch (M1)</summary>'+bimg('m1')+'</details>':'')+'<div style="margin-top:8px">'+terms(['Index','preisbereinigt','Bruttoinlandsprodukt'],term)+'</div></div>'
+  +'<div><div class="card"><div class="prog"><span>Frage '+(qi+1)+' von '+DQ.length+'</span><div class="bar"><i style="width:'+qi/DQ.length*100+'%"></i></div></div><p style="font-size:1.08rem;margin:0 0 10px"><b>'+esc(q[0])+'</b></p>'+q[1].map((o,k)=>'<button class="opt'+(a!=null?(k===q[2]?' ok':k===a?' no':''):'')+'" data-o="'+k+'">'+esc(o)+'</button>').join('')
+  +(a!=null?fb(a===q[2],(a===q[2]?'✓ ':'')+esc(q[3]))+'<div class="row"><button class="sec" data-pq '+(qi?'':'disabled')+'>‹</button><div class="sp"></div>'+(qi<DQ.length-1?'<button class="pri" data-nq>Weiter ›</button>':'')+'</div>':'')+'</div>'
+  +(ans.filter(x=>x!=null).length===DQ.length?writeBox('a1','Aufgabe 1: Beschreibe die Entwicklung des globalen Warenhandels und der globalen Warenproduktion seit 1960.','Seit 1960 ist der Welthandel … Bis 1990 … Danach … Die Weltwirtschaftsleistung … Einbrüche gab es …','a1'):'')+'</div></div>');
+  app.querySelectorAll('[data-pt]').forEach(b=>b.onclick=()=>{sel=+b.dataset.pt;draw()});
+  app.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{if(ans[qi]!=null)return;ans[qi]=+b.dataset.o;ST.diaA=ans;const n=ans.filter(x=>x!=null).length;if(n===DQ.length)ST.dia={p:ans.filter((x,i)=>x===DQ[i][2]).length,t:DQ.length};save();draw()});
+  const nq=app.querySelector('[data-nq]');if(nq)nq.onclick=()=>{qi++;draw()};const pq=app.querySelector('[data-pq]');if(pq)pq.onclick=()=>{qi--;draw()};
+  wireTerms(k=>{term=term===k?null:k;draw()});wireWrite()};
+ qi=Math.min(ans.filter(x=>x!=null).length,DQ.length-1);draw()}
+
+/* ---------- 4 Exportländer (M5) – Aufgabe 2A ---------- */
+function runExp(){let pick=null,mk=null;const pl=ST.expP||{};
+ const max=EXP[0][1],bars='<div class="hbars">'+EXP.map(([n,v])=>'<div class="hb"><span>'+n+'</span><i style="width:'+v/max*100+'%"></i><b>'+fmt(v)+'</b></div>').join('')+'</div>';
+ const draw=()=>{frame('Exportländer','<div class="two"><div class="card"><b>Die zehn größten Exportländer 2022</b><div class="muted" style="font-size:.85rem">Warenexporte in Mrd. US-Dollar · Quelle: WTO</div>'+bars+'</div>'
+  +'<div class="card"><b>Aufgabe 2A:</b> Ordne die zehn größten Exportländer den drei großen Wirtschaftsregionen zu. Tippe ein Land und dann die Region.<div class="pool" style="margin-top:10px">'+EXP.map((x,i)=>pl[i]==null?'<button class="chip'+(pick===i?' on':'')+'" data-c="'+i+'">'+x[0]+'</button>':'').join('')+'</div>'
+  +'<div class="cols c3">'+Object.entries(REG).map(([k,l])=>'<div class="col'+(pick!=null?' tgt':'')+'" data-col="'+k+'"><h3>'+l+'</h3>'+EXP.map((x,i)=>pl[i]===k?'<button class="chip'+(mk?(x[2]===k?' ok':' no'):'')+'" data-back="'+i+'">'+x[0]+'</button>':'').join('')+'</div>').join('')+'</div>'
+  +'<div class="row"><div class="sp"></div><button class="pri" data-chk '+(Object.keys(pl).length<EXP.length?'disabled':'')+'>Prüfen</button></div><div id="fbx">'+(mk!=null?(mk===EXP.length?fb(1,'⭐ Richtig! Fünf der zehn größten Exportländer liegen in Europa, vier in Asien, eins in Nordamerika. Diese drei Räume nennt man die <b>Triade</b>.'):fb(0,mk+' von '+EXP.length+' richtig.')):'')+'</div></div></div>');
+  app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{pick=+b.dataset.c;draw()});
+  app.querySelectorAll('[data-col]').forEach(c=>c.onclick=e=>{if(e.target.closest('[data-back]')||pick==null)return;pl[pick]=c.dataset.col;ST.expP=pl;pick=null;mk=null;save();draw()});
+  app.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{delete pl[+b.dataset.back];mk=null;save();draw()});
+  app.querySelector('[data-chk]').onclick=()=>{mk=EXP.filter((x,i)=>pl[i]===x[2]).length;if(!ST.exp)ST.exp={p:mk,t:EXP.length};else ST.exp.p=Math.max(ST.exp.p,mk);save();draw()}};draw()}
+
+/* ---------- 5 Handelsströme (M4) – Aufgabe 2B ---------- */
+const SQ=[['Welcher Wirtschaftsraum hat das größte Handelsvolumen?',0],['Welcher Wirtschaftsraum hat das kleinste Handelsvolumen?',6],['In welchem Raum findet der größte Anteil des Handels innerhalb der eigenen Region statt (Binnenhandel)?',0],['Welcher Raum handelt anteilig am meisten mit anderen Räumen?',5]];
+function runStr(){let qi=0,ans=ST.strA||[],term=null;
+ const vmax=VOL[0][1],tbl='<div class="hbars">'+VOL.map(([n,v,b],i)=>'<div class="hb hb2" data-r="'+i+'"><span>'+n+'</span><i style="width:'+v/vmax*100+'%"></i><b>'+fmt(v)+'</b><em><s style="width:'+b+'%"></s>'+String(b).replace('.',',')+' %</em></div>').join('')+'</div>';
+ const draw=()=>{const q=SQ[qi],a=ans[qi];
+  frame('Handelsströme','<div class="two"><div class="card">'+(BOOK&&BOOK.img.m4?zoomBox('m4','mm'):'')+'<b>Handelsvolumen 2019 nach Wirtschaftsräumen</b><div class="muted" style="font-size:.85rem">in Mrd. US-Dollar · rechts: Anteil des Handels <b>innerhalb</b> des eigenen Raumes · Quelle: Weltbank</div>'+tbl+terms(['Binnenhandel','Triade'],term)+'</div>'
+  +'<div><div class="card"><div class="prog"><span>Frage '+(qi+1)+' von '+SQ.length+'</span><div class="bar"><i style="width:'+qi/SQ.length*100+'%"></i></div></div><p style="font-size:1.08rem;margin:0 0 10px"><b>'+esc(q[0])+'</b></p><p class="muted" style="margin:0 0 8px;font-size:.9rem">Tippe in der Liste auf den Wirtschaftsraum.</p>'
+  +(a!=null?fb(a===q[1],(a===q[1]?'✓ Richtig: ':'Nicht ganz – richtig ist: ')+esc(VOL[q[1]][0])+'.')+'<div class="row"><div class="sp"></div>'+(qi<SQ.length-1?'<button class="pri" data-nq>Weiter ›</button>':'')+'</div>':'')+'</div>'
+  +(ans.filter(x=>x!=null).length===SQ.length?'<div class="card info"><b>Zusammengefasst:</b> Der Welthandel konzentriert sich auf die <b>Triade</b>. Europa handelt zu fast 70 % mit sich selbst, Ostasien zur Hälfte, Nordamerika nur zu 30 %. Die Räume der Südhalbkugel (außer Australien) und vor allem Subsahara-Afrika sind kaum beteiligt.</div>'
+   +writeBox('a2b','Aufgabe 2B: Vergleiche den Handel innerhalb Europas mit dem innerhalb Asiens und Nordamerikas sowie den Handel auf der Nord- und der Südhalbkugel.','Europa handelt zu … % innerhalb … In Asien … Nordamerika dagegen … Auf der Nordhalbkugel … während auf der Südhalbkugel …','a2b'):'')+'</div></div>');
+  if(BOOK)wireZoom();
+  app.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{if(ans[qi]!=null)return;ans[qi]=+b.dataset.r;ST.strA=ans;if(ans.filter(x=>x!=null).length===SQ.length)ST.str={p:ans.filter((x,i)=>x===SQ[i][1]).length,t:SQ.length};save();draw()});
+  const nq=app.querySelector('[data-nq]');if(nq)nq.onclick=()=>{qi++;draw()};wireTerms(k=>{term=term===k?null:k;draw()});wireWrite()};
+ qi=Math.min(ans.filter(x=>x!=null).length,SQ.length-1);draw()}
+
+/* ---------- 6 Wirtschaftsbündnisse (M6) – Aufgabe 3A ---------- */
+const BUE=[['EU','Europäische Union','Europa','27'],['ASEAN','Verband Südostasiatischer Nationen','Südostasien','10'],['NAFTA / USMCA','Nordamerikanisches Freihandelsabkommen (seit 2020 USMCA)','Nordamerika','3'],['Mercosur','Gemeinsamer Markt Südamerikas','Südamerika','6'],['SADC','Entwicklungsgemeinschaft des südlichen Afrika','Südliches Afrika','16']];
+function runBue(){let pick=null,mk=null,term=null,qi=0;const pl=ST.bueP||{},ans=ST.bueA||[];const regs=shuffleOnce('bueR',BUE.map((_,i)=>i));
+ const T=BOOK&&BOOK.m6,BQ=T?BOOK.m6q:[];
+ const draw=()=>{const q=BQ[qi],a=ans[qi];
+  frame('Wirtschaftsbündnisse','<div class="two"><div class="card"><b>Welches Bündnis gehört wohin?</b> Tippe ein Bündnis und dann die Region.<div class="pool" style="margin-top:10px">'+BUE.map((x,i)=>!Object.values(pl).includes(i)?'<button class="chip'+(pick===i?' on':'')+'" data-c="'+i+'">'+x[0]+'</button>':'').join('')+'</div>'
+  +'<div style="margin-top:10px">'+regs.map(r=>'<div class="ev'+(mk?(pl[r]===r?' ok':' no'):'')+'" data-reg="'+r+'" style="cursor:pointer"><span class="tx"><b>'+BUE[r][2]+'</b> <small class="muted">· '+BUE[r][3]+' Mitglieder</small></span><span style="font-weight:800;color:var(--blue)">'+(pl[r]!=null?BUE[pl[r]][0]:'…')+'</span></div>').join('')+'</div>'
+  +'<div class="row"><div class="sp"></div><button class="pri" data-chk '+(Object.keys(pl).length<BUE.length?'disabled':'')+'>Prüfen</button></div>'+(mk!=null?(mk===BUE.length?fb(1,'⭐ Richtig!'):fb(0,mk+' von '+BUE.length+' richtig. Tippe eine Region an, um die Zuordnung zu löschen.')):'')+terms(['Wirtschaftsbündnis','Freihandelszone','Zoll'],term)+'</div>'
+  +'<div>'+(T?'<div class="card"><b>M6 Wirtschaftsbündnisse im Vergleich (2022)</b><div class="tblw"><table class="tbl"><tr>'+T.head.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>'+T.rows.map(r=>'<tr>'+r.map((c,k)=>'<td'+(k?'':' style="text-align:left"')+'>'+esc(c)+'</td>').join('')+'</tr>').join('')+'</table></div><div class="cap">'+esc(T.note)+'</div></div>'
+   +(q?'<div class="card"><div class="prog"><span>Frage '+(qi+1)+' von '+BQ.length+'</span><div class="bar"><i style="width:'+qi/BQ.length*100+'%"></i></div></div><p style="margin:0 0 10px"><b>'+esc(q[0])+'</b></p>'+q[1].map((o,k)=>'<button class="opt'+(a!=null?(k===q[2]?' ok':k===a?' no':''):'')+'" data-o="'+k+'">'+esc(o)+'</button>').join('')+(a!=null&&qi<BQ.length-1?'<div class="row"><div class="sp"></div><button class="pri" data-nq>Weiter ›</button></div>':'')+'</div>':'')
+   +(ans.filter(x=>x!=null).length>=BQ.length?writeBox('a3a','Aufgabe 3A: Vergleiche die Wirtschaftsbündnisse miteinander (M6).','Das älteste Bündnis ist … Die meisten Mitglieder hat … Das größte BIP erwirtschaftet … Die geringste Wirtschaftskraft …','a3a'):'')
+   :'<div class="card info"><b>Mit der Schulbuch-Datei</b> erscheint hier die Tabelle M6 mit Gründung, Bevölkerung, BIP und Exporten der Bündnisse – und Aufgabe 3A zum Vergleichen.</div>')+'</div></div>');
+  app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{pick=+b.dataset.c;draw()});
+  app.querySelectorAll('[data-reg]').forEach(d=>d.onclick=()=>{const r=+d.dataset.reg;if(pick==null){delete pl[r];mk=null}else{pl[r]=pick;pick=null;mk=null}ST.bueP=pl;save();draw()});
+  app.querySelector('[data-chk]').onclick=()=>{mk=BUE.filter((_,r)=>pl[r]===r).length;finBue();save();draw()};
+  app.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{if(ans[qi]!=null)return;ans[qi]=+b.dataset.o;ST.bueA=ans;finBue();save();draw()});
+  const nq=app.querySelector('[data-nq]');if(nq)nq.onclick=()=>{qi++;draw()};wireTerms(k=>{term=term===k?null:k;draw()});wireWrite()};
+ const finBue=()=>{const m=BUE.filter((_,r)=>pl[r]===r).length,qa=BQ.filter((q,i)=>ans[i]===q[2]).length;if(Object.keys(pl).length===BUE.length&&(!BQ.length||ans.filter(x=>x!=null).length===BQ.length))ST.bue={p:Math.max(ST.bue?.p||0,m+qa),t:BUE.length+BQ.length}};
+ qi=Math.min(ans.filter(x=>x!=null).length,Math.max(0,BQ.length-1));draw()}
+function shuffleOnce(k,a){ST.ord??={};if(!ST.ord[k]||ST.ord[k].length!==a.length){ST.ord[k]=shuffle(a);save()}return ST.ord[k]}
+
+/* ---------- 7 Chancen und Risiken (M3) – Aufgabe 4 ---------- */
+const CR=[['Verbraucher haben eine große Auswahl zu günstigen Preisen.',0],['Exportstarke Länder wie Deutschland sichern Arbeitsplätze und Wohlstand.',0],['Waren können dort produziert werden, wo es am günstigsten ist.',0],['Handel lässt Handelswege, Häfen und Handelsstädte wachsen.',0],['Gemeinsame Regeln (WTO, Freihandel) erleichtern den Austausch.',0],['Handel ist ein Motor für Wirtschaft und Gesellschaft.',0],['Viele arme Länder bleiben nur Rohstofflieferanten.',1],['Der Abstand zwischen reichen und armen Ländern kann größer werden.',1],['Lieferketten sind anfällig – z. B. in der Pandemie oder bei einer Blockade des Suezkanals.',1],['Der weltweite Transport belastet Klima und Ökosysteme.',1],['Länder werden stärker voneinander abhängig.',1],['Unternehmen konkurrieren weltweit – Arbeitsplätze können abwandern.',1]];
+function runCr(){let pick=null,mk=null;const pl=ST.crP||{};const ord=shuffleOnce('cr',CR.map((_,i)=>i));
+ const draw=()=>{frame('Chancen und Risiken','<div class="two"><div><div class="card"><b>Chance oder Risiko?</b> Tippe eine Aussage an und dann die passende Spalte.<div class="pool" style="margin-top:10px">'+ord.map(i=>pl[i]==null?'<button class="chip'+(pick===i?' on':'')+'" data-c="'+i+'">'+esc(CR[i][0])+'</button>':'').join('')+'</div>'
+  +'<div class="cols c2">'+['Chancen','Risiken'].map((l,e)=>'<div class="col'+(pick!=null?' tgt':'')+'" data-col="'+e+'"><h3>'+l+'</h3>'+ord.map(i=>pl[i]===e?'<button class="chip'+(mk!=null?(CR[i][1]===e?' ok':' no'):'')+'" data-back="'+i+'">'+esc(CR[i][0])+'</button>':'').join('')+'</div>').join('')+'</div>'
+  +'<div class="row"><div class="sp"></div><button class="pri" data-chk '+(Object.keys(pl).length<CR.length?'disabled':'')+'>Prüfen</button></div>'+(mk!=null?(mk===CR.length?fb(1,'⭐ Alles richtig zugeordnet!'):fb(0,mk+' von '+CR.length+' richtig.')):'')+'</div>'
+  +(BOOK&&BOOK.m3?'<div class="card"><b>'+esc(BOOK.m3.t)+'</b>'+BOOK.m3.p.map(p=>p.q?'<p style="margin:10px 0 2px"><b>'+esc(p.q)+'</b></p>':'<p style="margin:2px 0;font-style:italic">'+md(p.a)+'</p>').join('')+'</div>':'')+'</div>'
+  +'<div><div class="card"><b>Aufgabe 4: Erörtere Chancen und Risiken des globalen Handels.</b><p class="muted" style="margin:4px 0 8px;font-size:.9rem">Eine Erörterung wägt ab: Argumente dafür und dagegen – mit Begründung und Beispiel – und am Ende ein begründetes Urteil.</p>'
+  +[['e1','Einleitung','Der Welthandel hat seit 1990 stark zugenommen. Es stellt sich die Frage, ob …'],['e2','Chancen (mit Begründung und Beispiel)','Ein Vorteil ist …, weil … Zum Beispiel …'],['e3','Risiken (mit Begründung und Beispiel)','Andererseits …, denn … So zeigte die Corona-Pandemie …'],['e4','Fazit – mein begründetes Urteil','Insgesamt überwiegen für mich …, weil …']].map(([k,l,ph])=>'<div style="margin-top:8px"><small style="font-weight:700;color:var(--mut)">'+l+'</small><textarea data-w="'+k+'" placeholder="'+esc(ph)+'" style="min-height:70px">'+esc((ST.w||{})[k]||'')+'</textarea></div>').join('')
+  +(BOOK&&BOOK.sol&&BOOK.sol.a4?'<div class="row" style="margin-top:8px"><button class="sec" data-sol="a4">Mit dem Lösungsvorschlag vergleichen</button><span class="muted" style="font-size:.85rem" data-solh="a4"></span></div><div data-solb="a4"></div>':'')+'</div></div></div>');
+  app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{pick=+b.dataset.c;draw()});
+  app.querySelectorAll('[data-col]').forEach(c=>c.onclick=e=>{if(e.target.closest('[data-back]')||pick==null)return;pl[pick]=+c.dataset.col;ST.crP=pl;pick=null;mk=null;save();draw()});
+  app.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{delete pl[+b.dataset.back];mk=null;save();draw()});
+  app.querySelector('[data-chk]').onclick=()=>{mk=CR.filter((x,i)=>pl[i]===x[1]).length;if(!ST.cr)ST.cr={p:mk,t:CR.length};else ST.cr.p=Math.max(ST.cr.p,mk);save();draw()};
+  wireWrite();const sb=app.querySelector('[data-sol="a4"]');if(sb)sb.onclick=()=>{const box=app.querySelector('[data-solb="a4"]');if(box.innerHTML){box.innerHTML='';return}const len=['e2','e3','e4'].reduce((n,k)=>n+((ST.w||{})[k]||'').trim().length,0);if(len<120){app.querySelector('[data-solh="a4"]').textContent='Schreibe zuerst Chancen, Risiken und Fazit.';return}
+   box.innerHTML='<div class="m4txt"><b>'+esc(BOOK.solsrc)+':</b>'+BOOK.sol.a4.map(([h,l])=>'<div style="margin-top:6px"><b>'+esc(h)+'</b><ul style="margin:2px 0 0;padding-left:20px">'+l.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>').join('')+'</div>'}};draw()}
+
+/* ---------- 8 Politik (M2) – Aufgabe 5 ---------- */
+const POL=[['Zölle','Ausländische Waren werden teurer – heimische Firmen werden geschützt.'],['Freihandelsabkommen','Staaten verzichten untereinander auf Zölle und Handelshemmnisse.'],['Regeln der WTO','Weltweit gültige Regeln; Streit zwischen Staaten wird geschlichtet.'],['Subventionen','Der Staat unterstützt bestimmte Branchen mit Geld.'],['Umweltauflagen','Produkte müssen bestimmte Umwelt- oder Sozialstandards erfüllen.'],['Förderung von Infrastruktur','Häfen, Straßen und Bahnen werden ausgebaut, damit ein Land besser handeln kann.']];
+function runPol(){let pick=null,mk=null,term=null;const pl=ST.polP||{};const ord=shuffleOnce('pol',POL.map((_,i)=>i));
+ const draw=()=>{frame('Politik und Handel','<div class="two"><div class="card">'+(BOOK&&BOOK.img.m2?bimg('m2'):'')+'<p style="margin:8px 0"><b>Wie kann Politik den Handel steuern?</b> Tippe ein Instrument und dann die passende Erklärung.</p><div class="pool">'+POL.map((x,i)=>!Object.values(pl).includes(i)?'<button class="chip'+(pick===i?' on':'')+'" data-c="'+i+'">'+x[0]+'</button>':'').join('')+'</div>'
+  +'<div style="margin-top:10px">'+ord.map(r=>'<div class="ev'+(mk!=null?(pl[r]===r?' ok':' no'):'')+'" data-reg="'+r+'" style="cursor:pointer;align-items:flex-start"><span class="tx">'+esc(POL[r][1])+'</span><span style="font-weight:800;color:var(--blue);min-width:110px;text-align:right">'+(pl[r]!=null?POL[pl[r]][0]:'…')+'</span></div>').join('')+'</div>'
+  +'<div class="row"><div class="sp"></div><button class="pri" data-chk '+(Object.keys(pl).length<POL.length?'disabled':'')+'>Prüfen</button></div>'+(mk!=null?(mk===POL.length?fb(1,'⭐ Richtig!'):fb(0,mk+' von '+POL.length+' richtig.')):'')+terms(['WTO','Zoll','Subvention','Freihandelszone'],term)+'</div>'
+  +'<div><div class="card"><b>Aufgabe 5: Diskutiert Möglichkeiten, wie die Politik auf den Handel Einfluss nehmen kann.</b><p class="muted" style="font-size:.9rem;margin:4px 0 10px">Bereite dich mit deinem Partner vor. Wähle eine Position und begründe sie.</p>'
+  +'<div class="muted" style="font-size:.85rem;font-weight:700">Meine Position: Der Welthandel sollte …</div><div class="seg5">'+['viel stärker geregelt werden','etwas stärker geregelt werden','so bleiben','freier werden'].map((l,k)=>'<button class="'+(ST.pos===k?'on':'')+'" data-pos="'+k+'">'+l+'</button>').join('')+'</div>'
+  +'<textarea data-w="a5" placeholder="Ich bin dafür, dass …, weil … Ein Gegenargument wäre …, aber …" style="margin-top:10px">'+esc((ST.w||{}).a5||'')+'</textarea>'
+  +(BOOK&&BOOK.sol&&BOOK.sol.a5?'<details style="margin-top:8px"><summary>Lösungshinweise</summary><ul>'+BOOK.sol.a5.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></details>':'')+'</div></div></div>');
+  app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{pick=+b.dataset.c;draw()});
+  app.querySelectorAll('[data-reg]').forEach(d=>d.onclick=()=>{const r=+d.dataset.reg;if(pick==null)delete pl[r];else{pl[r]=pick;pick=null}mk=null;ST.polP=pl;save();draw()});
+  app.querySelectorAll('[data-pos]').forEach(b=>b.onclick=()=>{ST.pos=+b.dataset.pos;save();draw()});
+  app.querySelector('[data-chk]').onclick=()=>{mk=POL.filter((_,r)=>pl[r]===r).length;if(!ST.pol)ST.pol={p:mk,t:POL.length};else ST.pol.p=Math.max(ST.pol.p,mk);save();draw()};
+  wireTerms(k=>{term=term===k?null:k;draw()});wireWrite()};draw()}
+
+/* ---------- 9 Urkunde / Unterlagen ---------- */
+function runEnd(){frame('Meine Ergebnisse','<div class="card"><h2>Rückblick</h2>'+(ST.verm?'<div class="muted" style="font-size:.9rem">Deine Vermutung am Anfang:</div><div class="verm">'+esc(ST.verm)+'</div>':'')+'<b>Was weißt du jetzt? Wer profitiert vom Welthandel – und wer nicht?</b><textarea id="rb" placeholder="Jetzt weiß ich, dass …">'+esc(ST.rueck||'')+'</textarea></div>'
+ +'<div class="card"><div class="row" style="margin-top:0"><input id="nm" placeholder="Dein Name" value="'+esc(ST.name||ST.me||'')+'" style="min-height:48px;padding:0 12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;flex:1;min-width:200px"><button class="pri" data-pdf>Für meine Unterlagen sichern</button></div><p class="muted" style="font-size:.9rem">Am iPad: im Druckfenster auf <b>Teilen</b> tippen und GoodNotes, Notability oder „In Dateien sichern“ wählen.</p></div>');
+ $('#rb').oninput=e=>{ST.rueck=e.target.value;save()};$('#nm').oninput=e=>{ST.name=e.target.value;save()};
+ app.querySelector('[data-pdf]').onclick=()=>{ST.end={};save();const r=k=>ST[k]&&ST[k].p!=null?ST[k].p+' / '+ST[k].t:'—',w=ST.w||{},blk=(t,x)=>x?'<h2>'+t+'</h2><p>'+esc(x).replace(/\n/g,'<br>')+'</p>':'';
+  $('#printBox').innerHTML='<h1>Welche Rolle spielt der Handel?</h1><div>'+(ST.name?esc(ST.name)+' · ':'')+new Date().toLocaleDateString('de-DE')+'</div>'
+   +'<h2>Welthandel und Weltwirtschaftsleistung seit 1950</h2><div style="max-width:520px">'+chartSvg(null)+'</div>'
+   +blk('Aufgabe 1: Entwicklung seit 1960',w.a1)+'<h2>Die zehn größten Exportländer (2022)</h2><p>'+Object.entries(REG).map(([k,l])=>'<b>'+l+':</b> '+EXP.filter(x=>x[2]===k).map(x=>x[0]).join(', ')).join('<br>')+'</p>'
+   +blk('Aufgabe 2B: Handel im Vergleich',w.a2b)+blk('Aufgabe 3A: Wirtschaftsbündnisse',w.a3a)
+   +'<h2>Chancen und Risiken</h2><table><tr><th>Chancen</th><th>Risiken</th></tr><tr>'+[0,1].map(e=>'<td>'+CR.filter(x=>x[1]===e).map(x=>esc(x[0])).join('<br>')+'</td>').join('')+'</tr></table>'
+   +(w.e1||w.e2||w.e3||w.e4?'<h2>Aufgabe 4: Meine Erörterung</h2>'+['e1','e2','e3','e4'].map(k=>w[k]?'<p>'+esc(w[k]).replace(/\n/g,'<br>')+'</p>':'').join(''):'')
+   +blk('Aufgabe 5: Meine Position',w.a5)+(ST.verm||ST.rueck?'<h2>Meine Vermutung – und was ich jetzt weiß</h2>'+(ST.verm?'<p><b>Vermutung:</b> '+esc(ST.verm)+'</p>':'')+(ST.rueck?'<p><b>Jetzt weiß ich:</b> '+esc(ST.rueck)+'</p>':''):'')
+   +'<h2>Fachbegriffe</h2><table>'+Object.entries(GLOSS).map(([k,v])=>'<tr><th style="text-align:left;width:26%">'+k+'</th><td>'+esc(v)+'</td></tr>').join('')+'</table>'
+   +'<div class="urk"><b>Ergebnisse</b> · Grundwissen '+r('wis')+' · Diagramm '+r('dia')+' · Exportländer '+r('exp')+' · Handelsströme '+r('str')+' · Bündnisse '+r('bue')+' · Chancen/Risiken '+r('cr')+' · Politik '+r('pol')+'</div>';print()}}
+
+/* ---------- Startseite ---------- */
+const STEPS=[['ein','Einstieg','Die Reise eines Smartphones · deine Vermutung',runEin],['wis','Grundwissen','Was wird gehandelt? Fachbegriffe',runWis],['dia','Diagramm lesen','Welthandel und Produktion seit 1950 (Aufgabe 1)',runDia],['exp','Exportländer','Die Top 10 den Regionen zuordnen (Aufgabe 2A)',runExp],['str','Handelsströme','Wer handelt mit wem? (Aufgabe 2B)',runStr],['bue','Wirtschaftsbündnisse','EU, ASEAN & Co. vergleichen (Aufgabe 3A)',runBue],['cr','Chancen und Risiken','Sortieren und erörtern (Aufgabe 4)',runCr],['pol','Politik und Handel','Instrumente und Diskussion (Aufgabe 5)',runPol],['end','Meine Ergebnisse','Rückblick und PDF',runEnd]];
+function home(){const st=k=>ST[k]?'<span class="st done">'+(ST[k].p!=null?ST[k].p+'/'+ST[k].t:'✓')+'</span>':'<span class="st">'+(k==='end'?'':'offen')+'</span>';
+ const startK=!ST.ein?'ein':!ST.wis?'wis':null;
+ app.innerHTML='<div class="card hero"><div><div class="muted">Erdkunde · Klasse 9 · Globale Verflechtungen</div><h1>Welche Rolle spielt der Handel?</h1><p>Rohstoffe, Autos, Smartphones, Software, Patente: Täglich wird weltweit gehandelt. Doch die Handelsströme sind ungleich verteilt – und der Welthandel hat Chancen und Risiken.</p><span class="badge">⭐ '+STEPS.filter(x=>ST[x[0]]).length+' von '+STEPS.length+' Stationen</span></div><div>'+chartSvg(null)+'</div></div>'
+  +'<div class="steps">'+STEPS.map(([k,t,d],i)=>'<button class="step'+(k===startK?' start':'')+'" data-s="'+k+'"><span class="n">'+(i+1)+'</span><span><b>'+t+'</b>'+(k===startK?'<span class="go">Starte hier</span>':'')+'<small>'+d+'</small></span>'+st(k)+'</button>').join('')+'</div>'
+  +(BOOK?'<div class="bksrc">📘 Schulbuch-Material geladen: '+esc(BOOK.source)+' · <button class="lnk" data-drop>Vom Gerät entfernen</button></div>':'<div class="bkload"><span>📘 Mit den Materialien aus dem Schulbuch arbeiten (Karte M4, Interview M3, Tabelle M6, Lösungsvorschläge)? Lade die Datei von deiner Lehrkraft (z. B. per AirDrop).</span><button class="sec" data-load>Schulbuch-Datei laden …</button></div>');
+ app.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>STEPS.find(x=>x[0]===b.dataset.s)[3]());const L=app.querySelector('[data-load]');if(L)L.onclick=bookPick;const D=app.querySelector('[data-drop]');if(D)D.onclick=bookDrop;scrollTo(0,0)}
+
+/* ---------- Abgabe-QR (wie „Städte im Wandel“) ---------- */
+ST.dv??=Math.random().toString(36).slice(2,10);
+(()=>{const h=location.hash;if(!/^#k1\./.test(h))return;try{let x=h.slice(4).replace(/-/g,'+').replace(/_/g,'/');while(x.length%4)x+='=';const b=atob(x),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);const j=JSON.parse(new TextDecoder().decode(u));
+ if(Array.isArray(j.n)&&j.n.length){if(ST.cls!==j.c||!j.n.includes(ST.me))ST.me=null;ST.cls=String(j.c||'');ST.roster=j.n.map(String)}}catch{}try{history.replaceState(null,'',location.pathname+location.search)}catch{}})();
+const doneCount=()=>STEPS.filter(x=>ST[x[0]]).length;
+function payload(){const sv={};for(const [k] of STEPS){const v=ST[k];if(v)sv[k]=v.p!=null?[v.p,v.t]:1}const cut=x=>String(x||'').replace(/\s+/g,' ').trim().slice(0,140);
+ return 'CMLE1:'+JSON.stringify({u:UID,c:ST.cls||'',n:ST.me,dv:ST.dv,ts:Date.now(),b:BOOK?1:0,s:sv,ia:[],tx:{v:cut(ST.verm),r:cut(ST.rueck)}})}
+const qrSvg=(t,o)=>{try{return classroomQrSvg(t,Object.assign({ecc:'L',boost:false,dark:'#243247',border:2},o||{}))}catch{return ''}};
+let whoT=0;function updWho(){clearTimeout(whoT);whoT=setTimeout(()=>{const w=$('#who');if(!w)return;document.body.classList.add('has-who');w.hidden=false;
+ if(!ST.me){w.className='noname';w.innerHTML='<span><b>Abgabe-QR</b><small>Name wählen</small></span>';return}
+ w.className='';w.innerHTML='<span><b>'+esc(ST.me)+'</b><small>'+doneCount()+' von '+STEPS.length+' ✓</small></span><svg viewBox="0 0 24 24" fill="#243247" aria-hidden="true"><path d="M3 3h8v8H3zM5 5v4h4V5zM13 3h8v8h-8zm2 2v4h4V5zM3 13h8v8H3zm2 2v4h4v-4zM13 13h3v3h-3zM18 13h3v3h-3zM13 18h3v3h-3zM18 18h3v3h-3zM16 16h2v2h-2z"/></svg>'},30)}
+function showQr(){if(!ST.me){runWho();return}const o=document.createElement('div');o.className='qrfull';
+ o.innerHTML='<div class="muted">Abgabe · Welthandel'+(ST.cls?' · '+esc(ST.cls):'')+'</div><div class="nm">'+esc(ST.me)+'</div>'+qrSvg(payload(),{border:3})+'<div class="muted" style="font-size:.9rem">Stand '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' · '+doneCount()+' von '+STEPS.length+' Stationen</div><div class="row" style="justify-content:center;margin-top:4px"><button class="pri" data-c>Schließen</button></div><button class="lnk" data-ch style="font-size:.85rem">Nicht dein Name? Ändern</button>';
+ document.body.append(o);o.querySelector('[data-c]').onclick=()=>o.remove();o.querySelector('[data-ch]').onclick=()=>{if(confirm('Deinen Namen wirklich ändern? Deine Lehrkraft sieht den neuen Namen.')){o.remove();runWho(true)}}}
+function runWho(force){const R=ST.roster||[];let pick=ST.me&&!force?ST.me:null;
+ const draw=()=>{frame('Dein Name',R.length?'<div class="card"><h2>Welthandel'+(ST.cls?' · '+esc(ST.cls):'')+'</h2><p style="margin:4px 0 0">Tippe auf deinen Namen. Er steht später groß über deinem Abgabe-QR.</p><div class="names">'+R.map(n=>'<button class="'+(n===pick?'on':'')+'" data-n="'+esc(n)+'">'+esc(n)+'</button>').join('')+'</div><div class="row"><div class="sp"></div><button class="pri" data-ok '+(pick?'':'disabled')+'>'+(pick?'Das bin ich: '+esc(pick):'Namen antippen')+'</button></div></div>'
+  :'<div class="card"><h2>Dein Name</h2><p style="margin:4px 0 10px">Scanne den Start-QR deiner Lehrkraft – dann kannst du deinen Namen aus der Liste wählen. Oder trage ihn hier ein (Vor- und Nachname):</p><input id="nmIn" value="'+esc(pick||'')+'" placeholder="Vorname Nachname" style="width:100%;min-height:50px;padding:0 12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit"><div class="row"><div class="sp"></div><button class="pri" data-ok>Speichern</button></div></div>');
+  app.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{pick=b.dataset.n;draw()});const inp=$('#nmIn');if(inp)inp.oninput=()=>{pick=inp.value.trim()};
+  app.querySelector('[data-ok]').onclick=()=>{if(!pick||pick.length<2)return;ST.me=pick;if(!ST.name)ST.name=pick;save();home()}};draw()}
+$('#who').onclick=showQr;
+save();if(ST.roster&&!ST.me)runWho();else home();updWho();bookInit();
+</script></body></html>

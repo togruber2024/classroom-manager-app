@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 12.11.2026 · Version 11.17
+Stand: 12.11.2026 · Version 11.18
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1396,3 +1396,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.15: iPhone: „Stundenplan“ statt „Aktuell“, Tage wechseln per ‹ › oder Wischen; Städte im Wandel mit Einstieg, „Die vier Phasen“ und Rückblick; Schüler-Seiten ohne Töne.
 11.16: Lerneinheiten: Start-QR mit Klassenliste, Abgabe-QR mit Namen oben rechts, Scannen und Übersicht mit Auswertung.
 11.17: Städte im Wandel: Stadtmodelle, Entwicklungskette, Lösungsvorschlag 2A, Profi-Runde (Klasse 8); iPhone: Noten als Fenster mit abgerundetem Rand.
+11.18: Neue Lerneinheit „Welthandel“ (Erdkunde 9) mit Abgabe-QR.
