@@ -41,6 +41,7 @@ table.gt td small{display:block;color:var(--ok);font-weight:600}
 .done{text-align:center}.done .big{font-size:3rem}
 .err{border-color:#f0a982}
 </style></head><body><div class="wrap" id="app"></div>
+<script src="qr-code.js"></script><script src="abgabe.js"></script>
 <script>
 (async()=>{
  const app=document.getElementById('app');
@@ -59,11 +60,13 @@ table.gt td small{display:block;color:var(--ok);font-weight:600}
  const KEY='cm-ueben-'+(P.t||'')+'-'+(P.k==='v'?P.w.length:P.q.length);
  const ls={get:()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch{return null}},set:v=>{try{localStorage.setItem(KEY,JSON.stringify(v))}catch{}}};
  const plain=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/j/g,'i');
- const head=sub=>'<h1>'+esc(P.t||'Üben')+'</h1><div class="muted">'+esc(sub)+(P.c?' · '+esc(P.c):'')+' · ohne Note – so oft du willst</div>';
+ const head=sub=>'<h1>'+esc(P.t||'Üben')+'</h1><div class="muted">'+esc(sub)+(P.c?' · '+esc(P.c):'')+''+(P.u?' · üben so oft du willst – gewertet wird '+(P.k==='v'?'die Abfrage':'jede Aufgabe')+' beim ersten Versuch':' · ohne Note – so oft du willst')+'</div>';
  /* ---------- Vokabeln ---------- */
  if(P.k==='v'){
   const W=P.w;let S=ls.get();if(!S||!Array.isArray(S.known)||S.known.length!==W.length)S={known:W.map(()=>0),first:W.map(()=>null),tab:'karten',dir:'ld'};
-  const save=()=>ls.set(S);let queue=[],cur=-1,shown=false,checked=null;
+  /* 11.45: Abgabe – gewertet wird nur die Abfrage, jedes Wort beim ersten Versuch */if(!Array.isArray(S.fa)||S.fa.length!==W.length)S.fa=W.map(()=>null);
+  const AB=P.u&&window.cmAbgabe?cmAbgabe({u:P.u,title:P.t,cls:P.c,names:P.n,score:()=>({s:{abf:[S.fa.filter(x=>x===true).length,W.length]},x:{abf:S.fa.map((v,i)=>v===false?i:-1).filter(i=>i>=0).join('.')}})}):null;
+  const save=()=>{ls.set(S);AB?.update()};let queue=[],cur=-1,shown=false,checked=null;
   const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
   const refill=()=>{queue=shuffle(W.map((_,i)=>i).filter(i=>!S.known[i]))};
   const nextCard=()=>{if(!queue.length)refill();cur=queue.shift()??-1;shown=SOL;checked=null};
@@ -91,10 +94,10 @@ table.gt td small{display:block;color:var(--ok);font-weight:600}
   app.addEventListener('click',e=>{const t=e.target.closest('button,[data-flip]');if(!t)return;
    if(t.dataset.t){S.tab=t.dataset.t;checked=null;shown=SOL;save();render();return}
    if(t.dataset.dir){S.dir=t.dataset.dir;checked=null;shown=SOL;save();render();return}
-   if(t.hasAttribute('data-reset')){if(known()&&!confirm('Wirklich von vorn beginnen?'))return;S={...S,known:W.map(()=>0),first:W.map(()=>null)};save();cur=-1;queue=[];render();return}
+   if(t.hasAttribute('data-reset')){if(known()&&!confirm('Wirklich von vorn beginnen?'))return;S={...S,known:W.map(()=>0),first:W.map(()=>null),fa:S.fa};save();cur=-1;queue=[];render();return}
    if(t.hasAttribute('data-flip')){shown=!shown;render();return}
    if(t.dataset.k!=null){mark(t.dataset.k==='1');nextCard();render();return}
-   if(t.hasAttribute('data-chk')||t.hasAttribute('data-skip')){const v=document.getElementById('ans').value,w=W[cur];checked=t.hasAttribute('data-skip')?false:(S.dir==='dl'?okLat(v,w[0]):okDe(v,w[2]));mark(checked);const keep=v;render();const a=document.getElementById('ans');if(a)a.value=keep;return}
+   if(t.hasAttribute('data-chk')||t.hasAttribute('data-skip')){const v=document.getElementById('ans').value,w=W[cur];checked=t.hasAttribute('data-skip')?false:(S.dir==='dl'?okLat(v,w[0]):okDe(v,w[2]));if(S.fa[cur]==null)S.fa[cur]=checked;mark(checked);const keep=v;render();const a=document.getElementById('ans');if(a)a.value=keep;return}
    if(t.hasAttribute('data-next')){nextCard();render()}});
   app.addEventListener('keydown',e=>{if(e.key!=='Enter'||e.target.id!=='ans')return;e.preventDefault();(app.querySelector('[data-chk]')||app.querySelector('[data-next]'))?.click()});
   window.cmPreviewSolutions=on=>{SOL=!!on;shown=SOL;render()};
@@ -102,7 +105,8 @@ table.gt td small{display:block;color:var(--ok);font-weight:600}
  /* ---------- Grammatik ---------- */
  const norm=s=>plain(s).replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim();
  const Q=P.q;let S=ls.get();const blank=it=>it.k==='tab'?{c:it.rw.map(()=>it.cl.map(()=>''))}:it.k==='det'?{d:it.d.map(()=>'')}:{v:it.sub.map(()=>'')};
- if(!S||!Array.isArray(S.a)||S.a.length!==Q.length)S={a:Q.map(blank),r:Q.map(()=>null)};const save=()=>ls.set(S);
+ if(!S||!Array.isArray(S.a)||S.a.length!==Q.length)S={a:Q.map(blank),r:Q.map(()=>null)};if(!Array.isArray(S.f)||S.f.length!==Q.length)S.f=Q.map(()=>null);
+ /* 11.45: Abgabe – jede Aufgabe beim ersten Prüfen */const AB=P.u&&window.cmAbgabe?cmAbgabe({u:P.u,title:P.t,cls:P.c,names:P.n,score:()=>({s:{abf:[S.f.filter(x=>x===true).length,Q.length]},x:{abf:S.f.map((v,i)=>v===false?i:-1).filter(i=>i>=0).join('.')}})}):null;const save=()=>{ls.set(S);AB?.update()};
  const off='autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"';
  const okTab=(it,ri,ci,v)=>{const f=it.sol[ri][ci];return !!norm(v)&&String(f).split('/').some(x=>norm(x)===norm(v))};
  function grade(it,a){if(it.k==='tab'){let ok=true;it.sol.forEach((row,ri)=>row.forEach((f,ci)=>{if(f&&!it.gv[ri][ci]&&!okTab(it,ri,ci,a.c[ri][ci]))ok=false}));return ok}
@@ -120,10 +124,10 @@ table.gt td small{display:block;color:var(--ok);font-weight:600}
    +Q.map(card).join('')+(ok===Q.length?'<div class="card done"><div class="big">🎉</div><h2>Alle Aufgaben richtig!</h2></div>':'')}
  const redraw=i=>{const old=app.querySelector('.gcard[data-i="'+i+'"]');const t=document.createElement('div');t.innerHTML=card(Q[i],i);old.replaceWith(t.firstChild);const ok=S.r.filter(x=>x===true).length;app.querySelector('.bar i').style.width=(100*ok/Q.length)+'%';app.querySelector('.bar+.muted').textContent=ok+' von '+Q.length+' richtig'};
  app.addEventListener('input',e=>{const t=e.target,c=t.closest('.gcard');if(!c)return;const i=+c.dataset.i,a=S.a[i];if(t.dataset.c){const [r,cc]=t.dataset.c.split(',').map(Number);a.c[r][cc]=t.value}else if(t.dataset.v!=null)a.v[+t.dataset.v]=t.value;if(S.r[i]!=null){S.r[i]=null;t.classList.remove('ok','no')}save()});
- app.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.hasAttribute('data-reset')){if(!confirm('Alle Eingaben löschen und von vorn beginnen?'))return;S={a:Q.map(blank),r:Q.map(()=>null)};save();render();return}
+ app.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.hasAttribute('data-reset')){if(!confirm('Alle Eingaben löschen und von vorn beginnen?'))return;S={a:Q.map(blank),r:Q.map(()=>null),f:S.f};save();render();return}
   const c=b.closest('.gcard');if(!c)return;const i=+c.dataset.i,a=S.a[i];
   if(b.dataset.d!=null){if(S.r[i]!=null)S.r[i]=null;const di=+b.dataset.d;a.d[di]=a.d[di]===b.dataset.v?'':b.dataset.v;save();redraw(i);return}
-  if(b.hasAttribute('data-chk')){S.r[i]=grade(Q[i],a);save();redraw(i);return}
+  if(b.hasAttribute('data-chk')){S.r[i]=grade(Q[i],a);if(S.f[i]==null)S.f[i]=S.r[i];save();redraw(i);return}
   if(b.hasAttribute('data-again')){S.a[i]=blank(Q[i]);S.r[i]=null;save();redraw(i)}});
  window.cmPreviewSolutions=on=>{SOL=!!on;render()};
  render();

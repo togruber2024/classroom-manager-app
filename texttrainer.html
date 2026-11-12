@@ -47,7 +47,7 @@ table{border-collapse:collapse;width:100%}td,th{padding:7px 8px;border-bottom:1p
 .empty{text-align:center;padding:40px 20px}
 @media (max-width:700px){.text{font-size:1.15rem}}
 </style></head><body><div class="wrap" id="app"></div><input type="file" id="file" hidden>
-<script src="unit-pdf.js"></script><script>
+<script src="unit-pdf.js"></script><script src="qr-code.js"></script><script src="abgabe.js"></script><script>
 'use strict';
 const $=s=>document.querySelector(s),app=$('#app');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -57,12 +57,15 @@ const beep=()=>{};/* keine Töne: im Klassenraum mit 30 iPads störend */
 const ls={get:k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 let T=null,ST=null,tab='pp',cur=0;
 const key=()=>'cm-texttrainer-'+(T?.title||'');
-const save=()=>ls.set(key(),ST);
+const save=()=>{ls.set(key(),ST);try{AB?.update()}catch{}};
 /* ---------- Laden: Link (#z1.… / #j1.…) oder Datei ---------- */
 const fromB64=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
 async function fromHash(h){const m=/^#?(z1|j1)\.(.+)$/.exec(h||'');if(!m)return null;const u=fromB64(m[2]);const bytes=m[1]==='z1'?new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()):u;return JSON.parse(new TextDecoder().decode(bytes))}
 function valid(t){return t&&t.type==='classroom-text-trainer'&&Array.isArray(t.s)&&t.s.length}
-function start(t){T=t;ST=ls.get(key())||{pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};ls.set('cm-texttrainer-last',t);render()}
+let AB=null;
+/* 11.45: Abgabe-QR – gezählt: fertige Sätze (mit Selbsteinschätzung) und davon ohne Hilfe; Klassenliste kommt mit dem Link (t.cm) */
+function ttScore(){const N=T.s.length,X=ST.sent||{};let fe=0,oh=0;for(let i=0;i<N;i++){const x=X[i];if(x&&x.r!=null){fe++;if(!x.h)oh++}}return {s:{fe:[fe,N],oh:[oh,N]},x:{}}}
+function start(t){T=t;ST=ls.get(key())||{pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};ls.set('cm-texttrainer-last',t);if(t.cm&&t.cm.u&&window.cmAbgabe&&!AB)AB=cmAbgabe({u:t.cm.u,title:t.title,cls:t.cm.c,names:t.cm.n,score:ttScore});render()}
 async function init(){let t=null;try{t=await fromHash(location.hash)}catch(e){console.warn(e)}
  if(!valid(t))t=ls.get('cm-texttrainer-last');if(valid(t))return start(t);
  app.innerHTML='<div class="card empty"><h1>Übersetzungs-Trainer</h1><p class="muted">Hier ist noch kein Text geladen. Öffne den Link deiner Lehrkraft oder lade die Datei, die sie dir geschickt hat.</p><button class="pri" data-load>Datei laden …</button></div>';$('[data-load]').onclick=()=>$('#file').click()}

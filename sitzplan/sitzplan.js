@@ -4360,7 +4360,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
 .ein-acts button{height:40px;border-radius:10px;border:1px solid #c9d5e6;background:#fff;color:#2f5f9b;font:inherit;font-size:.9rem;font-weight:650;padding:0 12px;cursor:pointer}
 .ein-acts button.look{background:#fff4e2;border-color:#f2c98a;color:#9a5400}
 .ein-acts button.pri{background:#2f5f9b;border-color:#2f5f9b;color:#fff}
-.ein-acts button.ghost{border-style:dashed;color:#66758a}.ein-acts button.air,button.air[data-do]{border-color:#9fb6d6;color:#2f5f9b;background:#f3f7fc}
+.ein-acts button.abg{border-color:#e8b46a;background:#fff8ec;color:#2f5f9b}.ein-acts button.ghost{border-style:dashed;color:#66758a}.ein-acts button.air,button.air[data-do]{border-color:#9fb6d6;color:#2f5f9b;background:#f3f7fc}
 .ein-acts button:hover{filter:brightness(.97)}
 .ein-empty{color:#66758a;padding:10px 2px}
 #einExp,#einQr{border:0;border-radius:14px;padding:0;max-width:640px;width:calc(100% - 32px);box-shadow:0 20px 60px #0004}
@@ -4458,14 +4458,16 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   h.onkeydown=e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();setW((ui.w||W0)+(e.key==='ArrowRight'?36:-36));saveUi()}};
   wire();prefetchAir();try{top()?.classroomPins?.render?.()}catch{}}
  const tile=(ic,cls,t,s,acts,off)=>'<div class="ein-tile '+cls+(off?' off':'')+'"><i>'+ic+'</i><b>'+t+'</b><small>'+s+'</small>'+(acts?'<div class="ein-acts">'+acts+'</div>':'')+'</div>';
+ /* 11.45: Abgaben aus Üben, Übungen und Übersetzungs-Trainer scannen */
+ const AB=u=>btn('scan',u,'Abgaben scannen','abg')+btn('ov',u,'Übersicht','abg');
  const btn=(d,k,t,c)=>'<button type="button" '+(c?'class="'+c+'" ':'')+'data-do="'+d+'" data-k="'+esc(k)+'">'+(c==='look'?'👁 ':'')+t+'</button>';
  function lessonTiles(l){const k=l.k,tt=l.tt[0];
   return '<div class="ein-tiles">'
-   +tile('V','','Vokabeln',l.nV?l.nV+' neue Vokabeln':'kein Vokabular geladen',l.nV?btn('lv',k,'Ansehen','look')+btn('uv',k,'Üben (QR)','pri')+btn('voc',k,'Als Test …','ghost'):'',!l.nV)
-   +tile('G','','Grammatik',l.gr.length?l.gr.length+(l.gr.length>1?' Themen':' Thema')+' · Formen bilden und bestimmen':'für diese Lektion keine',l.gr.length?btn('lg',k,'Ansehen','look')+btn('ug',k,'Üben (QR)','pri')+btn('gr',k,'Als Test …','ghost'):'',!l.gr.length)
-   +tile('Ü','t3','Übersetzungs-Trainer',tt?tt.n+' Sätze'+(tt.hunt?' · '+esc(tt.hunt):'')+(l.tt.length>1?' · '+l.tt.length+' Texte':''):'noch kein Text – Datei laden',tt?btn('pt',k,'Ansehen','look')+btn('tt',k,'Link senden …','pri'):btn('load','','Datei laden …'),!tt)
-   +tile('W','','Wiederholung',l.nW?l.nW+' alte Vokabeln aus dem Lektionstext':'keine Liste geladen',l.nW?btn('lw',k,'Ansehen','look')+btn('uw',k,'Üben (QR)','pri')+btn('wh',k,'Als Test …','ghost'):'',!l.nW)
-   +(l.ueb?tile('Ü','t2','Übungen','interaktiv, 3 Stufen',btn('pu',k,'Ansehen','look')+btn('ueb',k,'Start-QR','pri')):'')+'</div>'+lpTiles(l)}
+   +tile('V','','Vokabeln',l.nV?l.nV+' neue Vokabeln':'kein Vokabular geladen',l.nV?btn('lv',k,'Ansehen','look')+btn('uv',k,'Üben (QR)','pri')+AB('pv-'+k)+btn('voc',k,'Als Test …','ghost'):'',!l.nV)
+   +tile('G','','Grammatik',l.gr.length?l.gr.length+(l.gr.length>1?' Themen':' Thema')+' · Formen bilden und bestimmen':'für diese Lektion keine',l.gr.length?btn('lg',k,'Ansehen','look')+btn('ug',k,'Üben (QR)','pri')+AB('pg-'+k)+btn('gr',k,'Als Test …','ghost'):'',!l.gr.length)
+   +tile('Ü','t3','Übersetzungs-Trainer',tt?tt.n+' Sätze'+(tt.hunt?' · '+esc(tt.hunt):'')+(l.tt.length>1?' · '+l.tt.length+' Texte':''):'noch kein Text – Datei laden',tt?btn('pt',k,'Ansehen','look')+btn('tt',k,'Link senden …','pri')+AB('pt-'+k):btn('load','','Datei laden …'),!tt)
+   +tile('W','','Wiederholung',l.nW?l.nW+' alte Vokabeln aus dem Lektionstext':'keine Liste geladen',l.nW?btn('lw',k,'Ansehen','look')+btn('uw',k,'Üben (QR)','pri')+AB('pw-'+k)+btn('wh',k,'Als Test …','ghost'):'',!l.nW)
+   +(l.ueb?tile('Ü','t2','Übungen','interaktiv, 3 Stufen',btn('pu',k,'Ansehen','look')+btn('ueb',k,'Start-QR','pri')+AB('px')):'')+'</div>'+lpTiles(l)}
  /* 11.38: Lernpakete (iPad) zur Lektion – Grundlagen, je ein Start-QR und eine Übersicht */
  function lpTiles(l){const us=data.units.filter(u=>u.subject==='latein'&&String(u.lesson)===String(l.k));if(!us.length)return '';const bk=us.some(u=>u.book);
   return '<h3 class="lp-h">Lernpakete fürs iPad'+GLP+'</h3><p class="ein-sub" style="margin:0 0 8px">Wischen, ziehen, antippen – höchstens zwei Versuche, Abgabe per QR. '+(bk?'Übungen aus dem Buch sind geladen ✓ '+btn('air',us.find(u=>u.book).u,'Material per AirDrop','air'):'Ohne Buchdatei mit eigenen Beispielen · '+btn('load','','Buchdatei laden …'))+'</p><div class="ein-tiles">'+us.map((u,i)=>tile(String.fromCharCode(65+i),'t2',esc(u.title.replace(/^L\d+ · /,'')),'<span class="gl-meta"><span>'+u.gl.n+' Stationen</span><span>ca. '+u.gl.min+' Min.</span></span>'+esc(u.sub.replace(/^Latein · Lektion \d+ · /,''))+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':''):''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Scannen')+btn('ov',u.u,'Übersicht')+btn('kol',u.u,'Für Kollegen …','ghost'))).join('')+'</div>'}
@@ -4521,7 +4523,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   let dlg=document.getElementById('einQr');if(!dlg){dlg=document.createElement('dialog');dlg.id='einQr';document.body.append(dlg)}
   let svg='';if(r.qr){try{svg=b.qr(r.url,{ecc:'L',boost:false,dark:'#243247',border:3})}catch{svg=''}}
   dlg.classList.remove('big');
-  dlg.innerHTML='<form method="dialog"><h2>'+esc(r.title)+' üben · '+esc(cx.short)+'</h2><p class="muted">'+(r.n)+' '+(kind==='g'?'Aufgaben':'Wörter')+' · sofortige Rückmeldung, falsche kommen wieder · ohne Note, nichts wird abgegeben.</p>'
+  dlg.innerHTML='<form method="dialog"><h2>'+esc(r.title)+' üben · '+esc(cx.short)+'</h2><p class="muted">'+(r.n)+' '+(kind==='g'?'Aufgaben':'Wörter')+' · sofortige Rückmeldung, falsche kommen wieder · Abgabe-QR oben rechts (gewertet: erster Versuch).</p>'
    +(svg?'<div class="qr">'+svg+'</div>':'<div class="note">Für einen QR-Code ist das zu viel. Schicke den Link per Jamf Teacher („Webseite öffnen“) oder AirDrop.</div>')
    +'<code>'+esc(r.url.split('#')[0])+'</code>'
    +'<div class="acts">'+(svg?'<button type="button" data-big>Groß zeigen</button>':'')+'<button type="button" data-copy>Link kopieren</button><button type="button" data-look>👁 Ansehen</button><button type="button" class="pri" data-x>Schließen</button></div></form>';

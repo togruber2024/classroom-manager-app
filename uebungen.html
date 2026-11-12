@@ -54,6 +54,7 @@ svg.lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z
 .legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin:4px 0 0;font-size:.9rem;color:var(--mut)}.legend span{display:inline-flex;align-items:center;gap:6px}.legend i{width:12px;height:12px;border-radius:3px}
 @media (max-width:700px){.cols{grid-template-columns:1fr}.fun,.choices{grid-template-columns:1fr}.sent{font-size:1.2rem}}
 </style></head><body><div class="wrap" id="app"></div>
+<script src="qr-code.js"></script><script src="abgabe.js"></script>
 <script>
 'use strict';
 /* ---------- Daten (eigene Übungssätze) ---------- */
@@ -102,6 +103,10 @@ const pick=a=>a[Math.random()*a.length|0];
 const clean=s=>s.replace(/[.,;:?!]/g,'');
 const beep=()=>{};/* keine Töne: im Klassenraum mit 30 iPads störend */
 const KEY='cm-uebungen-v1';const best=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}};
+/* 11.45: Abgabe-QR – je Übung zählt das Ergebnis des ersten Durchgangs; die Klassenliste kommt mit dem Link (#k1.…) */
+const FKEY='cm-uebungen-first-v1';const firsts=()=>{try{return JSON.parse(localStorage.getItem(FKEY)||'{}')||{}}catch{return {}}};
+let AB=null;(()=>{const h=location.hash;if(!/^#k1\./.test(h))return;try{let x=h.slice(4).replace(/-/g,'+').replace(/_/g,'/');while(x.length%4)x+='=';const b=atob(x),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);const j=JSON.parse(new TextDecoder().decode(u));localStorage.setItem('cm-uebungen-who',JSON.stringify(j))}catch{}})();
+setTimeout(()=>{let j=null;try{j=JSON.parse(localStorage.getItem('cm-uebungen-who')||'null')}catch{}if(!j||!j.u||!window.cmAbgabe)return;AB=cmAbgabe({u:j.u,title:'Latein-Übungen',cls:j.c,names:j.n,score:()=>{const f=firsts(),s={};for(const [k,v] of Object.entries(f))s[k]=v;return {s,x:{}}}})},0);
 const saveBest=(id,pts,tot)=>{try{const b=best();if(!b[id]||pts/tot>b[id][0]/b[id][1])b[id]=[pts,tot];localStorage.setItem(KEY,JSON.stringify(b))}catch{}};
 /* ---------- Startseite ---------- */
 const EXS=[
@@ -118,7 +123,7 @@ function home(){const b=best();const ex=e=>{const r=b[e.id];return '<button clas
   +'<div class="topic"><h2>Perfekt und Plusquamperfekt Passiv<small>PPP + Form von esse – KöNiGs-Regel</small></h2>'+EXS.filter(e=>e.topic==='p').map(ex).join('')+'</div></div>';
  app.querySelectorAll('[data-ex]').forEach(x=>x.onclick=()=>EXS.find(e=>e.id===x.dataset.ex).run());scrollTo(0,0)}
 function frame(e,inner){app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+esc(e.t)+'</b></div>'+inner;app.querySelector('[data-home]').onclick=home;scrollTo(0,0)}
-function result(e,pts,tot,again){saveBest(e.id,pts,tot);const r=pts/tot;frame(e,'<div class="card res"><div class="big">'+pts+' / '+tot+'</div><p style="font-size:1.2rem">'+(r>=.9?'Hervorragend!':r>=.7?'Gut gemacht!':r>=.5?'Schon ordentlich – noch einmal üben?':'Noch einmal versuchen – es wird!')+'</p><div class="row" style="justify-content:center"><button class="sec" data-home2>Zur Übersicht</button><button class="pri" data-again>Noch einmal</button></div></div>');
+function result(e,pts,tot,again){saveBest(e.id,pts,tot);try{const f=firsts();if(!f[e.id]){f[e.id]=[pts,tot];localStorage.setItem(FKEY,JSON.stringify(f))}}catch{}AB?.update();const r=pts/tot;frame(e,'<div class="card res"><div class="big">'+pts+' / '+tot+'</div><p style="font-size:1.2rem">'+(r>=.9?'Hervorragend!':r>=.7?'Gut gemacht!':r>=.5?'Schon ordentlich – noch einmal üben?':'Noch einmal versuchen – es wird!')+'</p><div class="row" style="justify-content:center"><button class="sec" data-home2>Zur Übersicht</button><button class="pri" data-again>Noch einmal</button></div></div>');
  app.querySelector('[data-home2]').onclick=home;app.querySelector('[data-again]').onclick=again;beep(r>=.5)}
 /* Ablauf: Aufgabenreihe mit Fortschritt; Fehler kommen am Ende noch einmal */
 function series(e,items,render,opts={}){let i=0,pts=0;const tot=items.length,queue=[...items],wrong=[];
