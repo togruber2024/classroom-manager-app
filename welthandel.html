@@ -90,7 +90,7 @@ body.has-who .wrap{padding-top:58px}
 details summary{cursor:pointer;color:var(--blue);font-weight:600;min-height:40px;display:flex;align-items:center}
 @media (max-width:820px){.cols.c5{grid-template-columns:repeat(2,1fr)}.cols.c3{grid-template-columns:1fr}.hb2{grid-template-columns:120px 1fr 50px}.hb2 em{grid-column:1/-1}.seg5{grid-template-columns:repeat(2,1fr)}}
 /* 11.33: nur AFB I – wischen, ziehen, antippen; höchstens ca. 20 Minuten */
-.step>span:nth-child(2){flex:1;min-width:0}.step b{overflow-wrap:anywhere;hyphens:auto;-webkit-hyphens:auto}.step .st{white-space:nowrap}.step .min{display:inline-block;margin-left:6px;font-size:.75rem;color:var(--mut);font-weight:600}
+.step>span:nth-child(2){flex:1;min-width:0}.step b{overflow-wrap:anywhere;hyphens:manual;-webkit-hyphens:manual}.step .st{white-space:nowrap}.step .min{display:inline-block;margin-left:6px;font-size:.75rem;color:var(--mut);font-weight:600}
 [data-dg]{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .ghost{position:fixed;z-index:90;pointer-events:none;margin:0;box-shadow:0 10px 24px #1d2d4a40;transform:rotate(-3deg);border-color:var(--blue)!important}
 .col.hov,.gapb.hov{border-color:var(--blue);background:#e4eefb}
@@ -127,7 +127,7 @@ const KEY='cm-welthandel-v2';let ST={};try{ST=JSON.parse(localStorage.getItem(KE
 if(!ST){ST={};try{const o=JSON.parse(localStorage.getItem('cm-welthandel-v1')||'{}')||{};for(const k of ['me','cls','roster','dv','name'])if(o[k]!=null)ST[k]=o[k]}catch{}}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ST))}catch{}try{updWho()}catch{}};
 let CURK=null;function goStep(k){const x=STEPS.find(y=>y[0]===k);if(!x)return home();CURK=k;x[4]();scrollTo(0,0)}
-function frame(title,inner){const i=CURK?STEPS.findIndex(x=>x[0]===CURK):-1,nx=i>=0?STEPS[i+1]:null,done=CURK&&ST[CURK];
+function frame(title,inner){if(CURK){const x=STEPS.find(y=>y[0]===CURK);if(x)title=x[1]}const i=CURK?STEPS.findIndex(x=>x[0]===CURK):-1,nx=i>=0?STEPS[i+1]:null,done=CURK&&ST[CURK];
  app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+(i>=0?(i+1)+' · ':'')+esc(title)+'</b></div>'+inner+(i>=0?'<div class="row nextrow"><button class="sec" data-home2>‹ Übersicht</button><div class="sp"></div>'+(nx?'<button class="'+(done?'pri':'sec')+'" data-nextst>Weiter: '+esc(nx[1])+' ›</button>':'')+'</div>':'');
  app.querySelector('[data-home]').onclick=home;const h2=app.querySelector('[data-home2]');if(h2)h2.onclick=home;const n=app.querySelector('[data-nextst]');if(n)n.onclick=()=>goStep(nx[0])}
 const fb=(ok,txt)=>'<div class="fb '+(ok?'ok':'no')+'">'+txt+'</div>';
@@ -391,7 +391,8 @@ const runEnd=()=>quiz('end',{title:'Abschluss-Check',qs:CHK,before:'<div class="
  wire:()=>{const nm=$('#nm');if(nm)nm.oninput=e=>{ST.name=e.target.value;save()};const p=app.querySelector('[data-pdf]');if(p)p.onclick=()=>savePdf(p);const q=app.querySelector('[data-qr]');if(q)q.onclick=showQr}});
 
 /* ---------- Startseite ---------- */
-const STEPS=[['ein','Die Reise eines Smartphones','Schritte der Lieferkette ordnen',1,runEin],['beg','Fachbegriffe','Begriff und Erklärung verbinden',2,runBeg],['wis','Was wird gehandelt?','Waren in Gruppen ziehen',2,runWis],['dia','Diagramm M1','Aussagen prüfen: wischen',2,runDia],['exp','Exportländer','Top 10 den Regionen zuordnen',1.5,runExp],['str','Handelsströme','Im Diagramm antippen',1.5,runStr],['bue','Wirtschafts­bündnisse','Länder ihrem Bündnis zuordnen',2,runBue],['pol','WTO und Handelspolitik','Lückentext mit Wort-Chips',2,runPol],['txt','Textarbeit: Interview','Markieren und Belege finden',3,runTxt],['end','Abschluss-Check','6 Fragen · Urkunde · Unterlagen',2,runEnd]];
+/* 11.36: Stationstitel nennen immer den konkreten Inhalt (wie die Materialtitel im Buch) – Material und Aufgabenform stehen darunter */
+const STEPS=[['ein','Reise eines Smartphones','Lieferkette: Schritte ordnen',1,runEin],['beg','Export, Import, Lieferkette','Begriff und Erklärung verbinden',2,runBeg],['wis','Was gehandelt wird','Waren und Dienstleistungen in Gruppen ziehen',2,runWis],['dia','Handel wächst schneller als Produktion','Diagramm M1 · Aussagen wischen',2,runDia],['exp','Die größten Exportländer','Länder den Regionen zuordnen',1.5,runExp],['str','Ungleiche Handelsströme','Handelsvolumen · im Diagramm antippen',1.5,runStr],['bue','Wirtschafts­bündnisse der Welt','Länder ihrem Bündnis zuordnen',2,runBue],['pol','WTO, Zoll und Freihandel','Lückentext mit Wort-Chips',2,runPol],['txt','Chancen und Risiken','Interview M3 · markieren und Belege finden',3,runTxt],['end','Was ich jetzt weiß','6 Fragen · Urkunde · Unterlagen',2,runEnd]];
 const TOTMIN=Math.round(STEPS.reduce((a,s)=>a+s[3],0));
 function home(){CURK=null;const st=k=>ST[k]?'<span class="st done">'+(ST[k].p!=null?ST[k].p+'/'+ST[k].t:'✓')+'</span>':'<span class="st">offen</span>';
  const startK=(STEPS.find(s=>!ST[s[0]])||[])[0];
