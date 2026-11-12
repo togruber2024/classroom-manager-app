@@ -100,7 +100,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const pick=a=>a[Math.random()*a.length|0];
 const clean=s=>s.replace(/[.,;:?!]/g,'');
-let ac=null;const beep=ok=>{try{ac??=new (window.AudioContext||window.webkitAudioContext)();const g=ac.createGain(),o=ac.createOscillator();o.frequency.value=ok?880:240;g.gain.value=.05;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.12)}catch{}};
+const beep=()=>{};/* keine Töne: im Klassenraum mit 30 iPads störend */
 const KEY='cm-uebungen-v1';const best=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}};
 const saveBest=(id,pts,tot)=>{try{const b=best();if(!b[id]||pts/tot>b[id][0]/b[id][1])b[id]=[pts,tot];localStorage.setItem(KEY,JSON.stringify(b))}catch{}};
 /* ---------- Startseite ---------- */

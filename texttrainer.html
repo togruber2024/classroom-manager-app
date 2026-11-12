@@ -53,7 +53,7 @@ const $=s=>document.querySelector(s),app=$('#app');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const clean=w=>w.replace(/[.,:;!?„“"]/g,'');
-let ac=null;const beep=ok=>{try{ac??=new (window.AudioContext||window.webkitAudioContext)();const g=ac.createGain(),o=ac.createOscillator();o.frequency.value=ok?880:240;g.gain.value=.05;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.12)}catch{}};
+const beep=()=>{};/* keine Töne: im Klassenraum mit 30 iPads störend */
 const ls={get:k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 let T=null,ST=null,tab='pp',cur=0;
 const key=()=>'cm-texttrainer-'+(T?.title||'');
