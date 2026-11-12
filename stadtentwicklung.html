@@ -124,7 +124,7 @@ let BOOK=null;const md=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');const BK=
 const IDB=(mode,fn)=>new Promise((res,rej)=>{try{const r=indexedDB.open('cm-lerneinheiten',1);r.onupgradeneeded=()=>r.result.createObjectStore('u');r.onerror=()=>rej(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('u',mode),q=fn(tx.objectStore('u'));tx.oncomplete=()=>{res(q&&q.result);db.close()};tx.onerror=()=>rej(tx.error)}}catch(e){rej(e)}});
 const bookOk=u=>!!(u&&u.type==='classroom-lerneinheit'&&u.id==='bs-stadt'&&Array.isArray(u.maps)&&u.maps.length===4);
 async function bookInit(){try{const u=await IDB('readonly',st=>st.get('bs-stadt'));if(bookOk(u)){BOOK=u;if(!app.querySelector('.top'))home()}}catch{}}
-function bookPick(){const i=document.createElement('input');i.type='file';i.accept='.cmeinheit,.json,application/json';i.style.display='none';document.body.append(i);
+function bookPick(){const i=document.createElement('input');i.type='file';i.style.display='none';document.body.append(i);
  i.onchange=async()=>{const f=i.files[0];i.remove();if(!f)return;try{const u=JSON.parse(await f.text());if(!bookOk(u))throw 0;BOOK=u;try{await IDB('readwrite',st=>st.put(u,'bs-stadt'))}catch{}home()}catch{alert('Diese Datei passt nicht zu dieser Lerneinheit.')}};i.click()}
 async function bookDrop(){if(!confirm('Schulbuch-Karten von diesem Gerät entfernen? (Deine Ergebnisse bleiben.)'))return;BOOK=null;try{await IDB('readwrite',st=>st.delete('bs-stadt'))}catch{}home()}
 /* Kartenstapel: alle vier Karten übereinander, Überblenden per Zeit */

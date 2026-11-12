@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 12.11.2026 · Version 11.13
+Stand: 12.11.2026 · Version 11.14
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1392,3 +1392,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.11: Latein – Pontes-Fenster neu: Übersicht mit „Meine iPad-Tests“ und Lektionswahl, danach fünf Bereiche je Lektion
 11.12: Lerneinheit Erdkunde „Städte im Wandel – Braunschweig“ (stadtentwicklung.html, eigene Karten und Texte)
 11.13: Städte im Wandel – optionale Schulbuch-Karten per privater Datei (.cmeinheit) mit fünf neuen Stationen.
+11.14: iPad-Dateiauswahl: .cmeinheit- und .cmtext-Dateien sind nicht mehr ausgegraut.
