@@ -142,7 +142,7 @@ let BOOK=null;const UID='logistik';
 const IDB=(mode,fn)=>new Promise((res,rej)=>{try{const r=indexedDB.open('cm-lerneinheiten',1);r.onupgradeneeded=()=>r.result.createObjectStore('u');r.onerror=()=>rej(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('u',mode),q=fn(tx.objectStore('u'));tx.oncomplete=()=>{res(q&&q.result);db.close()};tx.onerror=()=>rej(tx.error)}}catch(e){rej(e)}});
 const bookOk=u=>!!(u&&u.type==='classroom-lerneinheit'&&u.id===UID);
 const IM={};function bookPrep(){if(!BOOK||!BOOK.img||!window.cmPdf)return Promise.resolve();return Promise.all(Object.entries(BOOK.img).map(([k,v])=>cmPdf.prep(v.src).then(r=>{IM[k]=r})))}
-async function bookInit(){try{const u=await IDB('readonly',st=>st.get(UID));if(bookOk(u)){BOOK=u;bookPrep();if(!CURK&&!app.querySelector('.names'))home()}}catch{}}
+async function bookInit(){try{const u=window.CM_EMBED_BOOK||await IDB('readonly',st=>st.get(UID));if(bookOk(u)){BOOK=u;bookPrep();if(!CURK&&!app.querySelector('.names'))home()}}catch{}}
 function bookPick(){const i=document.createElement('input');i.type='file';i.style.display='none';document.body.append(i);
  i.onchange=async()=>{const f=i.files[0];i.remove();if(!f)return;try{const u=JSON.parse(await f.text());if(!bookOk(u))throw 0;BOOK=u;bookPrep();try{await IDB('readwrite',st=>st.put(u,UID))}catch{}home()}catch{alert('Diese Datei passt nicht zu dieser Lerneinheit.')}};i.click()}
 async function bookDrop(){if(!confirm('Schulbuch-Material von diesem Gerät entfernen? (Deine Ergebnisse bleiben.)'))return;BOOK=null;try{await IDB('readwrite',st=>st.delete(UID))}catch{}home()}

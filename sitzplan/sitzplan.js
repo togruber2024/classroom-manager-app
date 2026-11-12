@@ -4468,10 +4468,10 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    +(l.ueb?tile('Ü','t2','Übungen','interaktiv, 3 Stufen',btn('pu',k,'Ansehen','look')+btn('ueb',k,'Start-QR','pri')):'')+'</div>'+lpTiles(l)}
  /* 11.38: Lernpakete (iPad) zur Lektion – Grundlagen, je ein Start-QR und eine Übersicht */
  function lpTiles(l){const us=data.units.filter(u=>u.subject==='latein'&&String(u.lesson)===String(l.k));if(!us.length)return '';const bk=us.some(u=>u.book);
-  return '<h3 class="lp-h">Lernpakete fürs iPad'+GLP+'</h3><p class="ein-sub" style="margin:0 0 8px">Wischen, ziehen, antippen – höchstens zwei Versuche, Abgabe per QR. '+(bk?'Übungen aus dem Buch sind geladen ✓ '+btn('air',us.find(u=>u.book).u,'Material per AirDrop','air'):'Ohne Buchdatei mit eigenen Beispielen · '+btn('load','','Buchdatei laden …'))+'</p><div class="ein-tiles">'+us.map((u,i)=>tile(String.fromCharCode(65+i),'t2',esc(u.title.replace(/^L\d+ · /,'')),'<span class="gl-meta"><span>'+u.gl.n+' Stationen</span><span>ca. '+u.gl.min+' Min.</span></span>'+esc(u.sub.replace(/^Latein · Lektion \d+ · /,''))+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':''):''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Scannen')+btn('ov',u.u,'Übersicht'))).join('')+'</div>'}
+  return '<h3 class="lp-h">Lernpakete fürs iPad'+GLP+'</h3><p class="ein-sub" style="margin:0 0 8px">Wischen, ziehen, antippen – höchstens zwei Versuche, Abgabe per QR. '+(bk?'Übungen aus dem Buch sind geladen ✓ '+btn('air',us.find(u=>u.book).u,'Material per AirDrop','air'):'Ohne Buchdatei mit eigenen Beispielen · '+btn('load','','Buchdatei laden …'))+'</p><div class="ein-tiles">'+us.map((u,i)=>tile(String.fromCharCode(65+i),'t2',esc(u.title.replace(/^L\d+ · /,'')),'<span class="gl-meta"><span>'+u.gl.n+' Stationen</span><span>ca. '+u.gl.min+' Min.</span></span>'+esc(u.sub.replace(/^Latein · Lektion \d+ · /,''))+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':''):''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Scannen')+btn('ov',u.u,'Übersicht')+btn('kol',u.u,'Für Kollegen …','ghost'))).join('')+'</div>'}
  function unitTiles(u){return '<div class="ein-tiles">'
    /* 11.37: „Grundlagen“-Einheiten (AFB I) mit Kurzinfo und dem Hinweis auf die Vertiefung in GoodNotes */
-   +tile('L','t2',u.gl?'Grundlagen erarbeiten (iPad)':'Lerneinheit (iPad)',(u.gl?'<span class="gl-meta"><span>AFB I</span><span>'+u.gl.n+' Stationen</span><span>ca. '+u.gl.min+' Min.</span><span>wischen · ziehen · antippen</span></span>':'')+(u.book?'mit Schulbuchmaterial ✓':'ohne Schulbuchmaterial')+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':'')+' gescannt':''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Abgaben scannen')+btn('ov',u.u,'Übersicht')+(u.book?btn('air',u.u,'Material per AirDrop','air'):''))
+   +tile('L','t2',u.gl?'Grundlagen erarbeiten (iPad)':'Lerneinheit (iPad)',(u.gl?'<span class="gl-meta"><span>AFB I</span><span>'+u.gl.n+' Stationen</span><span>ca. '+u.gl.min+' Min.</span><span>wischen · ziehen · antippen</span></span>':'')+(u.book?'mit Schulbuchmaterial ✓':'ohne Schulbuchmaterial')+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':'')+' gescannt':''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Abgaben scannen')+btn('ov',u.u,'Übersicht')+(u.book?btn('air',u.u,'Material per AirDrop','air'):'')+btn('kol',u.u,'Für Kollegen …','ghost'))
    +(u.gl?'<div class="ein-tile gl-next"><i>V</i><b>Vertiefen (GoodNotes)</b><small>AFB II/III mit dem Stift – Grundlage ist die PDF „Für meine Unterlagen“, die jeder Schüler am Ende speichert.</small></div>':'')+tile('B','t3','Schulbuchmaterial',u.book?'auf diesem Gerät geladen ✓':'noch nicht geladen (.cmeinheit)',btn('load','',u.book?'Neu laden …':'Datei laden …'))+'</div>'}
  const wire=()=>view.querySelectorAll('[data-do]').forEach(b=>b.onclick=()=>run(b.dataset.do,b.dataset.k,b));
  /* Aktionen */
@@ -4485,6 +4485,21 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   const W=top()||window,N=navigator;try{if(N.canShare&&N.canShare({files:[f]})){N.share({files:[f],title:f.name}).catch(()=>{});return}}catch{}
   /* am Mac ohne Teilen: Datei speichern, dann z. B. per AirDrop im Finder senden */
   const a=W.document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;W.document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+ /* 11.44: „Für Kollegen …“ – eine einzige HTML-Datei mit der Lerneinheit (und dem Schulbuchmaterial, falls geladen).
+    Sie läuft ohne die App in jedem Browser; unten links zeigt „Lösungen“ alle Lösungen. */
+ const ascii=t=>String(t).replace(/[äÄöÖüÜß]/g,c=>({'ä':'ae','Ä':'Ae','ö':'oe','Ö':'Oe','ü':'ue','Ü':'Ue','ß':'ss'}[c])).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w .,-]+/g,'').replace(/\s+/g,' ').trim();
+ async function colleague(k,el){const b=B(),u=data.units.find(x=>x.u===k);if(!u)return;const t0=el?.textContent;if(el){el.disabled=true;el.textContent='Wird erstellt …'}
+  try{const [file,q]=u.file.split('?'),uq=new URLSearchParams(q||'').get('u');let html=await (await fetch('../'+file,{cache:'no-store'})).text();
+   for(const m of [...html.matchAll(/<script src="([^"]+)"><\/script>/g)]){const js=await (await fetch('../'+m[1].split('?')[0],{cache:'no-store'})).text();html=html.replace(m[0],()=>'<script>'+js.replace(/<\/script/gi,'<\\/script')+'</script>')}
+   let book=null;try{book=u.book&&b.bookFile?await b.bookFile(k):null}catch{}
+   const emb='<script>window.CM_EMBED_U='+JSON.stringify(uq||'')+';window.CM_EMBED_BOOK='+(book?book.text.replace(/</g,'\\u003c'):'null')+';</script>';
+   html=html.replace(/<script>/,emb+'<script>');
+   const tail='<script>(()=>{const d=document.createElement("div");d.style.cssText="position:fixed;left:12px;bottom:12px;z-index:99999;display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;border-radius:12px;background:#fff6e5;border:1px solid #f1d8a8;color:#7a4b00;font:600 13px -apple-system,Inter,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.12)";d.innerHTML="Ansicht für Kolleginnen und Kollegen <button type=button style=\\"height:34px;padding:0 12px;border-radius:9px;border:1px solid #d9c49a;background:#fff;font:inherit;cursor:pointer\\">Lösungen</button>";let on=false;d.querySelector("button").onclick=()=>{on=!on;try{cmPdf.solutions(on,pdfBlocks)}catch(e){alert(e.message)}};addEventListener("message",e=>{if(e.data&&e.data.type==="cm-sol-off")on=false});document.body.append(d);const w=document.getElementById("who");if(w)w.style.display="none"})();</script>';
+   html=html.replace(/<\/body>/i,()=>tail+'</body>');
+   const f=new File([html],ascii(u.title.replace(/^L\d+ · /,(uq||'').toUpperCase()+' '))+' - fuer Kollegen.html',{type:'text/html'});
+   const N=navigator;try{if(N.canShare&&N.canShare({files:[f]})){await N.share({files:[f],title:f.name});return}}catch(e){if(e&&e.name==='AbortError')return}
+   const W=top()||window,a=W.document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;W.document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+  catch(e){alert('Die Datei konnte nicht erstellt werden: '+(e&&e.message||e))}finally{if(el){el.disabled=false;el.textContent=t0}}}
  async function run(d,k,el){const b=B();if(!b)return;const l=data.lessons.find(x=>x.k===k),u=data.units.find(x=>x.u===k);
   if(d==='lv')return prev({title:'Vokabeln '+l.label,html:listHtml(b.list('main',k),'Lateinisch und Angaben – die Bedeutungen erscheinen mit „mit Lösungen“.'),solutions:true});
   if(d==='lw')return prev({title:'Wiederholung '+l.label,html:listHtml(b.list('wh',k)),solutions:true});
@@ -4494,6 +4509,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   if(d==='pl')return prev({title:u.title,url:u.file+(u.file.includes('?')?'&':'?')+'vorschau=1'});
   if(d==='load')return loadPkg();
   if(d==='air')return airdrop(k);
+  if(d==='kol')return colleague(k,el);
   if(d==='uv'||d==='uw'||d==='ug')return practice(d.slice(1),k,el);
   /* Dialoge des Noten-Managers: kurz zu „Noten“ wechseln, nach dem Schließen zurück */
   const T=top()?.document;const back0=[...(T?.querySelectorAll('[data-view][aria-selected="true"]')||[])][0];

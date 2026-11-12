@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 12.11.2026 · Version 11.43
+Stand: 12.11.2026 · Version 11.44
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1422,3 +1422,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.41: Anheften neu: Nadel auf jeder Noten-Seite neben dem Papierkorb (orange = angeheftet) und in der Kopfleiste neben „?“ mit kleinem Menü; alte Leiste entfernt.
 11.42: Vorschau mit Knopf „Lösungen“; „Material per AirDrop“ für Lerneinheiten; Anheften-Nadel am iPhone und im Safari-Stil der anderen Knöpfe; Hinweis, wenn „Aktuell“ nur in einer anderen Lerngruppe möglich ist.
 11.43: Unterricht nur mit Inhalten der gewählten Lerngruppe; Nadel neben „Aktuelle Einheit“; Materialsymbole in den Stationen; am iPhone wieder ohne Nadel.
+11.44: Schulbuchmaterial optional im Backup; „Für Kollegen …“ erzeugt eine eigenständige HTML-Datei einer Lerneinheit.

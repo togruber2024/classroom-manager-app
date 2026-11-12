@@ -136,7 +136,7 @@ const $=s=>document.querySelector(s),app=$('#app');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const md=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
 const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
-const UQ=new URLSearchParams(location.search).get('u')||'l16a',P=(window.LP||{})[UQ];
+const UQ=new URLSearchParams(location.search).get('u')||window.CM_EMBED_U||'l16a',P=(window.LP||{})[UQ];
 const KEY='cm-lp-'+UQ;let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch{}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ST))}catch{}try{updWho()}catch{}};
 let CURK=null;function goStep(k){const x=STEPS.find(y=>y[0]===k);if(!x)return home();CURK=k;x[4]();scrollTo(0,0)}
@@ -151,7 +151,7 @@ const keep=(k,f)=>{const top=scrollY;f();if(CURK===k)scrollTo(0,top)};
 let BOOK=null;const UID=UQ,BOOKID=P?P.bookId:'';
 const IDB=(mode,fn)=>new Promise((res,rej)=>{try{const r=indexedDB.open('cm-lerneinheiten',1);r.onupgradeneeded=()=>r.result.createObjectStore('u');r.onerror=()=>rej(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('u',mode),q=fn(tx.objectStore('u'));tx.oncomplete=()=>{res(q&&q.result);db.close()};tx.onerror=()=>rej(tx.error)}}catch(e){rej(e)}});
 const bookOk=u=>!!(u&&u.type==='classroom-lerneinheit'&&u.id===BOOKID);
-async function bookInit(){try{const u=await IDB('readonly',st=>st.get(BOOKID));if(bookOk(u)){BOOK=u;if(!CURK&&!app.querySelector('.names'))home()}}catch{}}
+async function bookInit(){try{const u=window.CM_EMBED_BOOK||await IDB('readonly',st=>st.get(BOOKID));if(bookOk(u)){BOOK=u;if(!CURK&&!app.querySelector('.names'))home()}}catch{}}
 function bookPick(){const i=document.createElement('input');i.type='file';i.style.display='none';document.body.append(i);
  i.onchange=async()=>{const f=i.files[0];i.remove();if(!f)return;try{const u=JSON.parse(await f.text());if(!bookOk(u))throw 0;BOOK=u;try{await IDB('readwrite',st=>st.put(u,BOOKID))}catch{}home()}catch{alert('Diese Datei passt nicht zu diesem Lernpaket.')}};i.click()}
 async function bookDrop(){if(!confirm('Übungen aus dem Buch von diesem Gerät entfernen? (Deine Ergebnisse bleiben.)'))return;BOOK=null;try{await IDB('readwrite',st=>st.delete(BOOKID))}catch{}home()}
