@@ -115,7 +115,7 @@ details summary{cursor:pointer;color:var(--blue);font-weight:600;min-height:40px
 .leg2{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:#4d5d73;margin-top:2px}.leg2 i{display:inline-block;width:16px;height:4px;border-radius:2px;margin-right:5px;vertical-align:middle}
 .time{display:inline-flex;align-items:center;gap:6px;margin-left:8px;padding:6px 12px;border-radius:999px;background:#eaf0fa;color:var(--blue);font-weight:700}
 .urkunde{text-align:center;padding:22px;border:3px solid var(--blue);border-radius:20px;background:linear-gradient(#fff,#f1f6fd)}.urkunde .big{font-size:2.4rem;font-weight:800;color:var(--blue)}
-</style></head><body><button type="button" id="who" hidden aria-label="Abgabe-QR zeigen"></button><div class="wrap" id="app"></div><div id="printBox"></div>
+.mm{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;align-items:stretch}.mm>b{grid-column:1/-1;justify-self:center;padding:8px 22px;border-radius:999px;background:#2f5f9b;color:#fff;font-size:1.05rem}.mm>span{border:1.5px solid #9bb6dc;border-radius:12px;padding:8px 10px;background:#f4f8fd}.mm i{display:block;font-style:normal;font-weight:700;color:#2f5f9b}.mm small{color:#5c6b80}</style></head><body><button type="button" id="who" hidden aria-label="Abgabe-QR zeigen"></button><div class="wrap" id="app"></div><div id="printBox"></div>
 <script src="qr-code.js"></script><script src="unit-pdf.js"></script>
 <script>
 'use strict';
@@ -128,11 +128,11 @@ const KEY='cm-logistik-v1';let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)
 if(!ST)ST={};
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ST))}catch{}try{updWho()}catch{}};
 let CURK=null;function goStep(k){const x=STEPS.find(y=>y[0]===k);if(!x)return home();CURK=k;if(SOLV&&!ST[k])try{solveK(k)}catch(e){console.warn(e)}x[4]();scrollTo(0,0)}
-function frame(title,inner){if(CURK){const x=STEPS.find(y=>y[0]===CURK);if(x)title=x[1]}const i=CURK?STEPS.findIndex(x=>x[0]===CURK):-1,nx=i>=0?STEPS[i+1]:null,done=CURK&&ST[CURK];
- app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+(i>=0?(i+1)+' · ':'')+esc(title)+'</b></div>'+inner+(i>=0?'<div class="row nextrow"><button class="sec" data-home2>‹ Übersicht</button><div class="sp"></div>'+(nx?'<button class="'+(done?'pri':'sec')+'" data-nextst>Weiter: '+esc(nx[1])+' ›</button>':'')+'</div>':'');
- app.querySelector('[data-home]').onclick=home;const h2=app.querySelector('[data-home2]');if(h2)h2.onclick=home;const n=app.querySelector('[data-nextst]');if(n)n.onclick=()=>goStep(nx[0])}
+function frame(title,inner){if(CURK){const x=STEPS.find(y=>y[0]===CURK);if(x)title=x[1]}const i=CURK?STEPS.findIndex(x=>x[0]===CURK):-1,nx=i>=0?STEPS[i+1]:null,pv=i>0?STEPS[i-1]:null,done=CURK&&ST[CURK];
+ app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+(i>=0?(i+1)+' · ':'')+esc(title)+'</b></div>'+inner+(i>=0?'<div class="row nextrow">'+(pv?'<button class="sec" data-prevst>‹ Zurück: '+esc(pv[1])+'</button>':'<button class="sec" data-home2>‹ Übersicht</button>')+'<div class="sp"></div>'+(nx?'<button class="'+(done?'pri':'sec')+'" data-nextst>Weiter: '+esc(nx[1])+' ›</button>':'')+'</div>':'');
+ app.querySelector('[data-home]').onclick=home;const h2=app.querySelector('[data-home2]');if(h2)h2.onclick=home;const n=app.querySelector('[data-nextst]');if(n)n.onclick=()=>goStep(nx[0]);const pb=app.querySelector('[data-prevst]');if(pb)pb.onclick=()=>goStep(pv[0])}
 const fb=(ok,txt)=>'<div class="fb '+(ok?'ok':'no')+'">'+txt+'</div>';
-const fmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const fmt=n=>{const [a,b]=String(n).split('.');return a.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+(b?','+b:'')};
 /* Punkte zählen beim ersten Versuch; danach darf man verbessern (zum Lernen) */
 const fin=(k,p,t,x)=>{if(!ST[k]){ST[k]={p,t};if(x&&x.length)ST[k].x=x}save()};
 const keep=(k,f)=>{const top=scrollY;f();if(CURK===k)scrollTo(0,top)};
@@ -219,11 +219,15 @@ const GLOSS={Logistik:'Wirtschaftsbereich, der den Transport und die (Zwischen-)
 
 /* ---------- Daten (vereinfacht) ---------- */
 /* Kosten-Index nach Rodrigue (2017) und Feenstra/Taylor (2014), gerundet */
-const COST=[{n:'Seetransport (1920 = 100)',c:'#243247',pts:[[1920,100],[1930,60],[1940,63],[1950,34],[1960,27],[1970,27],[1980,24],[1990,17],[2000,13],[2010,13]]},
- {n:'Lufttransport (1946 = 100)',c:'#3a9be0',pts:[[1946,100],[1950,82],[1960,44],[1970,40],[1980,16],[1990,10],[2000,9],[2010,10]]},
- {n:'Telefonverbindungen (1931 = 100)',c:'#7c3aed',pts:[[1931,100],[1940,77],[1950,22],[1960,19],[1970,13],[1980,2],[1990,1],[2000,0.5],[2010,0.3]]},
- {n:'Zölle (1933 = 100)',c:'#e8873a',pts:[[1933,100],[1940,73],[1950,48],[1960,49],[1970,45],[1980,35],[1990,39],[2000,29],[2010,25]]}];
-/* Passagiere (Mio.) nach ACI/ADV, gerundet */
+const COST=[{n:'Seetransport (1920 = 100)',c:'#243247',pts:[[1920,100],[1930,60],[1940,63],[1950,34],[1960,27],[1970,27],[1980,24],[1990,17],[2000,13],[2010,13],[2015,11]]},
+ {n:'Lufttransport (1946 = 100)',c:'#3a9be0',pts:[[1946,100],[1950,82],[1960,44],[1970,40],[1980,16],[1990,10],[2000,9],[2010,10],[2015,11]]},
+ {n:'Telefonverbindungen (1931 = 100)',c:'#7c3aed',pts:[[1931,100],[1940,77],[1950,22],[1960,19],[1970,13],[1980,2],[1990,1],[2000,0.5],[2010,0.3],[2015,0.3]]},
+ {n:'Speicher (Computer) (1956 = 100)',c:'#7cb342',pts:[[1956,100],[1959,82],[1960,39],[1964,38],[1966,11],[1970,3],[1975,2],[1983,3],[1985,0.5],[2000,0.3],[2015,0.2]]},
+ {n:'Zölle (1933 = 100)',c:'#e8873a',pts:[[1933,100],[1940,73],[1950,48],[1960,49],[1970,45],[1980,35],[1990,39],[2000,29],[2010,25],[2015,19]]}];
+/* Passagiere (Mio.) und Fracht (Mio. t) nach ACI, ADV, DCAA, gerundet */
+const FRT=[{n:'Dubai (DXB)',c:'#3a8fd0',pts:[[2011,2.2],[2013,2.4],[2015,2.5],[2017,2.7],[2019,2.5],[2021,2.1],[2022,1.95]]},
+ {n:'London (LHR)',c:'#e8a23a',pts:[[2011,1.6],[2013,1.5],[2015,1.6],[2017,1.8],[2019,1.7],[2021,1.5],[2022,1.4]]},
+ {n:'Frankfurt (FRA)',c:'#2f9e7a',pts:[[2011,2.2],[2013,2.1],[2015,2.1],[2017,2.2],[2019,2.1],[2021,2.3],[2022,1.9]]}];
 const AIR=[{n:'Dubai (DXB)',c:'#3a8fd0',pts:[[2011,51],[2013,66],[2015,78],[2017,88],[2019,86],[2021,29],[2022,66]]},
  {n:'London (LHR)',c:'#e8a23a',pts:[[2011,69],[2013,72],[2015,75],[2017,78],[2019,81],[2021,19],[2022,62]]},
  {n:'Frankfurt (FRA)',c:'#2f9e7a',pts:[[2011,56],[2013,58],[2015,61],[2017,64],[2019,70],[2021,25],[2022,49]]}];
@@ -234,8 +238,9 @@ function lineChart(o){const W=640,H=330,L=50,R=16,T=14,B=36,x=v=>L+(v-o.xr[0])/(
  for(const s of o.series)g+='<path d="'+s.pts.map((p,i)=>(i?'L':'M')+x(p[0]).toFixed(1)+' '+y(p[1]).toFixed(1)).join(' ')+'" stroke="'+s.c+'" stroke-width="3.2" fill="none"/>';
  for(const s of o.series)for(const p of s.pts)g+='<circle cx="'+x(p[0])+'" cy="'+y(p[1])+'" r="3.6" fill="#fff" stroke="'+s.c+'" stroke-width="2.2"/>';
  return g+'</svg><div class="leg2">'+o.series.map(s=>'<span><i style="background:'+s.c+'"></i>'+esc(s.n)+'</span>').join('')+'</div>'}
-const costChart=()=>lineChart({title:'Kosten in Handel und Kommunikation',xr:[1920,2012],yr:[0,100],yt:[0,20,40,60,80,100],xt:[1920,1940,1960,1980,2000],series:COST});
+const costChart=()=>lineChart({title:'Kosten in Handel und Kommunikation',xr:[1920,2016],yr:[0,100],yt:[0,20,40,60,80,100],xt:[1920,1940,1960,1980,2000],series:COST});
 const airChart=()=>lineChart({title:'Passagiere an drei Flughäfen',xr:[2011,2022],yr:[0,100],yt:[0,20,40,60,80,100],xt:[2011,2013,2015,2017,2019,2021],series:AIR});
+const frtChart=()=>lineChart({title:'Fracht an drei Flughäfen',xr:[2011,2022],yr:[1,3],yt:[1,1.5,2,2.5,3],xt:[2011,2013,2015,2017,2019,2021],series:FRT});
 
 /* ---------- 1 Ein Schiff, 364 Millionen T-Shirts (M2) ---------- */
 const shipSvg='<svg class="chart" viewBox="0 0 640 210" aria-label="Containerschiff und Frachtflugzeug"><text x="10" y="22" class="lb" fill="#243247">Ever Alot – das größte Containerschiff (2023)</text><text x="10" y="42" class="ax">24.004 Standard-Container (TEU)</text>'
@@ -262,15 +267,17 @@ function runBeg(){const P=ST.begP??={ok:[],err:[]};P.sol??=[];P.n??={};const dor
    if(P.ok.length===N)fin('beg',N-P.err.length,N,P.err);else save();draw()})};draw()}
 
 /* ---------- 3 Transport wird immer billiger (M1) ---------- */
-const costBox=()=>'<div class="card"><b>Kosten in Handel und Kommunikation seit 1920</b><div class="muted" style="font-size:.85rem">Index der Kosten · nach Rodrigue (2017) und Feenstra/Taylor (2014), vereinfacht</div>'+costChart()+(BOOK&&BOOK.img&&BOOK.img.m1?'<details style="margin-top:8px"><summary>Original aus dem Schulbuch (M1)</summary>'+bimg('m1')+'</details>':'')+termBox(['Index'])+'</div>';
+const costBox=()=>'<div class="card"><b>Kosten in Handel und Kommunikation 1920–2015</b><div class="muted" style="font-size:.85rem">Index der Kosten · nach Rodrigue (2017) und Feenstra/Taylor (2014), vereinfacht</div>'+costChart()+(BOOK&&BOOK.img&&BOOK.img.m1?'<details style="margin-top:8px"><summary>Original aus dem Schulbuch (M1)</summary>'+bimg('m1')+'</details>':'')+termBox(['Index'])+'</div>';
 const runDia=()=>quiz('dia',{qs:[['Wie haben sich die Kosten für den Seetransport seit 1920 entwickelt?',['Sie sind etwa gleich geblieben.','Sie sind stark gesunken – auf etwa ein Achtel.','Sie sind gestiegen.'],1,'Von 100 (1920) auf etwa 13 (2010).'],
- ['Welche Kosten sind am stärksten gesunken?',['Zölle','Seetransport','Telefonverbindungen'],2,'Telefonieren kostet heute fast nichts mehr (Index unter 1).'],
+ ['Welche Kosten sind am stärksten gesunken?',['Zölle','Seetransport','Telefon und Computerspeicher'],2,'Telefonieren und Daten speichern kosten heute fast nichts mehr (Index unter 1).'],
+ ['Was wurde als Erstes deutlich billiger?',['der Seetransport (ab 1920)','der Lufttransport (ab 1946)','der Computerspeicher (ab 1956)'],0,'Erst der Seetransport, dann Telefon (ab 1931), Luftfracht (ab 1946) und Computer (ab 1956).'],
+ ['Wie entwickeln sich die Zölle seit etwa 1990?',['Sie steigen wieder stark an.','Sie sinken weiter – der Handel wird freier (Freihandel).','Es gibt keine Zölle mehr.'],1,'Niedrigere Zölle erleichtern den Welthandel zusätzlich.'],
  ['Was bedeutet „1920 = 100“?',['Ein Transport kostete 1920 genau 100 Euro.','Die Kosten von 1920 werden gleich 100 gesetzt.','1920 fuhren 100 Schiffe.'],1,'Ein Index zeigt Veränderungen: 50 bedeutet „nur noch halb so teuer“.'],
- ['Welche Folge haben die gesunkenen Kosten?',['Waren können günstig über weite Strecken gehandelt werden.','Es wird weniger gehandelt.','Container werden überflüssig.'],0,'Billiger Transport und billige Kommunikation treiben die Globalisierung an.']],
+ ['Welche Folge haben die gesunkenen Kosten?',['Waren können günstig über weite Strecken gehandelt werden.','Es wird weniger gehandelt.','Container werden überflüssig.'],0,'Waren und Daten lassen sich immer billiger austauschen – die Regionen der Erde rücken zusammen. Das treibt die Globalisierung an.']],
  before:()=>costBox()});
 
 /* ---------- 4 Die Kiste, die die Welt verändert hat (M3, M5) ---------- */
-const CLZ=['Seit etwa 1970 reisen die meisten Waren in ',0,'. Das sind genormte ',1,' aus Stahl. Mit ihnen geht das Umladen vom Schiff auf ',2,' und Bahn schnell und günstig. Das größte Containerschiff fasst über 24.000 ',3,' – ein Frachtflugzeug nur 18. In modernen Häfen arbeiten oft ',4,' vollautomatisch, aber viele Aufgaben übernehmen noch ',5,', zum Beispiel die Steuerung der Containerkräne.'];
+const CLZ=['Seit etwa 1970 reisen die meisten Waren in ',0,'. Das sind genormte ',1,' aus Stahl, die sich überall passend stapeln lassen. Mit ihnen geht das Umladen vom Schiff auf ',2,' und Bahn schnell und günstig. Das größte Containerschiff fasst über 24.000 ',3,' – ein Frachtflugzeug nur 18. In modernen Häfen arbeiten oft ',4,' vollautomatisch, aber viele Aufgaben übernehmen noch ',5,', zum Beispiel die Steuerung der Containerkräne.'];
 const CLW=['Containern','Großraumbehälter','Lkw','TEU','Roboter','Menschen','Säcken','Flugzeuge'];
 function runPol(){const G=ST.polG??={},sol=ST.polX??=[],R=()=>ST.polR||0;const ord=shuffleOnce('pol',CLW.map((_,i)=>i));let gap=null;const N=6,GS=[0,1,2,3,4,5];
  const fixed=g=>R()>0&&G[g]===g;
@@ -287,6 +294,13 @@ function runPol(){const G=ST.polG??={},sol=ST.polX??=[],R=()=>ST.polR||0;const o
   const chk=app.querySelector('[data-chk]');if(chk)chk.onclick=()=>{const wrong=GS.filter(g=>G[g]!==g);
    if(R()===0){fin('pol',N-wrong.length,N,wrong);if(wrong.length){wrong.forEach(g=>delete G[g]);ST.polR=1}else ST.polR=2}else{wrong.forEach(g=>{G[g]=g;sol.push(g)});ST.polR=2}save();draw()}});draw()}
 
+/* ---------- 4b Aufgaben der Logistik: Mindmap (M3–M5) ---------- */
+const LOGM=[['Transport','Rohstoffe, Bauteile und fertige Produkte befördern'],['Lagerhaltung','Waren zwischenlagern, bis sie gebraucht werden'],['Belieferung und Versand','Zulieferer und Endkunden pünktlich beliefern'],['Umschlag im Hafen','Container umladen – oft vollautomatisch']];
+const LOGI=[['Rohstoffe zur Fabrik bringen',0],['Bauteile zwischen den Werken fahren',0],['fertige Produkte verschiffen',0],['Waren in Hallen zwischenlagern',1],['Vorräte überwachen und nachbestellen',1],['Zulieferer in der Lieferkette beliefern',2],['Geschäfte und Unternehmen beliefern',2],['Pakete an Privathaushalte zustellen',2],['Roboter laden Container vom Schiff auf Lkw',3],['Kräne stapeln Container im Terminal',3]];
+const runLog=()=>sorter('log',{h:'Mindmap: Was gehört zu den Aufgaben der Logistik?',task:'Ziehe jede Karte zum passenden Ast der Mindmap.',cats:LOGM.map(x=>x[0]),items:LOGI,
+ before:()=>'<div class="card"><div class="mm"><b>Logistik</b>'+LOGM.map(x=>'<span><i>'+esc(x[0])+'</i><small>'+esc(x[1])+'</small></span>').join('')+'</div>'+termBox(['Logistik','Lieferkette','Umschlag'])+'</div>',
+ done:'Die Logistik plant den ganzen Weg einer Ware: vom Rohstoff über Lager und Umschlag bis zum Kunden.'});
+
 /* ---------- 5 Von Shanghai nach Duisburg: vier Wege (M4) ---------- */
 const routeSvg='<svg class="chart" viewBox="0 0 640 300" aria-label="Transportwege von Shanghai nach Duisburg (schematisch)"><rect x="0" y="0" width="640" height="300" rx="14" fill="#eef5fb"/>'
  +'<text x="320" y="24" text-anchor="middle" class="ax">Nordpolarmeer</text><text x="320" y="292" text-anchor="middle" class="ax">Indischer Ozean · Suezkanal</text>'
@@ -302,15 +316,15 @@ const runRou=()=>sorter('rou',{h:'Welche Angabe gehört zu welchem Weg?',task:'Z
  done:'Die Logistik wählt den Weg nach dem Kunden: Wie dringend ist die Lieferung, was darf sie kosten – und wie stark belastet sie die Umwelt?'});
 
 /* ---------- 6 Dubai, London, Frankfurt: Drehkreuze des Luftverkehrs (M6, M7) ---------- */
-const airBox=()=>'<div class="card"><b>Passagiere an drei großen Flughäfen 2011–2022</b><div class="muted" style="font-size:.85rem">in Millionen · nach ACI/ADV, gerundet</div>'+airChart()+(BOOK&&BOOK.img&&BOOK.img.m6?'<details style="margin-top:8px"><summary>Original aus dem Schulbuch (M6) – mit Fracht</summary>'+bimg('m6')+'</details>':'')+(BOOK&&BOOK.img&&BOOK.img.m7?'<details style="margin-top:4px"><summary>Foto: Dubai International Airport (M7)</summary>'+bimg('m7')+'</details>':'')+termBox(['Drehkreuz'])+'</div>';
+const airBox=()=>'<div class="card"><b>Passagiere an drei großen Flughäfen 2011–2022</b><div class="muted" style="font-size:.85rem">in Millionen · nach ACI, ADV, DCAA, gerundet</div>'+airChart()+'<b style="display:block;margin-top:12px">Fracht an denselben Flughäfen</b><div class="muted" style="font-size:.85rem">in Millionen Tonnen</div>'+frtChart()+(BOOK&&BOOK.img&&BOOK.img.m6?'<details style="margin-top:8px"><summary>Original aus dem Schulbuch (M6) – mit Fracht</summary>'+bimg('m6')+'</details>':'')+(BOOK&&BOOK.img&&BOOK.img.m7?'<details style="margin-top:4px"><summary>Foto: Dubai International Airport (M7)</summary>'+bimg('m7')+'</details>':'')+termBox(['Drehkreuz'])+'</div>';
 const runAir=()=>swiper('air',{h:'Stimmt die Aussage?',task:'Wische nach rechts (stimmt) oder links (stimmt nicht).',l:'stimmt nicht',r:'stimmt',before:()=>airBox(),
- cards:[['Dubai hatte 2017 fast 90 Millionen Passagiere.',true,'Rund 88 Millionen – mehr als London und Frankfurt.'],['Frankfurt hatte in allen Jahren die meisten Passagiere.',false,'Frankfurt liegt immer hinter London und meist hinter Dubai.'],['2021 brachen die Passagierzahlen an allen drei Flughäfen ein.',true,'Grund war die Corona-Pandemie.'],['Dubai hat seine Passagierzahl von 2011 bis 2017 deutlich gesteigert.',true,'Von etwa 51 auf etwa 88 Millionen.'],['London hatte 2022 schon wieder so viele Passagiere wie 2019.',false,'2022 waren es etwa 62 Millionen, 2019 etwa 81 Millionen.'],['Große Flughäfen sind Drehkreuze für Menschen und Waren.',true,'Zum Beispiel Dubai zwischen Europa, Asien und Afrika.']],
+ cards:[['Dubai hatte 2017 fast 90 Millionen Passagiere.',true,'Rund 88 Millionen – mehr als London und Frankfurt.'],['Frankfurt hatte in allen Jahren die meisten Passagiere.',false,'Frankfurt liegt immer hinter London und meist hinter Dubai.'],['2021 brachen die Passagierzahlen an allen drei Flughäfen ein.',true,'Grund war die Corona-Pandemie.'],['Dubai hat seine Passagierzahl von 2011 bis 2017 deutlich gesteigert.',true,'Von etwa 51 auf etwa 88 Millionen.'],['London hatte 2022 schon wieder so viele Passagiere wie 2019.',false,'2022 waren es etwa 62 Millionen, 2019 etwa 81 Millionen.'],['Seit etwa 2015 hat Dubai mehr Passagiere als London.',true,'2011 lag London noch vorn, ab 2015 liegt Dubai an der Spitze.'],['Bei der Fracht lag Dubai schon 2011 vorn.',true,'Dubai und Frankfurt hatten 2011 je etwa 2,2 Mio. t.'],['London hat von den drei Flughäfen die meiste Fracht.',false,'London hat in allen Jahren die wenigste Fracht.'],['In der Corona-Zeit stieg die Fracht nur in Frankfurt.',true,'Passagiere und Fracht brachen fast überall ein – nur Frankfurt beförderte 2021 mehr Fracht.'],['Große Flughäfen sind Drehkreuze für Menschen und Waren.',true,'Zum Beispiel Dubai zwischen Europa, Asien und Afrika.']],
  done:'Große Flughäfen sind Knotenpunkte des Weltverkehrs – und reagieren empfindlich auf Krisen.'});
 
 /* ---------- 7 Was fliegt – und was fährt mit dem Schiff? (M8) ---------- */
 const runFra=()=>sorter('fra',{h:'Flugzeug oder Schiff?',task:'Ziehe jede Ware zum passenden Verkehrsmittel.',cats:['Luftfracht (Flugzeug)','Seefracht (Schiff)'],
- items:[['neue Smartphones',0],['Medikamente',0],['Schnittblumen',0],['Modeartikel für einen neuen Trend',0],['optische Instrumente',0],['Eisenerz',1],['Getreide',1],['Erdöl',1],['Autos',1],['Möbel',1]],
- before:()=>'<div class="card"><b>Luftfracht in Zahlen</b><p style="margin:6px 0 0">Gemessen am <b>Gewicht</b> wird nur etwa <b>1 %</b> aller Waren geflogen – gemessen am <b>Wert</b> sind es aber rund <b>40 %</b>. Geflogen werden vor allem teure, kurzlebige und verderbliche Güter, die schnell beim Kunden sein müssen.</p>'+(BOOK&&BOOK.m8?'<details style="margin-top:8px"><summary>'+esc(BOOK.m8.t)+' (Schulbuch M8)</summary>'+BOOK.m8.p.map(p=>'<p style="margin:6px 0">'+md(p)+'</p>').join('')+'<div class="cap">'+esc(BOOK.m8.src||'')+'</div></details>':'')+termBox(['Luftfracht','Seefracht'])+'</div>',
+ items:[['neue Smartphones',0],['Medikamente',0],['Schnittblumen',0],['Modeartikel für einen neuen Trend',0],['optische Instrumente',0],['Kunstgegenstände',0],['Eisenerz',1],['Getreide',1],['Erdöl',1],['Autos',1],['Möbel',1]],
+ before:()=>'<div class="card"><b>Luftfracht in Zahlen</b><p style="margin:6px 0 0">Gemessen am <b>Gewicht</b> wird nur etwa <b>1 %</b> aller Waren geflogen – gemessen am <b>Wert</b> sind es aber rund <b>40 %</b>. Geflogen werden vor allem teure, kurzlebige und verderbliche Güter, die schnell beim Kunden sein müssen.</p><div class="two" style="margin-top:8px;gap:10px"><div class="def"><b>Vorteile:</b> sehr schnell und zuverlässig</div><div class="def"><b>Nachteile:</b> viel teurer als Seefracht, für schwere, große oder billige Massengüter kaum geeignet, hoher Schadstoffausstoß</div></div>'+(BOOK&&BOOK.m8?'<details style="margin-top:8px"><summary>'+esc(BOOK.m8.t)+' (Schulbuch M8)</summary>'+BOOK.m8.p.map(p=>'<p style="margin:6px 0">'+md(p)+'</p>').join('')+'<div class="cap">'+esc(BOOK.m8.src||'')+'</div></details>':'')+termBox(['Luftfracht','Seefracht'])+'</div>',
  done:'Schnell und teuer fliegt, schwer und billig fährt mit dem Schiff.'});
 
 /* ---------- 8 Textarbeit: Container und Logistik (M3) ---------- */
@@ -358,6 +372,7 @@ const CHK=[['Was ist Logistik?',['Die Herstellung von Containern','Planung und D
  ['Welcher Weg von Shanghai nach Duisburg ist am schnellsten?',['Flugverbindung','Zugverbindung','Suezkanal-Route'],0,'Etwa einen halben Tag – aber etwa fünfmal so teuer wie Seefracht.'],
  ['Welche Kosten sind seit 1950 am stärksten gesunken?',['Telefonverbindungen','Zölle','Seetransport'],0,'Telefonieren kostet heute fast nichts mehr.'],
  ['Was wird eher mit dem Flugzeug transportiert?',['Eisenerz','Medikamente','Getreide'],1,'Wertvolle und eilige Güter fliegen.'],
+ ['Was ist ein Nachteil der Luftfracht?',['Sie ist sehr langsam.','Sie ist teuer und stößt viele Schadstoffe aus.','Sie eignet sich nur für schwere Massengüter.'],1,'Schnell und zuverlässig – aber teuer und schlecht für die Umwelt.'],
  ['Was geschah 2021 an den großen Flughäfen?',['Die Passagierzahlen brachen ein (Corona).','Es gab einen Rekord an Passagieren.','Alle Flughäfen wurden geschlossen.'],0,'Seit 2022 steigen die Zahlen wieder.']];
 function doPrint(){}
 function pdfBlocks(){const nm=ST.name||ST.me||'',tot=STEPS.reduce((a,s)=>a+(ST[s[0]]?.p||0),0),max=STEPS.reduce((a,s)=>a+(ST[s[0]]?.t||0),0),src=' – '+((BOOK&&BOOK.source)||'Schulbuch');
@@ -369,12 +384,13 @@ function pdfBlocks(){const nm=ST.name||ST.me||'',tot=STEPS.reduce((a,s)=>a+(ST[s
   {t:'h2',s:'Fachbegriffe'},{t:'table',w:[.27,.73],firstBold:true,rows:Object.entries(GLOSS).map(([k,v])=>[k,v])},
   {t:'h2',s:'Ein Schiff, 364 Millionen T-Shirts'},{t:'table',w:[.34,.33,.33],head:['Ware','Menge je Schiffsladung','Transportkosten je Stück'],rows:[['T-Shirts','364 Millionen','ca. 7 Cent'],['Flachbildfernseher','9 Millionen','ca. 80 Cent'],['Paar Schuhe','65 Millionen','ca. 28 Cent']]},
   {t:'p',s:'Die **Ever Alot** fasst 24.004 Standard-Container (TEU), ein Frachtflugzeug (Boeing 747-8F) nur 18.'},im('m2',.8,330),
-  {t:'h2',s:'Transport wird immer billiger (Index der Kosten)'},{t:'chart',xr:[1920,2012],yr:[0,100],xt:[1920,1940,1960,1980,2000],yt:[0,20,40,60,80,100],series:COST.map(s=>({color:s.c,pts:s.pts})),labels:[{x:1921,y:92,s:'Seetransport',color:'#243247'},{x:1950,y:88,s:'Lufttransport',color:'#3a9be0'},{x:1972,y:52,s:'Zölle',color:'#e8873a'},{x:1951,y:12,s:'Telefon',color:'#7c3aed'}]},im('m1',.75,320),
-  {t:'list',items:['Seit 1920 sind die Kosten für den **Seetransport** auf etwa ein Achtel gesunken.','**Telefonieren** kostet heute fast nichts mehr.','Billiger Transport und billige Kommunikation treiben die **Globalisierung** an.']},
+  {t:'h2',s:'Transport wird immer billiger (Index der Kosten)'},{t:'chart',xr:[1920,2016],yr:[0,100],xt:[1920,1940,1960,1980,2000],yt:[0,20,40,60,80,100],series:COST.map(s=>({color:s.c,pts:s.pts})),labels:[{x:1921,y:92,s:'Seetransport',color:'#243247'},{x:1950,y:88,s:'Lufttransport',color:'#3a9be0'},{x:1972,y:52,s:'Zölle',color:'#e8873a'},{x:1951,y:12,s:'Telefon',color:'#7c3aed'},{x:1961,y:34,s:'Computer',color:'#7cb342'}]},im('m1',.75,320),
+  {t:'list',items:['Seit 1920 sind die Kosten für den **Seetransport** auf etwa ein Achtel gesunken.','**Telefonieren** und **Daten speichern** kosten heute fast nichts mehr.','Die **Zölle** sinken seit etwa 1990 weiter: Der Handel wird freier.','Billiger Transport und billige Kommunikation treiben die **Globalisierung** an.']},
   {t:'h2',s:'Die Kiste, die die Welt verändert hat'},{t:'p',s:CLZ.map(x=>typeof x==='string'?x:'**'+CLW[x]+'**').join('')},im('m5',.6,260),
+  {t:'h2',s:'Mindmap: Aufgaben der Logistik'},{t:'table',w:[.3,.7],firstBold:true,rows:LOGM.map((c,ci)=>[c[0],LOGI.filter(x=>x[1]===ci).map(x=>x[0]).join(' · ')])},
   {t:'h2',s:'Von Shanghai nach Duisburg: vier Wege'},{t:'table',w:[.34,.22,.2,.24],head:['Weg','Strecke','Dauer','Besonderheit'],rows:[['Flugzeug','–','ca. 0,5 Tage','etwa fünfmal so teuer'],['Zug („Seidenstraße“)','11.000 km','ca. 13 Tage',''],['Schiff: Nordostpassage','14.000 km','ca. 30 Tage','nur Juli bis November'],['Schiff: Suezkanal','21.000 km','30–48 Tage','am günstigsten']]},im('m4',1,300),
-  {t:'h2',s:'Dubai, London, Frankfurt: Drehkreuze des Luftverkehrs (Passagiere in Mio.)'},{t:'chart',xr:[2011,2022],yr:[0,100],xt:[2011,2013,2015,2017,2019,2021],yt:[0,20,40,60,80,100],series:AIR.map(s=>({color:s.c,pts:s.pts})),labels:[{x:2014,y:84,s:'Dubai',color:'#3a8fd0'},{x:2011.3,y:76,s:'London',color:'#b45309'},{x:2013.5,y:52,s:'Frankfurt',color:'#2f9e7a'}]},im('m6',.6,330),im('m7',.7,260),
-  {t:'h2',s:'Luftfracht oder Seefracht?'},{t:'table',w:[.5,.5],head:['Luftfracht (Flugzeug)','Seefracht (Schiff)'],rows:[['neue Smartphones, Medikamente, Schnittblumen, Modeartikel, optische Instrumente','Eisenerz, Getreide, Erdöl, Autos, Möbel'],['schnell, teuer – 1 % des Gewichts, aber rund 40 % des Werts','langsam, sehr günstig']]},
+  {t:'h2',s:'Dubai, London, Frankfurt: Drehkreuze des Luftverkehrs (Passagiere in Mio.)'},{t:'chart',xr:[2011,2022],yr:[0,100],xt:[2011,2013,2015,2017,2019,2021],yt:[0,20,40,60,80,100],series:AIR.map(s=>({color:s.c,pts:s.pts})),labels:[{x:2014,y:84,s:'Dubai',color:'#3a8fd0'},{x:2011.3,y:76,s:'London',color:'#b45309'},{x:2013.5,y:52,s:'Frankfurt',color:'#2f9e7a'}]},{t:'h3',s:'Fracht in Mio. t'},{t:'chart',xr:[2011,2022],yr:[1,3],xt:[2011,2013,2015,2017,2019,2021],yt:[1,1.5,2,2.5,3],series:FRT.map(s=>({color:s.c,pts:s.pts})),labels:[{x:2015.5,y:2.75,s:'Dubai',color:'#3a8fd0'},{x:2012,y:1.35,s:'London',color:'#b45309'},{x:2019.6,y:2.4,s:'Frankfurt',color:'#2f9e7a'}]},{t:'list',items:['2011 hatte London die meisten Passagiere, seit etwa 2015 liegt **Dubai** vorn.','Bei der **Fracht** lag Dubai schon 2011 vorn, London immer hinten.','2020/21 brachen Passagiere und Fracht ein (Corona) – nur in **Frankfurt** stieg die Fracht.']},im('m6',.6,330),im('m7',.7,260),
+  {t:'h2',s:'Luftfracht oder Seefracht?'},{t:'table',w:[.5,.5],head:['Luftfracht (Flugzeug)','Seefracht (Schiff)'],rows:[['neue Smartphones, Medikamente, Schnittblumen, Modeartikel, optische Instrumente, Kunstgegenstände','Eisenerz, Getreide, Erdöl, Autos, Möbel'],['schnell, zuverlässig, teuer – 1 % des Gewichts, aber rund 40 % des Werts','langsam, sehr günstig'],['Nachteile: hohe Kosten, für schwere, große und billige Massengüter kaum geeignet, hoher Schadstoffausstoß','Nachteil: lange Transportzeit']]},
   ...(BOOK&&BOOK.m8?[{t:'h3',s:BOOK.m8.t},...BOOK.m8.p.map(p=>({t:'p',s:p})),{t:'p',s:BOOK.m8.src||'',sz:8,col:'#5c6b80'}]:[]),
   ...txt].filter(Boolean)}
 let pdfBusy=false;
@@ -382,14 +398,14 @@ async function savePdf(btn){if(pdfBusy)return;pdfBusy=true;const t=btn.textConte
  try{await Promise.race([bookPrep(),new Promise(r=>setTimeout(r,4000))]);const blob=cmPdf.build(pdfBlocks(),{title:'Logistik',foot:'Welche Rolle spielt die Logistik? · '+(ST.name||ST.me||'')});const nm='Logistik'+((ST.name||ST.me)?' - '+String(ST.name||ST.me).replace(/[\\/:*?"<>|]/g,''):'')+'.pdf';
   const how=await cmPdf.save(blob,nm);btn.textContent=how==='download'?'✓ PDF geladen':how==='share'?'✓ Geteilt':t}
  catch(e){alert('Die PDF konnte nicht erstellt werden: '+(e&&e.message||e));btn.textContent=t}finally{pdfBusy=false;setTimeout(()=>{if(btn.isConnected)btn.textContent=t},2500)}}
-const runEnd=()=>quiz('end',{qs:CHK,before:'<div class="card"><h2>Was weißt du jetzt?</h2><p style="margin:0">Sechs Fragen zu allen Stationen – tippe die richtige Antwort an.</p></div>',
+const runEnd=()=>quiz('end',{qs:CHK,before:'<div class="card"><h2>Was weißt du jetzt?</h2><p style="margin:0">Sieben Fragen zu allen Stationen – tippe die richtige Antwort an.</p></div>',
  end:()=>{const tot=STEPS.reduce((a,s)=>a+(ST[s[0]]?.p||0),0),max=STEPS.reduce((a,s)=>a+(ST[s[0]]?.t||0),0);return '<div class="card urkunde"><div class="muted">Urkunde · Logistik</div><div class="big">'+tot+' von '+max+' Punkten</div><div>'+esc(ST.me||ST.name||'')+' · '+STEPS.filter(s=>ST[s[0]]).length+' von '+STEPS.length+' Stationen</div></div>'
   +'<div class="card"><div class="row" style="margin-top:0"><input id="nm" placeholder="Dein Name" value="'+esc(ST.name||ST.me||'')+'" style="min-height:48px;padding:0 12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;flex:1;min-width:200px"><button class="pri" data-pdf>Für meine Unterlagen sichern</button>'+(ST.me?'<button class="sec" data-qr>Abgabe-QR zeigen</button>':'')+'</div><p class="muted" style="font-size:.9rem">Die PDF enthält alle Fachbegriffe, Lösungen und das Material – deine Grundlage für die Aufgaben in GoodNotes. Am iPad öffnet sich das Teilen-Menü: GoodNotes wählen.</p></div>'},
  wire:()=>{const nm=$('#nm');if(nm)nm.oninput=e=>{ST.name=e.target.value;save()};const p=app.querySelector('[data-pdf]');if(p)p.onclick=()=>savePdf(p);const q=app.querySelector('[data-qr]');if(q)q.onclick=showQr}});
 
 /* ---------- Startseite ---------- */
 /* Stationstitel nennen immer den konkreten Inhalt – Material und Aufgabenform stehen darunter */
-const STEPS=[['ein','Ein Schiff, 364 Millionen T-Shirts','{B}M2 · Karten zuordnen',1.5,runEin],['beg','Logistik, Container, TEU','Begriff und Erklärung verbinden',2,runBeg],['dia','Transport wird immer billiger','{D}M1 · Antworten antippen',2,runDia],['pol','Die Kiste, die die Welt verändert hat','{T}M3 {B}M5 · Lückentext',2,runPol],['rou','Von Shanghai nach Duisburg','{K}M4 · vier Transportwege zuordnen',2,runRou],['air','Dubai, London, Frankfurt im Vergleich','{D}M6 {B}M7 · Aussagen wischen',2,runAir],['fra','Was fliegt – und was fährt?','{T}M8 · Waren zuordnen',2,runFra],['txt','Container und Logistik','{T}M3 · markieren und Belege finden',3,runTxt],['end','Was ich jetzt weiß','6 Fragen · Urkunde · Unterlagen',2,runEnd]];
+const STEPS=[['ein','Ein Schiff, 364 Millionen T-Shirts','{B}M2 · Karten zuordnen',1.5,runEin],['beg','Logistik, Container, TEU','Begriff und Erklärung verbinden',2,runBeg],['dia','Transport wird immer billiger','{D}M1 · Antworten antippen',2.5,runDia],['pol','Die Kiste, die die Welt verändert hat','{T}M3 {B}M5 · Lückentext',2,runPol],['log','Was die Logistik alles leistet','{T}M3 {B}M5 · Mindmap ergänzen',2,runLog],['rou','Von Shanghai nach Duisburg','{K}M4 · vier Transportwege zuordnen',2,runRou],['air','Dubai, London, Frankfurt im Vergleich','{D}M6 {B}M7 · Aussagen wischen',2.5,runAir],['fra','Was fliegt – und was fährt?','{T}M8 · Waren zuordnen',2,runFra],['txt','Container und Logistik','{T}M3 · markieren und Belege finden',3,runTxt],['end','Was ich jetzt weiß','7 Fragen · Urkunde · Unterlagen',2,runEnd]];
 const TOTMIN=Math.round(STEPS.reduce((a,s)=>a+s[3],0));
 function home(){CURK=null;const st=k=>ST[k]?'<span class="st done">'+(ST[k].p!=null?ST[k].p+'/'+ST[k].t:'✓')+'</span>':'<span class="st">offen</span>';
  const startK=(STEPS.find(s=>!ST[s[0]])||[])[0];

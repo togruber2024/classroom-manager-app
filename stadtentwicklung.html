@@ -135,9 +135,9 @@ const KEY='cm-stadt-bs-v2';let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)
 if(!ST){ST={};try{const o=JSON.parse(localStorage.getItem('cm-stadt-bs-v1')||'{}')||{};for(const k of ['me','name','cls','roster','dv'])if(o[k]!=null)ST[k]=o[k]}catch{}}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ST))}catch{}try{updWho()}catch{}};
 let CURK=null;function goStep(k){const x=STEPS.find(y=>y[0]===k);if(!x)return home();CURK=k;if(SOLV&&!ST[k])try{solveK(k)}catch(e){console.warn(e)}x[4]();scrollTo(0,0)}
-function frame(title,inner){if(CURK){const x=STEPS.find(y=>y[0]===CURK);if(x)title=x[1]}const i=CURK?STEPS.findIndex(x=>x[0]===CURK):-1,nx=i>=0?STEPS[i+1]:null,done=CURK&&ST[CURK];
- app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+(i>=0?(i+1)+' · ':'')+esc(title)+'</b></div>'+inner+(i>=0?'<div class="row nextrow"><button class="sec" data-home2>‹ Übersicht</button><div class="sp"></div>'+(nx?'<button class="'+(done?'pri':'sec')+'" data-nextst>Weiter: '+esc(nx[1])+' ›</button>':'')+'</div>':'');
- app.querySelector('[data-home]').onclick=home;const h2=app.querySelector('[data-home2]');if(h2)h2.onclick=home;const n=app.querySelector('[data-nextst]');if(n)n.onclick=()=>goStep(nx[0])}
+function frame(title,inner){if(CURK){const x=STEPS.find(y=>y[0]===CURK);if(x)title=x[1]}const i=CURK?STEPS.findIndex(x=>x[0]===CURK):-1,nx=i>=0?STEPS[i+1]:null,pv=i>0?STEPS[i-1]:null,done=CURK&&ST[CURK];
+ app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+(i>=0?(i+1)+' · ':'')+esc(title)+'</b></div>'+inner+(i>=0?'<div class="row nextrow">'+(pv?'<button class="sec" data-prevst>‹ Zurück: '+esc(pv[1])+'</button>':'<button class="sec" data-home2>‹ Übersicht</button>')+'<div class="sp"></div>'+(nx?'<button class="'+(done?'pri':'sec')+'" data-nextst>Weiter: '+esc(nx[1])+' ›</button>':'')+'</div>':'');
+ app.querySelector('[data-home]').onclick=home;const h2=app.querySelector('[data-home2]');if(h2)h2.onclick=home;const n=app.querySelector('[data-nextst]');if(n)n.onclick=()=>goStep(nx[0]);const pb=app.querySelector('[data-prevst]');if(pb)pb.onclick=()=>goStep(pv[0])}
 const fb=(ok,txt)=>'<div class="fb '+(ok?'ok':'no')+'">'+txt+'</div>';
 const fmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 /* Punkte zählen beim ersten Versuch; danach darf man verbessern (zum Lernen) */
