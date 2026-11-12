@@ -4335,6 +4335,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
 .ein-tog .sw{width:38px;height:22px;border-radius:11px;background:#e8590c;position:relative;flex:none;transition:background .15s}.ein-tog .sw::after{content:'';position:absolute;top:3px;left:19px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
 .ein-tog.off .sw{background:#c9d2df}.ein-tog.off .sw::after{left:3px}
 .ein-dots{display:inline-flex;gap:3px;flex:none}.ein-dots b{width:7px;height:7px;border-radius:50%;background:#d5dde9}.ein-dots b.dv{background:#2f5f9b}.ein-dots b.dg{background:#6b8fc4}.ein-dots b.dt{background:#e8590c}.ein-dots b.dw{background:#9db4d6}
+.ein-chips{display:inline-flex;gap:3px;margin-right:10px;vertical-align:1px}.ein-chips i{font-style:normal;width:18px;height:18px;border-radius:5px;display:inline-grid;place-items:center;font-size:11px;font-weight:800;background:#f1f4f9;color:#c3ccd9;cursor:default}.ein-chips i.on{background:#eaf0fa;color:#2f5f9b}.ein-chips i.on.t{background:#fff1e3;color:#c2570c}
 .ein-row .why{display:block;font-size:.78rem;color:#8a97aa;font-weight:500}
 .ein-pick{display:none}
 .ein-empty{color:#66758a;padding:10px 2px}
@@ -4395,13 +4396,15 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  async function render(){if(!on)return;cx=ctx();data=await load();
   if(!data){view.innerHTML='<div class="ein-body ein-empty">Der Unterricht ist gerade nicht erreichbar. Öffne einmal „Noten“ und versuche es erneut.</div>';return}
   {const f=find(sel);if(!f.l&&!f.u)sel=stand()}draw()}
+ /* 11.28: Buchstaben-Chips (V · G · Ü · W) in der Zeile unter dem Lektionstitel – kräftig = vorhanden, blass = fehlt noch */
+ const chips=l=>'<span class="ein-chips">'+[['V',l.nV,'Vokabeln'],['G',l.gr.length,'Grammatik'],['Ü',l.tt.length,'Übersetzungs-Trainer','t'],['W',l.nW,'Wiederholung']].map(([c,n,t,o])=>'<i class="'+(n?(o?'on t':'on'):'')+'" title="'+t+(n?'':' – fehlt noch')+'">'+c+'</i>').join('')+'</span>';
  const dots=l=>'<span class="ein-dots" title="Vokabeln · Grammatik · Übersetzungs-Trainer · Wiederholung">'+[['dv',l.nV],['dg',l.gr.length],['dt',l.tt.length],['dw',l.nW]].map(([c,n])=>'<b class="'+(n?c:'')+'"></b>').join('')+'</span>';
- const rowL=l=>'<button type="button" class="ein-row'+(sel==='l:'+l.k?' on':'')+(blocks(l)?'':' dim')+'" data-sel="l:'+esc(l.k)+'"><span>'+esc(lname(l))+'</span>'+(isStand('l:'+l.k)?'<span class="stand">aktuell</span>':dots(l))+'</button>';
- const rowU=u=>'<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>'+esc(u.title)+'</span>'+(isStand('u:'+u.u)?'<span class="stand">aktuell</span>':'<span class="ein-dots"><b class="'+(u.book?'dt':'')+'" title="Schulbuchmaterial"></b></span>')+'</button>';
+ const rowL=l=>'<button type="button" class="ein-row'+(sel==='l:'+l.k?' on':'')+(blocks(l)?'':' dim')+'" data-sel="l:'+esc(l.k)+'"><span>'+esc(lname(l))+'</span>'+(isStand('l:'+l.k)?'<span class="stand">aktuell</span>':'')+'</button>';
+ const rowU=u=>'<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>'+esc(u.title)+'</span>'+(isStand('u:'+u.u)?'<span class="stand">aktuell</span>':'')+'</button>';
  const norm=x=>String(x||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9äöüß]+/g,' ').trim();
  function treeHtml(){const subj=SUBJ[cx.subject]||'',known=cx.subject in {latein:1,erdkunde:1},showAll=ui.all||!known,latOk=showAll||cx.subject==='latein',ekOk=showAll||cx.subject==='erdkunde';
   if(q.trim()){const t=norm(q),hit=x=>norm(x).includes(t);let out='';
-   for(const l of data.lessons){const why=[...l.gr,...l.formen,l.syntax,...l.tt.map(x=>x.hunt)].filter(Boolean).find(hit);if(hit(lname(l))||hit(l.label)||why)out+='<button type="button" class="ein-row'+(sel==='l:'+l.k?' on':'')+'" data-sel="l:'+esc(l.k)+'"><span>Latein · '+esc(lname(l))+(why&&!hit(lname(l))?'<small class="why">'+esc(why)+'</small>':'')+'</span>'+dots(l)+'</button>'}
+   for(const l of data.lessons){const why=[...l.gr,...l.formen,l.syntax,...l.tt.map(x=>x.hunt)].filter(Boolean).find(hit);if(hit(lname(l))||hit(l.label)||why)out+='<button type="button" class="ein-row'+(sel==='l:'+l.k?' on':'')+'" data-sel="l:'+esc(l.k)+'"><span>Latein · '+esc(lname(l))+(why&&!hit(lname(l))?'<small class="why">'+esc(why)+'</small>':'')+'</span></button>'}
    for(const u of data.units)if(hit(u.title)||hit(u.sub))out+='<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>Erdkunde · '+esc(u.title)+'</span></button>';
    return out||'<div class="ein-empty" style="padding:8px">Nichts gefunden.</div>'}
   const {l:selL,u:selU}=find(sel);const openNow=new Set(openJg);if(cx.jg)openNow.add(cx.jg);if(selL)openNow.add(selL.jg);if(selU)openNow.add(selU.jg);
@@ -4423,7 +4426,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    +'<div class="ein-handle" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Seitenmenü breiter oder schmaler ziehen" title="Ziehen: Seitenmenü breiter oder schmaler · Doppelklick: Standardbreite"><span class="sp-side-pill" aria-hidden="true">⋮</span><span class="sp-side-line" aria-hidden="true"></span><span class="sp-side-badge" aria-hidden="true"></span></div>'
    +'<div class="ein-main"><button type="button" class="ein-pick" data-pick>☰ '+(l?esc(lname(l)):u?esc(u.title):'Einheit wählen')+' ▾</button>'
    +(l||u?'<div class="ein-mh"><h2>'+title+'</h2><span class="sp"></span>'+(cx.key&&items().includes(sel)?'<label class="ein-tog'+(st?'':' off')+'" title="Eingeschaltet: „Unterricht“ öffnet für die '+esc(cls)+' automatisch diese '+(l?'Lektion':'Einheit')+'"><input type="checkbox" data-stand'+(st?' checked':'')+'><span class="sw"></span>Aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+'</label>':'')+'</div>'
-     +(l?'<p class="ein-sub">'+(sub(l)||'&nbsp;')+'</p>'+lessonTiles(l):'<p class="ein-sub">'+esc(u.sub)+' · Jahrgang '+u.jg+'</p>'+unitTiles(u))
+     +(l?'<p class="ein-sub">'+chips(l)+(sub(l)||'')+'</p>'+lessonTiles(l):'<p class="ein-sub">'+esc(u.sub)+' · Jahrgang '+u.jg+'</p>'+unitTiles(u))
     :'<div class="ein-empty">Für '+esc(subj||'dieses Fach')+' gibt es noch keine Einheiten. Links findest du alles, was geladen ist („alle Fächer“).</div>')+'</div>';
   wireTree();
   const qi=view.querySelector('.ein-q');qi.oninput=()=>{q=qi.value;const T=view.querySelector('.ein-list');T.innerHTML=treeHtml();wireTree()};
@@ -4519,5 +4522,53 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  window.addEventListener('storage',e=>{if(on&&e.key&&/^classroom-(vocab|grammar|text-trainer|lerneinheiten)/.test(e.key))render()});
  /* Beim Laden: Modus vom Hauptfenster übernehmen */
  try{if(frameElement?.dataset.mode==='unterricht')setTimeout(()=>mode(true),0)}catch{}
+})();
+;
+
+/* ==== sitzplan/view-pills.js ==== */
+/* 11.28: Sitzplan-Leiste wie im Noten-Manager – runde Knöpfe ändern nur die Ansicht, eckige tun etwas.
+   ① Einstellungen | Noten-Spalte | Seite tauschen: Umschalter-Pille (36 hoch, Felder 38 × 30)
+   ② Zoom als eine Pille: − Regler 100 % +   ③ Einpassen | 100 %: Umschalter   ④ Bewertungen: runder Einzelknopf 40 × 40
+   Die Knöpfe bleiben direkte Kinder der Leiste (das Menü „Mehr“ verschiebt sie bei Platzmangel) – die Pillen entstehen nur per CSS. */
+(()=>{
+ const Z='html body[data-module=sitzplan] .classroom-plan-zoom',X=':not(#_):not(#__):not(#___)',BG='#e7edf6',ON='#fff',SH='0 2px 5px rgba(35,61,96,.08)';
+ const st=document.createElement('style');st.textContent=
+  /* ① Umschalter-Pille */
+  Z+'>.plan-col-pair'+X+'{display:inline-flex!important;align-items:center;gap:2px!important;height:36px!important;padding:3px!important;border:0!important;border-radius:999px!important;background:'+BG+'!important;box-shadow:none!important;overflow:visible!important}'
+  +Z+'>.plan-col-pair>button'+X+'{width:38px!important;min-width:38px!important;height:30px!important;min-height:0!important;padding:0!important;margin:0!important;border:0!important;border-radius:999px!important;background:transparent!important;color:#66778f!important;box-shadow:none!important;display:inline-grid!important;place-items:center}'
+  +Z+'>.plan-col-pair>button[aria-pressed=true]'+X+'{background:'+ON+'!important;color:#243247!important;box-shadow:'+SH+'!important}'
+  +Z+'>.plan-col-pair>button:hover'+X+'{color:#2f5f9b!important}'
+  +Z+'>.plan-col-pair>button svg{width:18px;height:18px}'
+  /* ② Zoom-Pille: −, Regler, Prozent, + liegen nebeneinander, die Lücken werden geschlossen */
+  +Z+'>:is([data-zoom-minus],[data-zoom-plus])'+X+'{width:36px!important;min-width:36px!important;height:36px!important;min-height:0!important;padding:0!important;border:0!important;box-shadow:none!important;color:#2f5f9b!important;font-size:18px!important;line-height:1!important;background:radial-gradient(circle at 50% 50%,#fff 14.5px,transparent 15.5px)!important}'
+  +Z+'>[data-zoom-minus]'+X+'{border-radius:999px 0 0 999px!important;margin-right:-8px!important}'
+  +Z+'>[data-zoom-plus]'+X+'{border-radius:0 999px 999px 0!important;margin-left:-8px!important}'
+  +Z+'>[data-zoom-minus]:hover'+X+','+Z+'>[data-zoom-plus]:hover'+X+'{background:radial-gradient(circle at 50% 50%,#eaf0fa 14.5px,transparent 15.5px)!important}'
+  +Z+'>input[type=range]'+X+'{margin:0 -8px 0 0!important;padding:0 8px!important;box-sizing:content-box}'
+  /* Safari/Chrome malen beim Regler keinen Hintergrund – die Pille liegt als eigenes Element dahinter */
+  +Z+'{position:relative;isolation:isolate}'+Z+'>.vp-zoom-bg{position:absolute;z-index:-1;height:36px;border-radius:999px;background:'+BG+';pointer-events:none}'
+  +Z+'>output'+X+'{display:inline-flex!important;align-items:center;height:36px!important;margin:0!important;padding:0 6px 0 8px!important;background:transparent!important;font-size:13px!important;font-weight:650!important;color:#243247!important;white-space:nowrap}'
+  /* ③ Einpassen | 100 %: Umschalter */
+  +Z+'>:is([data-zoom-fit],[data-zoom-reset])'+X+'{width:41px!important;min-width:41px!important;height:36px!important;min-height:0!important;padding:0!important;border:0!important;box-shadow:none!important;color:#66778f!important;background:'+BG+'!important}'
+  +Z+'>[data-zoom-fit]'+X+'{border-radius:999px 0 0 999px!important;padding-left:3px!important;width:44px!important;min-width:44px!important}'
+  +Z+'>[data-zoom-reset]'+X+'{border-radius:0 999px 999px 0!important;margin-left:-8px!important;padding-right:3px!important;width:44px!important;min-width:44px!important}'
+  +Z+'>:is([data-zoom-fit][aria-pressed=true],[data-zoom-reset][data-vp-on])'+X+'{color:#243247!important;background:radial-gradient(ellipse 19px 15px at calc(50% + var(--vp-off,0px)) 50%,#fff 96%,'+BG+' 100%)!important}'
+  +Z+'>[data-zoom-fit]'+X+'{--vp-off:1.5px}'+Z+'>[data-zoom-reset]'+X+'{--vp-off:-1.5px}'
+  +Z+'>:is([data-zoom-fit],[data-zoom-reset]):hover'+X+'{color:#2f5f9b!important}'
+  /* fehlt eine Hälfte (Menü „Mehr“), ist die andere ganz rund */
+  +Z+':has(>[data-zoom-reset].zoom-collapsed)>[data-zoom-fit]'+X+'{border-radius:999px!important}'
+  +Z+':has(>[data-zoom-fit].zoom-collapsed)>[data-zoom-reset]'+X+'{border-radius:999px!important;margin-left:0!important}'
+  /* ④ Bewertungen: runder Einzelknopf */
+  +Z+'>.plan-assess-switch'+X+'{width:40px!important;min-width:40px!important;height:40px!important;border-radius:999px!important;padding:0!important}';
+ document.head.append(st);
+ /* „100 %“ gilt als aktiv, wenn nicht eingepasst und der Zoom genau 100 % ist */
+ function pill(bar){const m=bar.querySelector(':scope>[data-zoom-minus]'),pl=bar.querySelector(':scope>[data-zoom-plus]');let bg=bar.querySelector(':scope>.vp-zoom-bg');
+  if(!m||!pl||!m.offsetParent){if(bg)bg.hidden=true;return}if(!bg){bg=document.createElement('span');bg.className='vp-zoom-bg';bg.setAttribute('aria-hidden','true');bar.prepend(bg)}bg.hidden=false;
+  const L=m.offsetLeft,R=pl.offsetLeft+pl.offsetWidth,T=m.offsetTop+(m.offsetHeight-36)/2,s=bg.style,l=L+'px',w=(R-L)+'px',t=T+'px';if(s.left!==l)s.left=l;if(s.width!==w)s.width=w;if(s.top!==t)s.top=t}
+ function sync(){const bar=document.querySelector('.classroom-plan-zoom');if(!bar)return;pill(bar);const fit=bar.querySelector(':scope>[data-zoom-fit]'),reset=bar.querySelector(':scope>[data-zoom-reset]'),out=bar.querySelector(':scope>output');if(!reset)return;
+  const on=fit?.getAttribute('aria-pressed')!=='true'&&/^\s*100\s*%/.test(out?.textContent||'');if(reset.hasAttribute('data-vp-on')!==on)reset.toggleAttribute('data-vp-on',on)}
+ let obs=null;const watch=()=>{const bar=document.querySelector('.classroom-plan-zoom');if(!bar||bar===obs)return;obs=bar;new MutationObserver(sync).observe(bar,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-pressed']});sync()};
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(watch);else new MutationObserver(watch).observe(document.body,{childList:true,subtree:true});
+ watch();setTimeout(watch,800);addEventListener('resize',()=>{const b=document.querySelector('.classroom-plan-zoom');if(b)pill(b)});
 })();
 ;
