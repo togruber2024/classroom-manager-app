@@ -4948,7 +4948,10 @@ window.LP=LP;window.lpLabels=labels;
    /* passend für einen QR-Code: notfalls weniger Aufgaben */while(n>1&&(await z1(o)).length>QRMAX){n--;q=make(n);o.q=q}if(!q.length)return null}
   else return null;
   const h=await z1(o);return {hash:'#'+h,url:studentBase().replace(/vokabeltest\.html$/,'ueben.html')+'#'+h,qr:h.length<=QRMAX,n:o.k==='v'?o.w.length:o.q.length,title:o.t}}
- window.classroomBibliothek={lessons:bibLessons,practice:bibPractice,qr:(u,o)=>classroomQrSvg(u,o),lesson:bibLesson,units:bibUnits,list:bibList,ttHash:bibTtHash,act:bibAct,exportPkg:bibExport,importFiles:bibImport,
+ /* 11.42: Schulbuch-Datei einer Lerneinheit zum Weitergeben (AirDrop) – dieselbe Datei, die die Schüler mit „Datei laden …“ öffnen */
+ const BOOKNAMES={'bs-stadt':'Braunschweig','welthandel':'Welthandel','logistik':'Logistik','pontes-l16':'Pontes-L16-Uebungen'};
+ async function bibBookFile(u){const U=UNITS[u];if(!U)return null;const id=U.bookId||u;const x=await leIDB('readonly',st=>st.get(id));if(!x)return null;return {name:(BOOKNAMES[id]||String(id).replace(/[^\w-]+/g,'-'))+'.cmeinheit',text:JSON.stringify(x)}}
+ window.classroomBibliothek={lessons:bibLessons,bookFile:bibBookFile,practice:bibPractice,qr:(u,o)=>classroomQrSvg(u,o),lesson:bibLesson,units:bibUnits,list:bibList,ttHash:bibTtHash,act:bibAct,exportPkg:bibExport,importFiles:bibImport,
   context:()=>({subject:currentSubject,classId:currentClassId,label:leCls()})};
  window.classroomLerneinheiten={open:openUnits,overview:leOverview,ingest:leIngest};
  window.classroomVocabTest={textTrainer:showTextTrainer,open:openManager,openBook,print:printTest,load:loadFile,fromPdf,normalizeTest,studentUrl};

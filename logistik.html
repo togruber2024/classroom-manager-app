@@ -416,4 +416,7 @@ function runWho(force){const R=ST.roster||[];let pick=ST.me&&!force?ST.me:null;
   app.querySelector('[data-ok]').onclick=()=>{if(!pick||pick.length<2)return;ST.me=pick;if(!ST.name)ST.name=pick;save();home()}};draw()}
 $('#who').onclick=showQr;
 save();if(ST.roster&&!ST.me)runWho();else home();updWho();bookInit();
+
+/* 11.42: Lehrkraft-Vorschau – Knopf „Lösungen“ */
+window.cmPreviewSolutions=on=>cmPdf.solutions(on,pdfBlocks);
 </script></body></html>

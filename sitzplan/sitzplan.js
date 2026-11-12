@@ -4359,7 +4359,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
 .ein-acts button{height:40px;border-radius:10px;border:1px solid #c9d5e6;background:#fff;color:#2f5f9b;font:inherit;font-size:.9rem;font-weight:650;padding:0 12px;cursor:pointer}
 .ein-acts button.look{background:#fff4e2;border-color:#f2c98a;color:#9a5400}
 .ein-acts button.pri{background:#2f5f9b;border-color:#2f5f9b;color:#fff}
-.ein-acts button.ghost{border-style:dashed;color:#66758a}
+.ein-acts button.ghost{border-style:dashed;color:#66758a}.ein-acts button.air,button.air[data-do]{border-color:#9fb6d6;color:#2f5f9b;background:#f3f7fc}
 .ein-acts button:hover{filter:brightness(.97)}
 .ein-empty{color:#66758a;padding:10px 2px}
 #einExp,#einQr{border:0;border-radius:14px;padding:0;max-width:640px;width:calc(100% - 32px);box-shadow:0 20px 60px #0004}
@@ -4439,7 +4439,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    +'<div class="ein-sacts"><button type="button" class="ein-b" data-load title="Paket (.cmpaket), Latein-Datenbank, Übersetzungs-Trainer-Dateien (.cmtext), Lerneinheiten (.cmeinheit) oder ein Zip – wird zusammengeführt">Paket laden …</button><button type="button" class="ein-b" data-exp>Exportieren …</button></div></div>'
    +'<div class="ein-handle" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Seitenmenü breiter oder schmaler ziehen" title="Ziehen: Seitenmenü breiter oder schmaler · Doppelklick: Standardbreite"><span class="sp-side-pill" aria-hidden="true">⋮</span><span class="sp-side-line" aria-hidden="true"></span><span class="sp-side-badge" aria-hidden="true"></span></div>'
    +'<div class="ein-main"><button type="button" class="ein-pick" data-pick>☰ '+(l?esc(lname(l)):u?esc(u.title):'Einheit wählen')+' ▾</button>'
-   +(l||u?'<div class="ein-mh"><h2>'+title+'</h2><span class="sp"></span>'+(cx.key&&items().includes(sel)?'<label class="ein-tog'+(st?'':' off')+'" title="Eingeschaltet: „Unterricht“ öffnet für die '+esc(cls)+' automatisch diese '+(l?'Lektion':'Einheit')+'"><input type="checkbox" data-stand'+(st?' checked':'')+'><span class="sw"></span>Aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+'</label>':'')+'</div>'
+   +(l||u?'<div class="ein-mh"><h2>'+title+'</h2><span class="sp"></span>'+(cx.key&&items().includes(sel)?'<label class="ein-tog'+(st?'':' off')+'" title="Eingeschaltet: „Unterricht“ öffnet für die '+esc(cls)+' automatisch diese '+(l?'Lektion':'Einheit')+'"><input type="checkbox" data-stand'+(st?' checked':'')+'><span class="sw"></span>Aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+'</label>':cx.key?'<span class="ein-tog off" style="cursor:default" title="„Aktuell“ gilt je Lerngruppe. Wechsle in eine '+(l?'Latein':'Erdkunde')+'-Klasse, um diese '+(l?'Lektion':'Einheit')+' dort als aktuell zu markieren.">„Aktuell“ nur in einer '+(l?'Latein':'Erdkunde')+'-Klasse · gewählt: '+esc(cls)+' · '+esc(subj)+'</span>':'')+'</div>'
      +(l?tocHtml(l)+lessonTiles(l):'<p class="ein-sub">'+esc(u.sub)+' · Jahrgang '+u.jg+'</p>'+unitTiles(u))
     :'<div class="ein-empty">Für '+esc(subj||'dieses Fach')+' gibt es noch keine Einheiten. Links findest du alles, was geladen ist („alle Fächer“).</div>')+'</div>';
   wireTree();
@@ -4454,7 +4454,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    h.onpointerup=h.onpointercancel=()=>{h.onpointermove=null;h.onpointerup=null;h.onpointercancel=null;view.classList.remove('ein-dragging');document.documentElement.classList.remove('ein-dragging');saveUi()}};
   h.ondblclick=e=>{e.preventDefault();setW(W0);saveUi()};
   h.onkeydown=e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();setW((ui.w||W0)+(e.key==='ArrowRight'?36:-36));saveUi()}};
-  wire()}
+  wire();prefetchAir()}
  const tile=(ic,cls,t,s,acts,off)=>'<div class="ein-tile '+cls+(off?' off':'')+'"><i>'+ic+'</i><b>'+t+'</b><small>'+s+'</small>'+(acts?'<div class="ein-acts">'+acts+'</div>':'')+'</div>';
  const btn=(d,k,t,c)=>'<button type="button" '+(c?'class="'+c+'" ':'')+'data-do="'+d+'" data-k="'+esc(k)+'">'+(c==='look'?'👁 ':'')+t+'</button>';
  function lessonTiles(l){const k=l.k,tt=l.tt[0];
@@ -4466,15 +4466,23 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    +(l.ueb?tile('Ü','t2','Übungen','interaktiv, 3 Stufen',btn('pu',k,'Ansehen','look')+btn('ueb',k,'Start-QR','pri')):'')+'</div>'+lpTiles(l)}
  /* 11.38: Lernpakete (iPad) zur Lektion – Grundlagen, je ein Start-QR und eine Übersicht */
  function lpTiles(l){const us=data.units.filter(u=>u.subject==='latein'&&String(u.lesson)===String(l.k));if(!us.length)return '';const bk=us.some(u=>u.book);
-  return '<h3 class="lp-h">Lernpakete fürs iPad'+GLP+'</h3><p class="ein-sub" style="margin:0 0 8px">Wischen, ziehen, antippen – höchstens zwei Versuche, Abgabe per QR. '+(bk?'Übungen aus dem Buch sind geladen ✓':'Ohne Buchdatei mit eigenen Beispielen · '+btn('load','','Buchdatei laden …'))+'</p><div class="ein-tiles">'+us.map((u,i)=>tile(String.fromCharCode(65+i),'t2',esc(u.title.replace(/^L\d+ · /,'')),'<span class="gl-meta"><span>'+u.gl.n+' Stationen</span><span>ca. '+u.gl.min+' Min.</span></span>'+esc(u.sub.replace(/^Latein · Lektion \d+ · /,''))+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':''):''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Scannen')+btn('ov',u.u,'Übersicht'))).join('')+'</div>'}
+  return '<h3 class="lp-h">Lernpakete fürs iPad'+GLP+'</h3><p class="ein-sub" style="margin:0 0 8px">Wischen, ziehen, antippen – höchstens zwei Versuche, Abgabe per QR. '+(bk?'Übungen aus dem Buch sind geladen ✓ '+btn('air',us.find(u=>u.book).u,'Material per AirDrop','air'):'Ohne Buchdatei mit eigenen Beispielen · '+btn('load','','Buchdatei laden …'))+'</p><div class="ein-tiles">'+us.map((u,i)=>tile(String.fromCharCode(65+i),'t2',esc(u.title.replace(/^L\d+ · /,'')),'<span class="gl-meta"><span>'+u.gl.n+' Stationen</span><span>ca. '+u.gl.min+' Min.</span></span>'+esc(u.sub.replace(/^Latein · Lektion \d+ · /,''))+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':''):''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Scannen')+btn('ov',u.u,'Übersicht'))).join('')+'</div>'}
  function unitTiles(u){return '<div class="ein-tiles">'
    /* 11.37: „Grundlagen“-Einheiten (AFB I) mit Kurzinfo und dem Hinweis auf die Vertiefung in GoodNotes */
-   +tile('L','t2',u.gl?'Grundlagen erarbeiten (iPad)':'Lerneinheit (iPad)',(u.gl?'<span class="gl-meta"><span>AFB I</span><span>'+u.gl.n+' Stationen</span><span>ca. '+u.gl.min+' Min.</span><span>wischen · ziehen · antippen</span></span>':'')+(u.book?'mit Schulbuchmaterial':'ohne Schulbuchmaterial')+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':'')+' gescannt':''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Abgaben scannen')+btn('ov',u.u,'Übersicht'))
+   +tile('L','t2',u.gl?'Grundlagen erarbeiten (iPad)':'Lerneinheit (iPad)',(u.gl?'<span class="gl-meta"><span>AFB I</span><span>'+u.gl.n+' Stationen</span><span>ca. '+u.gl.min+' Min.</span><span>wischen · ziehen · antippen</span></span>':'')+(u.book?'mit Schulbuchmaterial ✓':'ohne Schulbuchmaterial')+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':'')+' gescannt':''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Abgaben scannen')+btn('ov',u.u,'Übersicht')+(u.book?btn('air',u.u,'Material per AirDrop','air'):''))
    +(u.gl?'<div class="ein-tile gl-next"><i>V</i><b>Vertiefen (GoodNotes)</b><small>AFB II/III mit dem Stift – Grundlage ist die PDF „Für meine Unterlagen“, die jeder Schüler am Ende speichert.</small></div>':'')+tile('B','t3','Schulbuchmaterial',u.book?'auf diesem Gerät geladen ✓':'noch nicht geladen (.cmeinheit)',btn('load','',u.book?'Neu laden …':'Datei laden …'))+'</div>'}
  const wire=()=>view.querySelectorAll('[data-do]').forEach(b=>b.onclick=()=>run(b.dataset.do,b.dataset.k,b));
  /* Aktionen */
  const prev=o=>{try{top().classroomPreview(o)}catch(e){alert('Vorschau nicht möglich: '+e.message)}};
  function listHtml(secs,note){return (note?'<p class="cmpv-note">'+esc(note)+'</p>':'')+secs.map(s=>(secs.length>1?'<h3>'+esc(s.name)+'</h3>':'')+'<table>'+s.rows.map(r=>'<tr><td>'+esc(r[0])+'</td><td class="info">'+esc(r[1])+'</td><td><span class="sol">'+esc(r[2])+'</span></td></tr>').join('')+'</table>').join('')}
+ /* 11.42: „Material per AirDrop“ – die Schulbuch-Datei über das Teilen-Menü (AirDrop) an die Schüler-iPads schicken.
+    Die Datei wird beim Anzeigen schon vorbereitet, damit das Teilen-Menü direkt beim Tippen aufgeht (Safari verlangt das). */
+ const AIR={};
+ function prefetchAir(){const b=B();if(!b?.bookFile)return;view.querySelectorAll('[data-do="air"]').forEach(x=>{const k=x.dataset.k;if(AIR[k])return;AIR[k]='…';b.bookFile(k).then(f=>{AIR[k]=f?new File([f.text],f.name,{type:'application/octet-stream'}):null}).catch(()=>{AIR[k]=null})})}
+ function airdrop(k){const f=AIR[k];if(!f||f==='…'){prefetchAir();alert('Die Datei wird noch vorbereitet – bitte gleich noch einmal tippen.');return}
+  const W=top()||window,N=navigator;try{if(N.canShare&&N.canShare({files:[f]})){N.share({files:[f],title:f.name}).catch(()=>{});return}}catch{}
+  /* am Mac ohne Teilen: Datei speichern, dann z. B. per AirDrop im Finder senden */
+  const a=W.document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;W.document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
  async function run(d,k,el){const b=B();if(!b)return;const l=data.lessons.find(x=>x.k===k),u=data.units.find(x=>x.u===k);
   if(d==='lv')return prev({title:'Vokabeln '+l.label,html:listHtml(b.list('main',k),'Lateinisch und Angaben – die Bedeutungen erscheinen mit „mit Lösungen“.'),solutions:true});
   if(d==='lw')return prev({title:'Wiederholung '+l.label,html:listHtml(b.list('wh',k)),solutions:true});
@@ -4483,6 +4491,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   if(d==='pt'){const h=await b.ttHash(k);if(!h)return;return prev({title:'Übersetzungs-Trainer '+lname(l),url:'texttrainer.html?vorschau=1'+h})}
   if(d==='pl')return prev({title:u.title,url:u.file+(u.file.includes('?')?'&':'?')+'vorschau=1'});
   if(d==='load')return loadPkg();
+  if(d==='air')return airdrop(k);
   if(d==='uv'||d==='uw'||d==='ug')return practice(d.slice(1),k,el);
   /* Dialoge des Noten-Managers: kurz zu „Noten“ wechseln, nach dem Schließen zurück */
   const T=top()?.document;const back0=[...(T?.querySelectorAll('[data-view][aria-selected="true"]')||[])][0];
