@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 12.11.2026 · Version 11.30
+Stand: 12.11.2026 · Version 11.31
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1409,3 +1409,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.28: Sitzplan-Leiste mit runden Ansichtsknöpfen (Pillen wie im Noten-Manager); Buchstaben-Chips V·G·Ü·W unter dem Lektionstitel statt Punkten im Seitenmenü.
 11.29: Inhaltsverzeichnis per Paket (privat): Lektionsnamen, Lektionstext, Sachinfo, Kompetenzen unter dem Titel; Suche über diese Themen; Übersetzungs-Trainer-Texte ersetzen auch bei geändertem Titel.
 11.30: Lerneinheiten bewerten: Punkte, Textbewertung, Bewertungszeichen, Notengrenzen/Gewichtung, Übernahme als Test „Digitale Lerneinheit: …“.
+11.31: Lerneinheiten: „Weiter“ zur nächsten Station, Druckseite auch in Vorschau/Web-App, Übernahme mit 0 % Gewicht.

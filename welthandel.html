@@ -28,7 +28,7 @@ input[type=range]{width:100%;margin:14px 0 2px;accent-color:var(--blue);height:3
 .two{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;align-items:start}
 .cols{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}.col{min-height:210px;padding:10px;border:2px dashed #cfd8e6;border-radius:14px;background:#fbfcfe;display:flex;flex-direction:column;gap:6px}.col.tgt{border-color:var(--blue);background:#f1f6fd}.col h3{margin:0 0 4px;font-size:.85rem;color:var(--c);text-transform:uppercase;letter-spacing:.4px}
 .pool{display:flex;flex-wrap:wrap;gap:8px}.chip{min-height:46px;padding:6px 14px;border:1px solid #cfd8e6;border-radius:12px;background:#fff;font-weight:600;font-size:.95rem;text-align:left}.chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}.chip.ok{background:var(--okbg);border-color:#7cc69a;color:var(--ok)}.chip.no{background:var(--badbg);border-color:#f0a982;color:var(--bad)}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}.row .sp{flex:1}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}.nextrow{margin-top:24px;padding-top:14px;border-top:1px solid #dce3ef}.row .sp{flex:1}
 .pri{min-height:48px;padding:0 20px;border:0;border-radius:12px;background:var(--blue);color:#fff;font-weight:650}.pri:disabled{opacity:.4}
 .sec{min-height:48px;padding:0 16px;border:1px solid #b9c6da;border-radius:12px;background:#fff;color:var(--blue)}
 .fb{margin-top:12px;padding:10px 14px;border-radius:12px;font-weight:600}.fb.ok{background:var(--okbg);color:var(--ok)}.fb.no{background:var(--badbg);color:var(--bad)}.fb.info{background:#eef3fa;color:#2f4f7a}
@@ -100,7 +100,11 @@ const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(
 const beep=()=>{};/* keine Töne im Klassenraum */
 const KEY='cm-welthandel-v1';let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch{}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ST))}catch{}try{updWho()}catch{}};
-function frame(title,inner){app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+esc(title)+'</b></div>'+inner;app.querySelector('[data-home]').onclick=home;scrollTo(0,0)}
+/* 11.31: unten „Weiter: nächste Station ›“ – nach dem Abschluss direkt weiter, ohne zurück zur Übersicht */
+let CURK=null;function goStep(k){const L=STEPS,x=L.find(y=>y[0]===k);if(!x)return home();CURK=k;x[3]()}
+function frame(title,inner){const L=STEPS,i=CURK?L.findIndex(x=>x[0]===CURK):-1,nx=i>=0?L[i+1]:null,done=CURK&&ST[CURK];
+ app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+esc(title)+'</b></div>'+inner+(i>=0?'<div class="row nextrow"><button class="sec" data-home2>‹ Übersicht</button><div class="sp"></div>'+(nx?'<button class="'+(done?'pri':'sec')+'" data-nextst>Weiter: '+esc(nx[1])+' ›</button>':'')+'</div>':'');
+ app.querySelector('[data-home]').onclick=home;const h2=app.querySelector('[data-home2]');if(h2)h2.onclick=home;const n=app.querySelector('[data-nextst]');if(n)n.onclick=()=>goStep(nx[0]);scrollTo(0,0)}
 const fb=(ok,txt)=>'<div class="fb '+(ok?'ok':'no')+'">'+txt+'</div>';
 const fmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 
@@ -264,6 +268,12 @@ function runPol(){let pick=null,mk=null,term=null;const pl=ST.polP||{};const ord
   wireTerms(k=>{term=term===k?null:k;draw()});wireWrite()};draw()}
 
 /* ---------- 9 Urkunde / Unterlagen ---------- */
+/* 11.31: „Für meine Unterlagen sichern“ – im eingebetteten Fenster (Vorschau am Mac) oder als Web-App klappt print() nicht: dann eigenes Fenster mit der Druckseite */
+function doPrint(){let inFrame=false;try{inFrame=window.top!==window}catch{inFrame=true}const app=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+ if(!inFrame&&!app){try{print();return}catch{}}
+ const w=window.open('','_blank');if(!w){alert('Bitte Pop-ups erlauben – oder die Seite direkt in Safari öffnen und noch einmal tippen.');return}
+ const css=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n');
+ w.document.write('<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(document.title)+'</title><style>'+css+'</style><style>#printBox{display:block!important;font:11pt/1.45 -apple-system,Inter,sans-serif;color:#000;padding:14mm;max-width:900px;margin:0 auto;background:#fff}body{background:#fff}</style></head><body><div id="printBox">'+$('#printBox').innerHTML+'</div><scr'+'ipt>setTimeout(function(){print()},400)</scr'+'ipt></body></html>');w.document.close()}
 function runEnd(){frame('Meine Ergebnisse','<div class="card"><h2>Rückblick</h2>'+(ST.verm?'<div class="muted" style="font-size:.9rem">Deine Vermutung am Anfang:</div><div class="verm">'+esc(ST.verm)+'</div>':'')+'<b>Was weißt du jetzt? Wer profitiert vom Welthandel – und wer nicht?</b><textarea id="rb" placeholder="Jetzt weiß ich, dass …">'+esc(ST.rueck||'')+'</textarea></div>'
  +'<div class="card"><div class="row" style="margin-top:0"><input id="nm" placeholder="Dein Name" value="'+esc(ST.name||ST.me||'')+'" style="min-height:48px;padding:0 12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;flex:1;min-width:200px"><button class="pri" data-pdf>Für meine Unterlagen sichern</button></div><p class="muted" style="font-size:.9rem">Am iPad: im Druckfenster auf <b>Teilen</b> tippen und GoodNotes, Notability oder „In Dateien sichern“ wählen.</p></div>');
  $('#rb').oninput=e=>{ST.rueck=e.target.value;save()};$('#nm').oninput=e=>{ST.name=e.target.value;save()};
@@ -276,16 +286,16 @@ function runEnd(){frame('Meine Ergebnisse','<div class="card"><h2>Rückblick</h2
    +(w.e1||w.e2||w.e3||w.e4?'<h2>Aufgabe 4: Meine Erörterung</h2>'+['e1','e2','e3','e4'].map(k=>w[k]?'<p>'+esc(w[k]).replace(/\n/g,'<br>')+'</p>':'').join(''):'')
    +blk('Aufgabe 5: Meine Position',w.a5)+(ST.verm||ST.rueck?'<h2>Meine Vermutung – und was ich jetzt weiß</h2>'+(ST.verm?'<p><b>Vermutung:</b> '+esc(ST.verm)+'</p>':'')+(ST.rueck?'<p><b>Jetzt weiß ich:</b> '+esc(ST.rueck)+'</p>':''):'')
    +'<h2>Fachbegriffe</h2><table>'+Object.entries(GLOSS).map(([k,v])=>'<tr><th style="text-align:left;width:26%">'+k+'</th><td>'+esc(v)+'</td></tr>').join('')+'</table>'
-   +'<div class="urk"><b>Ergebnisse</b> · Grundwissen '+r('wis')+' · Diagramm '+r('dia')+' · Exportländer '+r('exp')+' · Handelsströme '+r('str')+' · Bündnisse '+r('bue')+' · Chancen/Risiken '+r('cr')+' · Politik '+r('pol')+'</div>';print()}}
+   +'<div class="urk"><b>Ergebnisse</b> · Grundwissen '+r('wis')+' · Diagramm '+r('dia')+' · Exportländer '+r('exp')+' · Handelsströme '+r('str')+' · Bündnisse '+r('bue')+' · Chancen/Risiken '+r('cr')+' · Politik '+r('pol')+'</div>';doPrint()}}
 
 /* ---------- Startseite ---------- */
 const STEPS=[['ein','Einstieg','Die Reise eines Smartphones · deine Vermutung',runEin],['wis','Grundwissen','Was wird gehandelt? Fachbegriffe',runWis],['dia','Diagramm lesen','Welthandel und Produktion seit 1950 (Aufgabe 1)',runDia],['exp','Exportländer','Die Top 10 den Regionen zuordnen (Aufgabe 2A)',runExp],['str','Handelsströme','Wer handelt mit wem? (Aufgabe 2B)',runStr],['bue','Wirtschaftsbündnisse','EU, ASEAN & Co. vergleichen (Aufgabe 3A)',runBue],['cr','Chancen und Risiken','Sortieren und erörtern (Aufgabe 4)',runCr],['pol','Politik und Handel','Instrumente und Diskussion (Aufgabe 5)',runPol],['end','Meine Ergebnisse','Rückblick und PDF',runEnd]];
-function home(){const st=k=>ST[k]?'<span class="st done">'+(ST[k].p!=null?ST[k].p+'/'+ST[k].t:'✓')+'</span>':'<span class="st">'+(k==='end'?'':'offen')+'</span>';
+function home(){CURK=null;const st=k=>ST[k]?'<span class="st done">'+(ST[k].p!=null?ST[k].p+'/'+ST[k].t:'✓')+'</span>':'<span class="st">'+(k==='end'?'':'offen')+'</span>';
  const startK=!ST.ein?'ein':!ST.wis?'wis':null;
  app.innerHTML='<div class="card hero"><div><div class="muted">Erdkunde · Klasse 9 · Globale Verflechtungen</div><h1>Welche Rolle spielt der Handel?</h1><p>Rohstoffe, Autos, Smartphones, Software, Patente: Täglich wird weltweit gehandelt. Doch die Handelsströme sind ungleich verteilt – und der Welthandel hat Chancen und Risiken.</p><span class="badge">⭐ '+STEPS.filter(x=>ST[x[0]]).length+' von '+STEPS.length+' Stationen</span></div><div>'+chartSvg(null)+'</div></div>'
   +'<div class="steps">'+STEPS.map(([k,t,d],i)=>'<button class="step'+(k===startK?' start':'')+'" data-s="'+k+'"><span class="n">'+(i+1)+'</span><span><b>'+t+'</b>'+(k===startK?'<span class="go">Starte hier</span>':'')+'<small>'+d+'</small></span>'+st(k)+'</button>').join('')+'</div>'
   +(BOOK?'<div class="bksrc">📘 Schulbuch-Material geladen: '+esc(BOOK.source)+' · <button class="lnk" data-drop>Vom Gerät entfernen</button></div>':'<div class="bkload"><span>📘 Mit den Materialien aus dem Schulbuch arbeiten (Karte M4, Interview M3, Tabelle M6, Lösungsvorschläge)? Lade die Datei von deiner Lehrkraft (z. B. per AirDrop).</span><button class="sec" data-load>Schulbuch-Datei laden …</button></div>');
- app.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>STEPS.find(x=>x[0]===b.dataset.s)[3]());const L=app.querySelector('[data-load]');if(L)L.onclick=bookPick;const D=app.querySelector('[data-drop]');if(D)D.onclick=bookDrop;scrollTo(0,0)}
+ app.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>goStep(b.dataset.s));const L=app.querySelector('[data-load]');if(L)L.onclick=bookPick;const D=app.querySelector('[data-drop]');if(D)D.onclick=bookDrop;scrollTo(0,0)}
 
 /* ---------- Abgabe-QR (wie „Städte im Wandel“) ---------- */
 ST.dv??=Math.random().toString(36).slice(2,10);

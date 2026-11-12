@@ -4638,16 +4638,19 @@ html.fs-view .fs-hide{display:none!important}
  function leToNotes(u,list,RT,sel){const U=UNITS[u],R=leAll()[leId(u)]||{};
   dlg.innerHTML='<form method="dialog" class="vt-mid"><h2>'+esc(U.title)+' · in die Noten übernehmen</h2><p class="vt-sub">'+esc(leCls())+' · '+list.length+' Bewertung'+(list.length===1?'':'en')+(R.done?' · <b>wurde schon einmal übernommen</b>':'')+'</p>'
    +'<label class="le-f">Name <input data-ln value="'+esc('Digitale Lerneinheit: '+U.title)+'"></label><label class="le-f">Datum <input type="date" data-ld value="'+today()+'"></label>'
-   +'<p class="vt-sub">Es entsteht ein Test im gerade gewählten Quartal – wie beim iPad-Vokabeltest – mit deinen Notengrenzen. Zählt in „Tests“ der Sonstigen Mitarbeit.</p>'
+   +'<label class="le-f" style="justify-content:flex-start"><input type="checkbox" data-lz checked style="flex:none;width:20px;height:20px"> Zählt vorerst nicht (Gewicht 0 %)</label>'
+   +'<p class="vt-sub">Es entsteht ein Test im gerade gewählten Quartal – wie beim iPad-Vokabeltest – mit deinen Notengrenzen. Er steht bei den „Tests“ der Sonstigen Mitarbeit; mit 0 % ist er nur zur Information da. Das Gewicht kannst du dort jederzeit ändern.</p>'
    +'<div class="dialog-actions"><span style="flex:1"></span><button type="button" data-x>Abbrechen</button><button type="submit" class="primary">Übernehmen</button></div></form>';
   dlg.querySelector('[data-x]').onclick=()=>leOverview(u,sel);
   dlg.querySelector('form').onsubmit=e=>{e.preventDefault();const label=dlg.querySelector('[data-ln]').value.trim()||'Digitale Lerneinheit: '+U.title,date=dlg.querySelector('[data-ld]').value;
    /* Punktwert: berechneter Anteil; bei selbst gesetztem Zeichen die Untergrenze dieses Zeichens */
    const val=x=>{if(!x.m.auto)return x.m.i>=6?Math.max(0,(RT[5]||50)-10):RT[x.m.i];return Math.floor(x.m.sc.comb+1e-9)};
    const scores=new Map(list.map(x=>[x.name,val(x)]));
+   const zero=dlg.querySelector('[data-lz]')?.checked;let lone=false;
    window.classroomCreateRawTest({label,system:'participation',init(task,data){if(date)task.date=date;const c=task.testDetail;Object.assign(c,{total:100,pass:50,halfPoints:false,useSubject:false,manual:true,manualRatios:{...RT},tendencies:false,source:'lerneinheit'});
+    /* 11.31: zählt vorerst nicht (0 %) – die übrigen Tests teilen sich die Gewichtung */if(zero){task.weight=0;task.weightEdited=true;if(!data.tasks.some(x=>x!==task&&!x.weightEdited)){const ed=data.tasks.filter(x=>x!==task&&x.weightEdited);if(ed.length){const sum=ed.reduce((a,x)=>a+Number(x.weight||0),0);if(Math.abs(sum-100)>.05)ed.forEach(x=>x.weight=sum>0?Math.round(Number(x.weight||0)/sum*1000)/10:Math.round(1000/ed.length)/10)}else{task.weight=100;task.weightEdited=false;lone=true}}}
     for(const st of data.students||[]){const n=String(st.name||'').trim();if(scores.has(n)){st.rawScores??={};st.rawScores[task.id]=String(scores.get(n))}}}});
-   const b=leAll();if(b[leId(u)])b[leId(u)].done=Date.now();leSave(b);dlg.close()};
+   const b=leAll();if(b[leId(u)])b[leId(u)].done=Date.now();leSave(b);dlg.close();if(lone)alert('Hinweis: In diesem Quartal gibt es noch keinen anderen Test. Ein einzelner Test kann nicht mit 0 % zählen – stelle das Gewicht im Noten-Manager um, sobald weitere Tests dazukommen.')};
   if(!dlg.open)dlg.showModal()}
  function leOverview(u,sel){const U=UNITS[u],names=leNames(),R=leAll()[leId(u)]||{subs:{}},subs=R.subs,absent=new Set(vtAbsentNames({subject:currentSubject,classId:currentClassId}).map(a=>matchName(a,names.map(x=>x.full))||a));
   const SV=Object.values(subs),cols0=[...U.cols,...U.book],want=U.modes?new Set(U.modes[SV.some(x=>x.b)?'b':'n']):null,cols=cols0.filter(([k])=>!want||want.has(k)||SV.some(x=>x.s&&x.s[k]!=null));
