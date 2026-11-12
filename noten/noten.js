@@ -4551,8 +4551,8 @@ html.fs-view .fs-hide{display:none!important}
  /* ---------- 11.16: Lerneinheiten (iPad) – Start-QR mit Vornamen der Klasse, Abgabe-QR scannen, Übersicht ---------- */
  const LE_KEY='classroom-lerneinheiten-v1';
  const UNITS={'bs-stadt':{title:'Städte im Wandel',sub:'Erdkunde · Stadtentwicklung am Beispiel Braunschweig',file:'stadtentwicklung.html',
-  cols:[['ein','Einstieg'],['info','Phasen'],['zeit','Zeitreise'],['sort','Detektiv'],['find','Karte'],['quiz','Warum?'],['line','Zeitstrahl'],['end','Urkunde']],
-  book:[['bz','Karten'],['bf','Aufg. 1'],['bfe_all','Aufg. 2A'],['bp','Aufg. 2B'],['bs','Ausschnitt']],
+  cols:[['ein','Einstieg'],['info','Phasen'],['mod','Modelle'],['zeit','Zeitreise'],['sort','Detektiv'],['find','Karte'],['quiz','Warum?'],['line','Zeitstrahl'],['end','Urkunde']],
+  book:[['bz','Karten'],['bf','Aufg. 1'],['bb','Profi'],['bfe_all','Aufg. 2A'],['bp','Aufg. 2B'],['bs','Ausschnitt']],
   qs:['Was liegt im Zentrum der mittelalterlichen Stadt?','Warum sternförmige Festungen?','Warum lagen Fabriken im Osten?','Was bedeutet Suburbanisierung?']}};
  const leAll=()=>{try{return JSON.parse(localStorage.getItem(LE_KEY)||'{}')||{}}catch{return {}}};
  const leSave=a=>{try{localStorage.setItem(LE_KEY,JSON.stringify(a))}catch(e){alert('Speichern nicht möglich: '+e.message)}};
@@ -8559,6 +8559,19 @@ return}
  +'.qsl-scroll{position:relative;flex:1;overflow-y:auto;padding:0 12px 40vh;-webkit-overflow-scrolling:touch}'
  +'.qsl-sec{padding:6px 0 12px;border-bottom:1px dashed #dce3ef;cursor:pointer}.qsl-sec h4{position:sticky;top:0;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 -12px 4px;padding:6px 12px;background:#fff;font-size:15px}'
  +'.qsl-row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px}.qsl-l{width:118px;flex:none;color:#66758a}.qsl-c{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.qsl-x{color:#b42318;font-weight:700;letter-spacing:1px}.qsl-dash{color:#8794a7}.qsl-qs{display:inline-block;flex:none;width:5px;height:5px;border-radius:50%;background:#9aa8bd;margin:0 8px}'+'.qsl-m{display:inline-flex!important;align-items:center;justify-content:center;min-width:28px;height:22px;padding:0 5px;border-radius:6px;font-style:normal;font-weight:800;font-size:12px;box-sizing:border-box}.qsl-note{margin:0 0 4px;padding:4px 8px;border-radius:8px;background:#fff8dc;color:#6b5a1e;font-size:12px}';document.head.append(st)})();
+/* 11.17: iPhone hochkant – „Noten“ wie Unterricht, Stundenplan und Hilfe als Fenster mit abgerundetem Rand oben und unten.
+   Die Seite scrollt weiter normal; oben und unten liegt je ein fester Kartenrand (6 px Abstand), unter dem der Inhalt verschwindet. */
+(()=>{const onPhone=()=>{try{return parent!==window&&parent.document.documentElement.classList.contains('is-phone')&&matchMedia('(orientation:portrait)').matches}catch{return false}};
+ const top=document.createElement('div'),bot=document.createElement('div');top.className='ph-cap ph-cap-t';bot.className='ph-cap ph-cap-b';top.innerHTML=bot.innerHTML='<i></i>';
+ const st=document.createElement('style');st.textContent='.ph-cap{position:fixed;left:0;right:0;height:26px;z-index:40;pointer-events:none;display:none}.ph-cap i{position:absolute;left:6px;right:6px;height:20px;box-sizing:border-box}'
+  +'html.ph-capped main{padding-bottom:6px!important}.ph-cap-t{top:0}.ph-cap-t i{top:6px;border-bottom:0!important;border-radius:20px 20px 0 0}.ph-cap-b{bottom:0}.ph-cap-b i{bottom:6px;border-top:0!important;border-radius:0 0 20px 20px}';
+ document.head.append(st);
+ let panel=null;const sync=()=>{const on=onPhone();panel=on?[...document.querySelectorAll('section.panel')].find(s=>s.offsetHeight>0):null;
+  document.documentElement.classList.toggle('ph-capped',!!panel);if(!panel||panel.getBoundingClientRect().height<innerHeight-12){top.style.display=bot.style.display='none';return}
+  const cs=getComputedStyle(panel),bg=getComputedStyle(document.body).backgroundColor;
+  for(const c of [top,bot]){if(!c.isConnected)document.body.append(c);c.style.background=bg;const i=c.firstChild;i.style.background=cs.backgroundColor;i.style.border=cs.borderTopWidth+' '+cs.borderTopStyle+' '+cs.borderTopColor}
+  const r=panel.getBoundingClientRect();top.style.display=r.top<6?'block':'none';bot.style.display=r.bottom>innerHeight-6?'block':'none'};
+ addEventListener('scroll',sync,{passive:true});addEventListener('resize',sync);document.addEventListener('click',()=>setTimeout(sync,350),true);try{parent.addEventListener('click',()=>setTimeout(sync,350),true)}catch{}setTimeout(sync,600);setTimeout(sync,2000);sync()})();
 ;
 
 /* ==== noten/mean-guard.js ==== */
