@@ -71,10 +71,13 @@ $('#file').onchange=async()=>{const f=$('#file').files?.[0];if(!f)return;try{con
 const words=si=>T.s[si].t.split(' ');
 function textHtml(cls){return T.s.map((s,si)=>words(si).map((w,i)=>'<span class="w '+(cls?cls(si,i)||'':'')+'" data-s="'+si+'" data-i="'+i+'">'+esc(w)+'</span>').join(' ')).join(' ')}
 /* ---------- Kopf und Reiter ---------- */
-const TABS=[['pp','Passiv-Jäger'],['ev','Zeitstrahl'],['pr','Wer ist gemeint?'],['tr','Übersetzen'],['res','Auswertung']];
+/* 11.20: Formen-Jäger je Lektion (T.hunt), Tabs ohne Daten entfallen */
+const HU=()=>Object.assign({name:'Passiv-Jäger',task:'Tippe alle Formen im <b>Perfekt</b> und <b>Plusquamperfekt Passiv</b> an (PPP + Form von esse).',hint:'Nicht jede Form auf -erat oder -ērunt ist Passiv; ein Infinitiv wie „positam esse“ zählt hier nicht.',short:'Passivformen',legend:'Perfekt und Plusquamperfekt Passiv'},T&&T.hunt||{});
+const TABS0=[['pp',''],['ev','Zeitstrahl'],['pr','Wer ist gemeint?'],['tr','Übersetzen'],['res','Auswertung']];
+const tabsOf=()=>TABS0.filter(([k])=>k==='pp'?(T.pp||[]).length:k==='ev'?(T.ev||[]).length:k==='pr'?(T.pron||[]).length:true).map(([k,l])=>[k,k==='pp'?HU().name:l]);
 function badge(k){if(k==='pp')return (ST.pp.length)+'/'+T.pp.length;if(k==='ev')return ST.evOk?'✓':'';if(k==='pr')return Object.keys(ST.pr).length+'/'+T.pron.length;if(k==='tr')return Object.values(ST.sent).filter(x=>x.r!=null).length+'/'+T.s.length;return ''}
 function badgeOk(k){if(k==='pp')return ST.pp.length===T.pp.length;if(k==='ev')return !!ST.evOk;if(k==='pr')return Object.keys(ST.pr).length===T.pron.length;if(k==='tr')return Object.values(ST.sent).filter(x=>x.r!=null).length===T.s.length;return false}
-function render(){closePop();app.innerHTML='<h1>'+esc(T.title)+'</h1><div class="muted">'+esc(T.sub||'')+'</div><div class="tabs">'+TABS.map(([k,l])=>'<button data-tab="'+k+'" class="'+(k===tab?'on':'')+'">'+l+(badge(k)?'<i class="'+(badgeOk(k)?'ok':'')+'">'+badge(k)+'</i>':'')+'</button>').join('')+'</div><div id="body"></div>';
+function render(){closePop();{const av=tabsOf().map(x=>x[0]);if(!av.includes(tab)){const ord=TABS0.map(x=>x[0]);tab=ord.slice(ord.indexOf(tab)).find(k=>av.includes(k))||av[0]}}app.innerHTML='<h1>'+esc(T.title)+'</h1><div class="muted">'+esc(T.sub||'')+'</div><div class="tabs">'+tabsOf().map(([k,l])=>'<button data-tab="'+k+'" class="'+(k===tab?'on':'')+'">'+l+(badge(k)?'<i class="'+(badgeOk(k)?'ok':'')+'">'+badge(k)+'</i>':'')+'</button>').join('')+'</div><div id="body"></div>';
  app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render();scrollTo(0,0)});({pp:renderPP,ev:renderEV,pr:renderPR,tr:renderTR,res:renderRes})[tab]($('#body'))}
 const refreshTabs=()=>app.querySelectorAll('[data-tab]').forEach(b=>{const k=b.dataset.tab,v=badge(k);let i=b.querySelector('i');if(v){if(!i){i=document.createElement('i');b.append(i)}i.textContent=v;i.className=badgeOk(k)?'ok':''}});
 /* ---------- 1 Passiv-Jäger ---------- */
@@ -84,7 +87,7 @@ function renderPP(b){const found=new Set(ST.pp),max=T.pp.length*2;if(ST.ppTaps==
  const left=()=>Math.max(0,max-ST.ppTaps),over=()=>ST.ppDone||left()<=0&&found.size<T.pp.length;
  const cls=(si,i)=>{const k=ppIdx(si,i);if(k>=0&&found.has(k))return 'f';if(k>=0&&over())return 'miss';return ''};
  const status=()=>found.size===T.pp.length?'<div class="fb ok">✓ Alle '+T.pp.length+' Formen gefunden – mit '+ST.ppTaps+' von '+max+' Versuchen.</div>':over()?'<div class="fb no">Keine Versuche mehr. '+found.size+' von '+T.pp.length+' gefunden – die fehlenden sind jetzt orange unterstrichen.</div>':'';
- b.innerHTML='<div class="card"><p class="task">Tippe alle Formen im <b>Perfekt</b> und <b>Plusquamperfekt Passiv</b> an (PPP + Form von esse). Gefunden: <span class="cnt" id="ppc">'+found.size+' von '+T.pp.length+'</span> · Versuche übrig: <span class="cnt" id="ppl">'+left()+' von '+max+'</span></p><div class="hint">Jedes Antippen kostet einen Versuch – überlege vorher. Nicht jede Form auf -erat oder -ērunt ist Passiv; ein Infinitiv wie „positam esse“ zählt hier nicht.</div></div><div class="card text" id="tx">'+textHtml(cls)+'</div><div id="fb">'+status()+'</div>';
+ b.innerHTML='<div class="card"><p class="task">'+HU().task+' Gefunden: <span class="cnt" id="ppc">'+found.size+' von '+T.pp.length+'</span> · Versuche übrig: <span class="cnt" id="ppl">'+left()+' von '+max+'</span></p><div class="hint">Jedes Antippen kostet einen Versuch – überlege vorher. '+HU().hint+'</div></div><div class="card text" id="tx">'+textHtml(cls)+'</div><div id="fb">'+status()+'</div>';
  b.querySelector('#tx').onclick=e=>{const w=e.target.closest('.w');if(!w||over()||found.size===T.pp.length)return;const si=+w.dataset.s,i=+w.dataset.i,k=ppIdx(si,i);if(k>=0&&found.has(k))return;
   ST.ppTaps++;
   if(k>=0){found.add(k);ST.pp=[...found];for(const j of T.pp[k][1])b.querySelector('.w[data-s="'+si+'"][data-i="'+j+'"]').className='w f';beep(true)}
@@ -174,12 +177,12 @@ addEventListener('pointerdown',e=>{if(popEl&&!popEl.contains(e.target)&&!e.targe
 function renderRes(b){const sents=T.s.map((_,i)=>ST.sent[i]||{});const rated=sents.filter(x=>x.r!=null);const prOk=T.pron.filter((p,k)=>ST.pr[k]===p[2]).length;
  const lab={2:'✓ passt',1:'≈ teilweise',0:'✗ noch nicht'};const talk=sents.map((x,i)=>({x,i})).filter(({x})=>x.r===0||x.r===1||(x.h||0)>=3);
  b.innerHTML='<div class="card"><p class="task"><b>Deine Auswertung</b></p><table><tr><th>Übung</th><th>Ergebnis</th></tr>'
-  +'<tr><td>Passiv-Jäger</td><td>'+ST.pp.length+' von '+T.pp.length+' gefunden · '+(ST.ppTaps||0)+' Versuche'+(ST.ppMiss?' · '+ST.ppMiss+' Fehlgriffe':'')+'</td></tr>'
+  +'<tr><td>'+HU().name+'</td><td>'+ST.pp.length+' von '+T.pp.length+' gefunden · '+(ST.ppTaps||0)+' Versuche'+(ST.ppMiss?' · '+ST.ppMiss+' Fehlgriffe':'')+'</td></tr>'
   +'<tr><td>Zeitstrahl</td><td>'+(ST.evFirst==null?'noch offen':'im ersten Versuch '+ST.evFirst+' von '+T.ev.length+' richtig'+(ST.evOk?' · gelöst':''))+'</td></tr>'
   +'<tr><td>Wer ist gemeint?</td><td>'+prOk+' von '+T.pron.length+' richtig</td></tr>'
   +'<tr><td>Übersetzen</td><td>'+rated.length+' von '+T.s.length+' Sätzen · '+rated.filter(x=>x.r===2).length+' passen · '+sents.reduce((a,x)=>a+(x.h||0),0)+' Hilfen · '+sents.reduce((a,x)=>a+(x.look||0),0)+' Wörter nachgeschlagen</td></tr></table></div>'
   +(talk.length?'<div class="card"><p class="task"><b>Diese Sätze solltest du dir noch einmal ansehen</b></p>'+talk.map(({x,i})=>'<div style="margin:6px 0"><button class="sec" data-go="'+i+'">Satz '+(i+1)+'</button> <span class="muted">'+(x.r!=null?lab[x.r]:'')+((x.h||0)>=3?' · viele Hilfen':'')+'</span></div>').join('')+'</div>':'')
-  +'<div class="card"><p class="task"><b>Für meine Unterlagen</b></p><div class="hint" style="margin-bottom:10px">Erstellt eine Seite mit dem Text, den Passivformen, dem Zeitstrahl, deinen Übersetzungen neben der Musterübersetzung und deinen nachgeschlagenen Wörtern. Am iPad: im Druckfenster auf <b>Teilen</b> tippen und GoodNotes, Notability oder „In Dateien sichern“ wählen.</div><div class="row" style="margin-top:0"><input id="pn" placeholder="Dein Name (optional)" style="min-height:48px;padding:0 12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;flex:1;min-width:200px"><button class="pri" data-pdf>Für meine Unterlagen sichern</button></div></div>'
+  +'<div class="card"><p class="task"><b>Für meine Unterlagen</b></p><div class="hint" style="margin-bottom:10px">Erstellt eine Seite mit dem Text, den '+HU().short+', dem Zeitstrahl, deinen Übersetzungen neben der Musterübersetzung und deinen nachgeschlagenen Wörtern. Am iPad: im Druckfenster auf <b>Teilen</b> tippen und GoodNotes, Notability oder „In Dateien sichern“ wählen.</div><div class="row" style="margin-top:0"><input id="pn" placeholder="Dein Name (optional)" style="min-height:48px;padding:0 12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;flex:1;min-width:200px"><button class="pri" data-pdf>Für meine Unterlagen sichern</button></div></div>'
   +'<div class="row"><button class="lnk" data-reset>Alles zurücksetzen</button></div>';
  b.querySelectorAll('[data-go]').forEach(x=>x.onclick=()=>{cur=+x.dataset.go;tab='tr';render()});
  const pn=b.querySelector('#pn');pn.value=ls.get('cm-texttrainer-name')||'';b.querySelector('[data-pdf]').onclick=()=>{ls.set('cm-texttrainer-name',pn.value.trim());printNotes(pn.value.trim())};
@@ -191,7 +194,7 @@ function printNotes(name){let box=document.getElementById('printNotes');if(!box)
  const sent=T.s.map((s,si)=>{const x=ST.sent[si]||{};return '<div class="pn-s"><div class="pn-la"><b>'+(si+1)+'</b> '+esc(s.t)+'</div><div class="pn-row"><span>Meine Übersetzung</span><div>'+(x.tx?.trim()?esc(x.tx):'<i>—</i>')+'</div></div><div class="pn-row pn-m"><span>Musterübersetzung</span><div>'+esc(s.de)+'</div></div></div>'}).join('');
  const vocab=[];T.s.forEach((s,si)=>{for(const i of (ST.sent[si]?.lk||[])){const g=s.w[i];if(g&&!vocab.some(v=>v[0]===g[0]))vocab.push(g)}});
  box.innerHTML='<div class="pn-h"><div><h1>'+esc(T.title)+'</h1><div>'+esc(T.sub||'')+'</div></div><div class="pn-n">'+(name?esc(name)+'<br>':'Name: ____________________<br>')+new Date().toLocaleDateString('de-DE')+'</div></div>'
-  +'<h2>Text</h2><p class="pn-t">'+text+'</p><p class="pn-k">Unterstrichen: Perfekt und Plusquamperfekt Passiv</p>'
+  +'<h2>Text</h2><p class="pn-t">'+text+'</p><p class="pn-k">Unterstrichen: '+HU().legend+'</p>'
   +'<h2>Was geschah nacheinander?</h2><ol>'+T.ev.map(e=>'<li>'+esc(e)+'</li>').join('')+'</ol>'
   +'<h2>Übersetzung</h2>'+sent
   +(vocab.length?'<h2>Meine Wörter zum Lernen</h2><table>'+vocab.map(v=>'<tr><td><b>'+esc(v[0])+'</b></td><td>'+esc(v[1])+'</td></tr>').join('')+'</table>':'');
