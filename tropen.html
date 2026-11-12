@@ -196,7 +196,7 @@ function swiper(k,o){if(SOLV&&!ST[k])solveW('swiper',k,o);const A=ST[k+'A']??=[]
   else if(cur!=null)deck='<div class="deck">'+(n+1<N?'<div class="scard under"></div>':'')+'<div class="scard" id="sc"><span class="tag l">'+esc(o.l)+'</span><span class="tag r">'+esc(o.r)+'</span>'+esc(o.cards[cur][0])+'</div></div><div class="swb"><button class="l" data-a="0">← '+esc(o.l)+'</button><button class="r" data-a="1">'+esc(o.r)+' →</button></div>';
   else deck=fb(ST[k].p===N,(ST[k].p===N?'⭐ ':'')+ST[k].p+' von '+N+' richtig.'+(o.done?' '+o.done:''))+'<ul class="sumli">'+ord.map((i,j)=>{const c=o.cards[i],ok=A[j]===c[1];return '<li class="'+(ok?'ok':'no')+'"><i>'+(ok?'✓':'✗')+'</i><span><b>'+esc(c[1]?o.r:o.l)+':</b> '+esc(c[0])+'</span></li>'}).join('')+'</ul>';
   const bf=typeof o.before==='function'?o.before():o.before||'',main='<div class="card"><h2>'+o.h+'</h2><div class="prog"><span>'+o.task+'</span><span class="sp" style="flex:1"></span><span>'+Math.min(n+(show==null&&n<N?1:0),N)+' von '+N+'</span></div>'+deck+'</div>';
-  frame(o.title,(bf?'<div class="two sw2"><div>'+bf+'</div><div>'+main+'</div></div>':main)+(o.after||''));
+  frame(o.title,(o.top?o.top()+main:bf?'<div class="two sw2"><div>'+bf+'</div><div>'+main+'</div></div>':main)+(o.after||''));
   const ans=v=>{const c=o.cards[cur];A.push(!!v);show=cur;if(A.length===N)fin(k,ord.filter((i,j)=>A[j]===o.cards[i][1]).length,N,ord.filter((i,j)=>A[j]!==o.cards[i][1]));else save();draw()};
   app.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>ans(b.dataset.a==='1'));
   const nx=app.querySelector('[data-nx]');if(nx)nx.onclick=()=>{show=null;draw()};
