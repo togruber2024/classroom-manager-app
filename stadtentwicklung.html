@@ -81,7 +81,7 @@ body.has-who .wrap{padding-top:58px}
 @media (max-width:820px){.hero,.two{grid-template-columns:1fr}.cols{grid-template-columns:repeat(2,1fr)}}
 @media print{@page{margin:14mm}body{background:#fff;padding:0}.wrap{display:none}#printBox{display:block;font:11pt/1.45 -apple-system,Inter,sans-serif;color:#000}#printBox h1{font-size:18pt;margin:0 0 4px}#printBox h2{font-size:12.5pt;color:#2f5f9b;border-bottom:1px solid #c9d3e3;margin:14px 0 6px}#printBox .map{max-width:520px}#printBox table{border-collapse:collapse;width:100%}#printBox td,#printBox th{border:1px solid #c9d3e3;padding:4px 6px;font-size:10pt;vertical-align:top}.urk{border:2px solid #2f5f9b;border-radius:10px;padding:10px 14px;margin-top:12px}}
 </style></head><body><button type="button" id="who" hidden aria-label="Abgabe-QR zeigen"></button><div class="wrap" id="app"></div><div id="printBox"></div>
-<script src="qr-code.js"></script>
+<script src="qr-code.js"></script><script src="unit-pdf.js"></script>
 <script>
 'use strict';
 const $=s=>document.querySelector(s),app=$('#app');
@@ -348,19 +348,34 @@ function doPrint(){let inFrame=false;try{inFrame=window.top!==window}catch{inFra
  w.document.write('<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(document.title)+'</title><style>'+css+'</style><style>#printBox{display:block!important;font:11pt/1.45 -apple-system,Inter,sans-serif;color:#000;padding:14mm;max-width:900px;margin:0 auto;background:#fff}body{background:#fff}</style></head><body><div id="printBox">'+$('#printBox').innerHTML+'</div><scr'+'ipt>setTimeout(function(){print()},400)</scr'+'ipt></body></html>');w.document.close()}
 function runEnd(){frame('Meine Stadtforscher-Urkunde','<div class="card"><h2>Rückblick</h2>'+(ST.verm?'<div class="muted" style="font-size:.9rem">Deine Vermutung am Anfang:</div><div class="verm">'+esc(ST.verm).replace(/\n/g,'<br>')+'</div>':'')+'<b>Was weißt du jetzt? Stimmte deine Vermutung?</b><textarea id="rb" placeholder="Jetzt weiß ich, dass …">'+esc(ST.rueck||'')+'</textarea></div><div class="card"><h2>Spurensuche in deiner eigenen Stadt</h2><p class="muted" style="margin-top:0">Welche Spuren der vier Zeitabschnitte findest du in deinem Wohnort oder deiner Schulstadt? (z. B. Straßennamen wie „Wallstraße“, ein Stadttor, alte Fabrikgebäude, eine Fußgängerzone)</p><textarea id="own" placeholder="Meine Spuren …">'+esc(ST.own||'')+'</textarea>'
  +(BOOK?'<h2 style="margin-top:16px">Aufgabe 3 · Satellitenbild</h2><p class="muted" style="margin-top:0">'+esc(BOOK.tasks[2])+'</p><textarea id="sat" placeholder="Im Satellitenbild erkenne ich … (Phase) …">'+esc(ST.sat||'')+'</textarea>':'')
- +'<div class="row"><input id="nm" placeholder="Dein Name" value="'+esc(ST.name||'')+'" style="min-height:48px;padding:0 12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;flex:1;min-width:200px"><button class="pri" data-pdf>Für meine Unterlagen sichern</button></div><p class="muted" style="font-size:.9rem">Am iPad: im Druckfenster auf <b>Teilen</b> tippen und GoodNotes, Notability oder „In Dateien sichern“ wählen.</p></div>');
+ +'<div class="row"><input id="nm" placeholder="Dein Name" value="'+esc(ST.name||'')+'" style="min-height:48px;padding:0 12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;flex:1;min-width:200px"><button class="pri" data-pdf>Für meine Unterlagen sichern</button></div><p class="muted" style="font-size:.9rem">Es entsteht eine PDF-Datei mit allen Ergebnissen und dem Material. Am iPad öffnet sich das Teilen-Menü: GoodNotes wählen.</p></div>');
  $('#own').oninput=e=>{ST.own=e.target.value;save()};$('#rb').oninput=e=>{ST.rueck=e.target.value;save()};if($('#sat'))$('#sat').oninput=e=>{ST.sat=e.target.value;save()};$('#nm').oninput=e=>{ST.name=e.target.value;save()};
- app.querySelector('[data-pdf]').onclick=()=>{ST.end={};save();const r=k=>ST[k]&&ST[k].p!=null?ST[k].p+' / '+ST[k].t:'—';
-  $('#printBox').innerHTML='<h1>Städte im Wandel – Braunschweig</h1><div>'+(ST.name?esc(ST.name)+' · ':'')+new Date().toLocaleDateString('de-DE')+'</div><h2>Die Stadt heute – mit Spuren aus allen Zeiten</h2><div id="pm">'+mapSvg({})+'</div>'
-   +'<h2>Die vier Phasen</h2><table><tr>'+ERAS.map(([y,l])=>'<th>'+y+' · '+l+'</th>').join('')+'</tr><tr>'+ERAS.map((_,e)=>'<td>'+SORT.filter(s=>s[1]===e).map(s=>esc(s[0])).join('<br>')+'</td>').join('')+'</tr></table>'
-   +'<h2>Wichtige Gründe</h2><ul>'+QUIZ.map(q=>'<li><b>'+esc(q[0])+'</b> '+esc(q[1][q[2]])+'</li>').join('')+'</ul>'
-   +'<h2>Zeitstrahl</h2><ul>'+LINE.map(l=>'<li>'+l[1]+': '+esc(l[0])+'</li>').join('')+'</ul>'
-   +(BOOK?'<h2>Schulbuch: Braunschweig 1400 – heute</h2><div class="bkimgs">'+BOOK.maps.map(m=>'<img src="'+m.img+'" alt="">').join('')+'</div><p style="font-size:9pt">'+esc(BOOK.source)+'</p>'+BOOK.maps.map((m,e)=>ST.bdesc&&ST.bdesc[e]?'<p><b>'+esc(m.title)+':</b> '+esc(ST.bdesc[e]).replace(/\n/g,'<br>')+'</p>':'').join('')+(ST.sat?'<p><b>Satellitenbild:</b> '+esc(ST.sat).replace(/\n/g,'<br>')+'</p>':''):'')
-   +(ST.verm||ST.rueck?'<h2>Meine Vermutung – und was ich jetzt weiß</h2>'+(ST.verm?'<p><b>Vermutung:</b> '+esc(ST.verm).replace(/\n/g,'<br>')+'</p>':'')+(ST.rueck?'<p><b>Jetzt weiß ich:</b> '+esc(ST.rueck).replace(/\n/g,'<br>')+'</p>':''):'')
-   +'<h2>Fachbegriffe</h2><table>'+Object.entries(GLOSS).map(([k,v])=>'<tr><th style="text-align:left;width:28%">'+k+'</th><td>'+esc(v)+'</td></tr>').join('')+'</table>'
-   +(ST.own?'<h2>Spuren in meiner Stadt</h2><p>'+esc(ST.own).replace(/\n/g,'<br>')+'</p>':'')
-   +'<div class="urk"><b>Stadtforscher-Urkunde</b> · Phasen-Detektiv '+r('sort')+' · Karte lesen '+r('find')+' · Warum dort? '+r('quiz')+' · Die vier Phasen '+r('info')+' · Zeitstrahl '+r('line')+(BOOK?' · Aufgabe 1 '+r('bf')+' · Aufgabe 2A '+r('bfe_all')+' · Aufgabe 2B '+r('bp')+' · Ausschnitte '+r('bs'):'')+'</div>';
-  setEra($('#pm'),3);doPrint()}}
+ app.querySelector('[data-pdf]').onclick=e=>{ST.end={};save();savePdf(e.currentTarget)}}
+/* 11.35: Unterlagen als PDF-Datei (Teilen → GoodNotes) – mit dem Material aus dem Schulbuch; Tabellen und Bilder werden nicht zerrissen */
+function mapImg(){const d=document.createElement('div');d.innerHTML=mapSvg({});setEra(d,3);const sv=d.querySelector('svg');if(!sv)return null;sv.setAttribute('xmlns','http://www.w3.org/2000/svg');
+ sv.querySelectorAll('.era').forEach(g=>{if(!g.classList.contains('on'))g.remove()});const vb=(sv.getAttribute('viewBox')||'0 0 800 560').split(/\s+/).map(Number);sv.setAttribute('width',vb[2]*2);sv.setAttribute('height',vb[3]*2);
+ const css=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n');sv.insertAdjacentHTML('afterbegin','<style>'+css.replace(/<\/?style>/g,'')+'.era{opacity:1!important}</style>');
+ return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(sv.outerHTML)}
+async function pdfBlocks(){const r=k=>ST[k]&&ST[k].p!=null?ST[k].p+' von '+ST[k].t:'–',nm=ST.name||ST.me||'';
+ const map=await cmPdf.prep(mapImg(),1800),bk=BOOK?await Promise.all(BOOK.maps.map(m=>cmPdf.prep(m.img))):[],ph=BOOK&&BOOK.photos?.m2?await cmPdf.prep(BOOK.photos.m2.img):null,src=BOOK?' – '+(BOOK.source||'Schulbuch'):'';
+ const rows=[['Phasen-Detektiv',r('sort')],['Karte lesen',r('find')],['Warum dort?',r('quiz')],['Die vier Phasen',r('info')],['Zeitstrahl',r('line')]].concat(BOOK?[['Aufgabe 1',r('bf')],['Aufgabe 2A',r('bfe_all')],['Aufgabe 2B',r('bp')],['Ausschnitte',r('bs')]]:[]);
+ return [{t:'h1',s:'Städte im Wandel – Braunschweig'},{t:'sub',s:'Erdkunde'+(ST.cls?' · '+ST.cls:'')+' · '+(nm?nm+' · ':'')+new Date().toLocaleDateString('de-DE')},
+  {t:'box',s:'**Stadtforscher-Urkunde** · '+STEPS.filter(x=>ST[x[0]]).length+' von '+STEPS.length+' Stationen'},{t:'table',w:[.6,.4],head:['Station','Punkte'],rows},
+  {t:'h2',s:'Die Stadt heute – mit Spuren aus allen Zeiten'},map?{t:'img',img:map,wf:.9,cap:'Modellkarte (eigene Darstellung): Spuren aus allen vier Zeitabschnitten'}:null,
+  {t:'h2',s:'Die vier Phasen'},{t:'table',w:[.25,.25,.25,.25],head:ERAS.map(([y,l])=>y+' · '+l),rows:[ERAS.map((_,e)=>SORT.filter(x=>x[1]===e).map(x=>x[0]).join('\n'))]},
+  {t:'h2',s:'Wichtige Gründe'},{t:'list',items:QUIZ.map(q=>'**'+q[0]+'** '+q[1][q[2]])},
+  {t:'h2',s:'Zeitstrahl'},{t:'table',w:[.2,.8],firstBold:true,rows:LINE.map(l=>[l[1],l[0]])},
+  ...(BOOK?[{t:'h2',s:'Material aus dem Schulbuch'},(BOOK.intro?{t:'p',s:BOOK.intro}:null),ph?{t:'img',img:ph,wf:.6,maxH:260,cap:BOOK.photos.m2.m+' '+BOOK.photos.m2.title+src}:null,
+   ...BOOK.maps.flatMap((m,e)=>[bk[e]?{t:'img',img:bk[e],wf:.8,maxH:420,cap:m.m+' '+m.title+src}:null,ST.bdesc&&ST.bdesc[e]?{t:'p',s:'**Meine Beschreibung:** '+ST.bdesc[e]}:null]),
+   ...(BOOK.m4?[{t:'h3',s:'M4 Phasen der Stadtentwicklung'},...Object.entries(BOOK.m4).map(([k,v])=>({t:'p',s:'**'+k+'** '+v}))]:[]),
+   ST.sat?{t:'p',s:'**Satellitenbild:** '+ST.sat}:null]:[]),
+  (ST.verm||ST.rueck)?{t:'h2',s:'Meine Vermutung – und was ich jetzt weiß'}:null,ST.verm?{t:'p',s:'**Vermutung:** '+ST.verm}:null,ST.rueck?{t:'p',s:'**Jetzt weiß ich:** '+ST.rueck}:null,
+  {t:'h2',s:'Fachbegriffe'},{t:'table',w:[.28,.72],firstBold:true,rows:Object.entries(GLOSS).map(([k,v])=>[k,v])},
+  ST.own?{t:'h2',s:'Spuren in meiner Stadt'}:null,ST.own?{t:'p',s:ST.own}:null].filter(Boolean)}
+let pdfBusy=false;
+async function savePdf(btn){if(pdfBusy)return;pdfBusy=true;const t=btn.textContent;btn.textContent='PDF wird erstellt …';
+ try{const blob=cmPdf.build(await pdfBlocks(),{title:'Städte im Wandel',foot:'Städte im Wandel · '+(ST.name||ST.me||'')});const n=ST.name||ST.me;const how=await cmPdf.save(blob,'Staedte im Wandel'+(n?' - '+String(n).replace(/[\\/:*?"<>|]/g,''):'')+'.pdf');btn.textContent=how==='download'?'✓ PDF geladen':how==='share'?'✓ Geteilt':t}
+ catch(e){alert('Die PDF konnte nicht erstellt werden: '+(e&&e.message||e));btn.textContent=t}finally{pdfBusy=false;setTimeout(()=>{if(btn.isConnected)btn.textContent=t},2500)}}
 /* ---------- 11.16: Abgabe-QR – Name aus der Klassenliste (Start-QR der Lehrkraft), Stand immer oben rechts ---------- */
 ST.dv??=Math.random().toString(36).slice(2,10);
 (()=>{const h=location.hash;if(!/^#k1\./.test(h))return;try{let x=h.slice(4).replace(/-/g,'+').replace(/_/g,'/');while(x.length%4)x+='=';const b=atob(x),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);const j=JSON.parse(new TextDecoder().decode(u));
