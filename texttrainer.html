@@ -79,13 +79,19 @@ function render(){closePop();app.innerHTML='<h1>'+esc(T.title)+'</h1><div class=
 const refreshTabs=()=>app.querySelectorAll('[data-tab]').forEach(b=>{const k=b.dataset.tab,v=badge(k);let i=b.querySelector('i');if(v){if(!i){i=document.createElement('i');b.append(i)}i.textContent=v;i.className=badgeOk(k)?'ok':''}});
 /* ---------- 1 Passiv-Jäger ---------- */
 function ppIdx(si,i){return T.pp.findIndex(([s,ws])=>s===si&&ws.includes(i))}
-function renderPP(b){const found=new Set(ST.pp);const cls=(si,i)=>{const k=ppIdx(si,i);if(k>=0&&found.has(k))return 'f';if(k>=0&&ST.ppDone)return 'miss';return ''};
- b.innerHTML='<div class="card"><p class="task">Tippe alle Formen im <b>Perfekt</b> und <b>Plusquamperfekt Passiv</b> an (PPP + Form von esse). Gefunden: <span class="cnt" id="ppc">'+found.size+' von '+T.pp.length+'</span></p><div class="hint">Vorsicht: Nicht jede Form auf -erat oder -ērunt ist Passiv. Ein Infinitiv wie „positam esse“ zählt hier nicht.</div></div><div class="card text" id="tx">'+textHtml(cls)+'</div><div class="row"><span class="muted" id="ppm">'+(ST.ppMiss?ST.ppMiss+' Fehlgriff'+(ST.ppMiss>1?'e':''):'')+'</span><div class="sp"></div><button class="sec" data-show '+(ST.ppDone?'disabled':'')+'>Fehlende zeigen</button></div><div id="fb"></div>';
- b.querySelector('#tx').onclick=e=>{const w=e.target.closest('.w');if(!w)return;const si=+w.dataset.s,i=+w.dataset.i,k=ppIdx(si,i);
-  if(k>=0){if(!found.has(k)){found.add(k);ST.pp=[...found];save();for(const j of T.pp[k][1])b.querySelector('.w[data-s="'+si+'"][data-i="'+j+'"]').className='w f';beep(true);$('#ppc').textContent=found.size+' von '+T.pp.length;refreshTabs();
-   if(found.size===T.pp.length)$('#fb').innerHTML='<div class="fb ok">✓ Alle '+T.pp.length+' Formen gefunden!</div>'}return}
-  if(w.classList.contains('f'))return;ST.ppMiss++;save();beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700);$('#ppm').textContent=ST.ppMiss+' Fehlgriff'+(ST.ppMiss>1?'e':'')};
- b.querySelector('[data-show]').onclick=()=>{ST.ppDone=true;save();render()}}
+function renderPP(b){const found=new Set(ST.pp),max=T.pp.length*2;if(ST.ppTaps==null){ST.ppDone=false;ST.ppTaps=found.size+ST.ppMiss}/* alter Stand mit „Fehlende zeigen“ wieder freigeben */
+ /* 11.09: begrenzte Versuche (doppelt so viele wie Formen) statt „Fehlende zeigen“ – wer wahllos tippt, ist schnell am Ende */
+ const left=()=>Math.max(0,max-ST.ppTaps),over=()=>ST.ppDone||left()<=0&&found.size<T.pp.length;
+ const cls=(si,i)=>{const k=ppIdx(si,i);if(k>=0&&found.has(k))return 'f';if(k>=0&&over())return 'miss';return ''};
+ const status=()=>found.size===T.pp.length?'<div class="fb ok">✓ Alle '+T.pp.length+' Formen gefunden – mit '+ST.ppTaps+' von '+max+' Versuchen.</div>':over()?'<div class="fb no">Keine Versuche mehr. '+found.size+' von '+T.pp.length+' gefunden – die fehlenden sind jetzt orange unterstrichen.</div>':'';
+ b.innerHTML='<div class="card"><p class="task">Tippe alle Formen im <b>Perfekt</b> und <b>Plusquamperfekt Passiv</b> an (PPP + Form von esse). Gefunden: <span class="cnt" id="ppc">'+found.size+' von '+T.pp.length+'</span> · Versuche übrig: <span class="cnt" id="ppl">'+left()+' von '+max+'</span></p><div class="hint">Jedes Antippen kostet einen Versuch – überlege vorher. Nicht jede Form auf -erat oder -ērunt ist Passiv; ein Infinitiv wie „positam esse“ zählt hier nicht.</div></div><div class="card text" id="tx">'+textHtml(cls)+'</div><div id="fb">'+status()+'</div>';
+ b.querySelector('#tx').onclick=e=>{const w=e.target.closest('.w');if(!w||over()||found.size===T.pp.length)return;const si=+w.dataset.s,i=+w.dataset.i,k=ppIdx(si,i);if(k>=0&&found.has(k))return;
+  ST.ppTaps++;
+  if(k>=0){found.add(k);ST.pp=[...found];for(const j of T.pp[k][1])b.querySelector('.w[data-s="'+si+'"][data-i="'+j+'"]').className='w f';beep(true)}
+  else{ST.ppMiss++;beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700)}
+  if(left()<=0&&found.size<T.pp.length)ST.ppDone=true;save();
+  $('#ppc').textContent=found.size+' von '+T.pp.length;$('#ppl').textContent=left()+' von '+max;refreshTabs();
+  if(ST.ppDone)renderPP(b);else $('#fb').innerHTML=status()}}
 /* ---------- 2 Zeitstrahl ---------- */
 function renderEV(b){if(!ST.ev||ST.ev.length!==T.ev.length){let o;do{o=shuffle(T.ev.map((_,i)=>i))}while(o.every((x,i)=>x===i));ST.ev=o;save()}
  b.innerHTML='<div class="card"><p class="task">Bringe die Ereignisse in die Reihenfolge, in der sie <b>passiert</b> sind – nicht in der Reihenfolge des Textes. Ziehe die Karten oder nutze die Pfeile.</p><div class="hint">Tipp: Das Plusquamperfekt zeigt, was schon vorher geschehen war.</div></div><div id="list"></div><div class="row"><div class="sp"></div><button class="pri" data-chk>Prüfen</button></div><div id="fb"></div>';
@@ -168,14 +174,14 @@ addEventListener('pointerdown',e=>{if(popEl&&!popEl.contains(e.target)&&!e.targe
 function renderRes(b){const sents=T.s.map((_,i)=>ST.sent[i]||{});const rated=sents.filter(x=>x.r!=null);const prOk=T.pron.filter((p,k)=>ST.pr[k]===p[2]).length;
  const lab={2:'✓ passt',1:'≈ teilweise',0:'✗ noch nicht'};const talk=sents.map((x,i)=>({x,i})).filter(({x})=>x.r===0||x.r===1||(x.h||0)>=3);
  b.innerHTML='<div class="card"><p class="task"><b>Deine Auswertung</b></p><table><tr><th>Übung</th><th>Ergebnis</th></tr>'
-  +'<tr><td>Passiv-Jäger</td><td>'+ST.pp.length+' von '+T.pp.length+' gefunden'+(ST.ppMiss?' · '+ST.ppMiss+' Fehlgriffe':'')+'</td></tr>'
+  +'<tr><td>Passiv-Jäger</td><td>'+ST.pp.length+' von '+T.pp.length+' gefunden · '+(ST.ppTaps||0)+' Versuche'+(ST.ppMiss?' · '+ST.ppMiss+' Fehlgriffe':'')+'</td></tr>'
   +'<tr><td>Zeitstrahl</td><td>'+(ST.evFirst==null?'noch offen':'im ersten Versuch '+ST.evFirst+' von '+T.ev.length+' richtig'+(ST.evOk?' · gelöst':''))+'</td></tr>'
   +'<tr><td>Wer ist gemeint?</td><td>'+prOk+' von '+T.pron.length+' richtig</td></tr>'
   +'<tr><td>Übersetzen</td><td>'+rated.length+' von '+T.s.length+' Sätzen · '+rated.filter(x=>x.r===2).length+' passen · '+sents.reduce((a,x)=>a+(x.h||0),0)+' Hilfen · '+sents.reduce((a,x)=>a+(x.look||0),0)+' Wörter nachgeschlagen</td></tr></table></div>'
   +(talk.length?'<div class="card"><p class="task"><b>Diese Sätze solltest du dir noch einmal ansehen</b></p>'+talk.map(({x,i})=>'<div style="margin:6px 0"><button class="sec" data-go="'+i+'">Satz '+(i+1)+'</button> <span class="muted">'+(x.r!=null?lab[x.r]:'')+((x.h||0)>=3?' · viele Hilfen':'')+'</span></div>').join('')+'</div>':'')
   +'<div class="row"><button class="lnk" data-reset>Alles zurücksetzen</button></div>';
  b.querySelectorAll('[data-go]').forEach(x=>x.onclick=()=>{cur=+x.dataset.go;tab='tr';render()});
- b.querySelector('[data-reset]').onclick=()=>{if(!confirm('Alle Eingaben zu diesem Text löschen und neu beginnen?'))return;ST={pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};save();tab='pp';cur=0;render()}}
+ b.querySelector('[data-reset]').onclick=()=>{if(!confirm('Alle Eingaben zu diesem Text löschen und neu beginnen?'))return;ST={pp:[],ppMiss:0,ppTaps:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};save();tab='pp';cur=0;render()}}
 addEventListener('hashchange',init);
 init();
 </script></body></html>

@@ -2224,8 +2224,8 @@ window.addEventListener('resize',()=>{if(classroomDeferredRender.pending)setTime
   d.querySelector('[data-x]').onclick=()=>d.close();d.addEventListener('close',()=>d.remove());document.body.append(d);d.showModal()}
  function addBtn(row2,cls,text,title,click){const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=text;b.title=title;b.onclick=click;row2.append(b);return b}
  function groupButtons(){
-  for(const panel of document.querySelectorAll('[data-custom-panel]')){if(!vis(panel)||panel.closest('.exam-combined-page'))continue;
-   const sumPage=panel.hasAttribute('data-quarter-summary')||panel.classList.contains('tests-ov-reduced')||!!panel.querySelector(':scope>.section-title~.table-wrap table.semester-table, table.schoolyear-table');if(!sumPage)continue;
+  for(const panel of document.querySelectorAll('[data-custom-panel]')){/* 11.08: erst die billigen Prüfungen, die Sichtbarkeit (erzwingt Layout) zuletzt */if(panel.closest('.exam-combined-page'))continue;
+   const sumPage=panel.hasAttribute('data-quarter-summary')||panel.classList.contains('tests-ov-reduced')||!!panel.querySelector(':scope>.section-title~.table-wrap table.semester-table, table.schoolyear-table');if(!sumPage||!vis(panel))continue;
    const t=panel.querySelector(':scope>.section-title');if(!t)continue;let row2=t.querySelector(':scope>.task-actions,:scope>.semester-table-tools');if(!row2){row2=document.createElement('div');row2.className='task-actions';t.append(row2)}
    if(!row2.querySelector(':scope>[data-student-overview]'))addBtn(row2,'student-overview-button tr-su','Schülerübersicht','Schülerübersicht: Bewertungen, Fehltage, Klassenliste bearbeiten',()=>parent.postMessage({type:'classroom:open-profile'},'*')).dataset.studentOverview='';
    if(!row2.querySelector(':scope>.notenspiegel-button'))addBtn(row2,'notenspiegel-button tr-ns','Notenspiegel','Notenspiegel der Endnoten dieser Seite',()=>nsOpen(panel))}}
@@ -4741,9 +4741,9 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
  rose:{label:'Rosé',accent:'#9b5270',dark:'#7e3e59',bg:'#fcf6f8',pale:'#f7e7ee',tabs:'#f1e3e9',line:'#ead9e1',border:'#cfa1b5',ink:'#402b34',muted:'#876d78'}
  });
  let current='blue';try{current=localStorage.getItem(key)||'blue'}catch{}if(!palettes[current])current='blue';
- let originalCss=null,seen=new WeakSet(),txCss='',rootCss='',tx=null;
+ let nx=0,originalCss=null,seen=new WeakSet(),txCss='',rootCss='',tx=null;
  /* 11.07: Stile nur einmal einlesen und umfärben; später eingefügte Stile werden nur noch angehängt (vorher bei jedem neuen Stil alles neu – kostete am iPhone ~1/5 der Startzeit) */
- const own=sheet=>sheet.ownerNode?.id==='classroomThemeStyle'||sheet.ownerNode?.hasAttribute?.('data-privacy');
+ const own=sheet=>/^classroomThemeStyle/.test(sheet.ownerNode?.id||'')||sheet.ownerNode?.hasAttribute?.('data-privacy');
  const cssOf=sheets=>sheets.map(sheet=>{seen.add(sheet.ownerNode||sheet);try{return [...sheet.cssRules].map(rule=>rule.cssText).join('\n')}catch{return ''}}).join('\n');
  function apply(name){
   if(!palettes[name])return;current=name;const p=palettes[name];
@@ -4752,14 +4752,16 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
   const expanded={};for(const [from,to] of Object.entries(colors)){expanded[from]=to;expanded[from+'20']=to+'20';expanded[from+'30']=to+'30';expanded[from+'55']=to+'55'}
   let style=document.getElementById('classroomThemeStyle');if(!style){style=document.createElement('style');style.id='classroomThemeStyle';document.head.append(style)}
   tx=css=>css.replace(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/gi,(match,r,g,b)=>{const hex='#'+[r,g,b].map(value=>Number(value).toString(16).padStart(2,'0')).join('');return expanded[hex]||match}).replace(/#[\da-f]{3,8}\b/gi,color=>expanded[color.toLowerCase()]||color);rootCss=`\n:root{--green:${p.accent};--primary:${p.accent};--primary-hover:${p.dark};--primary-color:${p.accent};--bg:${p.bg};--bg-color:${p.bg};--pale:${p.pale};--line:${p.line};--border-color:${p.line};--ink:${p.ink};--text-main:${p.ink};--muted:${p.muted}}`;
-  txCss=tx(originalCss);style.textContent=txCss+rootCss;
+  txCss=tx(originalCss);style.textContent=txCss+rootCss;document.querySelectorAll('style[id^=classroomThemeStyleX]').forEach(x=>x.remove());
   if(style.nextElementSibling)document.head.append(style);document.documentElement.dataset.theme=name;
   document.querySelectorAll('[data-theme-choice]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.themeChoice===name)));
  }
  apply(current);
  /* Später eingefügte Stile (z. B. aus Zusatzmodulen) ebenfalls umfärben, sonst bleiben blaue Flächen. */
- let restyle=0;new MutationObserver(ms=>{if(!ms.some(m=>[...m.addedNodes].some(n=>(n.tagName==='STYLE'&&n.id!=='classroomThemeStyle')||(n.tagName==='LINK'&&/stylesheet/.test(n.rel||'')))))return;cancelAnimationFrame(restyle);restyle=requestAnimationFrame(addNew)}).observe(document.head,{childList:true});
- function addNew(){if(!tx)return;const fresh=[...document.styleSheets].filter(sheet=>!own(sheet)&&!seen.has(sheet.ownerNode||sheet));if(!fresh.length)return;const css=cssOf(fresh);originalCss+='\n'+css;txCss+='\n'+tx(css);const style=document.getElementById('classroomThemeStyle');if(!style)return;style.textContent=txCss+rootCss;if(style.nextElementSibling)document.head.append(style)}
+ let restyle=0;new MutationObserver(ms=>{if(!ms.some(m=>[...m.addedNodes].some(n=>(n.tagName==='STYLE'&&!/^classroomThemeStyle/.test(n.id||''))||(n.tagName==='LINK'&&/stylesheet/.test(n.rel||'')))))return;cancelAnimationFrame(restyle);restyle=requestAnimationFrame(addNew)}).observe(document.head,{childList:true});
+ function addNew(){if(!tx)return;const fresh=[...document.styleSheets].filter(sheet=>!own(sheet)&&!seen.has(sheet.ownerNode||sheet));if(!fresh.length)return keepLast();const freshNodes=new Set(fresh.map(x=>x.ownerNode));const css=cssOf(fresh);originalCss+='\n'+css;const add=tx(css);txCss+='\n'+add;/* eigener kleiner Stil statt das große Umfärbe-Blatt jedes Mal neu zu schreiben */const x=document.createElement('style');x.id='classroomThemeStyleX'+(++nx);x.textContent=add;document.head.append(x);keepLast(freshNodes)}
+ /* Wird ein schon bekannter Stil ans Ende verschoben (z. B. beim Laden), die Umfärbungen wieder dahinter setzen */
+ function keepLast(fresh){const main=document.getElementById('classroomThemeStyle');if(!main)return;let n=main.nextElementSibling,move=false;for(;n;n=n.nextElementSibling){if(!/^(STYLE|LINK)$/.test(n.tagName)||/^classroomThemeStyle/.test(n.id||'')||n.hasAttribute('data-privacy')||fresh?.has(n))continue;move=true;break}if(move)document.head.append(main,...document.querySelectorAll('style[id^=classroomThemeStyleX]'))}
  if(window===parent){
   const mark=document.querySelector('.brand-mark');
   if(mark){const button=document.createElement('button');button.type='button';button.className=mark.className;button.innerHTML=mark.innerHTML;button.setAttribute('aria-label','Farbgestaltung ändern');button.title='Farbgestaltung';mark.replaceWith(button);
@@ -5408,13 +5410,15 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
  function replaceText(text){const t=terms();return text.replace(/Klassenarbeiten|Klausuren/g,t.plural).replace(/Klassenarbeit|Klausur/g,t.singular).replace(/(Klassenarbeit|Klausur) (\d+)\b/g,'$2. $1')}
  /* 9.75: Bei Änderungen nur die neu hinzugekommenen Teile prüfen statt jedes Mal das ganze Dokument (spürbar am iPhone). */
  const SEL='button,h2,h3,p,legend,summary,th,label';
- function fix(element){if(element.closest('.subject-grade-dialog'))return;for(const node of element.childNodes){if(node.nodeType!==Node.TEXT_NODE)continue;const prev=originalText.get(node),source=prev&&node.textContent===prev.output?prev.source:node.textContent;if(!prev&&!/Klausur|Klassenarbeit/.test(source))continue;const output=replaceText(source);if(output!==node.textContent)node.textContent=output;originalText.set(node,{source,output})}for(const attr of ['title','aria-label']){const value=element.getAttribute(attr);if(value&&/Klausur|Klassenarbeit/.test(value)){const v=replaceText(value);if(v!==value)element.setAttribute(attr,v)}}}
+ /* 11.07: Elemente ohne die Wörter überspringen – auch eine bereits ersetzte Ausgabe enthält sie immer */
+ const HAS=/Klausur|Klassenarbeit/;
+ function fix(element){if(!HAS.test(element.textContent)||element.closest('.subject-grade-dialog'))return;for(const node of element.childNodes){if(node.nodeType!==Node.TEXT_NODE)continue;const prev=originalText.get(node),source=prev&&node.textContent===prev.output?prev.source:node.textContent;if(!prev&&!/Klausur|Klassenarbeit/.test(source))continue;const output=replaceText(source);if(output!==node.textContent)node.textContent=output;originalText.set(node,{source,output})}for(const attr of ['title','aria-label']){const value=element.getAttribute(attr);if(value&&/Klausur|Klassenarbeit/.test(value)){const v=replaceText(value);if(v!==value)element.setAttribute(attr,v)}}}
  function addQuick(){const add=document.getElementById('addExamQuick');if(add){const label='＋ '+terms().singular,title=terms().singular+' hinzufügen';/* Nur bei Änderung schreiben – sonst löst jede Zuweisung andere Beobachter aus (Endlosschleife mit der Kompaktansicht). */if(add.textContent!==label)add.textContent=label;if(add.title!==title)add.title=title}}
  let lastNoun='';
  function paint(){observer.disconnect();updateGroups();try{lastNoun=terms().singular}catch{}for(const element of document.querySelectorAll(SEL))fix(element);addQuick();watch()}
  function paintSome(records){let noun='';try{noun=terms().singular}catch{}if(noun!==lastNoun){paint();return}observer.disconnect();updateGroups();const seen=new Set();const visit=el=>{if(!el||seen.has(el))return;seen.add(el);fix(el)};
   for(const r of records){const n=r.type==='characterData'?r.target.parentElement:r.target;const roots=r.type==='childList'?[...r.addedNodes].map(x=>x.nodeType===1?x:x.parentElement):[n];
-   for(const root of roots){if(!root||!root.isConnected)continue;visit(root.closest?.(SEL));if(root.querySelectorAll)for(const el of root.querySelectorAll(SEL))visit(el)}
+   for(const root of roots){if(!root||!root.isConnected||!HAS.test(root.textContent))continue;visit(root.closest?.(SEL));if(root.querySelectorAll)for(const el of root.querySelectorAll(SEL))visit(el)}
    if(r.type==='childList'){const c=r.target.closest?.(SEL);if(c)visit(c)}}
   addQuick();watch()}
  const observer=new MutationObserver(paintSome);function watch(){observer.observe(document.body,{childList:true,subtree:true,characterData:true})}
@@ -6057,6 +6061,7 @@ function classroomSelectTestQuarter(){const holder=classesBySubject[currentSubje
  function decolor(root){for(const el of root.querySelectorAll(SEL)){if(el.classList.contains('classroom-colorless')||el.classList.contains('classroom-rating-choice'))continue;if(el.classList.contains('cell')&&!el.classList.contains('classroom-seat-assessed'))continue;if(colored(el))el.classList.add('classroom-colorless')}}
  window.classroomColorsOff={get:()=>colorsOff,set:v=>{v=!!v;try{localStorage.setItem(CKEY,v?'on':'off')}catch{}if(colorsOff!==v){colorsOff=v;apply()}}};
  style.textContent+='html.colors-off body .classroom-colorless:not(#_):not(#__){background:#fff!important;background-image:none!important;color:#243247!important;box-shadow:inset 0 0 0 1px #d5deea!important}html.colors-off body .room-grid .cell.classroom-seat-assessed.classroom-colorless:not(#_):not(#__){box-shadow:none!important}';
+ const gradCache=new WeakMap();
  function apply(){
   observer.disconnect();try{
   if(!enabled)unstripe(document);
@@ -6075,7 +6080,8 @@ function classroomSelectTestQuarter(){const holder=classesBySubject[currentSubje
   // Schalter auf Seiten mit Noten immer zeigen; ohne Schraffur-Werte ausgegraut (8.45).
   for(const label of document.querySelectorAll('[data-hatching-toggle]')){const scope=label.closest('[data-custom-panel]')||label.closest('section,.panel,.card')||label.parentElement?.parentElement;if(!scope)continue;
    let any=!!scope.querySelector('.classroom-unstriped,.grade-four-fail,[class*=participation-between-]');
-   if(!any)for(const el of scope.querySelectorAll('td span,td input,td select,td button,.cell,.classroom-rating-choice')){if(getComputedStyle(el).backgroundImage.includes('gradient')){any=true;break}}
+   /* 11.07: Die teure Stil-Abfrage je Zelle nur, wenn sich der Bereich geändert hat (vorher bei jeder Änderung irgendwo auf der Seite) */
+   if(!any){const sig=scope.getElementsByTagName('*').length+':'+scope.textContent.length+':'+(scope.className||''),c=gradCache.get(scope);if(c&&c.sig===sig)any=c.any;else{for(const el of scope.querySelectorAll('td span,td input,td select,td button,.cell,.classroom-rating-choice')){if(getComputedStyle(el).backgroundImage.includes('gradient')){any=true;break}}gradCache.set(scope,{sig,any})}}
    /* 8.45: Auf Seiten mit Noten bleibt der Schalter immer sichtbar (einheitliche Kopfzeile); ohne Schraffur-Werte ist er nur ausgegraut.
       Seiten ohne Noten (Hausaufgaben, Material) zeigen ihn nicht. */
    let hw=!!scope.querySelector('[data-homework-status]');try{const k=scope.dataset?.customPanel;if(k&&typeof customPagesFor==='function'&&typeof currentSubject!=='undefined'&&customPagesFor(currentSubject).some(pg=>pg.key===k&&pg.system==='homework'))hw=true}catch{}const gradePage=!hw;const hide=!gradePage;if(label.hidden!==hide)label.hidden=hide;
