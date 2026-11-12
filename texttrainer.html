@@ -66,7 +66,7 @@ let AB=null;
 /* 11.45: Abgabe-QR – gezählt: fertige Sätze (mit Selbsteinschätzung) und davon ohne Hilfe; Klassenliste kommt mit dem Link (t.cm) */
 function ttScore(){const N=T.s.length,X=ST.sent||{};let fe=0,oh=0;for(let i=0;i<N;i++){const x=X[i];if(x&&x.r!=null){fe++;if(!x.h)oh++}}return {s:{fe:[fe,N],oh:[oh,N]},x:{}}}
 function start(t){T=t;ST=ls.get(key())||{pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};ls.set('cm-texttrainer-last',t);if(t.cm&&t.cm.u&&window.cmAbgabe&&!AB)AB=cmAbgabe({u:t.cm.u,title:t.title,cls:t.cm.c,names:t.cm.n,score:ttScore});render()}
-async function init(){let t=null;try{t=await fromHash(location.hash)}catch(e){console.warn(e)}
+async function init(){let t=null;try{t=await fromHash(location.hash||window.CM_EMBED_HASH||'')}catch(e){console.warn(e)}
  if(!valid(t))t=ls.get('cm-texttrainer-last');if(valid(t))return start(t);
  app.innerHTML='<div class="card empty"><h1>Übersetzungs-Trainer</h1><p class="muted">Hier ist noch kein Text geladen. Öffne den Link deiner Lehrkraft oder lade die Datei, die sie dir geschickt hat.</p><button class="pri" data-load>Datei laden …</button></div>';$('[data-load]').onclick=()=>$('#file').click()}
 $('#file').onchange=async()=>{const f=$('#file').files?.[0];if(!f)return;try{const t=JSON.parse(await f.text());if(!valid(t))throw 0;start(t)}catch{alert('Diese Datei ist kein Text für den Übersetzungs-Trainer.')}};
@@ -213,5 +213,6 @@ let SOL=false;
  showPR=function(b,k){pr(b,k);if(SOL)b.querySelector('.card')?.insertAdjacentHTML('beforeend',box(esc(T.pron[k][2])))};
  showSent=function(b,si){ss(b,si);const S=T.s[si];if(SOL&&S?.de)b.insertAdjacentHTML('beforeend',box(esc(S.de)))};}
 window.cmPreviewSolutions=on=>{SOL=!!on;if(T)render()};
+/* 11.47: Lösungsblatt – Text mit Musterübersetzung Satz für Satz */window.cmSolutionSheet=on=>{if(!T)return;cmPdf.solutions(on,()=>[{t:'h2',s:T.title},{t:'table',w:[.5,.5],head:['Latein','Musterübersetzung'],rows:T.s.map(x=>[x.t,x.de||''])}])};
 init();
 </script></body></html>

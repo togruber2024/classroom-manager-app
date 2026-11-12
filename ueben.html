@@ -41,7 +41,7 @@ table.gt td small{display:block;color:var(--ok);font-weight:600}
 .done{text-align:center}.done .big{font-size:3rem}
 .err{border-color:#f0a982}
 </style></head><body><div class="wrap" id="app"></div>
-<script src="qr-code.js"></script><script src="abgabe.js"></script>
+<script src="qr-code.js"></script><script src="abgabe.js"></script><script src="unit-pdf.js"></script>
 <script>
 (async()=>{
  const app=document.getElementById('app');
@@ -50,7 +50,7 @@ table.gt td small{display:block;color:var(--ok);font-weight:600}
  const b64=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u};
  addEventListener('hashchange',()=>location.reload());
  let P;
- try{const h=decodeURIComponent(location.hash.slice(1));if(!h)throw new Error('Kein Inhalt im Link. Bitte den QR-Code noch einmal scannen.');
+ try{const h=decodeURIComponent((location.hash||window.CM_EMBED_HASH||'').replace(/^#/,''));if(!h)throw new Error('Kein Inhalt im Link. Bitte den QR-Code noch einmal scannen.');
   let bytes;if(h.startsWith('z1.')){if(typeof DecompressionStream!=='function')throw new Error('Bitte Safari aktualisieren.');bytes=new Uint8Array(await new Response(new Blob([b64(h.slice(3))]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())}
   else if(h.startsWith('j1.'))bytes=b64(h.slice(3));else throw new Error('Der Link ist unvollständig. Bitte den QR-Code noch einmal scannen.');
   P=JSON.parse(new TextDecoder().decode(bytes));if(!(P.k==='v'&&Array.isArray(P.w)&&P.w.length)&&!(P.k==='g'&&Array.isArray(P.q)&&P.q.length))throw new Error('Der Link ist beschädigt.')}
@@ -101,6 +101,7 @@ table.gt td small{display:block;color:var(--ok);font-weight:600}
    if(t.hasAttribute('data-next')){nextCard();render()}});
   app.addEventListener('keydown',e=>{if(e.key!=='Enter'||e.target.id!=='ans')return;e.preventDefault();(app.querySelector('[data-chk]')||app.querySelector('[data-next]'))?.click()});
   window.cmPreviewSolutions=on=>{SOL=!!on;shown=SOL;render()};
+  /* 11.47: Lösungsblatt – die ganze Liste auf einer Seite */window.cmSolutionSheet=on=>cmPdf.solutions(on,()=>[{t:'h2',s:P.t||'Vokabeln'},{t:'table',w:[.34,.24,.42],head:['Latein','Angaben','Deutsch'],rows:W.map(x=>[x[0],x[1]||'',x[2]])}]);
   render();return}
  /* ---------- Grammatik ---------- */
  const norm=s=>plain(s).replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim();
@@ -130,6 +131,7 @@ table.gt td small{display:block;color:var(--ok);font-weight:600}
   if(b.hasAttribute('data-chk')){S.r[i]=grade(Q[i],a);if(S.f[i]==null)S.f[i]=S.r[i];save();redraw(i);return}
   if(b.hasAttribute('data-again')){S.a[i]=blank(Q[i]);S.r[i]=null;save();redraw(i)}});
  window.cmPreviewSolutions=on=>{SOL=!!on;render()};
+ /* 11.47: Lösungsblatt – alle Aufgaben mit Lösung */window.cmSolutionSheet=on=>cmPdf.solutions(on,()=>{const out=[{t:'h2',s:P.t||'Grammatik'}];Q.forEach((it,i)=>{out.push({t:'h3',s:(i+1)+'. '+(it.ti||'')});if(it.k==='tab')out.push({t:'table',head:['',...it.cl],rows:it.rw.map((r,ri)=>[r,...it.sol[ri].map(f=>f==null?'–':String(f))])});else if(it.k==='det')out.push({t:'p',s:'**'+it.f+'**: '+solDet(it)});else out.push({t:'table',w:[.4,.6],head:[it.p||'',''],rows:it.sub.map((l,si)=>[l,it.sol[si][0]])})});return out});
  render();
 })();
 </script></body></html>

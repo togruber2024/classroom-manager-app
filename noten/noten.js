@@ -4037,7 +4037,7 @@ html.fs-view .fs-hide{display:none!important}
 (()=>{
 const S=(k,t,d,min,type,own,book)=>({k,t,d,min,type,own,book:book===undefined?k:book});
 const LP={
- l16a:{lesson:'16',title:'L16 · exempla – Wie die Römer an Vorbildern lernten',short:'Sachinfo',sub:'Latein · Lektion 16 · Sachinfo',bookId:'pontes-l16',
+ l16a:{lesson:'16',part:'sach',title:'L16 · exempla – Wie die Römer an Vorbildern lernten',short:'Sachinfo',sub:'Latein · Lektion 16 · Sachinfo',bookId:'pontes-l16',
   text:'lie',steps:[
    S('lie','Wie die Römer an Vorbildern lernten','{T}Sachinfo · Sätze antippen',4,'read',{h:'Wie die Römer an Vorbildern lernten',task:'Lies den Text. Tippe dann zu jeder Frage den Satz an, in dem die Antwort steht.',src:'Eigener Lesetext (ohne Buchdatei)',
     paras:[['Die Römer erzählten sich gern Geschichten von Menschen, die für Rom Großes geleistet hatten.','Solche Vorbilder nannten sie exempla (Singular: exemplum = „Beispiel“, „Vorbild“).'],
@@ -4052,7 +4052,7 @@ const LP={
     cards:[['Ein exemplum ist ein Beispiel oder Vorbild.',true,'exemplum = „Beispiel“, „Vorbild“.'],['Bei Begräbnissen berühmter Adliger erzählte ein Sohn von den Taten seiner Vorfahren.',true,'Diese Reden sollten an die Verdienste der Familie erinnern.'],['Der Grieche Polybios hielt diese Reden für ein Erfolgsgeheimnis Roms.',true,'Sie spornten die Jugend an, für das Vaterland alles zu ertragen.'],['exempla erzählen vor allem von den Leistungen der „kleinen Leute“.',false,'Sie zeigen vor allem die Verdienste des Adels.'],['Auch Redner nutzten exempla als überzeugende Beweise.',true,'Geschichtliche Beispiele galten als starkes Argument.'],['Die Geschichten von Cloelia, Horatius und Mucius sind sicher bewiesen.',false,'Es sind Sagen aus der Frühzeit Roms.']],done:'Die Römer lernten an Vorbildern – an exempla.'},null),
    S('seq','Rom gegen König Porsenna','Szenen in die richtige Reihenfolge',2,'order',{h:'Was geschah nacheinander?',task:'Tippe die Szenen in der richtigen Reihenfolge an.',
     items:['Der Etruskerkönig Porsenna greift Rom an.','Horatius Cocles verteidigt die Tiberbrücke, bis sie eingerissen ist.','Mucius Scaevola schleicht sich ins Lager der Etrusker.','Mucius hält seine Hand ins Feuer – Porsenna lässt ihn frei.','Rom schließt Frieden und gibt Porsenna Geiseln, darunter Cloelia.','Cloelia flieht mit den Mädchen durch den Tiber.'],done:'So erzählt es der Geschichtsschreiber Livius.'},null)]},
- l16b:{lesson:'16',title:'L16 · Übungen 1–6',short:'Übungen 1–6',sub:'Latein · Lektion 16 · Ü 1–6 · D 1–3',bookId:'pontes-l16',
+ l16b:{lesson:'16',part:'ueb',title:'L16 · Übungen 1–6',short:'Übungen 1–6',sub:'Latein · Lektion 16 · Ü 1–6 · D 1–3',bookId:'pontes-l16',
   steps:[
    S('ppp','Zurückführen erwünscht','{U}Ü 1 · D 1 · PPP antippen',2,'tarn',{h:'Finde alle PPP',task:'Tippe alle Formen an, die ein PPP sind (Partizip Perfekt Passiv).',
     words:[['vocātum','vocāre'],['templum'],['audītum','audīre'],['dōnum'],['laudātum','laudāre'],['nōndum'],['pūnītum','pūnīre'],['verbum'],['mūtātum','mūtāre'],['iterum']],done:'PPP auf -tum/-sum kommen vom Verb: vocātum ← vocāre.'}),
@@ -4070,7 +4070,7 @@ const LP={
     items:[['Mārcus ā patre ___ (laudāre).','laudāt',['us','a','ī','ae','um'],0,['est','sunt','erat'],0,'Markus ist vom Vater gelobt worden.'],['Puellae ā magistrō ___ (vocāre).','vocāt',['us','a','ī','ae','um'],3,['est','sunt','erat'],1,'Die Mädchen sind vom Lehrer gerufen worden.'],['Templum ā Rōmānīs ___ (aedificāre).','aedificāt',['us','a','ī','ae','um'],4,['est','sunt','erant'],0,'Der Tempel ist von den Römern gebaut worden.'],['Servī ā dominō ___ (pūnīre).','pūnīt',['us','a','ī','ae','um'],2,['est','sunt','erat'],1,'Die Sklaven sind vom Herrn bestraft worden.']]}),
    S('cha','Chaos','{U}Ü 6 · D 3 · Pronomina in Spalten ziehen',2,'sorter',{h:'Welche Art von Pronomen?',task:'Ziehe jedes Pronomen in die passende Spalte.',cats:['Relativpronomen','Personalpronomen','Demonstrativpronomen'],
     items:[['quem',0],['quae',0],['cuius',0],['vōbīs',1],['ego',1],['nōbīs',1],['hic',2],['illa',2],['eius',2],['huius',2]]})]},
- l16c:{lesson:'16',title:'L16 · Übungen 7–11',short:'Übungen 7–11',sub:'Latein · Lektion 16 · Ü 7–11 · D 4–5',bookId:'pontes-l16',
+ l16c:{lesson:'16',part:'ueb',title:'L16 · Übungen 7–11',short:'Übungen 7–11',sub:'Latein · Lektion 16 · Ü 7–11 · D 4–5',bookId:'pontes-l16',
   steps:[
    S('sgl','Hier dreht sich alles um eine Person','{U}Ü 7 · D 4 · Satzglied antippen',3,'quiz',{h:'Welches Satzglied ist das Relativpronomen?',opts:['Subjekt','Akkusativobjekt','Dativobjekt','adverbiale Bestimmung','Attribut'],
     qs:[['Amīcus, **quī** in forō stat, Mārcum salūtat.',0,'quī ist Subjekt des Relativsatzes.'],['Amīcus, **quem** Mārcus salūtat, laetus est.',1,'quem = wen? → Akkusativobjekt.'],['Amīcus, **cui** Mārcus librum dat, gaudet.',2,'cui = wem? → Dativobjekt.'],['Amīcus, **quōcum** Mārcus ambulat, rīdet.',3,'quōcum = mit dem → adverbiale Bestimmung.'],['Der Hund, **dessen** Besitzer krank ist, bellt.',4,'dessen bestimmt das Nomen „Besitzer“ näher → Attribut.'],['Die Lehrerin, **mit der** wir sprechen, lacht.',3,'mit der → adverbiale Bestimmung (Begleitung).']]}),
@@ -4081,7 +4081,7 @@ const LP={
     items:[['Mārcus audit amīcum laudātum esse.',0],['Mārcus audit amīcum laudārī.',1],['Constat urbem dēlētam esse.',0],['Videō puellās vocārī.',1]]}),
    S('deu','Fit für Deutsch','{U}Ü 11 · Fremdwort und lateinisches Verb verbinden',2,'pairs',{h:'Woher kommt das Fremdwort?',task:'Tippe ein Fremdwort an und dann das lateinische Verb, von dessen PPP es stammt.',
     pairs:[['Diktat','dīcere (dictum)'],['Produkt','prōdūcere (prōductum)'],['Motiv','movēre (mōtum)'],['Version','vertere (versum)']]})]},
- l16d:{lesson:'16',title:'L16 · Ponticulus',short:'Ponticulus',sub:'Latein · Lektion 16 · Ponticulus 1–3',bookId:'pontes-l16',
+ l16d:{lesson:'16',part:'pont',title:'L16 · Ponticulus',short:'Ponticulus',sub:'Latein · Lektion 16 · Ponticulus 1–3',bookId:'pontes-l16',
   steps:[
    S('tab','Kasus und Numerus','{U}Ponticulus 1 · Formen ins Raster ziehen',3,'sorter',{h:'In welches Feld gehört die Form?',task:'Ziehe jede Form in das passende Feld. Manche Formen passen in zwei Felder – sie kommen zweimal vor.',grid:true,
     cats:['Nom. Sg.','Nom. Pl.','Gen. Sg.','Gen. Pl.','Dat. Sg.','Dat. Pl.','Akk. Sg.','Akk. Pl.','Abl. Sg.','Abl. Pl.'],
@@ -4226,7 +4226,8 @@ window.LP=LP;window.lpLabels=labels;
    /* 11.29: auch bei geändertem Titel ersetzen (gleiche Lektion, gleicher erster Satz) */for(const [id,x] of Object.entries(s2))if(x.t.title===t.title||(ttLesson(x.t)===t.lesson&&x.t.s?.[0]?.t&&x.t.s[0].t===t.s[0]?.t))delete s2[id];s2[Math.random().toString(36).slice(2,8)]={t,added:Date.now()};got.push(t)}catch{bad++}}
   ttSave(s2);return {got,bad}}
  const ttSave=x=>{try{localStorage.setItem(TTKEY,JSON.stringify(x))}catch{alert('Speicher voll – der Text konnte nicht gespeichert werden.')}};
- const ttWho=t=>({...t,cm:{u:'pt-'+(ttLesson(t)||'x'),c:leCls(),n:leNames().map(x=>x.disp)}});
+ const ttIdx=t=>Math.max(0,Object.values(ttStore()).filter(x=>ttLesson(x.t)===ttLesson(t)).findIndex(x=>x.t.title===t.title));
+ const ttWho=t=>({...t,cm:{u:'pt-'+(ttLesson(t)||'x')+(ttIdx(t)?'.'+(ttIdx(t)+1):''),c:leCls(),n:leNames().map(x=>x.disp)}});
  async function ttUrl(t){const bytes=new TextEncoder().encode(JSON.stringify(t));let h;try{h='z1.'+b64url(new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()))}catch{h='j1.'+b64url(bytes)}return studentBase().replace(/vokabeltest\.html$/,'texttrainer.html')+'#'+h}
  async function showTextTrainer(les){let g=document.getElementById('vtTT');if(!g){g=document.createElement('dialog');g.id='vtTT';g.className='classroom-dialog vt-guide';document.body.append(g)}
   const st=ttStore(),V=window.classroomVocabPdf,ord=k=>k===''?1e9:V?V.lessonOrder(k):+k||0,all=Object.entries(st).sort((a,b)=>ord(ttLesson(a[1].t))-ord(ttLesson(b[1].t))),list=les!=null?all.filter(([,x])=>ttLesson(x.t)===String(les)):all,base=studentBase().replace(/vokabeltest\.html$/,'texttrainer.html');
@@ -4910,14 +4911,14 @@ window.LP=LP;window.lpLabels=labels;
  function bibLessons(){const V=window.classroomVocabPdf,set=new Set(Array.from({length:32},(_,i)=>String(i)));for(const k of homeLessons())set.add(k);for(const x of Object.values(ttStore())){const k=ttLesson(x.t);if(k)set.add(k)}for(const k of Object.keys(tocStore()?.lessons||{}))set.add(k);
   return [...set].sort((a,b)=>V.lessonOrder(a)-V.lessonOrder(b)).map(bibLesson)}
  async function bibUnits(){const a=leAll();let have={};try{for(const u of Object.keys(UNITS)){if(UNITS[u].prac)continue;const x=await leIDB('readonly',st=>st.get(UNITS[u].bookId||u));have[u]=!!x}}catch{}
-  return Object.entries(UNITS).filter(([,U])=>!U.prac).map(([u,U])=>({u,title:U.title,sub:U.sub,file:U.file,subject:UNIT_META[u]?.subject||'erdkunde',jg:UNIT_META[u]?.jg||0,lesson:UNIT_META[u]?.lesson||null,short:U.short||'',book:!!have[u],gl:U.gl||null,subs:Object.keys(a[leId(u)]?.subs||{}).length}))}
+  return Object.entries(UNITS).filter(([,U])=>!U.prac).map(([u,U])=>({u,title:U.title,sub:U.sub,file:U.file,subject:UNIT_META[u]?.subject||'erdkunde',jg:UNIT_META[u]?.jg||0,lesson:UNIT_META[u]?.lesson||null,short:U.short||'',book:!!have[u],gl:U.gl||null,part:U.lp?.part||null,subs:Object.keys(a[leId(u)]?.subs||{}).length}))}
  const bibList=(id,k)=>{const l=libOf(id),L=l?.lessons?.[k];if(!L)return [];return L.sections.filter(x=>id==='wh'||!/^(Wiederholung|Übungen)$/.test(x.name)).map(s=>({name:s.name,rows:(s.entries||[]).map(e=>[e.lemma||'',e.info||'',e.meaning||''])}))};
  async function bibTtHash(k,i=0){const t=Object.values(ttStore()).filter(x=>ttLesson(x.t)===String(k))[i]?.t;if(!t)return '';const u=await ttUrl(t);return u.slice(u.indexOf('#'))}
  /* 11.45: Abgaben auch aus Üben (Vokabeln pv-, Wiederholung pw-, Grammatik pg-), den Übungen (px) und dem Übersetzungs-Trainer (pt-) */
  const PCOLS={v:[['abf','Abfrage']],w:[['abf','Abfrage']],g:[['abf','Abfrage']],x:[['r1','Formen-Regler'],['r2','Bezug ziehen'],['r3','Satzglied'],['p1','Formen bestimmen'],['p2','Baukasten'],['p3','Formenschlange'],['p4','KöNiGs-Regel']],t:[['fe','Sätze fertig'],['oh','ohne Hilfe']]};
- function ensureP(u){if(UNITS[u])return UNITS[u];const m=/^p([vwgxt])(?:-(.+))?$/.exec(String(u||''));if(!m)return null;const k=m[2]||'',V=window.classroomVocabPdf,lab=k&&V?V.lessonLabel(k):(k?'Lektion '+k:'');
+ function ensureP(u){if(UNITS[u])return UNITS[u];const m=/^p([vwgxt])(?:-(.+))?$/.exec(String(u||''));if(!m)return null;const k=(m[2]||'').split('.')[0],ti=m[2]&&m[2].includes('.')?Object.values(ttStore()).filter(x=>ttLesson(x.t)===k)[+m[2].split('.')[1]-1]?.t?.title:null,V=window.classroomVocabPdf,lab=k&&V?V.lessonLabel(k):(k?'Lektion '+k:'');
   const T={v:'Vokabeln üben',w:'Wiederholung üben',g:'Grammatik üben',x:'Interaktive Übungen',t:'Übersetzungs-Trainer'}[m[1]];
-  UNITS[u]={title:T+(lab?' · '+lab:''),sub:'Latein · Abgabe per QR',file:{v:'ueben.html',w:'ueben.html',g:'ueben.html',x:'uebungen.html',t:'texttrainer.html'}[m[1]],cols:PCOLS[m[1]],book:[],qs:[],notx:true,prac:true};UNIT_META[u]={subject:'latein',jg:0,lesson:k||null};return UNITS[u]}
+  UNITS[u]={title:(ti&&m[1]==='t'?T+' · '+ti:T+(lab?' · '+lab:'')),sub:'Latein · Abgabe per QR',file:{v:'ueben.html',w:'ueben.html',g:'ueben.html',x:'uebungen.html',t:'texttrainer.html'}[m[1]],cols:PCOLS[m[1]],book:[],qs:[],notx:true,prac:true};UNIT_META[u]={subject:'latein',jg:0,lesson:k||null};return UNITS[u]}
  function bibAct(kind,k){
   if(kind==='voc'){cur='main';bookSel=new Set([k]);fromBook([k])}else if(kind==='wh'){cur='wh';bookSel=new Set([k]);openBook()}else if(kind==='gr'){gSel=k;openGrammar()}
   else if(kind==='ueb')showExercises();else if(kind==='tt')showTextTrainer(k);else if(kind==='qr')leStart(k);else if(kind==='scan'){ensureP(k);leScan(k)}else if(kind==='ov'){ensureP(k);leOverview(k)}else return null;
@@ -4944,14 +4945,14 @@ window.LP=LP;window.lpLabels=labels;
  /* 11.23: Üben (ohne Note) – Wörter bzw. Aufgaben mit Lösungen reisen im Link (#…) zur Seite ueben.html, nicht zum Server */
  const z1=async o=>{const bytes=new TextEncoder().encode(JSON.stringify(o));try{return 'z1.'+b64url(new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()))}catch{return 'j1.'+b64url(bytes)}};
  const QRMAX=2300;
- async function bibPractice(kind,k){const V=window.classroomVocabPdf,lab=V.lessonLabel(String(k)),c=leCls();let o;
+ async function bibPractice(kind,k,anon){const V=window.classroomVocabPdf,lab=V.lessonLabel(String(k)),c=leCls();let o;
   if(kind==='v'||kind==='w'){const l=libOf(kind==='w'?'wh':'main'),L=l?.lessons?.[k];if(!L)return null;
    const w=L.sections.filter(x=>kind==='w'||!/^(Wiederholung|Übungen)$/.test(x.name)).flatMap(x=>x.entries||[]).map(e=>[e.lemma||'',e.info||'',e.meaning||'']).filter(x=>x[0]&&x[2]);if(!w.length)return null;
-   o={k:'v',t:(kind==='w'?'Wiederholung ':'Vokabeln ')+lab,c,w,u:'p'+kind+'-'+k,n:leNames().map(x=>x.disp)}}
+   o={k:'v',t:(kind==='w'?'Wiederholung ':'Vokabeln ')+lab,c,w,...(anon?{}:{u:'p'+kind+'-'+k,n:leNames().map(x=>x.disp)})}}
   else if(kind==='g'){const g=glib(),L=g?.lessons?.[k],tps=L?topicsOf(L).filter(x=>x.g):[];if(!tps.length||!GR())return null;
    const keep=it=>it.k==='tab'?{k:'tab',ti:it.ti,rw:it.rw,cl:it.cl,sol:it.sol,gv:it.gv}:it.k==='det'?{k:'det',ti:it.ti,f:it.f,d:it.d,sol:it.sol}:{k:'inp',ti:it.ti,p:it.p,sub:it.sub,sol:it.sol};
    const seed=Math.floor(Math.random()*1e9),make=n=>{const r=GR().rngOf(seed);const out=[];for(const tp of tps){let gen=null;try{gen=GR().gen(tp.g,k)}catch{}if(!gen)continue;for(const [,,cnt,mk] of gen.types){try{out.push(...mk(r,cnt?n:1).map(keep))}catch{}}}return out};
-   let n=4,q=make(n);o={k:'g',t:'Grammatik '+lab,c,q,u:'pg-'+k,n:leNames().map(x=>x.disp)};
+   let n=4,q=make(n);o={k:'g',t:'Grammatik '+lab,c,q,...(anon?{}:{u:'pg-'+k,n:leNames().map(x=>x.disp)})};
    /* passend für einen QR-Code: notfalls weniger Aufgaben */while(n>1&&(await z1(o)).length>QRMAX){n--;q=make(n);o.q=q}if(!q.length)return null}
   else return null;
   const h=await z1(o);return {hash:'#'+h,url:studentBase().replace(/vokabeltest\.html$/,'ueben.html')+'#'+h,qr:h.length<=QRMAX,n:o.k==='v'?o.w.length:o.q.length,title:o.t}}

@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 12.11.2026 · Version 11.46
+Stand: 12.11.2026 · Version 11.47
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1425,3 +1425,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.44: Schulbuchmaterial optional im Backup; „Für Kollegen …“ erzeugt eine eigenständige HTML-Datei einer Lerneinheit.
 11.45: Abgabe-QR in Üben, Übungen und Übersetzungs-Trainer (mit Scannen und Übersicht); L16-Lernpakete wie im Buch geordnet.
 11.46: „Für Kollegen …“ und „Material per AirDrop“ speichern am Mac eine echte Datei (statt Teilen-Menü mit Dateipfad).
+11.47: Lektionsseite in der Reihenfolge des Buchs mit einheitlichen Knöpfen und „Für Kollegen …“ überall; Lösungen in der Seite und Lösungsblatt in jeder Vorschau.

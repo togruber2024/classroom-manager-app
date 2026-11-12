@@ -5,7 +5,7 @@
 (()=>{
 const S=(k,t,d,min,type,own,book)=>({k,t,d,min,type,own,book:book===undefined?k:book});
 const LP={
- l16a:{lesson:'16',title:'L16 · exempla – Wie die Römer an Vorbildern lernten',short:'Sachinfo',sub:'Latein · Lektion 16 · Sachinfo',bookId:'pontes-l16',
+ l16a:{lesson:'16',part:'sach',title:'L16 · exempla – Wie die Römer an Vorbildern lernten',short:'Sachinfo',sub:'Latein · Lektion 16 · Sachinfo',bookId:'pontes-l16',
   text:'lie',steps:[
    S('lie','Wie die Römer an Vorbildern lernten','{T}Sachinfo · Sätze antippen',4,'read',{h:'Wie die Römer an Vorbildern lernten',task:'Lies den Text. Tippe dann zu jeder Frage den Satz an, in dem die Antwort steht.',src:'Eigener Lesetext (ohne Buchdatei)',
     paras:[['Die Römer erzählten sich gern Geschichten von Menschen, die für Rom Großes geleistet hatten.','Solche Vorbilder nannten sie exempla (Singular: exemplum = „Beispiel“, „Vorbild“).'],
@@ -20,7 +20,7 @@ const LP={
     cards:[['Ein exemplum ist ein Beispiel oder Vorbild.',true,'exemplum = „Beispiel“, „Vorbild“.'],['Bei Begräbnissen berühmter Adliger erzählte ein Sohn von den Taten seiner Vorfahren.',true,'Diese Reden sollten an die Verdienste der Familie erinnern.'],['Der Grieche Polybios hielt diese Reden für ein Erfolgsgeheimnis Roms.',true,'Sie spornten die Jugend an, für das Vaterland alles zu ertragen.'],['exempla erzählen vor allem von den Leistungen der „kleinen Leute“.',false,'Sie zeigen vor allem die Verdienste des Adels.'],['Auch Redner nutzten exempla als überzeugende Beweise.',true,'Geschichtliche Beispiele galten als starkes Argument.'],['Die Geschichten von Cloelia, Horatius und Mucius sind sicher bewiesen.',false,'Es sind Sagen aus der Frühzeit Roms.']],done:'Die Römer lernten an Vorbildern – an exempla.'},null),
    S('seq','Rom gegen König Porsenna','Szenen in die richtige Reihenfolge',2,'order',{h:'Was geschah nacheinander?',task:'Tippe die Szenen in der richtigen Reihenfolge an.',
     items:['Der Etruskerkönig Porsenna greift Rom an.','Horatius Cocles verteidigt die Tiberbrücke, bis sie eingerissen ist.','Mucius Scaevola schleicht sich ins Lager der Etrusker.','Mucius hält seine Hand ins Feuer – Porsenna lässt ihn frei.','Rom schließt Frieden und gibt Porsenna Geiseln, darunter Cloelia.','Cloelia flieht mit den Mädchen durch den Tiber.'],done:'So erzählt es der Geschichtsschreiber Livius.'},null)]},
- l16b:{lesson:'16',title:'L16 · Übungen 1–6',short:'Übungen 1–6',sub:'Latein · Lektion 16 · Ü 1–6 · D 1–3',bookId:'pontes-l16',
+ l16b:{lesson:'16',part:'ueb',title:'L16 · Übungen 1–6',short:'Übungen 1–6',sub:'Latein · Lektion 16 · Ü 1–6 · D 1–3',bookId:'pontes-l16',
   steps:[
    S('ppp','Zurückführen erwünscht','{U}Ü 1 · D 1 · PPP antippen',2,'tarn',{h:'Finde alle PPP',task:'Tippe alle Formen an, die ein PPP sind (Partizip Perfekt Passiv).',
     words:[['vocātum','vocāre'],['templum'],['audītum','audīre'],['dōnum'],['laudātum','laudāre'],['nōndum'],['pūnītum','pūnīre'],['verbum'],['mūtātum','mūtāre'],['iterum']],done:'PPP auf -tum/-sum kommen vom Verb: vocātum ← vocāre.'}),
@@ -38,7 +38,7 @@ const LP={
     items:[['Mārcus ā patre ___ (laudāre).','laudāt',['us','a','ī','ae','um'],0,['est','sunt','erat'],0,'Markus ist vom Vater gelobt worden.'],['Puellae ā magistrō ___ (vocāre).','vocāt',['us','a','ī','ae','um'],3,['est','sunt','erat'],1,'Die Mädchen sind vom Lehrer gerufen worden.'],['Templum ā Rōmānīs ___ (aedificāre).','aedificāt',['us','a','ī','ae','um'],4,['est','sunt','erant'],0,'Der Tempel ist von den Römern gebaut worden.'],['Servī ā dominō ___ (pūnīre).','pūnīt',['us','a','ī','ae','um'],2,['est','sunt','erat'],1,'Die Sklaven sind vom Herrn bestraft worden.']]}),
    S('cha','Chaos','{U}Ü 6 · D 3 · Pronomina in Spalten ziehen',2,'sorter',{h:'Welche Art von Pronomen?',task:'Ziehe jedes Pronomen in die passende Spalte.',cats:['Relativpronomen','Personalpronomen','Demonstrativpronomen'],
     items:[['quem',0],['quae',0],['cuius',0],['vōbīs',1],['ego',1],['nōbīs',1],['hic',2],['illa',2],['eius',2],['huius',2]]})]},
- l16c:{lesson:'16',title:'L16 · Übungen 7–11',short:'Übungen 7–11',sub:'Latein · Lektion 16 · Ü 7–11 · D 4–5',bookId:'pontes-l16',
+ l16c:{lesson:'16',part:'ueb',title:'L16 · Übungen 7–11',short:'Übungen 7–11',sub:'Latein · Lektion 16 · Ü 7–11 · D 4–5',bookId:'pontes-l16',
   steps:[
    S('sgl','Hier dreht sich alles um eine Person','{U}Ü 7 · D 4 · Satzglied antippen',3,'quiz',{h:'Welches Satzglied ist das Relativpronomen?',opts:['Subjekt','Akkusativobjekt','Dativobjekt','adverbiale Bestimmung','Attribut'],
     qs:[['Amīcus, **quī** in forō stat, Mārcum salūtat.',0,'quī ist Subjekt des Relativsatzes.'],['Amīcus, **quem** Mārcus salūtat, laetus est.',1,'quem = wen? → Akkusativobjekt.'],['Amīcus, **cui** Mārcus librum dat, gaudet.',2,'cui = wem? → Dativobjekt.'],['Amīcus, **quōcum** Mārcus ambulat, rīdet.',3,'quōcum = mit dem → adverbiale Bestimmung.'],['Der Hund, **dessen** Besitzer krank ist, bellt.',4,'dessen bestimmt das Nomen „Besitzer“ näher → Attribut.'],['Die Lehrerin, **mit der** wir sprechen, lacht.',3,'mit der → adverbiale Bestimmung (Begleitung).']]}),
@@ -49,7 +49,7 @@ const LP={
     items:[['Mārcus audit amīcum laudātum esse.',0],['Mārcus audit amīcum laudārī.',1],['Constat urbem dēlētam esse.',0],['Videō puellās vocārī.',1]]}),
    S('deu','Fit für Deutsch','{U}Ü 11 · Fremdwort und lateinisches Verb verbinden',2,'pairs',{h:'Woher kommt das Fremdwort?',task:'Tippe ein Fremdwort an und dann das lateinische Verb, von dessen PPP es stammt.',
     pairs:[['Diktat','dīcere (dictum)'],['Produkt','prōdūcere (prōductum)'],['Motiv','movēre (mōtum)'],['Version','vertere (versum)']]})]},
- l16d:{lesson:'16',title:'L16 · Ponticulus',short:'Ponticulus',sub:'Latein · Lektion 16 · Ponticulus 1–3',bookId:'pontes-l16',
+ l16d:{lesson:'16',part:'pont',title:'L16 · Ponticulus',short:'Ponticulus',sub:'Latein · Lektion 16 · Ponticulus 1–3',bookId:'pontes-l16',
   steps:[
    S('tab','Kasus und Numerus','{U}Ponticulus 1 · Formen ins Raster ziehen',3,'sorter',{h:'In welches Feld gehört die Form?',task:'Ziehe jede Form in das passende Feld. Manche Formen passen in zwei Felder – sie kommen zweimal vor.',grid:true,
     cats:['Nom. Sg.','Nom. Pl.','Gen. Sg.','Gen. Pl.','Dat. Sg.','Dat. Pl.','Akk. Sg.','Akk. Pl.','Abl. Sg.','Abl. Pl.'],

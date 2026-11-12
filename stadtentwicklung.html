@@ -134,7 +134,7 @@ const KEY='cm-stadt-bs-v2';let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)
 /* 11.40: neue Fassung nach den Vorgaben – Name, Klasse und Gerät aus der alten Fassung übernehmen */
 if(!ST){ST={};try{const o=JSON.parse(localStorage.getItem('cm-stadt-bs-v1')||'{}')||{};for(const k of ['me','name','cls','roster','dv'])if(o[k]!=null)ST[k]=o[k]}catch{}}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ST))}catch{}try{updWho()}catch{}};
-let CURK=null;function goStep(k){const x=STEPS.find(y=>y[0]===k);if(!x)return home();CURK=k;x[4]();scrollTo(0,0)}
+let CURK=null;function goStep(k){const x=STEPS.find(y=>y[0]===k);if(!x)return home();CURK=k;if(SOLV&&!ST[k])try{solveK(k)}catch(e){console.warn(e)}x[4]();scrollTo(0,0)}
 function frame(title,inner){if(CURK){const x=STEPS.find(y=>y[0]===CURK);if(x)title=x[1]}const i=CURK?STEPS.findIndex(x=>x[0]===CURK):-1,nx=i>=0?STEPS[i+1]:null,done=CURK&&ST[CURK];
  app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+(i>=0?(i+1)+' · ':'')+esc(title)+'</b></div>'+inner+(i>=0?'<div class="row nextrow"><button class="sec" data-home2>‹ Übersicht</button><div class="sp"></div>'+(nx?'<button class="'+(done?'pri':'sec')+'" data-nextst>Weiter: '+esc(nx[1])+' ›</button>':'')+'</div>':'');
  app.querySelector('[data-home]').onclick=home;const h2=app.querySelector('[data-home2]');if(h2)h2.onclick=home;const n=app.querySelector('[data-nextst]');if(n)n.onclick=()=>goStep(nx[0])}
@@ -164,11 +164,19 @@ function dragify(onDrop){app.querySelectorAll('[data-dg]').forEach(el=>el.addEve
   const t=ev.type==='pointerup'?document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-drop]'):null;if(t)onDrop(el.dataset.dg,t.dataset.drop)};
  addEventListener('pointermove',mv,{passive:false});addEventListener('pointerup',up);addEventListener('pointercancel',up)}))}
 
+/* 11.47: Lehrkraft-Vorschau – „Lösungen“ zeigt jede Station schon richtig gelöst (in der Seite), „Lösungsblatt“ alles auf einer Seite */
+let SOLV=false,SNAP=null;
+function solveW(type,k,o){const T=n=>{ST[k]={p:n,t:n}};
+ if(type==='sorter'){const pl={};o.items.forEach((it,i)=>pl[i]=[].concat(it[1])[0]);ST[k+'P']=pl;ST[k+'R']=2;ST[k+'S']=[];T(o.items.length)}
+ else if(type==='swiper'){const ord=shuffleOnce(k,o.cards.map((_,i)=>i));ST[k+'A']=ord.map(i=>!!o.cards[i][1]);T(o.cards.length)}
+ else if(type==='quiz'){ST[k+'A']=o.qs.map(q=>q[2]);T(o.qs.length)}}
+const solvePairs=()=>{ST.begP={ok:PAIRS.map((_,i)=>i),err:[],sol:[],n:{}};ST.beg={p:PAIRS.length,t:PAIRS.length}};
+function solveK(k){if(k==='beg')solvePairs();else if(k==='txt'){const X=txSrc();ST.txtA={...X.PH};ST.txtR=2;ST.txtXA=[];ST.txtB=TQ.map((q,i)=>({w:[],r:X.ans[i],e:1}));ST.txt={p:4+TQ.length,t:4+TQ.length}}else if(k==='bf'){const Q=findQs();ST.bfA=Q.map(()=>({n:1,ok:1,e:1}));ST.bf={p:Q.length,t:Q.length}}else if(k==='bfe'){const F=featL();ST.feS={},ST.feR={},ST.feP={},ST.feX={};F.forEach((f,e)=>{ST.feS[e]=f.map((x,i)=>x[1]?i:-1).filter(i=>i>=0);ST.feR[e]=2;ST.feP[e]=ST.feS[e].length;ST.feX[e]=[]});const t=F.reduce((a,f)=>a+f.filter(x=>x[1]).length,0);ST.bfe={p:t,t}}else if(k==='line'){ST.lineS=LINE.map((_,i)=>i);ST.lineR=2;ST.lineX=[];ST.line={p:LINE.length,t:LINE.length}}}
 /* ---------- Bausteine ---------- */
 /* Zuordnen: Karten in Gruppen ziehen (oder Karte und dann Gruppe antippen).
    11.34: Nicht raten – nach „Prüfen“ sind richtige Karten fest; für falsche gibt es genau einen zweiten Versuch (ohne Punkte), danach steht die Lösung da. */
 const tries=(r,N,wrong)=>r===0?'':r===1?fb(0,'⚠︎ '+(N-wrong)+' von '+N+' richtig – diese Punkte zählen. Die falschen Karten liegen wieder oben: <b>ein</b> zweiter Versuch (ohne Punkte).'):'';
-function sorter(k,o){let pick=null;const pl=ST[k+'P']??={},N=o.items.length,R=()=>ST[k+'R']||0,sol=ST[k+'S']??=[];const ord=shuffleOnce(k,o.items.map((_,i)=>i));
+function sorter(k,o){if(SOLV&&!ST[k])solveW('sorter',k,o);let pick=null;const pl=ST[k+'P']??={},N=o.items.length,R=()=>ST[k+'R']||0,sol=ST[k+'S']??=[];const ord=shuffleOnce(k,o.items.map((_,i)=>i));
  const fixed=i=>R()>0&&pl[i]===o.items[i][1];
  const draw=()=>keep(k,()=>{const n=Object.keys(pl).length,r=R();
   frame(o.title,(typeof o.before==='function'?o.before():o.before||'')+'<div class="card"><h2>'+o.h+'</h2><p style="margin:0">'+o.task+' <b>'+n+' von '+N+'</b></p><div class="pool" style="margin-top:12px">'+ord.map(i=>pl[i]==null?'<button class="chip'+(pick===i?' on':'')+(r===1?' retry':'')+'" data-c="'+i+'" data-dg="'+i+'">'+esc(o.items[i][0])+'</button>':'').join('')+(n===N&&r<2?'<span class="muted">Alle Karten liegen in einer Gruppe.</span>':'')+'</div>'
@@ -184,7 +192,7 @@ function sorter(k,o){let pick=null;const pl=ST[k+'P']??={},N=o.items.length,R=()
    else{wrong.forEach(i=>{pl[i]=o.items[i][1];sol.push(i)});ST[k+'R']=2}save();draw()};
   o.wire?.(draw)});draw()}
 /* Wischen: rechts / links */
-function swiper(k,o){const A=ST[k+'A']??=[];const ord=shuffleOnce(k,o.cards.map((_,i)=>i));let show=null;
+function swiper(k,o){if(SOLV&&!ST[k])solveW('swiper',k,o);const A=ST[k+'A']??=[];const ord=shuffleOnce(k,o.cards.map((_,i)=>i));let show=null;
  const draw=()=>keep(k,()=>{const n=A.length,N=o.cards.length,cur=n<N?ord[n]:null;
   let deck;if(show!=null){const c=o.cards[show],ok=A[A.length-1]===c[1];deck='<div class="deck"><div class="scard res '+(ok?'ok':'no')+'"><b>'+(ok?'✓ Richtig':'✗ Nicht ganz')+' – '+esc(c[1]?o.r:o.l)+'</b><div>„'+esc(c[0])+'“</div>'+(c[2]?'<div class="muted">'+esc(c[2])+'</div>':'')+'</div></div><div class="swb"><button class="pri" style="border:0" data-nx>'+(n<N?'Nächste Karte ›':'Fertig ›')+'</button></div>'}
   else if(cur!=null)deck='<div class="deck">'+(n+1<N?'<div class="scard under"></div>':'')+'<div class="scard" id="sc"><span class="tag l">'+esc(o.l)+'</span><span class="tag r">'+esc(o.r)+'</span>'+esc(o.cards[cur][0])+'</div></div><div class="swb"><button class="l" data-a="0">← '+esc(o.l)+'</button><button class="r" data-a="1">'+esc(o.r)+' →</button></div>';
@@ -200,7 +208,7 @@ function swiper(k,o){const A=ST[k+'A']??=[];const ord=shuffleOnce(k,o.cards.map(
    sc.onpointerup=sc.onpointercancel=()=>{if(x0==null)return;x0=null;sc.style.transition='transform .25s';if(Math.abs(dx)>90){sc.style.transform='translateX('+(dx>0?600:-600)+'px) rotate('+(dx>0?25:-25)+'deg)';setTimeout(()=>ans(dx>0),180)}else{sc.style.transform='';tl.style.opacity=0;tr.style.opacity=0}}}
   o.wire?.(draw)});draw()}
 /* Antippen: Fragen mit drei Antworten */
-function quiz(k,o){const A=ST[k+'A']??=[];let qi=Math.min(A.length,o.qs.length-1);
+function quiz(k,o){if(SOLV&&!ST[k])solveW('quiz',k,o);const A=ST[k+'A']??=[];let qi=SOLV?0:Math.min(A.length,o.qs.length-1);
  const draw=()=>keep(k,()=>{const q=o.qs[qi],a=A[qi],N=o.qs.length;
   frame(o.title,(typeof o.before==='function'?o.before():o.before||'')+'<div class="card"><div class="prog"><span>Frage '+(qi+1)+' von '+N+'</span><div class="bar"><i style="width:'+(A.length/N*100)+'%"></i></div></div><p style="font-size:1.1rem;margin:0 0 10px"><b>'+esc(q[0])+'</b></p>'
    +q[1].map((x,j)=>'<button class="opt'+(a!=null?(j===q[2]?' ok':j===a?' no':''):'')+'" data-o="'+j+'">'+esc(x)+'</button>').join('')
@@ -291,7 +299,7 @@ const sents=a=>{a=String(a);const o=[];let c='';for(let i=0;i<a.length;i++){c+=a
 const LET=['A','B','C','D'];
 function txSrc(){const T=BOOK&&BOOK.m4?BOOK.m4:OWNM4,PH=BOOK&&BOOK.phase?BOOK.phase:OWNPH;const S=[];LET.forEach(l=>sents(T[l]).forEach(s=>S.push([l,s])));
  return {T,PH,S,ans:TQ.map(([,re])=>S.findIndex(([,s])=>re.test(s))),src:BOOK&&BOOK.m4?'M4 · '+(BOOK.source||''):'Eigener Text. Mit der Schulbuch-Datei liest du hier den Originaltext M4.'}}
-function runTxt(){const X=txSrc(),A=ST.txtA??={},R=()=>ST.txtR||0,B=ST.txtB??=[];let qi=0;while(qi<TQ.length-1&&B[qi]&&B[qi].e)qi++;let pick=null;
+function runTxt(){const X=txSrc(),A=ST.txtA??={},R=()=>ST.txtR||0,B=ST.txtB??=[];let qi=0;while(!SOLV&&qi<TQ.length-1&&B[qi]&&B[qi].e)qi++;let pick=null;
  const partB=()=>R()>=2,NA=4,NB=TQ.length;
  const finish=()=>{if(ST.txt||!partB()||B.filter(x=>x&&x.e).length<NB)return;const xa=ST.txtXA||[],pb=B.filter((b,i)=>b.r===X.ans[i]&&!b.w.length).length;
   fin('txt',(NA-xa.length)+pb,NA+NB,[...xa,...B.map((b,i)=>b.r===X.ans[i]&&!b.w.length?-1:NA+i).filter(i=>i>=0)])};
@@ -319,7 +327,7 @@ function runTxt(){const X=txSrc(),A=ST.txtA??={},R=()=>ST.txtR||0,B=ST.txtB??=[]
 /* ---------- 5 Burgplatz und Residenzschloss in vier Karten (Aufgabe 1) ---------- */
 const FIND=[['Tippe auf den Markt – das Zentrum der alten Stadt.',0,[[268,205]]],['Tippe auf die Burg.',0,[[333,211]]],['Tippe auf das Residenzschloss.',1,[[378,272]]],['Tippe auf die Festung mit den Bastionen.',1,null,'ring'],['Tippe auf den Bahnhof.',2,[[442,377]]],['Wo liegt die Industrie?',2,[[527,255]]],['Wo stand früher das Schloss? Tippe auf das heutige Einkaufszentrum.',3,[[378,272]]],['Tippe auf ein Parkhaus.',3,[[238,128],[384,206],[236,310]]]];
 const findQs=()=>BOOK&&BOOK.find?BOOK.find:FIND;
-function runFind(){const QS=findQs(),F=ST.bfA??=[],N=QS.length;let i=0;while(i<N-1&&F[i]&&F[i].e)i++;
+function runFind(){const QS=findQs(),F=ST.bfA??=[],N=QS.length;let i=0;while(!SOLV&&i<N-1&&F[i]&&F[i].e)i++;
  const draw=()=>keep('bf',()=>{const q=QS[i],a=F[i]||{n:0},e=q[1];
   frame('','<div class="prog"><span>Aufgabe '+(i+1)+' von '+N+'</span><div class="bar"><i style="width:'+F.filter(x=>x&&x.e).length/N*100+'%"></i></div></div><div class="two"><div class="card"><p style="font-size:1.12rem;margin:0 0 10px"><b>'+esc(mapT(e))+':</b> '+esc(q[0])+'</p><div class="find" id="fm">'+(BOOK?bmap([e],'bfm'):mapSvg({labels:false}))+'</div>'+(BOOK?'<div class="bmbar"><button class="sec" data-zoom="bfm">🔍 Vergrößern</button></div>':'')
    +(a.e?fb(a.ok&&a.n===1,(a.ok?(a.n===1?'✓ Gefunden!':'✓ Gefunden – Punkte gibt es nur beim ersten Versuch.'):'✗ Hier ist es (grüner Kreis).')+(q[4]?' '+esc(q[4]):''))+'<div class="row"><button class="sec" data-pq '+(i?'':'disabled')+'>‹</button><div class="sp"></div>'+(i<N-1?'<button class="pri" data-nq>Nächste Aufgabe ›</button>':'')+'</div>':a.n?fb(0,'✗ Noch nicht. <b>Ein</b> zweiter Versuch (ohne Punkte).'):'')
@@ -328,7 +336,7 @@ function runFind(){const QS=findQs(),F=ST.bfA??=[],N=QS.length;let i=0;while(i<N
   const fm=$('#fm');if(BOOK){bshow(fm,e);wireZoom()}else setEra(fm,e);const tgt=BOOK?fm.querySelector('.bml.on img'):fm.querySelector('svg');
   const pin=(x,y,ok)=>{const p=document.createElement('div');p.className='ping'+(ok?' ok':'');p.style.left=x+'%';p.style.top=y+'%';(BOOK?tgt.parentNode:fm).append(p)};
   const sol=()=>{if(BOOK){const [x,y]=q[2][0];pin(x*100,y*100,true)}else if(q[3]==='ring')pin(300/6,(220-182)/4.4,true);else{const [x,y]=q[2][0];pin(x/6,y/4.4,true)}};
-  if(a.e&&!a.ok)sol();
+  if(a.e&&(!a.ok||SOLV))sol();
   tgt.addEventListener('click',ev=>{const c=F[i]??={n:0};if(c.e)return;const r=tgt.getBoundingClientRect(),x=(ev.clientX-r.left)/r.width,y=(ev.clientY-r.top)/r.height;let ok;
    if(BOOK){const R=BOOK.maps[e].r||1;ok=q[2].some(([u,v])=>Math.hypot(x-u,(y-v)*R)<(q[2].length>1?.07:.06))}
    else if(q[3]==='ring'){const d=Math.hypot((x*600-300)/150,(y*440-220)/182);ok=Math.abs(d-1)<.1}else ok=q[2].some(([u,v])=>Math.hypot(x*600-u,y*440-v)<30);
@@ -342,7 +350,7 @@ const OWNFEAT=[[['Stadtmauer mit Toren',1],['Markt mit Rathaus und Kirche',1],['
  [['Bahnhof mit Gleisen',1],['Industrie',1],['Mietskasernen',1],['Villenviertel',1],['Grünring statt Festung',1],['Festungsanlage mit Bastionen',0],['Fußgängerzone',0]],
  [['Fußgängerzone',1],['Parkhäuser',1],['Einkaufszentrum',1],['Ringstraße',1],['Fachmarkt am Stadtrand',1],['Stadtmauer mit Toren',0],['Festungsanlage mit Bastionen',0]]];
 const featL=()=>BOOK&&BOOK.feat?BOOK.feat:OWNFEAT;
-function runFeat(){const FT=featL(),S=ST.feS??={},R=ST.feR??={},PT=ST.feP??={},XX=ST.feX??={};let e=Math.max(0,[0,1,2,3].find(k=>(R[k]||0)<2)??0),leg=false;
+function runFeat(){const FT=featL(),S=ST.feS??={},R=ST.feR??={},PT=ST.feP??={},XX=ST.feX??={};let e=SOLV?0:Math.max(0,[0,1,2,3].find(k=>(R[k]||0)<2)??0),leg=false;
  const tot=()=>FT.reduce((a,f)=>a+f.filter(x=>x[1]).length,0);
  const draw=()=>keep('bfe',()=>{const F=FT[e],sel=S[e]??=[],r=R[e]||0,N=F.filter(x=>x[1]).length,fx=k=>r>0&&F[k][1]&&sel.includes(k),solk=k=>r===2&&F[k][1]&&!sel.includes(k);
   frame('','<div class="tabs">'+[0,1,2,3].map(k=>'<button class="'+(k===e?'on':'')+((R[k]||0)>=1?' done':'')+'" data-tab="'+k+'">'+esc(ERAS[k][0])+'</button>').join('')+'</div>'
@@ -459,5 +467,6 @@ $('#who').onclick=showQr;
 save();if(ST.roster&&!ST.me)runWho();else home();updWho();bookInit();
 
 /* 11.42: Lehrkraft-Vorschau – Knopf „Lösungen“ */
-window.cmPreviewSolutions=on=>cmPdf.solutions(on,pdfBlocks);
+window.cmPreviewSolutions=on=>{if(on&&!SOLV){SNAP=JSON.stringify(ST);SOLV=true}else if(!on&&SOLV){SOLV=false;try{ST=JSON.parse(SNAP)}catch{}}if(CURK)goStep(CURK);else home()};
+window.cmSolutionSheet=on=>cmPdf.solutions(on,pdfBlocks);
 </script></body></html>

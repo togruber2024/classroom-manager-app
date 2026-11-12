@@ -4350,6 +4350,8 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
 .ein-row:hover{background:#f3f6fb}.ein-row.on{background:#eaf0fa;color:#2f5f9b;font-weight:700}.ein-row span{flex:1;min-width:0}.ein-row small{color:#8a97aa;font-size:.8rem}.ein-row.dim span{color:#8a97aa}
 .ein-row .stand{font-size:.72rem;font-weight:700;color:#9a5400;background:#fff4e2;border:1px solid #f2c98a;border-radius:999px;padding:0 7px;flex:none}
 .ein-foot{color:#8a97aa;font-size:.82rem;margin:16px 8px 0;line-height:1.5}.ein-foot a{color:#2f5f9b;cursor:pointer;text-decoration:underline}
+.ein-tile b .gl-pill{vertical-align:2px}.ein-tile b .gl-pill i{display:inline-block;width:7px;height:7px;margin:0;border-radius:50%;background:#1f8a4c}
+.ein-part{display:grid;grid-template-columns:190px 1fr;gap:14px;margin:0 0 14px}.ein-pl{padding-top:8px}.ein-pl .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#2f5f9b;color:#fff;font-weight:800;font-size:12.5px;margin-right:6px}.ein-pl b{font-size:1rem}.ein-pl small{display:block;color:#66758a;margin:2px 0 0 30px;font-size:.82rem}@media (max-width:900px){.ein-part{grid-template-columns:1fr}}
 .ein-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
 .ein-tile{border:1px solid #dce3ef;border-radius:12px;padding:14px;background:#fff;display:flex;flex-direction:column;gap:3px}
 .ein-tile i{font-style:normal;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:9px;background:#eaf0fa;color:#2f5f9b;font-weight:800;margin-bottom:4px}
@@ -4461,16 +4463,30 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  /* 11.45: Abgaben aus Üben, Übungen und Übersetzungs-Trainer scannen */
  const AB=u=>btn('scan',u,'Abgaben scannen','abg')+btn('ov',u,'Übersicht','abg');
  const btn=(d,k,t,c)=>'<button type="button" '+(c?'class="'+c+'" ':'')+'data-do="'+d+'" data-k="'+esc(k)+'">'+(c==='look'?'👁 ':'')+t+'</button>';
- function lessonTiles(l){const k=l.k,tt=l.tt[0];
-  return '<div class="ein-tiles">'
-   +tile('V','','Vokabeln',l.nV?l.nV+' neue Vokabeln':'kein Vokabular geladen',l.nV?btn('lv',k,'Ansehen','look')+btn('uv',k,'Üben (QR)','pri')+AB('pv-'+k)+btn('voc',k,'Als Test …','ghost'):'',!l.nV)
-   +tile('G','','Grammatik',l.gr.length?l.gr.length+(l.gr.length>1?' Themen':' Thema')+' · Formen bilden und bestimmen':'für diese Lektion keine',l.gr.length?btn('lg',k,'Ansehen','look')+btn('ug',k,'Üben (QR)','pri')+AB('pg-'+k)+btn('gr',k,'Als Test …','ghost'):'',!l.gr.length)
-   +tile('Ü','t3','Übersetzungs-Trainer',tt?tt.n+' Sätze'+(tt.hunt?' · '+esc(tt.hunt):'')+(l.tt.length>1?' · '+l.tt.length+' Texte':''):'noch kein Text – Datei laden',tt?btn('pt',k,'Ansehen','look')+btn('tt',k,'Link senden …','pri')+AB('pt-'+k):btn('load','','Datei laden …'),!tt)
-   +tile('W','','Wiederholung',l.nW?l.nW+' alte Vokabeln aus dem Lektionstext':'keine Liste geladen',l.nW?btn('lw',k,'Ansehen','look')+btn('uw',k,'Üben (QR)','pri')+AB('pw-'+k)+btn('wh',k,'Als Test …','ghost'):'',!l.nW)
-   +(l.ueb?tile('Ü','t2','Übungen','interaktiv, 3 Stufen',btn('pu',k,'Ansehen','look')+btn('ueb',k,'Start-QR','pri')+AB('px')):'')+'</div>'+lpTiles(l)}
- /* 11.38: Lernpakete (iPad) zur Lektion – Grundlagen, je ein Start-QR und eine Übersicht */
- function lpTiles(l){const us=data.units.filter(u=>u.subject==='latein'&&String(u.lesson)===String(l.k));if(!us.length)return '';const bk=us.some(u=>u.book);
-  return '<h3 class="lp-h">Lernpakete fürs iPad'+GLP+'</h3><p class="ein-sub" style="margin:0 0 8px">Wischen, ziehen, antippen – höchstens zwei Versuche, Abgabe per QR. '+(bk?'Übungen aus dem Buch sind geladen ✓ '+btn('air',us.find(u=>u.book).u,'Material per AirDrop','air'):'Ohne Buchdatei mit eigenen Beispielen · '+btn('load','','Buchdatei laden …'))+'</p><div class="ein-tiles">'+us.map((u,i)=>tile(String.fromCharCode(65+i),'t2',esc(u.title.replace(/^L\d+ · /,'')),'<span class="gl-meta"><span>'+u.gl.n+' Stationen</span><span>ca. '+u.gl.min+' Min.</span></span>'+esc(u.sub.replace(/^Latein · Lektion \d+ · /,''))+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':''):''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Scannen')+btn('ov',u.u,'Übersicht')+btn('kol',u.u,'Für Kollegen …','ghost'))).join('')+'</div>'}
+ /* 11.47: Lektion in der Reihenfolge des Buchs – Vorbereitung · Lektionstext · Sachinfo · Grammatik · Übungen · Ponticulus.
+    Jede Karte hat dieselben Knöpfe: Ansehen · Üben/Start-QR/Link senden · Abgaben · Übersicht · Für Kollegen … (Vokabeln/Grammatik: Als Test …) */
+ const KOL=k=>btn('kolp',k,'Für Kollegen …','ghost');
+ const sec=(n,t,sub,cards)=>cards?'<div class="ein-part"><div class="ein-pl"><span class="n">'+n+'</span><b>'+t+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</div><div class="ein-tiles">'+cards+'</div></div>':'';
+ function lpCard(u){const L=u.title.match(/^L\d+ · /)?'':'';return tile(String.fromCharCode(65+data.units.filter(x=>x.subject==='latein'&&String(x.lesson)===String(u.lesson)).indexOf(u)),'t2',esc(u.title.replace(/^L\d+ · /,''))+GLP,'<span class="gl-meta"><span>'+u.gl.n+' Stationen</span><span>ca. '+u.gl.min+' Min.</span></span>'+esc(u.sub.replace(/^Latein · Lektion \d+ · /,''))+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':''):''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+AB(u.u)+btn('kol',u.u,'Für Kollegen …','ghost'))}
+ function lessonTiles(l){const k=l.k,T=l.toc||{},us=data.units.filter(u=>u.subject==='latein'&&String(u.lesson)===String(k)),part=p=>us.filter(u=>u.part===p),rest=us.filter(u=>!u.part);
+  /* Lektionstext = der Text mit dem Titel aus dem Inhaltsverzeichnis, sonst der erste */
+  const norm2=x=>String(x||'').toLowerCase();let ti=T.text?l.tt.findIndex(x=>norm2(x.title).includes(norm2(T.text))):-1;if(ti<0&&l.tt.length)ti=0;
+  const ttCard=(x,i,main)=>tile('T','t3',main?'Übersetzungs-Trainer':esc(x.title.replace(/^(Lektion|L)\s*\d+\s*[·:-]?\s*/i,'')),x.n+' Sätze'+(x.hunt?' · '+esc(x.hunt):'')+(main?'':' · Zusatztext'),btn('pt',k+'|'+i,'Ansehen','look')+btn('tt',k,'Link senden …','pri')+AB('pt-'+k+(i?'.'+(i+1):''))+KOL('t|'+k+'|'+i));
+  const bk=us.some(u=>u.book);
+  const head=us.length?'<p class="ein-sub" style="margin:0 0 10px">Lernpakete: wischen, ziehen, antippen – höchstens zwei Versuche, Abgabe per QR. '+(bk?'Übungen aus dem Buch sind geladen ✓ <span class="ein-acts" style="display:inline-flex;vertical-align:middle">'+btn('air',us.find(u=>u.book).u,'Material per AirDrop','air')+'</span>':'Ohne Buchdatei mit eigenen Beispielen · <span class="ein-acts" style="display:inline-flex;vertical-align:middle">'+btn('load','','Buchdatei laden …')+'</span>')+'</p>':'';
+  return head
+   +sec(1,'Vorbereitung','vor dem Lektionstext',
+     tile('W','','Wiederholungsvokabeln',l.nW?l.nW+' Wörter aus dem Lektionstext':'keine Liste geladen',l.nW?btn('lw',k,'Ansehen','look')+btn('uw',k,'Üben (QR)','pri')+AB('pw-'+k)+KOL('w|'+k)+btn('wh',k,'Als Test …','ghost'):btn('load','','Datei laden …'),!l.nW)
+    +tile('V','','Lernvokabeln',l.nV?l.nV+' neue Wörter':'kein Vokabular geladen',l.nV?btn('lv',k,'Ansehen','look')+btn('uv',k,'Üben (QR)','pri')+AB('pv-'+k)+KOL('v|'+k)+btn('voc',k,'Als Test …','ghost'):btn('load','','Datei laden …'),!l.nV))
+   +sec(2,'Lektionstext',T.text?'„'+esc(T.text)+'“':'',
+     (ti>=0?ttCard(l.tt[ti],ti,true)+l.tt.map((x,i)=>i===ti?'':ttCard(x,i,false)).join(''):tile('T','t3','Übersetzungs-Trainer','noch kein Text – Datei laden',btn('load','','Datei laden …'),true)))
+   +sec(3,'Sachinfo',T.sach?esc(T.sach):'',part('sach').map(lpCard).join(''))
+   +sec(4,'Grammatik',[T.syn,T.form].filter(Boolean).map(esc).join(' · '),
+     (l.gr.length?tile('G','','Formen bilden und bestimmen',l.gr.length+(l.gr.length>1?' Themen':' Thema'),btn('lg',k,'Ansehen','look')+btn('ug',k,'Üben (QR)','pri')+AB('pg-'+k)+KOL('g|'+k)+btn('gr',k,'Als Test …','ghost')):'')
+    +(l.ueb?tile('+','t2','Training: Relativpronomen · Passiv','7 Übungen · 3 Stufen',btn('pu',k,'Ansehen','look')+btn('ueb',k,'Start-QR','pri')+AB('px')+KOL('x|'+k)):''))
+   +sec(5,'Übungen','Ü und Differenzierung',part('ueb').map(lpCard).join(''))
+   +sec(6,'Ponticulus','',part('pont').map(lpCard).join(''))
+   +(rest.length?sec(7,'Weitere Lernpakete','',rest.map(lpCard).join('')):'')}
  function unitTiles(u){return '<div class="ein-tiles">'
    /* 11.37: „Grundlagen“-Einheiten (AFB I) mit Kurzinfo und dem Hinweis auf die Vertiefung in GoodNotes */
    +tile('L','t2',u.gl?'Grundlagen erarbeiten (iPad)':'Lerneinheit (iPad)',(u.gl?'<span class="gl-meta"><span>AFB I</span><span>'+u.gl.n+' Stationen</span><span>ca. '+u.gl.min+' Min.</span><span>wischen · ziehen · antippen</span></span>':'')+(u.book?'mit Schulbuchmaterial ✓':'ohne Schulbuchmaterial')+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':'')+' gescannt':''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Abgaben scannen')+btn('ov',u.u,'Übersicht')+(u.book?btn('air',u.u,'Material per AirDrop','air'):'')+btn('kol',u.u,'Für Kollegen …','ghost'))
@@ -4493,15 +4509,21 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  /* 11.44: „Für Kollegen …“ – eine einzige HTML-Datei mit der Lerneinheit (und dem Schulbuchmaterial, falls geladen).
     Sie läuft ohne die App in jedem Browser; unten links zeigt „Lösungen“ alle Lösungen. */
  const ascii=t=>String(t).replace(/[äÄöÖüÜß]/g,c=>({'ä':'ae','Ä':'Ae','ö':'oe','Ö':'Oe','ü':'ue','Ü':'Ue','ß':'ss'}[c])).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w .,-]+/g,'').replace(/\s+/g,' ').trim();
- async function colleague(k,el){const b=B(),u=data.units.find(x=>x.u===k);if(!u)return;const t0=el?.textContent;if(el){el.disabled=true;el.textContent='Wird erstellt …'}
-  try{const [file,q]=u.file.split('?'),uq=new URLSearchParams(q||'').get('u');let html=await (await fetch('../'+file,{cache:'no-store'})).text();
+ async function colleague(k,el){const b=B(),u=data.units.find(x=>x.u===k);if(!u)return;let book=null;try{book=u.book&&b.bookFile?await b.bookFile(k):null}catch{}const uq=new URLSearchParams(u.file.split('?')[1]||'').get('u');
+  return buildKol({file:u.file.split('?')[0],uq,book,name:ascii(u.title.replace(/^L\d+ · /,(uq||'').toUpperCase()+' '))},el)}
+ /* 11.47: auch Vokabeln, Wiederholung, Grammatik, Übersetzungs-Trainer und Training – der Inhalt reist in der Datei mit */
+ async function colleagueP(k,el){const b=B(),[kind,kk,ii]=String(k).split('|'),L2=data.lessons.find(x=>x.k===kk),lab=L2?lname(L2):'';
+  try{if(kind==='v'||kind==='w'||kind==='g'){const r=await b.practice(kind,kk,true);if(!r){alert('Dafür fehlen noch Inhalte.');return}return buildKol({file:'ueben.html',hash:r.hash,name:ascii(({v:'Lernvokabeln',w:'Wiederholungsvokabeln',g:'Grammatik'})[kind]+' '+lab)},el)}
+   if(kind==='t'){const h=await b.ttHash(kk,+ii||0);if(!h)return;const x=L2?.tt?.[+ii||0];return buildKol({file:'texttrainer.html',hash:h,name:ascii('Uebersetzungs-Trainer '+(x?x.title:lab))},el)}
+   if(kind==='x')return buildKol({file:'uebungen.html',name:ascii('Training Relativpronomen Passiv')},el)}catch(e){alert('Die Datei konnte nicht erstellt werden: '+(e&&e.message||e))}}
+ async function buildKol(o,el){const t0=el?.textContent;if(el){el.disabled=true;el.textContent='Wird erstellt …'}
+  try{const file=o.file,uq=o.uq,book=o.book;let html=await (await fetch('../'+file,{cache:'no-store'})).text();
    for(const m of [...html.matchAll(/<script src="([^"]+)"><\/script>/g)]){const js=await (await fetch('../'+m[1].split('?')[0],{cache:'no-store'})).text();html=html.replace(m[0],()=>'<script>'+js.replace(/<\/script/gi,'<\\/script')+'</script>')}
-   let book=null;try{book=u.book&&b.bookFile?await b.bookFile(k):null}catch{}
-   const emb='<script>window.CM_EMBED_U='+JSON.stringify(uq||'')+';window.CM_EMBED_BOOK='+(book?book.text.replace(/</g,'\\u003c'):'null')+';</script>';
+   const emb='<script>window.CM_EMBED_U='+JSON.stringify(uq||'')+';window.CM_EMBED_BOOK='+(book?book.text.replace(/</g,'\\u003c'):'null')+';window.CM_EMBED_HASH='+JSON.stringify(o.hash||'')+';</script>';
    html=html.replace(/<script>/,emb+'<script>');
-   const tail='<script>(()=>{const d=document.createElement("div");d.style.cssText="position:fixed;left:12px;bottom:12px;z-index:99999;display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;border-radius:12px;background:#fff6e5;border:1px solid #f1d8a8;color:#7a4b00;font:600 13px -apple-system,Inter,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.12)";d.innerHTML="Ansicht für Kolleginnen und Kollegen <button type=button style=\\"height:34px;padding:0 12px;border-radius:9px;border:1px solid #d9c49a;background:#fff;font:inherit;cursor:pointer\\">Lösungen</button>";let on=false;d.querySelector("button").onclick=()=>{on=!on;try{cmPdf.solutions(on,pdfBlocks)}catch(e){alert(e.message)}};addEventListener("message",e=>{if(e.data&&e.data.type==="cm-sol-off")on=false});document.body.append(d);const w=document.getElementById("who");if(w)w.style.display="none"})();</script>';
+   const tail='<script>(()=>{const d=document.createElement("div");d.style.cssText="position:fixed;left:12px;bottom:12px;z-index:99999;display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;border-radius:12px;background:#fff6e5;border:1px solid #f1d8a8;color:#7a4b00;font:600 13px -apple-system,Inter,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.12)";const B="height:34px;padding:0 12px;border-radius:9px;border:1px solid #d9c49a;background:#fff;font:inherit;cursor:pointer";d.innerHTML="Ansicht für Kolleginnen und Kollegen <button type=button data-a style=\\""+B+"\\">Lösungen</button><button type=button data-b style=\\""+B+"\\">Lösungsblatt</button>";let a=false,b=false;const sty=(x,on)=>{x.style.background=on?"#fff4e0":"#fff";x.style.borderColor=on?"#e8a23a":"#d9c49a"};const A=d.querySelector("[data-a]"),S=d.querySelector("[data-b]");A.onclick=()=>{a=!a;sty(A,a);try{cmPreviewSolutions(a)}catch(e){}};S.onclick=()=>{b=!b;sty(S,b);try{cmSolutionSheet(b)}catch(e){}};addEventListener("message",e=>{if(e.data&&e.data.type==="cm-sol-off"){b=false;sty(S,false)}});document.body.append(d);setTimeout(()=>{A.hidden=typeof window.cmPreviewSolutions!=="function";S.hidden=typeof window.cmSolutionSheet!=="function";if(A.hidden&&S.hidden)d.firstChild.textContent="Ansicht für Kolleginnen und Kollegen"},1500);const w=document.getElementById("who");if(w)w.style.display="none"})();</script>';
    html=html.replace(/<\/body>/i,()=>tail+'</body>');
-   const f=new File([html],ascii(u.title.replace(/^L\d+ · /,(uq||'').toUpperCase()+' '))+' - fuer Kollegen.html',{type:'text/html'});
+   const f=new File([html],o.name+' - fuer Kollegen.html',{type:'text/html'});
    if(touchDev()){const N=navigator;try{if(N.canShare&&N.canShare({files:[f]})){await N.share({files:[f],title:f.name});return}}catch(e){if(e&&e.name==='AbortError')return}}
    /* 11.46: am Mac nicht über das Teilen-Menü (Chrome reicht dort nur einen Dateipfad als Text weiter), sondern als echte Datei speichern */
    saveFile(f);alert('„'+f.name+'“ ('+Math.round(f.size/1024)+' KB) liegt jetzt in „Downloads“. Schicke sie per Mail oder AirDrop an deine Kollegin oder deinen Kollegen – sie öffnet sich mit Doppelklick im Browser.')}
@@ -4511,11 +4533,12 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   if(d==='lw')return prev({title:'Wiederholung '+l.label,html:listHtml(b.list('wh',k)),solutions:true});
   if(d==='lg')return prev({title:'Grammatik '+l.label,html:'<h3>Themen</h3><ul>'+l.gr.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>'+(l.syntax?'<h3>Syntax</h3><p>'+esc(l.syntax)+'</p>':'')});
   if(d==='pu')return prev({title:'Übungen '+l.label,url:'uebungen.html?vorschau=1'});
-  if(d==='pt'){const h=await b.ttHash(k);if(!h)return;return prev({title:'Übersetzungs-Trainer '+lname(l),url:'texttrainer.html?vorschau=1'+h})}
+  if(d==='pt'){const [kk,ii]=String(k).split('|'),L2=data.lessons.find(x=>x.k===kk);const h=await b.ttHash(kk,+ii||0);if(!h)return;return prev({title:'Übersetzungs-Trainer '+lname(L2),url:'texttrainer.html?vorschau=1'+h})}
   if(d==='pl')return prev({title:u.title,url:u.file+(u.file.includes('?')?'&':'?')+'vorschau=1'});
   if(d==='load')return loadPkg();
   if(d==='air')return airdrop(k);
   if(d==='kol')return colleague(k,el);
+  if(d==='kolp')return colleagueP(k,el);
   if(d==='uv'||d==='uw'||d==='ug')return practice(d.slice(1),k,el);
   /* Dialoge des Noten-Managers: kurz zu „Noten“ wechseln, nach dem Schließen zurück */
   const T=top()?.document;const back0=[...(T?.querySelectorAll('[data-view][aria-selected="true"]')||[])][0];

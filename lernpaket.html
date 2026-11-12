@@ -199,7 +199,7 @@ function wSwiper(st,o){const k=st.k,A=ST[k+'A']??=[];const ord=shuffleOnce(k,o.c
    sc.onpointerup=sc.onpointercancel=()=>{if(x0==null)return;x0=null;sc.style.transition='transform .25s';if(Math.abs(dx)>90){sc.style.transform='translateX('+(dx>0?600:-600)+'px) rotate('+(dx>0?25:-25)+'deg)';setTimeout(()=>ans(dx>0),180)}else{sc.style.transform='';tl.style.opacity=0;tr.style.opacity=0}}}});draw()}
 
 /* ===== Antippen (Fragen mit Auswahl) ===== */
-function wQuiz(st,o){const k=st.k,A=ST[k+'A']??=[];let qi=Math.min(A.length,o.qs.length-1);const opts=q=>Array.isArray(q[1])?q[1]:o.opts,ans=q=>Array.isArray(q[1])?q[2]:q[1],ex=q=>Array.isArray(q[1])?q[3]:q[2];
+function wQuiz(st,o){const k=st.k,A=ST[k+'A']??=[];let qi=SOLV?0:Math.min(A.length,o.qs.length-1);const opts=q=>Array.isArray(q[1])?q[1]:o.opts,ans=q=>Array.isArray(q[1])?q[2]:q[1],ex=q=>Array.isArray(q[1])?q[3]:q[2];
  const draw=()=>keep(k,()=>{const q=o.qs[qi],a=A[qi],N=o.qs.length;
   frame('<div class="card"><div class="prog"><span>Frage '+(qi+1)+' von '+N+'</span><div class="bar"><i style="width:'+(A.length/N*100)+'%"></i></div></div>'+(o.h?'<div class="muted" style="font-weight:650;margin-bottom:6px">'+md(o.h)+'</div>':'')+'<p class="qlat">'+md(q[0])+'</p>'
    +'<div class="optg">'+opts(q).map((x,j)=>'<button class="opt'+(a!=null?(j===ans(q)?' ok':j===a?' no':''):'')+'" data-o="'+j+'" '+(a!=null?'disabled':'')+'>'+esc(x)+'</button>').join('')+'</div>'
@@ -255,7 +255,7 @@ function wMemory(st,o){const k=st.k,N=o.pairs.length,Mm=ST[k+'M']??={found:[],se
    draw()})};draw()}
 
 /* ===== Drehräder: Person, Numerus, Tempus ===== */
-function wWheels(st,o){const k=st.k,A=ST[k+'A']??=[],N=o.forms.length;let qi=Math.min(A.length,N-1);const W=[['1. Person','2. Person','3. Person'],['Singular','Plural'],['Perfekt','Plusquamperfekt']];let cur=[0,0,0];
+function wWheels(st,o){const k=st.k,A=ST[k+'A']??=[],N=o.forms.length;let qi=SOLV?0:Math.min(A.length,N-1);const W=[['1. Person','2. Person','3. Person'],['Singular','Plural'],['Perfekt','Plusquamperfekt']];let cur=[0,0,0];
  const draw=()=>keep(k,()=>{const f=o.forms[qi],a=A[qi],sol=[f[1]-1,f[2],f[3]],ok=a&&a.every((v,i)=>v===sol[i]);const val=a||cur;
   frame('<div class="card">'+head(o)+'<div class="prog" style="margin-top:8px"><span>Form '+(qi+1)+' von '+N+'</span><div class="bar"><i style="width:'+(A.filter(Boolean).length/N*100)+'%"></i></div></div><p class="qlat big">'+esc(f[0])+'</p>'
    +'<div class="wheels">'+W.map((opts,w)=>'<div class="wheel'+(a?(val[w]===sol[w]?' ok':' no'):'')+'"><button data-up="'+w+'" '+(a?'disabled':'')+'>▲</button><b>'+opts[val[w]]+'</b><button data-dn="'+w+'" '+(a?'disabled':'')+'>▼</button></div>').join('')+'</div>'
@@ -269,7 +269,7 @@ function wWheels(st,o){const k=st.k,A=ST[k+'A']??=[],N=o.forms.length;let qi=Mat
   const nq=app.querySelector('[data-nq]');if(nq)nq.onclick=()=>{qi++;cur=[0,0,0];draw()}});draw()}
 
 /* ===== Baukasten: PPP-Endung + Form von esse ===== */
-function wBuild(st,o){const k=st.k,A=ST[k+'A']??=[],N=o.items.length;let qi=Math.min(A.length,N-1),sel=[null,null];
+function wBuild(st,o){const k=st.k,A=ST[k+'A']??=[],N=o.items.length;let qi=SOLV?0:Math.min(A.length,N-1),sel=[null,null];
  const draw=()=>keep(k,()=>{const it=o.items[qi],a=A[qi],v=a||sel,ok=a&&a[0]===it[3]&&a[1]===it[5];
   const form=(v[0]!=null?it[1]+it[2][v[0]]:'…')+(it[7]?' '+it[7]:'')+' '+(v[1]!=null?it[4][v[1]]:'…');
   frame('<div class="card">'+head(o)+'<div class="prog" style="margin-top:8px"><span>Satz '+(qi+1)+' von '+N+'</span><div class="bar"><i style="width:'+(A.filter(Boolean).length/N*100)+'%"></i></div></div>'
@@ -284,7 +284,7 @@ function wBuild(st,o){const k=st.k,A=ST[k+'A']??=[],N=o.items.length;let qi=Math
   const nq=app.querySelector('[data-nq]');if(nq)nq.onclick=()=>{qi++;draw()}});draw()}
 
 /* ===== Relativpronomen wählen – Pfeil zum Bezugswort (KNG-Farbe) ===== */
-function wArrow(st,o){const k=st.k,A=ST[k+'A']??=[],N=o.items.length;let qi=0;while(qi<N-1&&A[qi]&&A[qi].r!=null)qi++;
+function wArrow(st,o){const k=st.k,A=ST[k+'A']??=[],N=o.items.length;let qi=0;while(!SOLV&&qi<N-1&&A[qi]&&A[qi].r!=null)qi++;
  const okI=(it,a)=>a&&a.p===it.ans&&[].concat(it.ref).includes(a.r);
  const draw=()=>{const it=o.items[qi],a=A[qi]||{},refs=[].concat(it.ref),G={m:'gm',f:'gf',n:'gn'}[it.kng]||'gm';
   const toks=it.s.map((w,i)=>{if(i===it.gap){const t=a.p!=null?it.opt[a.p]:'?';return '<span class="tok gap'+(a.p!=null?(a.p===it.ans?' '+G:' no'):'')+'" data-tk="'+i+'">'+esc(t)+'</span>'}
@@ -313,7 +313,7 @@ function wPant(st,o){const k=st.k;let w=null,t=0,tm=null;
   const h=app.querySelector('[data-hide]');if(h)h.onclick=()=>{w=null;clearInterval(tm);draw()}};draw()}
 
 /* ===== 11.40: Text lesen – zu jeder Frage den passenden Satz antippen (2 Versuche, nur der erste zählt) ===== */
-function wRead(st,o){const k=st.k,A=ST[k+'A']??=[],N=o.qs.length,T=o.paras.flat();let qi=0;while(qi<N-1&&A[qi]&&A[qi].e)qi++;
+function wRead(st,o){const k=st.k,A=ST[k+'A']??=[],N=o.qs.length,T=o.paras.flat();let qi=0;while(!SOLV&&qi<N-1&&A[qi]&&A[qi].e)qi++;
  const draw=()=>keep(k,()=>{const q=o.qs[qi],a=A[qi]||{w:[]},ok=a.r===q[1],end=!!a.e;let n=0;
   const txt=o.paras.map(pa=>'<p>'+pa.map(()=>{const i=n++;const c=end&&i===q[1]?(ok?' ok':' sol'):a.w.includes(i)?' no':'';return '<span class="rs'+c+'" data-si="'+i+'">'+md(T[i])+'</span>'}).join(' ')+'</p>').join('');
   frame('<div class="card">'+head(o)+'</div><div class="card rdq"><div class="prog"><span>Frage '+(qi+1)+' von '+N+'</span><div class="bar"><i style="width:'+(A.filter(x=>x&&x.e).length/N*100)+'%"></i></div></div><p class="qlat" style="margin:4px 0 0">'+md(q[0])+'</p>'
@@ -329,7 +329,21 @@ function textSheet(){const st=P.steps.find(x=>x.k===P.text);if(!st)return;const 
  d.innerHTML='<div class="txin"><div class="row" style="margin:0 0 8px"><b style="flex:1;font-size:1.1rem">📖 '+esc(o.h||st.t)+'</b><button class="sec" data-x>Schließen</button></div><div class="muted" style="font-size:.8rem;margin-bottom:6px">'+esc(o.src||'')+'</div>'+o.paras.map(pa=>'<p>'+pa.map(md).join(' ')+'</p>').join('')+'</div>';
  d.onclick=e=>{if(e.target===d||e.target.closest('[data-x]'))d.remove()};document.body.append(d)}
 const WID={read:wRead,sorter:wSorter,swiper:wSwiper,quiz:wQuiz,pairs:wPairs,order:wOrder,tarn:wTarn,memory:wMemory,wheels:wWheels,build:wBuild,arrow:wArrow,pant:wPant};
-const STEPS=P?P.steps.map(st=>[st.k,st.t,st.d,st.min,()=>WID[st.type](st,DATA(st))]):[];
+/* 11.47: Lehrkraft-Vorschau – „Lösungen“ zeigt jede Station schon richtig gelöst (in der Seite), „Lösungsblatt“ alles auf einer Seite */
+let SOLV=false,SNAP=null;
+function solveW(st,o){const k=st.k,T=n=>{ST[k]={p:n,t:n}};switch(st.type){
+ case 'sorter':{const pl={};o.items.forEach((it,i)=>pl[i]=[].concat(it[1])[0]);ST[k+'P']=pl;ST[k+'R']=2;ST[k+'S']=[];T(o.items.length);break}
+ case 'swiper':{const ord=shuffleOnce(k,o.cards.map((_,i)=>i));ST[k+'A']=ord.map(i=>!!o.cards[i][1]);T(o.cards.length);break}
+ case 'quiz':ST[k+'A']=o.qs.map(q=>Array.isArray(q[1])?q[2]:q[1]);T(o.qs.length);break;
+ case 'pairs':ST[k+'P']={ok:o.pairs.map((_,i)=>i),err:[],sol:[],n:{}};T(o.pairs.length);break;
+ case 'order':ST[k+'S']=o.items.map((_,i)=>i);ST[k+'R']=2;T(o.items.length);break;
+ case 'tarn':ST[k+'T']={hit:o.words.map((w,i)=>w[1]?i:-1).filter(i=>i>=0),miss:[]};T(o.words.filter(w=>w[1]).length);break;
+ case 'memory':ST[k+'M']={found:o.pairs.map((_,i)=>i),seen:[],err:[]};T(o.pairs.length);break;
+ case 'wheels':ST[k+'A']=o.forms.map(f=>[f[1]-1,f[2],f[3]]);T(o.forms.length);break;
+ case 'build':ST[k+'A']=o.items.map(it=>[it[3],it[5]]);T(o.items.length);break;
+ case 'arrow':ST[k+'A']=o.items.map(it=>({p:it.ans,r:[].concat(it.ref)[0]}));T(o.items.length*2);break;
+ case 'read':ST[k+'A']=o.qs.map(q=>({w:[],r:q[1],e:1}));T(o.qs.length);break}}
+const STEPS=P?P.steps.map(st=>[st.k,st.t,st.d,st.min,()=>{const o=DATA(st);if(SOLV&&!ST[st.k])try{solveW(st,o)}catch(e){console.warn(e)}WID[st.type](st,o)}]):[];
 const TOTMIN=Math.round(STEPS.reduce((a,s)=>a+s[3],0));
 
 /* ---------- Unterlagen (PDF) ---------- */
@@ -385,5 +399,6 @@ $('#who').onclick=showQr;
 save();if(P)document.title=P.title;if(ST.roster&&!ST.me)runWho();else home();updWho();bookInit();
 
 /* 11.42: Lehrkraft-Vorschau – Knopf „Lösungen“ */
-window.cmPreviewSolutions=on=>cmPdf.solutions(on,pdfBlocks);
+window.cmPreviewSolutions=on=>{if(on&&!SOLV){SNAP=JSON.stringify(ST);SOLV=true}else if(!on&&SOLV){SOLV=false;try{ST=JSON.parse(SNAP)}catch{}}if(CURK)goStep(CURK);else home()};
+window.cmSolutionSheet=on=>cmPdf.solutions(on,pdfBlocks);
 </script></body></html>

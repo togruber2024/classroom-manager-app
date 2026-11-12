@@ -126,7 +126,7 @@ const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(
 const KEY='cm-welthandel-v2';let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)||'null')||null}catch{}
 if(!ST){ST={};try{const o=JSON.parse(localStorage.getItem('cm-welthandel-v1')||'{}')||{};for(const k of ['me','cls','roster','dv','name'])if(o[k]!=null)ST[k]=o[k]}catch{}}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ST))}catch{}try{updWho()}catch{}};
-let CURK=null;function goStep(k){const x=STEPS.find(y=>y[0]===k);if(!x)return home();CURK=k;x[4]();scrollTo(0,0)}
+let CURK=null;function goStep(k){const x=STEPS.find(y=>y[0]===k);if(!x)return home();CURK=k;if(SOLV&&!ST[k])try{solveK(k)}catch(e){console.warn(e)}x[4]();scrollTo(0,0)}
 function frame(title,inner){if(CURK){const x=STEPS.find(y=>y[0]===CURK);if(x)title=x[1]}const i=CURK?STEPS.findIndex(x=>x[0]===CURK):-1,nx=i>=0?STEPS[i+1]:null,done=CURK&&ST[CURK];
  app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+(i>=0?(i+1)+' · ':'')+esc(title)+'</b></div>'+inner+(i>=0?'<div class="row nextrow"><button class="sec" data-home2>‹ Übersicht</button><div class="sp"></div>'+(nx?'<button class="'+(done?'pri':'sec')+'" data-nextst>Weiter: '+esc(nx[1])+' ›</button>':'')+'</div>':'');
  app.querySelector('[data-home]').onclick=home;const h2=app.querySelector('[data-home2]');if(h2)h2.onclick=home;const n=app.querySelector('[data-nextst]');if(n)n.onclick=()=>goStep(nx[0])}
@@ -168,11 +168,21 @@ function dragify(onDrop){app.querySelectorAll('[data-dg]').forEach(el=>el.addEve
   const t=ev.type==='pointerup'?document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-drop]'):null;if(t)onDrop(el.dataset.dg,t.dataset.drop)};
  addEventListener('pointermove',mv,{passive:false});addEventListener('pointerup',up);addEventListener('pointercancel',up)}))}
 
+/* 11.47: Lehrkraft-Vorschau – „Lösungen“ zeigt jede Station schon richtig gelöst (in der Seite), „Lösungsblatt“ alles auf einer Seite */
+let SOLV=false,SNAP=null;
+function solveW(type,k,o){const T=n=>{ST[k]={p:n,t:n}};
+ if(type==='sorter'){const pl={};o.items.forEach((it,i)=>pl[i]=[].concat(it[1])[0]);ST[k+'P']=pl;ST[k+'R']=2;ST[k+'S']=[];T(o.items.length)}
+ else if(type==='swiper'){const ord=shuffleOnce(k,o.cards.map((_,i)=>i));ST[k+'A']=ord.map(i=>!!o.cards[i][1]);T(o.cards.length)}
+ else if(type==='quiz'){ST[k+'A']=o.qs.map(q=>q[2]);T(o.qs.length)}}
+const solvePairs=()=>{ST.begP={ok:PAIRS.map((_,i)=>i),err:[],sol:[],n:{}};ST.beg={p:PAIRS.length,t:PAIRS.length}};
+const solveTxt6=()=>{const {K}=txSrc(),M={},NM=K.c.length+K.r.length;K.c.forEach(k=>M[k]='c');K.r.forEach(k=>M[k]='r');ST.txtM=M;ST.txtL=[...K.c,...K.r];ST.txtR=2;ST.txtF=NM;ST.txtW=[];ST.txtA=BEL.map(q=>q[1]);ST.txtB=BEL.map((q,i)=>K.b[i][0]);ST.txt={p:NM+BEL.length*2,t:NM+BEL.length*2}};
+const solveCloze=()=>{ST.polG={0:0,1:1,2:2,3:3,4:4,5:5};ST.polR=2;ST.polX=[];ST.pol={p:6,t:6}};
+function solveK(k){if(k==='beg')solvePairs();else if(k==='pol')solveCloze();else if(k==='txt')solveTxt6();else if(k==='ein'){ST.einS=TRIP.map((_,i)=>i);ST.einR=2;ST.einX=[];ST.ein={p:TRIP.length,t:TRIP.length}}else if(k==='str'){ST.strA=SQ.map(q=>q[1]);ST.str={p:SQ.length,t:SQ.length}}}
 /* ---------- Bausteine ---------- */
 /* Zuordnen: Karten in Gruppen ziehen (oder Karte und dann Gruppe antippen).
    11.34: Nicht raten – nach „Prüfen“ sind richtige Karten fest; für falsche gibt es genau einen zweiten Versuch (ohne Punkte), danach steht die Lösung da. */
 const tries=(r,N,wrong)=>r===0?'':r===1?fb(0,'⚠︎ '+(N-wrong)+' von '+N+' richtig – diese Punkte zählen. Die falschen Karten liegen wieder oben: <b>ein</b> zweiter Versuch (ohne Punkte).'):'';
-function sorter(k,o){let pick=null;const pl=ST[k+'P']??={},N=o.items.length,R=()=>ST[k+'R']||0,sol=ST[k+'S']??=[];const ord=shuffleOnce(k,o.items.map((_,i)=>i));
+function sorter(k,o){if(SOLV&&!ST[k])solveW('sorter',k,o);let pick=null;const pl=ST[k+'P']??={},N=o.items.length,R=()=>ST[k+'R']||0,sol=ST[k+'S']??=[];const ord=shuffleOnce(k,o.items.map((_,i)=>i));
  const fixed=i=>R()>0&&pl[i]===o.items[i][1];
  const draw=()=>keep(k,()=>{const n=Object.keys(pl).length,r=R();
   frame(o.title,(typeof o.before==='function'?o.before():o.before||'')+'<div class="card"><h2>'+o.h+'</h2><p style="margin:0">'+o.task+' <b>'+n+' von '+N+'</b></p><div class="pool" style="margin-top:12px">'+ord.map(i=>pl[i]==null?'<button class="chip'+(pick===i?' on':'')+(r===1?' retry':'')+'" data-c="'+i+'" data-dg="'+i+'">'+esc(o.items[i][0])+'</button>':'').join('')+(n===N&&r<2?'<span class="muted">Alle Karten liegen in einer Gruppe.</span>':'')+'</div>'
@@ -188,7 +198,7 @@ function sorter(k,o){let pick=null;const pl=ST[k+'P']??={},N=o.items.length,R=()
    else{wrong.forEach(i=>{pl[i]=o.items[i][1];sol.push(i)});ST[k+'R']=2}save();draw()};
   o.wire?.(draw)});draw()}
 /* Wischen: rechts / links */
-function swiper(k,o){const A=ST[k+'A']??=[];const ord=shuffleOnce(k,o.cards.map((_,i)=>i));let show=null;
+function swiper(k,o){if(SOLV&&!ST[k])solveW('swiper',k,o);const A=ST[k+'A']??=[];const ord=shuffleOnce(k,o.cards.map((_,i)=>i));let show=null;
  const draw=()=>keep(k,()=>{const n=A.length,N=o.cards.length,cur=n<N?ord[n]:null;
   let deck;if(show!=null){const c=o.cards[show],ok=A[A.length-1]===c[1];deck='<div class="deck"><div class="scard res '+(ok?'ok':'no')+'"><b>'+(ok?'✓ Richtig':'✗ Nicht ganz')+' – '+esc(c[1]?o.r:o.l)+'</b><div>„'+esc(c[0])+'“</div>'+(c[2]?'<div class="muted">'+esc(c[2])+'</div>':'')+'</div></div><div class="swb"><button class="pri" style="border:0" data-nx>'+(n<N?'Nächste Karte ›':'Fertig ›')+'</button></div>'}
   else if(cur!=null)deck='<div class="deck">'+(n+1<N?'<div class="scard under"></div>':'')+'<div class="scard" id="sc"><span class="tag l">'+esc(o.l)+'</span><span class="tag r">'+esc(o.r)+'</span>'+esc(o.cards[cur][0])+'</div></div><div class="swb"><button class="l" data-a="0">← '+esc(o.l)+'</button><button class="r" data-a="1">'+esc(o.r)+' →</button></div>';
@@ -204,7 +214,7 @@ function swiper(k,o){const A=ST[k+'A']??=[];const ord=shuffleOnce(k,o.cards.map(
    sc.onpointerup=sc.onpointercancel=()=>{if(x0==null)return;x0=null;sc.style.transition='transform .25s';if(Math.abs(dx)>90){sc.style.transform='translateX('+(dx>0?600:-600)+'px) rotate('+(dx>0?25:-25)+'deg)';setTimeout(()=>ans(dx>0),180)}else{sc.style.transform='';tl.style.opacity=0;tr.style.opacity=0}}}
   o.wire?.(draw)});draw()}
 /* Antippen: Fragen mit drei Antworten */
-function quiz(k,o){const A=ST[k+'A']??=[];let qi=Math.min(A.length,o.qs.length-1);
+function quiz(k,o){if(SOLV&&!ST[k])solveW('quiz',k,o);const A=ST[k+'A']??=[];let qi=SOLV?0:Math.min(A.length,o.qs.length-1);
  const draw=()=>keep(k,()=>{const q=o.qs[qi],a=A[qi],N=o.qs.length;
   frame(o.title,(typeof o.before==='function'?o.before():o.before||'')+'<div class="card"><div class="prog"><span>Frage '+(qi+1)+' von '+N+'</span><div class="bar"><i style="width:'+(A.length/N*100)+'%"></i></div></div><p style="font-size:1.1rem;margin:0 0 10px"><b>'+esc(q[0])+'</b></p>'
    +q[1].map((x,j)=>'<button class="opt'+(a!=null?(j===q[2]?' ok':j===a?' no':''):'')+'" data-o="'+j+'">'+esc(x)+'</button>').join('')
@@ -267,7 +277,7 @@ const runExp=()=>{const max=EXP[0][1];sorter('exp',{title:'Exportländer',h:'Wo 
 
 /* ---------- 6 Handelsströme M4: in der Liste antippen ---------- */
 const SQ=[['Welcher Wirtschaftsraum hat das größte Handelsvolumen?',0],['Welcher Wirtschaftsraum hat das kleinste Handelsvolumen?',6],['In welchem Raum findet der kleinste Anteil des Handels innerhalb der eigenen Region statt?',5]];
-function runStr(){const A=ST.strA??=[];let qi=Math.min(A.length,SQ.length-1);
+function runStr(){const A=ST.strA??=[];let qi=SOLV?0:Math.min(A.length,SQ.length-1);
  const vmax=VOL[0][1];const draw=()=>{const q=SQ[qi],a=A[qi],N=SQ.length;
   frame('Handelsströme','<div class="two"><div class="card">'+(BOOK&&BOOK.img&&BOOK.img.m4?zoomBox('m4','mm'):'')+'<b>Handelsvolumen 2019 nach Wirtschaftsräumen</b><div class="muted" style="font-size:.85rem">in Mrd. US-Dollar · rechts: Anteil des Handels <b>innerhalb</b> des eigenen Raumes · Quelle: Weltbank</div><div class="hbars">'+VOL.map(([n,v,b],i)=>'<div class="hb hb2'+(a!=null&&i===q[1]?' ok':'')+'" data-r="'+i+'" style="'+(a!=null&&i===q[1]?'background:var(--okbg)':a===i?'background:var(--badbg)':'')+'"><span>'+n+'</span><i style="width:'+v/vmax*100+'%"></i><b>'+fmt(v)+'</b><em><s style="width:'+b+'%"></s>'+String(b).replace('.',',')+' %</em></div>').join('')+'</div>'+termBox(['Binnenhandel','Triade'])+'</div>'
    +'<div><div class="card"><div class="prog"><span>Frage '+(qi+1)+' von '+N+'</span><div class="bar"><i style="width:'+A.length/N*100+'%"></i></div></div><p style="font-size:1.1rem;margin:0 0 8px"><b>'+esc(q[0])+'</b></p><p class="muted" style="margin:0;font-size:.9rem">Tippe links in der Liste auf den Wirtschaftsraum.</p>'
@@ -316,7 +326,7 @@ const BEL=[['Für eine Firma ist es egal, ob ihr Lieferant in Deutschland, Afrik
 const txSrc=()=>BOOK&&BOOK.m3?{T:BOOK.m3,K:TXK.m3}:{T:OWNTXT,K:TXK.own};
 const sents=a=>{a=String(a);const o=[];let c='';for(let i=0;i<a.length;i++){c+=a[i];if('.!?'.includes(a[i])&&(i===a.length-1||/\s/.test(a[i+1]))){o.push(c.trim());c=''}}if(c.trim())o.push(c.trim());return o};
 function txtHtml(T,cls){let i=0;return T.p.map(p=>p.q?'<p class="tq">'+esc(p.q)+'</p>':'<p class="tp">'+sents(p.a).map(x=>{const k=i++;return '<span class="sn'+(cls(k)||'')+'" data-si="'+k+'">'+md(x)+'</span> '}).join('')+'</p>').join('')}
-function runTxt(){const {T,K}=txSrc();const M=ST.txtM??={},A=ST.txtA??=[],B=ST.txtB??=[],R=()=>ST.txtR||0;let pen='c',qi=Math.min(B.filter(x=>x!=null).length,BEL.length-1);
+function runTxt(){const {T,K}=txSrc();const M=ST.txtM??={},A=ST.txtA??=[],B=ST.txtB??=[],R=()=>ST.txtR||0;let pen='c',qi=SOLV?0:Math.min(B.filter(x=>x!=null).length,BEL.length-1);
  const tgt=k=>K.c.includes(k)?'c':K.r.includes(k)?'r':null,part=()=>R()<2?'a':'b';
  const markScore=()=>{let ok=0,bad=0;for(const [k,v] of Object.entries(M)){const t=tgt(+k);if(t===v)ok++;else bad++}return Math.max(0,ok-bad)};
  const finish=()=>{if(ST.txt||A.length<BEL.length||B.filter(x=>x!=null).length<BEL.length)return;const m=ST.txtF??0,x=[...K.c,...K.r].map((k,i)=>(ST.txtW||[]).includes(k)?i:-1).filter(i=>i>=0);
@@ -429,5 +439,6 @@ $('#who').onclick=showQr;
 save();if(ST.roster&&!ST.me)runWho();else home();updWho();bookInit();
 
 /* 11.42: Lehrkraft-Vorschau – Knopf „Lösungen“ */
-window.cmPreviewSolutions=on=>cmPdf.solutions(on,pdfBlocks);
+window.cmPreviewSolutions=on=>{if(on&&!SOLV){SNAP=JSON.stringify(ST);SOLV=true}else if(!on&&SOLV){SOLV=false;try{ST=JSON.parse(SNAP)}catch{}}if(CURK)goStep(CURK);else home()};
+window.cmSolutionSheet=on=>cmPdf.solutions(on,pdfBlocks);
 </script></body></html>
