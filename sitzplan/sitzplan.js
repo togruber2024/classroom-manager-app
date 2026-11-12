@@ -4336,6 +4336,11 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
 .ein-tog.off .sw{background:#c9d2df}.ein-tog.off .sw::after{left:3px}
 .ein-dots{display:inline-flex;gap:3px;flex:none}.ein-dots b{width:7px;height:7px;border-radius:50%;background:#d5dde9}.ein-dots b.dv{background:#2f5f9b}.ein-dots b.dg{background:#6b8fc4}.ein-dots b.dt{background:#e8590c}.ein-dots b.dw{background:#9db4d6}
 .ein-chips{display:inline-flex;gap:3px;margin-right:10px;vertical-align:1px}.ein-chips i{font-style:normal;width:18px;height:18px;border-radius:5px;display:inline-grid;place-items:center;font-size:11px;font-weight:800;background:#f1f4f9;color:#c3ccd9;cursor:default}.ein-chips i.on{background:#eaf0fa;color:#2f5f9b}.ein-chips i.on.t{background:#fff1e3;color:#c2570c}
+.ein-sub b{color:#2f5f9b;font-weight:650}
+.ein-toc{display:grid;grid-template-columns:1.25fr 1fr;gap:4px 26px;border-top:1px solid #eef2f7;border-bottom:1px solid #eef2f7;padding:10px 0 8px;margin:0 0 16px;font-size:.92rem;color:#243247}
+.ein-tk{font-size:.72rem;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:#8a97aa;margin:4px 0 2px}
+.ein-tr{margin-bottom:4px;line-height:1.4}.ein-tr i{font-style:normal;font-size:.7rem;font-weight:750;letter-spacing:.04em;color:#c2570c;text-transform:uppercase;margin-right:6px}
+@media (max-width:760px){.ein-toc{grid-template-columns:1fr}}
 .ein-row .why{display:block;font-size:.78rem;color:#8a97aa;font-weight:500}
 .ein-pick{display:none}
 .ein-empty{color:#66758a;padding:10px 2px}
@@ -4398,13 +4403,20 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   {const f=find(sel);if(!f.l&&!f.u)sel=stand()}draw()}
  /* 11.28: Buchstaben-Chips (V · G · Ü · W) in der Zeile unter dem Lektionstitel – kräftig = vorhanden, blass = fehlt noch */
  const chips=l=>'<span class="ein-chips">'+[['V',l.nV,'Vokabeln'],['G',l.gr.length,'Grammatik'],['Ü',l.tt.length,'Übersetzungs-Trainer','t'],['W',l.nW,'Wiederholung']].map(([c,n,t,o])=>'<i class="'+(n?(o?'on t':'on'):'')+'" title="'+t+(n?'':' – fehlt noch')+'">'+c+'</i>').join('')+'</span>';
+ /* 11.29: Themen aus dem Inhaltsverzeichnis unter dem Lektionstitel (ohne Inhaltsverzeichnis: Grammatik-Themen) */
+ function tocHtml(l){const T=l.toc;if(!T)return '<p class="ein-sub">'+(sub(l)||'&nbsp;')+'</p>';const li=a=>(a||[]).map(esc).join(' · ');
+  const head=[T.text&&'Lektionstext: <b>'+esc(T.text)+'</b>',T.sach&&'Sachinfo: '+esc(T.sach)].filter(Boolean).join(' · ');
+  const L=[['Syntax',T.syn],['Formenlehre',T.form],['Wortschatz',T.wort]].filter(x=>x[1]).map(([k,v])=>'<div class="ein-tr"><i>'+k+'</i>'+esc(v)+'</div>').join('');
+  const R=[['Textkompetenz',T.textk],['Kulturkompetenz',T.kult],['Medienkompetenz',T.med]].filter(x=>x[1]?.length).map(([k,v])=>'<div class="ein-tk">'+k+'</div><div class="ein-tr">'+li(v)+'</div>').join('');
+  const O=T.orig?'<div class="ein-tk">Originaltext (fakultativ)</div><div class="ein-tr"><b>'+esc(T.orig.t)+'</b>'+(T.orig.q?' · '+esc(T.orig.q):'')+'</div>':'';
+  return (head?'<p class="ein-sub">'+head+'</p>':'')+'<div class="ein-toc"><div>'+(L?'<div class="ein-tk">Sprachkompetenz</div>'+L:'')+'</div><div>'+R+O+'</div></div>'}
  const dots=l=>'<span class="ein-dots" title="Vokabeln · Grammatik · Übersetzungs-Trainer · Wiederholung">'+[['dv',l.nV],['dg',l.gr.length],['dt',l.tt.length],['dw',l.nW]].map(([c,n])=>'<b class="'+(n?c:'')+'"></b>').join('')+'</span>';
  const rowL=l=>'<button type="button" class="ein-row'+(sel==='l:'+l.k?' on':'')+(blocks(l)?'':' dim')+'" data-sel="l:'+esc(l.k)+'"><span>'+esc(lname(l))+'</span>'+(isStand('l:'+l.k)?'<span class="stand">aktuell</span>':'')+'</button>';
  const rowU=u=>'<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>'+esc(u.title)+'</span>'+(isStand('u:'+u.u)?'<span class="stand">aktuell</span>':'')+'</button>';
  const norm=x=>String(x||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9äöüß]+/g,' ').trim();
  function treeHtml(){const subj=SUBJ[cx.subject]||'',known=cx.subject in {latein:1,erdkunde:1},showAll=ui.all||!known,latOk=showAll||cx.subject==='latein',ekOk=showAll||cx.subject==='erdkunde';
   if(q.trim()){const t=norm(q),hit=x=>norm(x).includes(t);let out='';
-   for(const l of data.lessons){const why=[...l.gr,...l.formen,l.syntax,...l.tt.map(x=>x.hunt)].filter(Boolean).find(hit);if(hit(lname(l))||hit(l.label)||why)out+='<button type="button" class="ein-row'+(sel==='l:'+l.k?' on':'')+'" data-sel="l:'+esc(l.k)+'"><span>Latein · '+esc(lname(l))+(why&&!hit(lname(l))?'<small class="why">'+esc(why)+'</small>':'')+'</span></button>'}
+   for(const l of data.lessons){const T=l.toc||{},why=[T.syn,T.form,T.wort,...(T.textk||[]),...(T.kult||[]),T.text,T.sach,...l.gr,...l.formen,l.syntax,...l.tt.map(x=>x.hunt)].filter(Boolean).find(hit);if(hit(lname(l))||hit(l.label)||why)out+='<button type="button" class="ein-row'+(sel==='l:'+l.k?' on':'')+'" data-sel="l:'+esc(l.k)+'"><span>Latein · '+esc(lname(l))+(why&&!hit(lname(l))?'<small class="why">'+esc(why)+'</small>':'')+'</span></button>'}
    for(const u of data.units)if(hit(u.title)||hit(u.sub))out+='<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>Erdkunde · '+esc(u.title)+'</span></button>';
    return out||'<div class="ein-empty" style="padding:8px">Nichts gefunden.</div>'}
   const {l:selL,u:selU}=find(sel);const openNow=new Set(openJg);if(cx.jg)openNow.add(cx.jg);if(selL)openNow.add(selL.jg);if(selU)openNow.add(selU.jg);
@@ -4426,7 +4438,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    +'<div class="ein-handle" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Seitenmenü breiter oder schmaler ziehen" title="Ziehen: Seitenmenü breiter oder schmaler · Doppelklick: Standardbreite"><span class="sp-side-pill" aria-hidden="true">⋮</span><span class="sp-side-line" aria-hidden="true"></span><span class="sp-side-badge" aria-hidden="true"></span></div>'
    +'<div class="ein-main"><button type="button" class="ein-pick" data-pick>☰ '+(l?esc(lname(l)):u?esc(u.title):'Einheit wählen')+' ▾</button>'
    +(l||u?'<div class="ein-mh"><h2>'+title+'</h2><span class="sp"></span>'+(cx.key&&items().includes(sel)?'<label class="ein-tog'+(st?'':' off')+'" title="Eingeschaltet: „Unterricht“ öffnet für die '+esc(cls)+' automatisch diese '+(l?'Lektion':'Einheit')+'"><input type="checkbox" data-stand'+(st?' checked':'')+'><span class="sw"></span>Aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+'</label>':'')+'</div>'
-     +(l?'<p class="ein-sub">'+chips(l)+(sub(l)||'')+'</p>'+lessonTiles(l):'<p class="ein-sub">'+esc(u.sub)+' · Jahrgang '+u.jg+'</p>'+unitTiles(u))
+     +(l?tocHtml(l)+lessonTiles(l):'<p class="ein-sub">'+esc(u.sub)+' · Jahrgang '+u.jg+'</p>'+unitTiles(u))
     :'<div class="ein-empty">Für '+esc(subj||'dieses Fach')+' gibt es noch keine Einheiten. Links findest du alles, was geladen ist („alle Fächer“).</div>')+'</div>';
   wireTree();
   const qi=view.querySelector('.ein-q');qi.oninput=()=>{q=qi.value;const T=view.querySelector('.ein-list');T.innerHTML=treeHtml();wireTree()};
@@ -4488,7 +4500,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  function pickFiles(){return new Promise(res=>{const i=document.createElement('input');i.type='file';i.multiple=true;i.hidden=true;document.body.append(i);i.onchange=()=>{res([...i.files]);i.remove()};i.addEventListener('cancel',()=>{res([]);i.remove()});i.click()})}
  async function loadPkg(){const b=B();if(!b)return;const fs=await pickFiles();if(!fs.length)return;let r;
   try{r=await b.importFiles(fs)}catch(e){alert('Laden nicht möglich: '+(e.name==='QuotaExceededError'?'Speicher voll.':e.message));return}
-  const parts=[r.voc&&'Vokabular +'+r.voc+' Wörter',r.wh&&'Wiederholung +'+r.wh+' Wörter',r.gr&&'Grammatik +'+r.gr+' Themen',r.tt&&r.tt+' Übersetzungs-Trainer-Text'+(r.tt>1?'e':''),r.le&&r.le+' Lerneinheit'+(r.le>1?'en':'')+' (Schulbuchmaterial)'].filter(Boolean);
+  const parts=[r.toc&&'Inhaltsverzeichnis: '+r.toc+' Lektionen',r.voc&&'Vokabular +'+r.voc+' Wörter',r.wh&&'Wiederholung +'+r.wh+' Wörter',r.gr&&'Grammatik +'+r.gr+' Themen',r.tt&&r.tt+' Übersetzungs-Trainer-Text'+(r.tt>1?'e':''),r.le&&r.le+' Lerneinheit'+(r.le>1?'en':'')+' (Schulbuchmaterial)'].filter(Boolean);
   alert(parts.length?'Geladen und zusammengeführt:\n'+parts.join('\n')+(r.bad||r.unknown?'\n\n'+(r.bad+r.unknown)+' Datei(en) nicht erkannt.':''):'Nichts Neues gefunden'+(r.bad||r.unknown?' – '+(r.bad+r.unknown)+' Datei(en) nicht erkannt.':' – alles war schon vorhanden.'));render()}
  /* Exportieren */
  async function exportPkg(){const b=B();if(!b)return;if(!data)data=await load();cx=ctx();
@@ -4500,7 +4512,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    +groups.map(g=>'<label class="l2"><input type="checkbox" data-g="'+g.jg+'"'+(g.jg===pre?' checked':'')+(g.n?'':' disabled')+'>'+esc(g.lab)+'<small>'+(g.n||'leer')+'</small></label>').join('')
    +'<label><input type="checkbox" data-all="ek"><b>Erdkunde</b><small>'+data.units.length+' Lerneinheiten</small></label>'
    +data.units.map(u=>'<label class="l2"><input type="checkbox" data-u="'+u.u+'"'+(u.jg===preU&&u.book?' checked':'')+(u.book?'':' disabled')+'>Jahrgang '+u.jg+' · '+esc(u.title)+'<small>'+(u.book?'mit Schulbuchbildern':'kein Material geladen')+'</small></label>').join('')
-   +'<div class="parts">Bausteine: '+[['voc','Vokabular'],['wh','Wiederholung'],['gr','Grammatik'],['tt','Übersetzungs-Trainer'],['le','Lerneinheiten']].map(([k,t])=>'<label><input type="checkbox" data-p="'+k+'" checked>'+t+'</label>').join('')+'</div>'
+   +'<div class="parts">Bausteine: '+[['toc','Inhaltsverzeichnis'],['voc','Vokabular'],['wh','Wiederholung'],['gr','Grammatik'],['tt','Übersetzungs-Trainer'],['le','Lerneinheiten']].map(([k,t])=>'<label><input type="checkbox" data-p="'+k+'" checked>'+t+'</label>').join('')+'</div>'
    +'<div class="note">Dateiname: <b data-fn></b> · Enthält Schulbuchmaterial – nur für den eigenen Unterricht, nicht veröffentlichen. Keine Schülerdaten, keine Noten.</div>'
    +'<div class="acts"><button type="button" data-x>Abbrechen</button><button type="button" data-everything>Alles exportieren</button><button type="submit" class="pri">Auswahl exportieren</button></div></form>';
   const q=s=>[...dlg.querySelectorAll(s)];

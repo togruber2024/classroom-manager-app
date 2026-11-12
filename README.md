@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 12.11.2026 · Version 11.28
+Stand: 12.11.2026 · Version 11.29
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1407,3 +1407,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.26: Unterricht mit festem Seitenmenü (Schieber), Schalter „Aktuelle Lektion“, Punkte je Baustein, Suche nach Lektion/Thema; iPhone-Auswahlblatt.
 11.27: Unterricht: Schieber wie im Sitzplan; Knopf „Klassenansicht“ entfernt.
 11.28: Sitzplan-Leiste mit runden Ansichtsknöpfen (Pillen wie im Noten-Manager); Buchstaben-Chips V·G·Ü·W unter dem Lektionstitel statt Punkten im Seitenmenü.
+11.29: Inhaltsverzeichnis per Paket (privat): Lektionsnamen, Lektionstext, Sachinfo, Kompetenzen unter dem Titel; Suche über diese Themen; Übersetzungs-Trainer-Texte ersetzen auch bei geändertem Titel.

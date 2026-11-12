@@ -4140,7 +4140,7 @@ html.fs-view .fs-hide{display:none!important}
   for(const f of files){try{if(/\.zip$/i.test(f.name)||f.type==='application/zip'){for(const x of await ttUnzip(await f.arrayBuffer()))texts.push(x.text)}else texts.push(await f.text())}catch{bad++}}
   const s2=ttStore(),got=[];
   for(const tx of texts){try{const t=JSON.parse(tx);if(t?.type!=='classroom-text-trainer'||!Array.isArray(t.s))throw 0;t.lesson=ttLesson(t);
-   for(const [id,x] of Object.entries(s2))if(x.t.title===t.title)delete s2[id];s2[Math.random().toString(36).slice(2,8)]={t,added:Date.now()};got.push(t)}catch{bad++}}
+   /* 11.29: auch bei geändertem Titel ersetzen (gleiche Lektion, gleicher erster Satz) */for(const [id,x] of Object.entries(s2))if(x.t.title===t.title||(ttLesson(x.t)===t.lesson&&x.t.s?.[0]?.t&&x.t.s[0].t===t.s[0]?.t))delete s2[id];s2[Math.random().toString(36).slice(2,8)]={t,added:Date.now()};got.push(t)}catch{bad++}}
   ttSave(s2);return {got,bad}}
  const ttSave=x=>{try{localStorage.setItem(TTKEY,JSON.stringify(x))}catch{alert('Speicher voll – der Text konnte nicht gespeichert werden.')}};
  async function ttUrl(t){const bytes=new TextEncoder().encode(JSON.stringify(t));let h;try{h='z1.'+b64url(new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()))}catch{h='j1.'+b64url(bytes)}return studentBase().replace(/vokabeltest\.html$/,'texttrainer.html')+'#'+h}
@@ -4652,11 +4652,13 @@ html.fs-view .fs-hide{display:none!important}
  const LAT_JG=[[6,0,9],[7,10,15],[8,16,23],[9,24,1e9]];
  const latJg=k=>{const o=window.classroomVocabPdf?.lessonOrder(k)??+k;return (LAT_JG.find(([,a,b])=>o>=a&&o<=b)||LAT_JG.at(-1))[0]};
  const leIDB=(mode,fn)=>new Promise((res,rej)=>{try{const r=indexedDB.open('cm-lerneinheiten',1);r.onupgradeneeded=()=>r.result.createObjectStore('u');r.onerror=()=>rej(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('u',mode),q=fn(tx.objectStore('u'));tx.oncomplete=()=>{res(q&&q.result);db.close()};tx.onerror=()=>rej(tx.error)}}catch(e){rej(e)}});
+ /* 11.29: Inhaltsverzeichnis (privat, per Paket geladen): Lektionsname, Lektionstext, Sachinfo, Kompetenzen */
+ const TOCKEY='classroom-pontes-toc-v1',tocStore=()=>{try{return JSON.parse(localStorage.getItem(TOCKEY)||'null')}catch{return null}};
  const ttTitle=k=>{const t=Object.values(ttStore()).find(x=>ttLesson(x.t)===String(k));const m=/·\s*(.+)$/.exec(t?.t?.title||'');return m?m[1].trim():''};
  function bibLesson(k){const m=libOf('main'),w=libOf('wh'),g=glib(),L=g?.lessons?.[k],tps=L?topicsOf(L).filter(x=>x.g):[],tts=Object.values(ttStore()).filter(x=>ttLesson(x.t)===String(k));
   const nV=m?.lessons?.[k]?m.lessons[k].sections.filter(x=>!/^(Wiederholung|Übungen)$/.test(x.name)).reduce((a,x)=>a+x.entries.length,0):0,nW=w?.lessons?.[k]?w.lessons[k].sections.reduce((a,x)=>a+x.entries.length,0):0;
-  return {k,tag:lesTag(k),label:window.classroomVocabPdf.lessonLabel(k),name:ttTitle(k),jg:latJg(k),nV,nW,gr:tps.map(x=>x.t),formen:(L?.formen||[]).map(x=>x.t),syntax:L?.syntax||'',ueb:k==='16',tt:tts.map(x=>({title:x.t.title,n:x.t.s.length,hunt:x.t.hunt?.name||x.t.hu?.name||''}))}}
- function bibLessons(){const V=window.classroomVocabPdf,set=new Set(Array.from({length:32},(_,i)=>String(i)));for(const k of homeLessons())set.add(k);for(const x of Object.values(ttStore())){const k=ttLesson(x.t);if(k)set.add(k)}
+  const T=tocStore()?.lessons?.[k]||null;return {k,tag:lesTag(k),label:window.classroomVocabPdf.lessonLabel(k),name:T?.t||ttTitle(k),toc:T,jg:latJg(k),nV,nW,gr:tps.map(x=>x.t),formen:(L?.formen||[]).map(x=>x.t),syntax:L?.syntax||'',ueb:k==='16',tt:tts.map(x=>({title:x.t.title,n:x.t.s.length,hunt:x.t.hunt?.name||x.t.hu?.name||''}))}}
+ function bibLessons(){const V=window.classroomVocabPdf,set=new Set(Array.from({length:32},(_,i)=>String(i)));for(const k of homeLessons())set.add(k);for(const x of Object.values(ttStore())){const k=ttLesson(x.t);if(k)set.add(k)}for(const k of Object.keys(tocStore()?.lessons||{}))set.add(k);
   return [...set].sort((a,b)=>V.lessonOrder(a)-V.lessonOrder(b)).map(bibLesson)}
  async function bibUnits(){const a=leAll();let have={};try{for(const u of Object.keys(UNITS)){const x=await leIDB('readonly',st=>st.get(u));have[u]=!!x}}catch{}
   return Object.entries(UNITS).map(([u,U])=>({u,title:U.title,sub:U.sub,file:U.file,subject:UNIT_META[u]?.subject||'erdkunde',jg:UNIT_META[u]?.jg||0,book:!!have[u],subs:Object.keys(a[leId(u)]?.subs||{}).length}))}
@@ -4670,13 +4672,15 @@ html.fs-view .fs-hide{display:none!important}
  async function bibExport(sel,title){const P=sel.parts||{},ks=new Set((sel.lessons||[]).map(String)),cut=l=>{if(!l?.lessons)return null;const lessons=Object.fromEntries(Object.entries(l.lessons).filter(([k])=>ks.has(k)));return Object.keys(lessons).length?{...l,lessons}:null};
   const d={type:PKT,v:1,title:title||'Einheiten',created:new Date().toISOString()};
   if(P.voc){const x=cut(libOf('main'));if(x)d.vocab=x}if(P.wh){const x=cut(libOf('wh'));if(x)d.wh=x}if(P.gr){const x=cut(glib());if(x)d.grammar=x}
+  if(P.toc){const T=tocStore();if(T?.lessons){const lessons=Object.fromEntries(Object.entries(T.lessons).filter(([k])=>ks.has(k)));if(Object.keys(lessons).length)d.toc={...T,lessons}}}
   if(P.tt){const t=Object.values(ttStore()).map(x=>x.t).filter(t=>ks.has(ttLesson(t)));if(t.length)d.texts=t}
   if(P.le&&sel.units?.length){const us=[];for(const u of sel.units){try{const x=await leIDB('readonly',st=>st.get(u));if(x)us.push(x)}catch{}}if(us.length)d.units=us}
-  const n=(d.vocab?1:0)+(d.wh?1:0)+(d.grammar?1:0)+(d.texts?.length||0)+(d.units?.length||0);return n?d:null}
+  const n=(d.vocab?1:0)+(d.wh?1:0)+(d.grammar?1:0)+(d.toc?1:0)+(d.texts?.length||0)+(d.units?.length||0);return n?d:null}
  async function bibImport(files){const out={voc:0,wh:0,gr:0,tt:0,le:0,bad:0,unknown:0},texts=[];
   const one=async(name,text)=>{let d;try{d=JSON.parse(text)}catch{out.bad++;return}
    if(d?.type===PKT||d?.type===DBT){for(const [id,inc,key] of [['main',d.vocab,'voc'],['wh',d.wh,'wh']]){if(!inc?.lessons)continue;const r=mergeLib(libOf(id),inc);localStorage.setItem(BOOKS[id].key,JSON.stringify(r.lib));out[key]+=r.add}
     if(d.grammar?.lessons){const r=mergeGram(glib(),d.grammar);localStorage.setItem(GKEY,JSON.stringify(r.g));out.gr+=r.add}
+    if(d.toc?.lessons){const own=tocStore()||{};const m={...own,...d.toc,lessons:{...(own.lessons||{}),...d.toc.lessons}};localStorage.setItem(TOCKEY,JSON.stringify(m));out.toc=(out.toc||0)+Object.keys(d.toc.lessons).length}
     for(const t of d.texts||[])texts.push(JSON.stringify(t));for(const u of d.units||[])await unit(u);if(d.type===DBT&&d.tests?.length)out.tests=(out.tests||0)+d.tests.length}
    else if(d?.type==='classroom-text-trainer')texts.push(text);else if(d?.type==='classroom-lerneinheit')await unit(d);else out.unknown++};
   const unit=async u=>{if(!u?.id||!UNITS[u.id]){out.unknown++;return}try{await leIDB('readwrite',st=>st.put(u,u.id));out.le++}catch{out.bad++}};
