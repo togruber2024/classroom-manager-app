@@ -1,0 +1,1051 @@
+/* Gemeinsame Gestaltung des Classroom-Managers */
+:root {color-scheme:light; --ink:#243247; --muted:#66758a; --line:#dce3ef; --paper:#fff; --bg:#f6f8fc; --green:#2f5f9b; --pale:#eaf0fa;
+--primary:#2f5f9b; --primary-hover:#244c80; --primary-color:#2f5f9b; --bg-color:#f6f8fc; --card-bg:#fff; --border-color:#dce3ef; --text-main:#243247; --danger:#a33b32; --danger-hover:#852d26;}
+body {font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif; background:var(--bg); color:var(--ink);}
+button,input,select,textarea {font-family:inherit;}
+input[type=checkbox],input[type=radio] {accent-color:var(--green);}
+:focus-visible {outline:3px solid #8ba9d1; outline-offset:2px;}
+body[data-module=noten] main {max-width:none; padding:22px 22px 60px;}
+body[data-module=noten] .header-copy,body[data-module=noten] #intro {display:none;}
+body[data-module=noten] header {margin-bottom:14px;}
+body[data-module=noten] .header-main {justify-content:flex-end;}
+body[data-module=sitzplan] {padding:22px 22px 40px;}
+body[data-module=sitzplan] > h1,body[data-module=sitzplan] > .subtitle {display:none;}
+body[data-module=sitzplan] .container {max-width:none; gap:20px;}
+body[data-module=sitzplan] .panel,body[data-module=sitzplan] .grid-container {border-radius:18px; border-color:var(--line); box-shadow:0 3px 12px #233d6005; padding:22px;}
+body[data-module=sitzplan] .class-selector-box {background:var(--bg); border-radius:14px; padding:12px;}
+body[data-module=sitzplan] .btn {min-height:40px; border:1px solid transparent; border-radius:9px; padding:7px 12px; font-weight:650;}
+body[data-module=sitzplan] .btn-secondary {background:#fff; color:var(--green); border-color:var(--line);}
+body[data-module=sitzplan] .btn-secondary:hover {background:var(--pale); border-color:#a8bfdc;}
+body[data-module=sitzplan] .class-delete-button,body[data-module=sitzplan] .list-clear-button,body[data-module=sitzplan] .btn-grid-reset {background:#fff; color:var(--danger); border:1px solid #d8a6a1;}
+body[data-module=sitzplan] .class-delete-button:hover,body[data-module=sitzplan] .list-clear-button:hover,body[data-module=sitzplan] .btn-grid-reset:hover {background:#fff0ee;}
+body[data-module=sitzplan] .btn-delete {background:#fff; color:var(--danger); border:1px solid #d8a6a1; border-radius:7px;}
+body[data-module=sitzplan] h2,body[data-module=sitzplan] h3,body[data-module=sitzplan] label {color:var(--ink);}
+body[data-module=sitzplan] .panel h2 {border-top:1px solid var(--line); padding-top:14px;}
+body[data-module=sitzplan] .tabs {padding:4px; border-radius:13px; background:#e7edf6; gap:3px;}
+body[data-module=sitzplan] .tab-btn {flex:1; border-radius:10px; min-height:34px; background:transparent; color:var(--muted); font:inherit; font-size:.85rem;}
+body[data-module=sitzplan] .tab-btn.active {background:#fff; color:var(--ink); box-shadow:0 2px 5px #233d6012;}
+body[data-module=sitzplan] input:not([type=checkbox]):not([type=radio]),body[data-module=sitzplan] select,body[data-module=sitzplan] textarea {color:var(--ink); background:#fff; border:1px solid #cbd6e5; border-radius:8px;}
+body[data-module=sitzplan] table.data-table th {background:#f3f6fb; color:var(--muted); font-weight:650;}
+body[data-module=sitzplan] .cell.tisch {background:#f7f9fc; border:1px solid #bac9de; color:var(--muted); border-radius:8px;}
+body[data-module=sitzplan] .cell.besetzt {background:#fff; border:1px solid #a8bdd8; color:var(--ink); border-radius:8px; box-shadow:0 2px 4px #233d600a;}
+body[data-module=sitzplan] .cell.pult {background:var(--pale); border:1px solid #a8bdd8; color:var(--green); border-radius:8px;}
+body[data-module=sitzplan] .cell.random-selected {background:var(--pale); color:var(--green); border:2px solid var(--green); box-shadow:0 0 0 3px #2f5f9b20;}
+body[data-module=sitzplan] .cell.search-match {outline-color:var(--green);}
+@media(max-width:600px){body[data-module=sitzplan]{padding:12px;}body[data-module=noten] main{padding:12px 12px 35px;}body[data-module=sitzplan] .panel,body[data-module=sitzplan] .grid-container {padding:14px;}}
+
+.classroom-sync {margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.classroom-sync p{font-size:.78rem;color:var(--muted);line-height:1.4;margin:8px 0 0}
+.classroom-global-actions {display:flex;gap:8px;align-items:center}
+.classroom-global-actions button,.classroom-dialog button {border:1px solid #cbd6e5;border-radius:9px;background:#fff;color:var(--green);padding:8px 13px;font:inherit;font-size:.9rem;font-weight:650;cursor:pointer}
+.classroom-global-actions button:hover,.classroom-dialog button:hover {background:var(--pale)}
+.classroom-dialog {width:min(520px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;padding:24px;border:1px solid var(--line);border-radius:18px;color:var(--ink);background:#fff;box-shadow:0 18px 60px #1c2b4630}
+.classroom-dialog::backdrop {background:#1c2b4666}
+.classroom-dialog h2 {font-size:1.3rem;margin:0 0 12px}
+.classroom-dialog p {font-size:.9rem;color:var(--muted);line-height:1.5}
+.classroom-dialog label {display:block;font-weight:650;margin:14px 0 6px}
+.classroom-dialog label.checkbox-label {display:flex;gap:8px}
+.classroom-dialog input:not([type=checkbox]),.classroom-dialog select {box-sizing:border-box;width:100%;min-height:36px;padding:7px 10px;border:1px solid #cbd6e5;border-radius:9px;background:#fff;color:var(--ink);font:inherit}
+.classroom-dialog select {margin-top:5px}
+.classroom-dialog input:disabled,.classroom-dialog select:disabled {opacity:.5}
+.classroom-dialog-actions {display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-top:20px}
+.classroom-roster-row {display:flex;gap:8px;margin:7px 0}
+.classroom-roster-row input {flex:1;min-width:0}
+.classroom-roster-row button {color:#a33b32}
+.classroom-absent {opacity:.45;filter:grayscale(1);text-decoration:line-through}
+#classroomStudentError,#classroomRosterError {color:#a33b32}
+@media(max-width:1000px){.app-header{flex-wrap:wrap}.classroom-global-actions{margin-left:auto}}
+
+body[data-module="noten"] .navigation-frame { background:#fff; }
+body[data-module="sitzplan"]:has(#classroomEditRoom:not(:checked)) .cell.besetzt {cursor:grab}
+.classroom-dragging,.classroom-dragging * {cursor:grabbing!important;user-select:none!important}
+.cell.classroom-drag-source {opacity:.35}
+.cell.classroom-drop-target {outline:3px solid var(--primary);outline-offset:2px;background:var(--pale)!important}
+.classroom-drag-ghost {position:fixed;z-index:20000;pointer-events:none;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%);padding:3px 7px;box-sizing:border-box;border:2px solid var(--primary);border-radius:9px;background:#fff;color:var(--ink);font:inherit;font-size:.85rem;font-weight:700;text-align:center;box-shadow:0 8px 24px #24324725}
+
+/* Small, non-modal classroom entry beside the selected seat. */
+.classroom-lesson{display:grid;gap:8px;margin:12px 0}.classroom-lesson label{display:grid;gap:4px;font-size:.85rem}.classroom-lesson select{width:100%;min-width:0;font-size:.85rem}
+.classroom-quick{position:fixed;z-index:10000;width:270px;max-width:calc(100vw - 16px);padding:16px;border:1px solid #b9cbe4;border-radius:14px;background:#fff;color:#24334b;box-shadow:0 8px 30px #24334b30;box-sizing:border-box}.classroom-quick[hidden]{display:none}.classroom-quick-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.classroom-quick-heading button{border:0;background:transparent;font-size:24px;padding:0 5px}.classroom-quick>label{display:grid;gap:6px;margin:12px 0;font-size:15px}.classroom-quick>label.checkbox-label{display:flex;align-items:center;gap:8px}.classroom-quick select{width:100%;font-size:17px;padding:6px;text-align:center}.classroom-quick p{font-size:12px;margin:8px 0 0;min-height:16px}.classroom-quick input[type=checkbox]{accent-color:#2f5f9b}
+.classroom-quick{width:360px}.classroom-grade-buttons{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;border:0;padding:0;margin:12px 0 16px;min-width:0}.classroom-grade-buttons legend{font-size:15px;margin-bottom:8px}.classroom-grade-buttons button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:54px;padding:6px 2px;border:1px solid #b9cbe4;border-radius:8px;background:#f6f8fc;color:#24334b;font-size:17px;font-weight:700;cursor:pointer}.classroom-grade-buttons button small{font-size:11px;font-weight:400}.classroom-grade-buttons button:hover{background:#e5edf9;border-color:#2f5f9b}.classroom-grade-buttons button[aria-pressed=true]{background:#2f5f9b;border-color:#2f5f9b;color:#fff}.classroom-grade-buttons button:focus-visible{outline:3px solid #86acf0;outline-offset:2px}.classroom-grade-buttons:disabled button{opacity:.5;cursor:default}
+.room-grid .cell.classroom-seat-assessed{background:var(--seat-grade-background)!important;color:var(--seat-grade-ink)!important;border-color:#667b8e}.room-grid .cell.classroom-seat-assessed .student-name{color:inherit}
+
+/* Typography: emphasis follows the information hierarchy. */
+h1,h2,h3,h4{font-weight:600}
+body[data-module=noten] label,body[data-module=sitzplan] label,.classroom-dialog label{font-weight:400}
+body[data-module=noten] .subject-tab,body[data-module=noten] .page-tab,body[data-module=noten] .add-subject-button{font-weight:400}
+body[data-module=noten] .subject-tab[aria-selected=true],body[data-module=noten] .page-tab[aria-selected=true]{font-weight:600}
+body[data-module=noten] .toggle,body[data-module=noten] .manual-toggle,body[data-module=noten] .task-weight-control,body[data-module=noten] .task-config-name{font-weight:400}
+body[data-module=noten] .export-button,body[data-module=noten] .settings-button,body[data-module=noten] .student-add-button,body[data-module=noten] .task-add-button,body[data-module=noten] .dialog-actions button{font-weight:500}
+body[data-module=noten] td:first-child{font-weight:500}
+body[data-module=sitzplan] .btn,.classroom-global-actions button,.classroom-dialog button{font-weight:500}
+body[data-module=sitzplan] .tab-btn{font-weight:400}
+body[data-module=sitzplan] .tab-btn.active{font-weight:600}
+body[data-module=sitzplan] .cell.besetzt,.classroom-drag-ghost{font-weight:500}
+body[data-module=sitzplan] table.data-table th{font-weight:500}
+.classroom-quick-heading strong,.classroom-lesson>strong{font-weight:600}
+.classroom-grade-buttons legend,.classroom-quick>label{font-weight:400}
+.module-tabs button{font-weight:400}.module-tabs button[aria-selected=true]{font-weight:600}
+.classroom-grade-buttons button{font-weight:400}
+.classroom-quick{padding-top:0;overflow:hidden}#classroomQuickHomeworkButton{display:block;margin:0 0 12px -16px;max-width:calc(100% + 32px);padding:10px 16px;border:0;border-right:1px solid #dce3ef;border-bottom:1px solid #dce3ef;border-radius:0 0 12px 0;background:#eef3fb;color:#243247;font:inherit;font-size:15px;font-weight:400;text-align:left;cursor:pointer}#classroomQuickHomeworkButton[aria-pressed=true]{background:#fbd1cc;color:#94291f}#classroomQuickHomeworkButton:disabled{opacity:.5;cursor:default}
+body[data-module=sitzplan] .room-grid .cell.classroom-seat-homework-missing{border:var(--hw-w,3px) solid #c52f2f!important;box-shadow:0 0 0 1px #c52f2f30}
+body[data-module=sitzplan] #classroomStartButton:disabled{background:#e4e8ee;color:#8a94a3;border-color:#d8dee7;cursor:not-allowed;box-shadow:none;opacity:1}
+body[data-module=sitzplan] .classroom-mode-toggle{position:relative;display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-weight:400;margin:0;white-space:nowrap}.classroom-mode-toggle input{position:absolute;left:0;top:0;width:44px;height:26px;opacity:0;margin:0;cursor:pointer}.classroom-mode-track{display:inline-block;position:relative;flex:none;width:44px;height:26px;border-radius:20px;background:#c7d1df;transition:background .15s}.classroom-mode-track:after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #24324730;transition:transform .15s}.classroom-mode-toggle input:checked+.classroom-mode-track{background:#2f5f9b}.classroom-mode-toggle input:checked+.classroom-mode-track:after{transform:translateX(18px)}.classroom-mode-toggle input:focus-visible+.classroom-mode-track{outline:3px solid #8ba9d1;outline-offset:3px}@media(prefers-reduced-motion:reduce){.classroom-mode-track,.classroom-mode-track:after{transition:none}}
+#classroomQuickHomeworkButton{display:flex;align-items:center;gap:9px;box-sizing:border-box;min-width:190px;margin:8px 0 16px -8px;padding:9px 12px;border:1px solid #d7e2f1;border-radius:10px;background:#f6f8fc;color:#405671;line-height:1.3;transition:background .12s,border-color .12s}#classroomQuickHomeworkButton svg{width:21px;height:21px;flex:none}#classroomQuickHomeworkButton span{white-space:nowrap}#classroomQuickHomeworkButton:hover:not(:disabled){background:#eaf0fa;border-color:#a8bdd8}#classroomQuickHomeworkButton[aria-pressed=true]{background:#fce8e6;border-color:#e8aaa3;color:#a33127}#classroomQuickHomeworkButton[aria-pressed=true]:hover:not(:disabled){background:#f8d9d5;border-color:#d98a80}#classroomQuickHomeworkButton:focus-visible{outline:2px solid #8ba9d1;outline-offset:2px}
+body[data-module=noten] .task-actions>.toggle{align-self:center;align-items:center;margin:0;min-height:40px}body[data-module=noten] .task-actions>.toggle input,body[data-module=noten] .task-actions>.toggle span{top:auto;transform:none}.task-table [data-quarter-heading]{min-width:165px;white-space:normal}
+body[data-module=noten] header{display:none}body[data-module=sitzplan] .grid-container:fullscreen{background:#f6f8fc;box-sizing:border-box;width:100vw;height:100vh;max-width:none;overflow:auto;padding:24px}.grid-container:fullscreen .room-grid{margin-inline:auto}
+.classroom-backup-dialog .classroom-dialog-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:24px}.classroom-backup-dialog .classroom-dialog-actions button{min-width:0;min-height:42px;text-align:center}.classroom-backup-dialog .classroom-dialog-actions [data-close]{grid-column:1/-1;justify-self:end;margin-top:8px;padding-inline:20px}#classroomExportBackup{background:var(--green);border-color:var(--green);color:#fff}#classroomExportBackup:hover{background:#244c80}#classroomBackupStatus:empty{display:none}@media(max-width:420px){.classroom-backup-dialog .classroom-dialog-actions{grid-template-columns:1fr}}
+button.brand-mark{border:0;cursor:pointer;padding:0;flex-shrink:0}button.brand-mark:hover{filter:brightness(.97)}.classroom-theme-choices{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}.classroom-theme-choices button{display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit;cursor:pointer}.classroom-theme-choices button[aria-pressed=true]{outline:2px solid var(--green);outline-offset:2px;background:var(--pale)}.classroom-theme-dialog .classroom-dialog-actions button{font-weight:400}
+.classroom-theme-dialog{max-height:calc(100dvh - 32px);overflow:auto}.classroom-theme-choices{grid-template-columns:repeat(3,minmax(0,1fr))}@media(max-width:380px){.classroom-theme-choices{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.classroom-theme-choices button{padding:10px 10px 12px;gap:9px}.classroom-theme-preview{display:block;width:100%;height:86px;overflow:hidden;border:1px solid var(--preview-line);border-radius:8px;background:var(--preview-bg)}.theme-preview-header{display:flex;align-items:center;gap:5px;height:20px;padding:0 7px;background:#fff;border-bottom:1px solid var(--preview-line)}.theme-preview-logo{width:9px;height:9px;border-radius:3px;background:var(--preview-accent)}.theme-preview-title{width:30%;height:3px;border-radius:2px;background:var(--preview-muted);opacity:.65}.theme-preview-action{width:17px;height:7px;margin-left:auto;border-radius:3px;background:var(--preview-accent)}.theme-preview-content{display:block;padding:7px}.theme-preview-tabs{display:flex;gap:3px;align-items:center;width:68%;height:12px;padding:2px;border-radius:4px;background:var(--preview-tabs)}.theme-preview-tabs i{flex:1;height:7px;border-radius:2px;background:var(--preview-pale)}.theme-preview-tabs i:first-child{background:var(--preview-accent)}.theme-preview-card{display:block;margin-top:5px;border:1px solid var(--preview-line);border-radius:4px;background:#fff;overflow:hidden}.theme-preview-table-head{display:block;height:6px;background:var(--preview-pale)}.theme-preview-row{display:flex;align-items:center;gap:6px;height:9px;padding:0 5px;border-top:1px solid var(--preview-line)}.theme-preview-row i{display:block;height:2px;width:40%;border-radius:2px;background:var(--preview-line)}.theme-preview-row i:last-child{width:22%;background:var(--preview-accent);opacity:.65}@media(max-width:380px){.classroom-theme-preview{height:80px}}
+body[data-module=sitzplan] #roomGrid{display:flex;flex-direction:column;gap:10px;min-width:0;width:100%}.classroom-plan-scroll{width:100%;min-width:0;overflow:auto;overscroll-behavior-x:contain}.classroom-plan-viewport{position:relative;flex:none}.classroom-zoom-board{display:grid;gap:5px;transform-origin:top left;position:absolute;top:0;left:0}.classroom-plan-zoom{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 4px;font-size:.85rem}.classroom-plan-zoom button{min-width:42px;min-height:40px;padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--green);font:inherit;cursor:pointer}.classroom-plan-zoom button:disabled{opacity:.4;cursor:default}.classroom-plan-zoom button[aria-pressed=true]{background:var(--pale);border-color:var(--green)}.classroom-plan-zoom input[type=range]{width:130px;accent-color:var(--green);padding:0!important;border:0!important}.classroom-plan-zoom output{min-width:45px;text-align:center;font-variant-numeric:tabular-nums}@media print{.classroom-plan-zoom{display:none!important}.classroom-plan-scroll{overflow:visible!important}.classroom-plan-viewport{width:100%!important;height:auto!important}.classroom-zoom-board{position:static!important;transform:none!important;width:100%!important;height:auto!important;grid-template-columns:repeat(10,minmax(0,1fr))!important;grid-template-rows:repeat(10,1fr)!important}}
+/* Keep all five plan actions together independently of board zoom. */
+body[data-module=sitzplan] #roomGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:auto;gap:10px}#roomGrid>.classroom-plan-scroll,#roomGrid>.main-group-legend{grid-column:1/-1}body[data-module=sitzplan] #roomGrid>.grid-action-buttons,body[data-module=sitzplan] #roomGrid>.grid-primary-buttons{display:contents}body[data-module=sitzplan] #roomGrid>.grid-save-button{grid-column:auto;width:100%;margin:0}body[data-module=sitzplan] #roomGrid .grid-action-buttons>.btn,body[data-module=sitzplan] #roomGrid .grid-primary-buttons>.btn{width:100%;min-width:0;margin:0;padding-inline:6px;white-space:normal}@media(max-width:600px){body[data-module=sitzplan] #roomGrid{gap:5px}body[data-module=sitzplan] #roomGrid .btn{font-size:.72rem;min-height:42px}}
+body[data-module=sitzplan] #roomGrid{display:flex;flex-direction:column;gap:10px}body[data-module=sitzplan] .classroom-plan-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;width:100%}body[data-module=sitzplan] .classroom-plan-actions>.btn{grid-column:auto!important;grid-row:auto!important;position:static;align-self:stretch;width:100%;min-width:0;height:auto;min-height:40px;margin:0;padding:7px 6px;font-size:.82rem;box-sizing:border-box;white-space:normal}@media(max-width:600px){body[data-module=sitzplan] .classroom-plan-actions{gap:5px}body[data-module=sitzplan] .classroom-plan-actions>.btn{font-size:.72rem}}@media print{.classroom-plan-actions{display:none!important}}
+.shared-quarter-picker{display:flex;align-items:center;gap:8px;margin-block:4px}.half-year-assessments{display:flex;align-items:center;gap:8px;margin-block:4px;padding-left:40px}.half-year-assessments:has(>.hide):not(:has(>:not(.hide))){display:none}.shared-quarter-picker .page-tabs{flex:0 1 auto}body[data-module=noten] .half-year-assessments .page-tabs{flex:0 1 auto}
+.classroom-backup-dialog .classroom-dialog-actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.classroom-backup-dialog .classroom-dialog-actions [data-close]{grid-column:auto;justify-self:stretch;margin-top:0;padding-inline:10px}.classroom-backup-dialog .classroom-dialog-actions button{padding-inline:10px;overflow-wrap:anywhere}
+.semester-table-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.semester-table-tools .notenspiegel-button{font-weight:400}
+/* Consistent light action labels; navigation retains its hierarchy. */
+body button:not([role=tab]):not(.subject-tab):not(.page-tab):not(.tab-btn):not([data-view]){font-weight:400!important}
+@media print{#notenspiegelDialog #notenspiegelBoundaryEditor{display:none!important}}
+body[data-module=sitzplan] .class-selector-box>label:has(input[aria-label="Unterrichtsdatum"]){display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0}body[data-module=sitzplan] .class-selector-box input[aria-label="Unterrichtsdatum"]{display:block;box-sizing:border-box;width:190px;min-width:0;max-width:100%;min-height:40px;padding:7px 10px;text-align:left;-webkit-appearance:none;appearance:none}body[data-module=sitzplan] input[aria-label="Unterrichtsdatum"]::-webkit-date-and-time-value{text-align:left}
+/* Navigation: existing entries first, add actions together on the right. */
+#examPicker>.rename-row-button{order:0}#examPicker>nav{order:1}#examPicker>.add-subject-button{order:2}
+
+/* Lesson and class settings are managed centrally in the notes manager. */
+.class-selector-box > :not(.classroom-date-only) { display:none !important; }
+.class-selector-box { padding:0 !important; border:0 !important; background:transparent !important; }
+.class-selector-box > .classroom-date-only { display:flex; flex-direction:column; gap:8px; }
+
+/* Compact quick assessment: reserve status space only when there is a message. */
+.classroom-quick .classroom-grade-buttons { margin-bottom:0; }
+#classroomQuickStatus:empty { display:none; }
+
+.classroom-quick.classroom-homework-right #classroomQuickHomeworkButton { margin-left:auto; margin-right:-8px; }
+
+body[data-module=sitzplan] .classroom-plan-actions>#classroomStartButton:not(:disabled) { background:var(--green); color:#fff; border:1px solid var(--green); }
+
+/* Preserve the palette shown by the group legend over the neutral seat style. */
+body[data-module=sitzplan] .room-grid .cell.gruppenfarbe:not(.classroom-seat-assessed):not(.random-selected) { background:var(--group-fill); color:var(--group-text); border-color:var(--group-stroke); }
+body[data-module=sitzplan] .room-grid .cell.gruppenfarbe:not(.classroom-seat-homework-missing):not(.random-selected) { border-color:var(--group-stroke); }
+
+body[data-module=sitzplan] .classroom-date-only>.classroom-history-delete { width:auto; min-width:0; align-self:flex-start; padding:8px 18px; color:#b42318; background:#fff; border:1px solid #dfaaa5; }
+body[data-module=sitzplan] .classroom-history-delete:hover:not(:disabled) { background:#fce8e6; border-color:#b42318; }
+
+body[data-module=noten] #classTabs .subject-tab { cursor:pointer; }
+
+/* Use the homework strip treatment for oral assessment dates. */
+body[data-module=noten] .task-config-grid:has(.performance-task-config) { background:var(--tab-bg,#e7edf6); min-height:40px; padding:2px 5px; border-radius:14px; }
+body[data-module=noten] .task-config-card.performance-task-config { flex:0 0 310px; min-width:290px; grid-template-columns:minmax(110px,1fr) 90px 28px; background:transparent; }
+body[data-module=noten] .performance-task-config .task-date-input,
+body[data-module=noten] .performance-task-config .task-weight-control input { background:transparent; border-color:transparent; box-shadow:none; }
+body[data-module=noten] .performance-task-config .task-date-input:focus,
+body[data-module=noten] .performance-task-config .task-weight-control input:focus { background:#fff; border-color:var(--line); }
+
+.excel-assessment-import { width:min(680px,calc(100vw - 32px)); max-height:90dvh; overflow:auto; }
+.excel-import-fields { display:grid; grid-template-columns:1fr 100px 1fr; gap:12px; margin:16px 0; }
+.excel-import-fields label { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.excel-import-fields input,.excel-import-fields select { width:100%; min-width:0; padding:8px; }
+.excel-assessment-import [data-error] { color:#b42318; }
+@media(max-width:600px){.excel-import-fields { grid-template-columns:1fr; }}
+
+/* Edit dated assessments directly in their column headings. */
+body[data-module=noten] .task-config[hidden] { display:none; }
+.task-header-editor { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px; min-width:155px; max-width:230px; margin:auto; font-weight:400; text-transform:none; letter-spacing:0; }
+.task-header-editor .task-date-input { flex:1 0 130px; width:145px; max-width:100%; text-align:center; background:transparent; }
+.task-header-editor .task-name-input { flex:1 0 100%; text-align:center; }
+.task-header-editor .task-weight-control { justify-content:center; }
+.task-header-editor .task-weight-control input { width:65px; max-width:65px; text-align:right; padding:4px; }
+.task-header-editor .task-remove { min-width:30px; min-height:30px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--muted); font:inherit; }
+.task-weight-menu { position:relative; align-self:center; font-weight:400; font-size:.85rem; }
+.task-weight-menu summary { cursor:pointer; color:var(--green); padding:7px 10px; }
+.task-weight-menu-options { position:absolute; top:100%; left:0; z-index:25; width:260px; padding:14px; border:1px solid var(--line); border-radius:12px; background:#fff; box-shadow:0 5px 20px #24334b20; }
+.task-weight-menu-options .task-weight-summary { font-size:.85rem; }
+@media print { .task-weight-menu,.task-header-editor .task-remove{ display:none!important; } }
+
+/* Keep date, weight and remove control together in each heading. */
+body[data-module=noten] .task-header-editor { display:grid; grid-template-columns:minmax(115px,1fr) auto 30px; gap:6px; min-width:260px; max-width:none; align-items:center; }
+body[data-module=noten] .task-header-editor .task-date-input { width:100%; min-width:0; }
+body[data-module=noten] .task-header-editor .task-name-input { grid-column:1/-1; }
+body[data-module=noten] .task-header-editor .task-remove { grid-column:3; grid-row:auto; width:30px; padding:0; }
+body[data-module=noten] .task-header-editor .task-weight-control { white-space:nowrap; }
+
+body[data-module=noten] .task-table .task-add-column { width:44px; min-width:44px; max-width:44px; padding:8px 5px; text-align:center; }
+body[data-module=noten] .task-add-column .task-add-button { width:34px; min-width:34px; height:34px; margin:auto; border:1px dashed var(--line); border-radius:9px; background:#fff; color:var(--green); font:inherit; font-size:22px; }
+body[data-module=noten] .task-table .task-add-column+th { padding-left:18px; padding-right:18px; }
+@media print { .task-table .task-add-column { display:none!important; } }
+
+/* Stack weighting over a compact date to reduce assessment column widths. */
+body[data-module=noten] .task-header-editor { grid-template-columns:132px 30px; grid-template-rows:auto auto; min-width:168px; width:168px; max-width:168px; gap:5px 6px; }
+body[data-module=noten] .task-header-editor .task-weight-control { grid-column:1; grid-row:1; justify-self:center; }
+body[data-module=noten] .task-header-editor .task-date-input { grid-column:1; grid-row:2; width:132px; max-width:132px; padding:4px; font-size:.8rem; }
+body[data-module=noten] .task-header-editor .task-remove { grid-column:2; grid-row:2; }
+body[data-module=noten] .task-header-editor:has(.task-name-input) { grid-template-rows:auto auto auto; }
+body[data-module=noten] .task-header-editor .task-name-input { grid-column:1/-1; grid-row:1; }
+body[data-module=noten] .task-header-editor:has(.task-name-input) .task-weight-control { grid-row:2; }
+body[data-module=noten] .task-header-editor:has(.task-name-input) .task-date-input,
+body[data-module=noten] .task-header-editor:has(.task-name-input) .task-remove { grid-row:3; }
+/* Optionale Bezeichnung einer Mitarbeitsspalte (z. B. „Kurzvortrag“): leer nur ein blasser Platzhalter. */
+body[data-module=noten] .task-header-editor:has(.task-label-input) { grid-template-rows:auto auto auto; }
+body[data-module=noten] .task-header-editor .task-label-input { grid-column:1/-1; grid-row:3; box-sizing:border-box; width:100%; min-width:0; height:26px; padding:2px 6px; border:1px solid transparent; border-radius:7px; background:transparent; color:#2f5f9b; font:inherit; font-size:.78rem; font-weight:600; text-align:center; text-transform:none; letter-spacing:0; }
+body[data-module=noten] .task-header-editor .task-label-input::placeholder { color:#b7c3d4; font-weight:400; opacity:1; }
+body[data-module=noten] .task-header-editor .task-label-input:not(:placeholder-shown) { background:#e8f0fb; }
+body[data-module=noten] .task-header-editor .task-label-input:hover { border-color:#dbe3ef; }
+body[data-module=noten] .task-header-editor .task-label-input:focus { outline:none; border-color:#abc1df; background:#fff; }
+body[data-module=noten] span.task-label-input { display:block; height:auto; line-height:1.6; }
+body[data-module=noten] span.task-label-input:empty { display:none; }
+@media print { body[data-module=noten] .task-header-editor input.task-label-input:placeholder-shown { visibility:hidden; } }
+
+body[data-module=noten] .task-table th.task-add-column { vertical-align:middle; text-align:center; }
+body[data-module=noten] .task-add-column .task-add-button { display:flex; align-items:center; justify-content:center; box-sizing:border-box; padding:0; line-height:1; text-align:center; margin:0 auto; }
+
+body[data-module=noten] table.task-table.participation-task-table th.task-add-column,
+body[data-module=noten] table.task-table.participation-task-table td.task-add-column { width:44px!important; min-width:44px!important; max-width:44px!important; padding-left:5px!important; padding-right:5px!important; }
+
+body[data-module=noten] .homework-config[hidden] { display:none; }
+body[data-module=noten] .homework-table { width:max-content; min-width:100%; table-layout:auto; }
+body[data-module=noten] .homework-header-editor { display:grid; grid-template-columns:132px 30px; gap:5px 6px; min-width:168px; width:168px; margin:auto; text-transform:none; letter-spacing:0; font-weight:400; }
+body[data-module=noten] .homework-header-editor .task-name-input { grid-column:1/-1; font-size:.8rem; text-align:center; }
+body[data-module=noten] .homework-header-editor .task-date-input { width:132px; padding:4px; font-size:.8rem; }
+body[data-module=noten] .homework-header-editor .task-remove { width:30px; min-height:30px; padding:0; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--muted); font:inherit; }
+body[data-module=noten] .homework-table th:first-child,body[data-module=noten] .homework-table td:first-child { min-width:220px; }
+body[data-module=noten] .homework-table .task-add-column { width:44px!important; min-width:44px!important; max-width:44px!important; padding:8px 5px; vertical-align:middle; }
+body[data-module=noten] .homework-table th:last-child { min-width:95px; }
+
+body[data-module=noten] .homework-header-editor { grid-template-columns:112px 28px; width:146px; min-width:146px; gap:4px 6px; }
+body[data-module=noten] .homework-header-editor .task-date-input { width:112px; max-width:112px; min-width:0; padding:4px 2px; font-size:.76rem; }
+body[data-module=noten] .homework-header-editor .task-remove { width:28px; min-width:28px; }
+body[data-module=noten] .homework-table th:not(:first-child):not(:last-child):not(.task-add-column),body[data-module=noten] .homework-table td:not(:first-child):not(:last-child):not(.task-add-column) { padding-left:6px; padding-right:6px; }
+
+body[data-module=noten] .homework-table select[data-homework-status] { display:block; box-sizing:border-box; width:calc(100% - 24px); max-width:155px; min-width:0; margin-inline:auto; }
+
+/* Shared compact assessment fields across all grade and result pages. */
+body[data-module=noten] .task-table td input.task-raw-score,
+body[data-module=noten] .task-table td input.task-grade-input,
+body[data-module=noten] .task-table td select,
+body[data-module=noten] .task-table td input[data-student-grade],
+body[data-module=noten] .task-table td input[data-quarter-value] { display:block; box-sizing:border-box; width:calc(100% - 24px); max-width:155px; min-width:82px; margin-inline:auto; }
+body[data-module=noten] .task-table.has-task-add-column { table-layout:auto; width:max-content; min-width:100%; }
+body[data-module=noten] .task-table.has-task-add-column td:first-child,body[data-module=noten] .task-table.has-task-add-column th:first-child { min-width:220px; }
+body[data-module=noten] .task-table.has-task-add-column td:not(:first-child):not(.task-add-column) { padding-inline:12px; }
+body[data-module=noten] .task-header-editor .task-config-name { grid-column:1; grid-row:2; min-width:0; white-space:normal; text-align:center; }
+body[data-module=noten] .task-table .task-add-column { width:44px!important; min-width:44px!important; max-width:44px!important; padding-inline:5px!important; }
+body[data-module=noten] .task-header-editor .task-date-input { width:112px; max-width:112px; font-size:.76rem; }
+body[data-module=noten] .task-header-editor { grid-template-columns:112px 28px; width:146px; min-width:146px; max-width:146px; }
+body[data-module=noten] .task-header-editor .task-remove { width:28px; min-width:28px; }
+
+/* Keep oral assessment columns compact; give spare width to the name column. */
+body[data-module=noten] table.task-table.participation-task-table.has-task-add-column { table-layout:fixed; width:100%; }
+body[data-module=noten] table.task-table.participation-task-table.has-task-add-column th:first-child,
+body[data-module=noten] table.task-table.participation-task-table.has-task-add-column td:first-child { width:auto; min-width:220px; }
+body[data-module=noten] table.task-table.participation-task-table.has-task-add-column th.task-assessment-column { width:174px; min-width:174px; padding-inline:6px; }
+body[data-module=noten] table.task-table.participation-task-table.has-task-add-column th:last-child,
+body[data-module=noten] table.task-table.participation-task-table.has-task-add-column th[data-quarter-heading] { width:155px; min-width:155px; }
+body[data-module=noten] table.task-table.participation-task-table td input.participation-grade-input,
+body[data-module=noten] table.task-table.participation-task-table td .task-end-grade { display:flex; align-items:center; justify-content:center; line-height:1; box-sizing:border-box; width:calc(100% - 24px); max-width:140px; min-width:82px; margin-inline:auto; }
+
+/* Leave spare table width before the summary instead of stretching pupil names. */
+body[data-module=noten] table.task-table.participation-task-table.has-task-add-column th:first-child,
+body[data-module=noten] table.task-table.participation-task-table.has-task-add-column td:first-child { width:260px; min-width:260px; }
+body[data-module=noten] .task-student-cell { max-width:260px; }
+body[data-module=noten] table.task-table.has-task-add-column .task-space-column { width:auto!important; min-width:16px!important; max-width:none; padding:0!important; }
+@media print { .task-space-column { display:none!important; } }
+
+/* Align homework names and the first dated column with oral assessments. */
+body[data-module=noten] table.homework-table { table-layout:fixed; width:100%; }
+body[data-module=noten] table.homework-table th:first-child,body[data-module=noten] table.homework-table td:first-child { width:260px; min-width:260px; }
+body[data-module=noten] table.homework-table th:not(:first-child):not(:last-child):not(.task-add-column):not(.task-space-column) { width:174px; min-width:174px; padding-inline:6px; }
+body[data-module=noten] table.homework-table th:last-child { width:155px; min-width:155px; }
+body[data-module=noten] table.homework-table .task-space-column { width:auto!important; min-width:16px!important; padding:0!important; }
+body[data-module=noten] table.homework-table .task-student-cell { width:100%; max-width:260px; }
+
+.class-create-dialog{box-sizing:border-box;width:min(520px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:hidden;padding:24px}.class-create-dialog form{display:flex;flex-direction:column;max-height:calc(100dvh - 82px);margin:0;min-height:0}.class-create-content{min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 2px}.class-create-dialog label{display:block;margin:14px 0 8px}.class-create-dialog input[data-class-name]{width:100%;box-sizing:border-box}.class-create-dialog textarea{box-sizing:border-box;max-height:230px;min-height:160px}.class-create-dialog .dialog-actions{flex:none;padding-top:16px}.class-create-dialog [hidden]{display:none}.class-create-person{display:grid;grid-template-columns:minmax(0,1fr) 120px 34px;gap:8px;margin:8px 0}.class-create-person input,.class-create-person select{min-width:0;width:100%;box-sizing:border-box}
+
+.classroom-gender-dialog{width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 32px);box-sizing:border-box;overflow:hidden}.classroom-gender-rows{max-height:55vh;overflow:auto}.classroom-gender-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line,#dbe3ef)}.classroom-gender-choices{display:flex;gap:8px;flex:none}.classroom-gender-choices button{width:44px;min-height:40px;padding:6px;text-align:center}.classroom-gender-choices button[aria-pressed=true]{background:var(--green,#315f99);border-color:var(--green,#315f99);color:#fff}.classroom-gender-dialog [data-save]{background:var(--green,#315f99);color:#fff;border-color:var(--green,#315f99)}
+
+.task-weight-toggle .task-weight-menu-options{position:static!important;display:block!important;padding:0!important;border:0!important;box-shadow:none!important;background:transparent!important;min-width:0!important}.task-weight-toggle .task-weight-summary{display:none}.task-weight-toggle .task-weight-mode{margin:0;display:inline-flex;align-items:center;gap:8px}.task-weight-toggle .task-weight-mode span{min-width:68px}
+
+.task-results-heading:not(:has(>h2)){justify-content:flex-end}
+
+/* Shared page heading layout for assessments, homework and summaries. */
+body[data-module=noten] .panel>.section-title{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin:0 0 18px}body[data-module=noten] .panel>.section-title h2{margin:0;font-size:1.1rem;font-weight:700;line-height:1.4;letter-spacing:-.015em}body[data-module=noten] .panel>.section-title .task-actions,body[data-module=noten] .panel>.section-title .semester-table-tools{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin:0;flex:1 1 auto;width:auto}body[data-module=noten] .panel>.section-title+p,body[data-module=noten] .panel>.task-score-note{margin:0 0 18px;color:var(--muted)}body[data-module=noten] .task-paste-status:empty,body[data-module=noten] .semester-status:empty{display:none}body[data-module=noten] .panel>.task-config:empty{display:none}@media(max-width:540px){body[data-module=noten] .panel>.section-title{gap:12px}body[data-module=noten] .panel>.section-title .task-actions,body[data-module=noten] .panel>.section-title .semester-table-tools{flex-basis:100%;justify-content:flex-start}}
+
+.task-weight-toggle .task-weight-menu-options{width:auto!important}.task-weight-toggle{flex:0 0 auto}.task-weight-toggle .task-weight-mode{white-space:nowrap}
+
+body[data-module=noten] .task-student-heading-with-weight{position:relative;padding-right:118px}body[data-module=noten] .task-student-heading-with-weight>.task-weight-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:.85rem;text-transform:none;letter-spacing:normal;font-weight:400}body[data-module=noten] .task-student-heading-with-weight .task-weight-mode{flex-direction:row-reverse;gap:8px}body[data-module=noten] .task-student-heading-with-weight .task-weight-mode span{min-width:0}body[data-module=noten] .task-student-heading-with-weight .task-weight-mode input{flex:none;margin:0}
+
+body[data-module=noten] .task-student-heading-with-weight>.task-weight-toggle{right:43px;transform:translate(50%,-50%)}body[data-module=noten] .task-student-heading-with-weight .task-weight-mode{flex-direction:column-reverse;align-items:center;gap:6px}body[data-module=noten] .task-student-heading-with-weight{padding-right:110px}
+
+body[data-module=noten] table.task-table.participation-task-table.has-task-add-column th[data-quarter-heading]{width:180px;min-width:180px;white-space:normal;overflow-wrap:break-word;line-height:1.4;padding:12px 14px;box-sizing:border-box}body[data-module=noten] table.task-table.has-task-add-column th.task-result-heading{width:155px;min-width:155px;white-space:normal;overflow-wrap:break-word;padding-inline:12px;box-sizing:border-box}
+
+body[data-module=noten] .task-table th.task-assessment-column{padding-top:11px;padding-bottom:11px}body[data-module=noten] .task-table th.task-add-column{vertical-align:bottom;padding-top:11px;padding-bottom:11px}body[data-module=noten] .task-add-column .task-add-button{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:28px;min-width:28px;height:30px;min-height:30px;padding:0;margin:0 auto;font-size:.85rem;line-height:1;border-radius:8px}body[data-module=noten] .task-header-editor .task-remove{box-sizing:border-box;height:30px;min-height:30px;font-size:.85rem;line-height:1}
+
+#classroomRotateButton{white-space:normal;word-break:normal;overflow-wrap:normal;hyphens:manual}
+
+/* Scroll the complete assessment row instead of squeezing each tab group. */
+@media(max-width:650px){body[data-module=noten] .exam-picker,body[data-module=noten] .half-year-assessments{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;max-width:100%;min-width:0;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;gap:8px}body[data-module=noten] .exam-picker>*,body[data-module=noten] .half-year-assessments>*{flex:0 0 auto!important}body[data-module=noten] #examTabs,body[data-module=noten] #performanceTabs,body[data-module=noten] #testTabs,body[data-module=noten] #semesterTabs,body[data-module=noten] #homeworkTabs{flex:0 0 auto!important;width:max-content!important;min-width:max-content!important;overflow:visible!important}body[data-module=noten] .exam-picker .page-tab,body[data-module=noten] .half-year-assessments .page-tab{flex:0 0 auto!important;width:auto;white-space:nowrap}body[data-module=noten] .subject-tabs .subject-tab,body[data-module=noten] .page-nav-group .page-tab{flex:0 0 auto;white-space:nowrap}body[data-module=noten] .subject-picker .subject-tabs,body[data-module=noten] .page-nav-group>.page-tabs{overflow-x:auto!important;overflow-y:hidden!important}body[data-module=noten] .shared-quarter-picker .page-tabs{flex:0 1 auto;width:max-content;min-width:0;overflow-x:auto}}
+
+/* Narrow read-only entry overview. */
+body[data-module=noten] .compact-view-toggle{margin-left:auto;font-size:.85rem;white-space:nowrap}body[data-module=noten] .is-compact-view>.table-wrap:not(.compact-table-wrap),body[data-module=noten] .is-compact-view .task-config,body[data-module=noten] .is-compact-view .homework-config,body[data-module=noten] .is-compact-view .custom-entry,body[data-module=noten] .is-compact-view .semester-weight-controls,body[data-module=noten] .is-compact-view .semester-weight-heading,body[data-module=noten] .is-compact-view .task-actions,body[data-module=noten] .is-compact-view .semester-table-tools,body[data-module=noten] .is-compact-view .custom-heading-controls{display:none!important}body[data-module=noten] .compact-table-wrap{overflow:auto;padding-top:8px}.compact-entry-table{border-collapse:collapse;width:max-content!important;min-width:0!important;table-layout:fixed!important}.compact-entry-table th,.compact-entry-table td{box-sizing:border-box;width:46px!important;min-width:46px!important;max-width:46px!important;padding:5px 3px!important;border:1px solid var(--line,#dbe3ef);text-align:center;white-space:nowrap;font-size:.8rem}.compact-entry-table thead th{height:155px;vertical-align:bottom;position:relative;overflow:visible}.compact-entry-table .compact-heading-label{position:absolute;bottom:8px;left:24px;transform:rotate(-60deg);transform-origin:left center;width:150px;text-align:left;white-space:normal;line-height:1.25;font-size:.72rem;letter-spacing:0}.compact-entry-table th:first-child,.compact-entry-table td:first-child{width:210px!important;min-width:210px!important;max-width:210px!important;text-align:left;padding-left:10px!important}.compact-entry-table thead th:first-child .compact-heading-label{position:static;display:block;transform:none;width:auto}.compact-entry-table .compact-cell-value,.compact-entry-table td>span{display:block!important;width:auto!important;min-width:0!important;max-width:none!important;margin:0!important;padding:3px 1px!important;font-size:.8rem!important;border:0!important;border-radius:4px!important;box-shadow:none!important;background-image:none!important}.compact-entry-table tbody tr{height:32px}.compact-entry-table tbody th:first-child{font-weight:500;text-transform:none;letter-spacing:0}@media(max-width:540px){.compact-entry-table th:first-child,.compact-entry-table td:first-child{width:170px!important;min-width:170px!important;max-width:170px!important;white-space:normal}}
+
+/* Slanted header cells follow the same angle as their labels. */
+body[data-module=noten] .compact-table-wrap{padding-right:128px;padding-top:12px;border:0;background:transparent;border-radius:0}body[data-module=noten] .compact-entry-table thead th:not(:first-child){height:155px;border:0;border-bottom:1px solid var(--line,#dbe3ef);background:transparent;padding:0!important}body[data-module=noten] .compact-slanted-heading{position:absolute;left:0;bottom:0;width:100%;height:100%;box-sizing:border-box;transform:skewX(-30deg);transform-origin:left bottom;background:var(--pale,#f5f7fc);border-top:1px solid var(--line,#dbe3ef);border-left:1px solid var(--line,#dbe3ef)}body[data-module=noten] .compact-entry-table thead th:last-child .compact-slanted-heading{border-right:1px solid var(--line,#dbe3ef)}body[data-module=noten] .compact-slanted-heading .compact-heading-label{left:23px;bottom:10px;transform:skewX(30deg) rotate(-60deg);transform-origin:left center;width:190px;white-space:nowrap;font-size:.7rem;line-height:1.2}body[data-module=noten] .compact-entry-table thead th:first-child{background:transparent;border-top:0;border-left:0;vertical-align:bottom}
+
+body[data-module=noten] .quarter-summary-table th.quarter-summary-edit-heading{width:100px!important;min-width:100px!important;max-width:100px!important;transform:none;vertical-align:bottom;white-space:normal;padding:12px!important;border:1px solid var(--line,#dbe3ef);background:var(--pale,#f5f7fc)}body[data-module=noten] .quarter-summary-table td.quarter-summary-edit-cell{width:100px!important;min-width:100px!important;max-width:100px!important;padding:6px 8px!important}.quarter-summary-edit-cell input{box-sizing:border-box;display:block;width:84px;max-width:100%;min-width:0;margin-inline:auto;text-align:center;padding:7px;border:1px solid var(--line,#dbe3ef);border-radius:8px;font:inherit}.quarter-summary-missing{color:#b42318;font-weight:700}
+
+body[data-module=noten] #quarterSummaryTabs{display:flex;align-items:center;flex:0 0 auto;width:max-content;gap:7px;padding:2px 5px;border-radius:14px;background:var(--pale,#e7edf6)}body[data-module=noten] #quarterSummaryTabs.hide{display:none}body[data-module=noten] #quarterSummaryTabs .page-tab{flex:none;white-space:nowrap;background:transparent}body[data-module=noten] #quarterSummaryTabs .page-tab[aria-selected=true]{background:var(--paper,#fff)}
+
+.quarter-summary-table .quarter-summary-average{background:#e7edf6;font-weight:700;border-left:2px solid #9caec8!important;border-right:2px solid #9caec8!important}.quarter-summary-table .quarter-summary-average .compact-slanted-heading{background:#dce6f4}.quarter-summary-table td.quarter-summary-average span{font-weight:700}
+
+body[data-module=noten] .quarter-summary-table th.quarter-summary-edit-heading{position:relative;padding:0!important;background:transparent!important;border:0!important;border-bottom:1px solid var(--line,#dbe3ef)!important;overflow:visible}body[data-module=noten] .quarter-summary-table th.quarter-summary-edit-heading .compact-heading-label{left:50%;bottom:10px}
+
+/* Keep names visible and help follow a pupil across the compact table. */
+body[data-module=noten] .compact-entry-table tbody tr>:first-child{position:sticky;left:0;z-index:3;background:var(--paper,#fff);box-shadow:2px 0 0 var(--line,#dbe3ef)}body[data-module=noten] .compact-entry-table thead th:first-child{position:sticky;left:0;z-index:4;background:var(--paper,#fff)}body[data-module=noten] .compact-entry-table tbody tr.compact-row-selected>td{box-shadow:inset 0 2px 0 #6f8fb0,inset 0 -2px 0 #6f8fb0;background-color:#edf3fa}body[data-module=noten] .compact-entry-table tbody tr.compact-row-selected>:first-child{background:#dfeaf7;box-shadow:inset 0 2px 0 #6f8fb0,inset 0 -2px 0 #6f8fb0,2px 0 0 #6f8fb0}body[data-module=noten] .compact-view-legend{font-size:.75rem;line-height:1.6;color:var(--muted,#65758a);margin:12px 0 0}.panel:not(.is-compact-view):not([data-quarter-summary])>.compact-view-legend{display:none}@media print{.compact-entry-table tbody tr>:first-child,.compact-entry-table thead th:first-child{position:static!important}}
+
+#pagePrintRoot{display:none}.page-print-button{flex:none;border:1px solid var(--line,#dbe3ef);border-radius:9px;padding:8px 12px;background:var(--paper,#fff);color:var(--green,#315f99);font:inherit;font-size:1rem;cursor:pointer}body[data-module=noten] #exportButton{display:none!important}@media print{body.printing-single-page>*:not(#pagePrintRoot){display:none!important}body.printing-single-page #pagePrintRoot{display:block!important}#pagePrintRoot .panel{display:block!important;border:0;box-shadow:none;padding:0;margin:0}#pagePrintRoot .table-wrap{overflow:visible!important}#pagePrintRoot .task-add-column{display:none!important}#pagePrintRoot *{-webkit-print-color-adjust:exact;print-color-adjust:exact}#pagePrintRoot .section-title{margin:0 0 16px}#pagePrintRoot .compact-entry-table{font-size:9px}@page{size:A4 portrait;margin:12mm}}
+
+body[data-module=noten] .page-print-button{font-size:1rem;padding:8px 12px;line-height:normal;min-height:40px}
+
+body[data-module=noten] .task-actions>.compact-view-toggle{margin-left:0;flex:none}body[data-module=noten] .task-actions>.page-print-button{flex:none}body[data-module=noten] .panel>.section-title .task-actions{flex-basis:0;min-width:0}
+
+body[data-module=noten] .is-compact-view .task-actions,body[data-module=noten] .is-compact-view .semester-table-tools{display:flex!important}body[data-module=noten] .is-compact-view .task-actions>:not(.compact-view-toggle):not(.page-print-button),body[data-module=noten] .is-compact-view .semester-table-tools>:not(.compact-view-toggle):not(.page-print-button){display:none!important}
+
+/* Oral assessment actions occupy their own row below the title. */
+body[data-module=noten] .panel[data-performance=true]>.section-title{display:flex;flex-direction:column;align-items:stretch;gap:14px}body[data-module=noten] .panel[data-performance=true]>.section-title>h2{align-self:flex-start}body[data-module=noten] .panel[data-performance=true]>.section-title>.task-actions{display:flex;flex:0 0 auto;width:100%;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:10px}
+
+body[data-module=noten] .panel[data-performance=true]>.section-title{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px}body[data-module=noten] .panel[data-performance=true]>.section-title>h2{grid-column:1;grid-row:1;align-self:center}body[data-module=noten] .oral-display-actions{grid-column:2;grid-row:1;display:flex;align-items:center;justify-content:flex-end;gap:12px}body[data-module=noten] .oral-display-actions .compact-view-toggle{margin:0}body[data-module=noten] .panel[data-performance=true]>.section-title>.task-actions{grid-column:1/-1;grid-row:2}@media(max-width:540px){body[data-module=noten] .panel[data-performance=true]>.section-title{grid-template-columns:1fr}body[data-module=noten] .oral-display-actions{grid-column:1;grid-row:2;flex-wrap:wrap}body[data-module=noten] .panel[data-performance=true]>.section-title>.task-actions{grid-row:3}}@media print{.oral-display-actions{display:none!important}}
+
+/* Summary emphasis follows the slanted header, not its rectangular table cell. */
+body[data-module=noten] .quarter-summary-table thead th.quarter-summary-average{border-left:0!important;border-right:0!important;background:transparent!important}body[data-module=noten] .quarter-summary-table thead th.quarter-summary-average .compact-slanted-heading{border-left:2px solid #9caec8;border-right:2px solid #9caec8}
+
+.quarter-summary-weight-controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px 20px;margin:12px 0 22px}.quarter-summary-weight-controls>strong{flex-basis:100%;font-size:.9rem}.quarter-summary-weight-controls label{display:flex;align-items:center;gap:8px;color:var(--muted,#65758a)}.quarter-summary-weight-controls input{width:76px;box-sizing:border-box;padding:6px 8px;border:1px solid var(--line,#dbe3ef);border-radius:8px;font:inherit;text-align:right}.quarter-summary-weight-status{color:#b42318;font-size:.85rem}.quarter-summary-weight-status:empty{display:none}
+
+.semester-weight-container{display:block;margin:12px 0 22px}.semester-weight-groups{display:flex;align-items:flex-start;flex-wrap:wrap;gap:24px 48px}.semester-weight-groups>.quarter-summary-weight-controls{flex:0 1 auto;margin:0;align-content:flex-start}.semester-weight-groups>.quarter-summary-weight-controls>strong{width:100%}
+
+.semester-weight-groups{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;gap:24px 40px;width:100%}.semester-weight-groups>.quarter-summary-weight-controls{display:flex;min-width:0;width:auto;gap:12px 16px;flex-wrap:wrap}.semester-weight-groups>.quarter-summary-weight-controls>strong{flex:0 0 100%;width:100%;margin:0}.semester-weight-groups>.quarter-summary-weight-controls label{white-space:nowrap}.semester-weight-container>.semester-weight-groups{flex:1 1 100%}@media(max-width:600px){.semester-weight-groups{grid-template-columns:1fr}}
+
+.single-page-export #normalExportOptions,.single-page-export #latinExportOptions,.single-page-export #customExportOptions{display:none!important}
+
+.oral-display-actions>.compact-view-toggle{order:0}.oral-display-actions>.page-print-button{order:1}
+
+/* Consistent display controls on every table page. */
+body[data-module=noten] .panel>.section-title:has(>.oral-display-actions){display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px}body[data-module=noten] .panel>.section-title:has(>.oral-display-actions)>h2{grid-column:1;grid-row:1;align-self:center}body[data-module=noten] .panel>.section-title:has(>.oral-display-actions)>.task-actions{grid-column:1/-1;grid-row:2;justify-content:flex-end;width:100%}body[data-module=noten] .panel>.section-title:has(>.oral-display-actions)>.semester-table-tools,body[data-module=noten] .panel>.section-title:has(>.oral-display-actions)>.custom-heading-controls{grid-column:1/-1;grid-row:2;justify-content:flex-end}.oral-display-actions>.compact-view-toggle{order:0}.oral-display-actions>.page-print-button{order:1}@media(max-width:540px){body[data-module=noten] .panel>.section-title:has(>.oral-display-actions){grid-template-columns:1fr}body[data-module=noten] .panel>.section-title:has(>.oral-display-actions)>.oral-display-actions{grid-column:1;grid-row:2}body[data-module=noten] .panel>.section-title:has(>.oral-display-actions)>.task-actions,body[data-module=noten] .panel>.section-title:has(>.oral-display-actions)>.semester-table-tools,body[data-module=noten] .panel>.section-title:has(>.oral-display-actions)>.custom-heading-controls{grid-row:3}}
+
+/* Pupil actions on the left, assessment actions on the right. */
+body[data-module=noten] .task-actions>[data-task-action="add-student"],body[data-module=noten] .task-actions>[data-homework-action="add-student"]{order:-2}body[data-module=noten] .task-actions>[data-gender-roster]{order:-1;margin-right:auto}body[data-module=noten] .task-actions:has(>[data-gender-roster]){width:100%}
+
+.blank-roster-settings{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}.blank-roster-settings[hidden]{display:none}.blank-roster-settings label{display:flex;flex-direction:column;gap:6px}.blank-roster-settings label:first-child{flex:1;min-width:180px}.blank-roster-settings input[type=number]{width:90px}
+
+body[data-module=noten] .quarter-summary-edit-cell input.g1{background:#00b050;color:#102b1b;font-weight:700}
+body[data-module=noten] .quarter-summary-edit-cell input.g2{background:#92d050;color:#26371a;font-weight:700}
+body[data-module=noten] .quarter-summary-edit-cell input.g3{background:#fff200;color:#3d3812;font-weight:700}
+body[data-module=noten] .quarter-summary-edit-cell input.g4{background:#ffc000;color:#493712;font-weight:700}
+body[data-module=noten] .quarter-summary-edit-cell input.g5{background:#f04438;color:#fff;font-weight:700}
+body[data-module=noten] .quarter-summary-edit-cell input.g6{background:#c00000;color:#fff;font-weight:700}
+
+.parent-mail-dialog{box-sizing:border-box;width:min(700px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;padding:24px}.parent-mail-dialog label{display:block;margin-top:16px}.parent-mail-dialog select,.parent-mail-dialog textarea{box-sizing:border-box;display:block;width:100%;margin-top:8px;padding:10px;border:1px solid var(--line,#dbe3ef);border-radius:9px;background:var(--paper,#fff);color:var(--ink,#243247);font:inherit}.parent-mail-dialog textarea{min-height:260px;resize:vertical;line-height:1.5}.parent-mail-dialog p{color:var(--muted,#65758a);font-size:.85rem}.parent-mail-dialog .dialog-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:16px}@media print{.parent-mail-dialog,[data-parent-mail]{display:none!important}}
+
+[data-parent-mail-student]{cursor:pointer}[data-parent-mail-student]:hover{text-decoration:underline}[data-parent-mail-student]:focus-visible{outline:2px solid #315f99;outline-offset:-2px}@media print{[data-parent-mail-student]{text-decoration:none!important;outline:none!important}}
+
+/* Phone portrait: full-width action buttons, centered switches. */
+@media screen and (max-width:540px) and (orientation:portrait){
+ /* Eine Zeile: kleines „?“, daneben Rückgängig und Backup. */
+ .app-header .classroom-global-actions{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(0,1fr);align-items:stretch;gap:8px;width:100%;margin:0}
+ .app-header .classroom-global-actions>button{box-sizing:border-box;width:100%;margin:0;min-height:42px}
+ .app-header .classroom-global-actions>.classroom-help-button{order:-1;width:42px!important;padding:0;font-size:1.05rem}
+ body[data-module=noten] .panel>.section-title,
+ body[data-module=noten] .panel>.section-title:has(>.oral-display-actions),
+ body[data-module=noten] .panel[data-performance=true]>.section-title{grid-template-columns:minmax(0,1fr);width:100%;align-items:stretch}
+ body[data-module=noten] .panel>.section-title .oral-display-actions,
+ body[data-module=noten] .panel>.section-title .task-actions,
+ body[data-module=noten] .panel>.section-title .semester-table-tools,
+ body[data-module=noten] .panel>.section-title .custom-heading-controls{display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:10px;box-sizing:border-box;min-width:0;width:100%;flex-basis:auto;margin:0}
+ body[data-module=noten] .panel>.section-title button{box-sizing:border-box;align-self:stretch;width:100%;max-width:none;margin:0;min-height:42px}
+ body[data-module=noten] .panel>.section-title .toggle,
+ body[data-module=noten] .panel>.section-title .task-actions>.toggle{display:flex;align-items:center;justify-content:center;align-self:center;box-sizing:border-box;width:100%;margin:0;min-height:42px}
+ body[data-module=noten] .panel>.section-title .task-actions>[data-gender-roster]{margin:0}
+}
+
+/* Give long seating-plan actions enough room on a portrait phone. */
+@media screen and (max-width:540px) and (orientation:portrait){
+ body[data-module=sitzplan] .classroom-plan-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ body[data-module=sitzplan] .classroom-plan-actions>.btn{box-sizing:border-box;min-width:0;max-width:100%;min-height:44px;height:auto;padding:10px 8px;font-size:.85rem;line-height:1.35;white-space:normal;overflow-wrap:anywhere;hyphens:manual;text-align:center}
+}
+
+/* Match the seating-plan stripes for intermediate participation symbols. */
+body[data-module=noten] .participation-between-1-2{background-image:repeating-linear-gradient(135deg,#5ccc8f 0 var(--participation-first-band,9px),#b9e18f var(--participation-first-band,9px) 18px)!important;color:#172617!important}
+body[data-module=noten] .participation-between-2-3{background-image:repeating-linear-gradient(135deg,#b9e18f 0 var(--participation-first-band,9px),#fff65c var(--participation-first-band,9px) 18px)!important;color:#172617!important}
+body[data-module=noten] .participation-between-3-4{background-image:repeating-linear-gradient(135deg,#fff65c 0 var(--participation-first-band,9px),#ffd65c var(--participation-first-band,9px) 18px)!important;color:#172617!important}
+body[data-module=noten] .participation-between-4-5{background-image:repeating-linear-gradient(135deg,#ffd65c 0 var(--participation-first-band,9px),#f68880 var(--participation-first-band,9px) 18px)!important;color:#172617!important}
+body[data-module=noten] .participation-between-5-6{background-image:repeating-linear-gradient(135deg,#f68880 0 var(--participation-first-band,9px),#d65c5c var(--participation-first-band,9px) 18px)!important;color:#24334b!important}
+
+body[data-module=sitzplan] .layout-category-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:20px}body[data-module=sitzplan] .layout-category-actions>.btn{box-sizing:border-box;width:100%;min-width:0;margin:0;padding-inline:8px;white-space:normal;overflow-wrap:anywhere}
+
+body[data-module=sitzplan] .seat-option-group{box-sizing:border-box;border:1px solid var(--line,#dbe3ef);border-radius:12px;padding:14px 16px;margin:0 0 12px;background:var(--paper,#fff)}body[data-module=sitzplan] .seat-option-group>h2{margin:0 0 10px;border:0;padding:0}body[data-module=sitzplan] .panel>.layout-category-actions{margin:0 0 16px}
+
+body[data-module=sitzplan] .classroom-quick-absence{display:flex;align-items:center;gap:8px;margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line,#dbe3ef);cursor:pointer}body[data-module=sitzplan] .classroom-quick-absence input{width:18px;height:18px;margin:0;accent-color:#315f99}
+
+body[data-module=sitzplan] #tablePaare{width:100%;table-layout:fixed}body[data-module=sitzplan] #tablePaare th:first-child,body[data-module=sitzplan] #tablePaare td:first-child{width:30px}body[data-module=sitzplan] #tablePaare input{box-sizing:border-box;width:100%;min-width:0}body[data-module=sitzplan] #tablePaare th:not(:first-child){white-space:nowrap}
+
+body[data-module=sitzplan] .panel>.layout-category-actions{border-top:1px solid var(--line,#dbe3ef);border-bottom:1px solid var(--line,#dbe3ef);padding-block:16px;margin-block:16px}
+
+body[data-module=sitzplan] .classroom-plan-history-box{box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;gap:10px;width:100%;min-width:0;border:1px solid var(--line,#dbe3ef);border-radius:12px;padding:14px 16px;margin-top:14px;background:var(--paper,#fff)}body[data-module=sitzplan] .classroom-plan-history-box .classroom-history-delete{align-self:flex-start;width:auto;margin:0}body[data-module=sitzplan] .classroom-plan-history-box .classroom-plan-history-status{margin:0}
+
+body[data-module=sitzplan] #roomGrid[hidden],body[data-module=sitzplan] .classroom-plan-zoom[hidden]{display:none!important}
+
+body[data-module=sitzplan] .classroom-plan-history-box .classroom-history-delete{background:#fff1ef;border:1px solid #e7a29b;color:#b42318}body[data-module=sitzplan] .classroom-plan-history-box .classroom-history-delete:hover:not(:disabled){background:#ffe1dc;border-color:#d87065}body[data-module=sitzplan] .classroom-plan-history-box .classroom-history-delete:disabled{opacity:.5;cursor:not-allowed}
+
+body[data-module=sitzplan] .classroom-date-only>input[type=date]{box-sizing:border-box;width:100%;max-width:none;min-width:0;align-self:stretch}
+
+body[data-module=noten] .exam-heading-title{grid-column:1;grid-row:1;display:flex;align-items:center;gap:40px;flex-wrap:wrap;min-width:0}@media(max-width:540px){}
+
+body[data-module=noten] .exam-heading-title{align-self:center}
+
+body[data-module=sitzplan] .classroom-history-delete-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}body[data-module=sitzplan] .classroom-history-delete-actions .classroom-history-delete{align-self:auto}
+
+body[data-module=sitzplan] .classroom-grade-buttons button.classroom-rating-choice{background:var(--rating-fill);color:var(--rating-ink);border-color:#00000020}body[data-module=sitzplan] .classroom-grade-buttons button.classroom-rating-choice:hover{filter:brightness(.96)}body[data-module=sitzplan] .classroom-grade-buttons button.classroom-rating-choice[aria-pressed=true]{border-color:#24334b;box-shadow:inset 0 0 0 2px #24334b;font-weight:700}
+
+/* Soft colour hints in the rating picker; keep the empty choice neutral. */
+body[data-module=sitzplan] .classroom-grade-buttons button.classroom-rating-choice{background:var(--rating-fill);color:#24334b;border-color:#d1dbe8}
+body[data-module=sitzplan] .classroom-grade-buttons button:not(.classroom-rating-choice),body[data-module=sitzplan] .classroom-grade-buttons button:not(.classroom-rating-choice)[aria-pressed=true]{background:#fff;color:#24334b;border-color:#d1dbe8}
+body[data-module=sitzplan] .classroom-grade-buttons button:not(.classroom-rating-choice)[aria-pressed=true]{box-shadow:inset 0 0 0 2px #a8b7ca}
+
+body[data-module=sitzplan] .room-grid .cell.classroom-seat-assessed{color:#24334b!important}
+
+@media print{
+ /* Sitzplan immer A4-Hochformat, damit Chrome nicht ins Querformat wechselt. */
+ @page classroom-seating{size:A4 portrait;margin:12mm}
+ body[data-module=sitzplan]{page:classroom-seating;width:186mm!important;margin:0!important;padding:0!important}body[data-module=sitzplan] .grid-container{padding:0!important;border:0!important;box-shadow:none!important}
+ body[data-module=sitzplan] .container,body[data-module=sitzplan] .grid-container,body[data-module=sitzplan] #roomGrid,body[data-module=sitzplan] .classroom-plan-scroll{width:100%!important;max-width:none!important;min-width:0!important;margin:0!important}
+ body[data-module=sitzplan] .classroom-plan-scroll{overflow:hidden!important}
+ body[data-module=sitzplan] .classroom-plan-viewport{width:100%!important;height:var(--print-seat-height,400px)!important;overflow:hidden!important}
+ body[data-module=sitzplan] .classroom-zoom-board{display:grid!important;position:relative!important;top:0!important;left:0!important;width:835px!important;height:545px!important;grid-template-columns:35px repeat(10,75px)!important;grid-template-rows:repeat(11,45px)!important;gap:5px!important;transform:translate(var(--print-seat-left,0px),var(--print-seat-top,0px))!important;zoom:var(--print-seat-scale,1)}
+ body[data-module=sitzplan] .classroom-zoom-board .cell{width:75px!important;height:45px!important;min-height:0!important;font-size:12px!important;box-sizing:border-box;box-shadow:none!important;white-space:normal;overflow-wrap:anywhere}
+ body[data-module=sitzplan] #gridInstructions{display:none!important}
+}
+
+@media print{body[data-module=sitzplan] .room-header{margin-bottom:20mm!important}body[data-module=sitzplan] .room-header[data-print-title] #titelKlasse,body[data-module=sitzplan] .room-header .classroom-mode-toggle{display:none!important}body[data-module=sitzplan] .room-header[data-print-title]::before{content:attr(data-print-title);display:block;font-size:22pt;font-weight:700;line-height:1.3;color:#243247}}
+
+/* Action sizes follow their labels, independently of seat columns and zoom. */
+body[data-module=sitzplan] .classroom-plan-actions{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:10px;width:100%;max-width:100%;margin:0}
+body[data-module=sitzplan] .classroom-plan-actions>.btn{flex:0 0 auto;align-self:auto;box-sizing:border-box;width:auto;max-width:100%;min-width:0;min-height:38px;height:auto;margin:0;padding:7px 12px;font:inherit;font-size:1rem;font-weight:500;line-height:1.4;white-space:normal;overflow-wrap:anywhere}
+@media screen and (max-width:540px){body[data-module=sitzplan] .classroom-plan-actions>.btn{min-height:42px}}
+
+body[data-module=sitzplan] .classroom-plan-actions{margin-top:16px}
+
+body[data-module=sitzplan] .student-search #studentSearchInput[hidden]{display:none!important}body[data-module=sitzplan] .student-search #studentSearchToggle{width:auto;justify-self:start;margin:0}
+
+/* Keep class names and their grading choice usable on narrow screens. */
+.rename-row-dialog:has(.rename-row-field>select){width:min(620px,calc(100vw - 32px));max-width:calc(100vw - 32px)}
+.rename-row-field:has(>select){grid-template-columns:38px minmax(0,1fr) 14ch}
+.rename-row-field>select{grid-column:3;grid-row:1;width:100%;min-width:0;max-width:100%;font:inherit;padding:9px 8px;border:1px solid #cbd6e5;border-radius:9px;background:white;color:var(--ink)}
+@media(max-width:480px){}
+
+#classroomUndoButton:not(:disabled){color:#a56522;border-color:#d4ac7d;background:#fff}
+#classroomUndoButton:not(:disabled):hover{color:#87501a;border-color:#bd8c54;background:#fff8ef}
+#classroomUndoButton:focus-visible{outline-color:#bd8c54}
+
+
+body[data-module=sitzplan] .student-search{width:100%;max-width:none;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:center}
+body[data-module=sitzplan] .student-search #studentSearchInput{grid-column:2;grid-row:1;justify-self:end}
+body[data-module=sitzplan] .student-search .random-student-action{grid-column:1/-1}
+@media(max-width:650px){body[data-module=sitzplan] .student-search{grid-template-columns:minmax(0,1fr)}body[data-module=sitzplan] .student-search #studentSearchInput{grid-column:1;grid-row:auto}}
+
+@media(min-width:651px){body[data-module=sitzplan] .student-search{box-sizing:border-box;padding-right:var(--search-print-gap,0px)}}
+@media print{}
+
+body[data-module=noten] .participation-lean-low{--participation-first-band:12px}
+body[data-module=noten] .participation-lean-high{--participation-first-band:6px}
+
+body[data-module=sitzplan] .classroom-aligned-symbol{display:inline-flex;align-items:center;justify-content:center;line-height:1}
+body[data-module=sitzplan] .classroom-aligned-symbol .classroom-symbol-glyph{display:block;width:.65em;height:1em;overflow:visible;fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:butt;flex:none}
+
+body[data-module=sitzplan] .classroom-aligned-symbol .classroom-symbol-slash{margin-inline:-.13em}
+
+body[data-module=sitzplan] .classroom-grade-buttons{grid-template-columns:repeat(5,minmax(0,1fr))}
+
+.test-create-dialog fieldset{margin-top:20px;border:1px solid var(--line);border-radius:12px;padding:14px}
+body[data-module=noten] .test-create-dialog fieldset label{display:flex;align-items:center;gap:10px;margin:10px 0}
+body[data-module=noten] .test-create-dialog input[type=radio]{width:20px;height:20px;min-width:20px;flex:none;margin:0;appearance:auto}
+.test-create-dialog [data-error]:empty{display:none}
+
+.test-detail-settings{display:flex;flex-wrap:wrap;align-items:end;gap:16px;margin:20px 0}
+.test-detail-settings>label{display:grid;gap:6px}.test-detail-settings input[type=number]{max-width:130px}
+.test-detail-results{width:100%;border-collapse:collapse}.test-detail-results td,.test-detail-results th{padding:10px;border:1px solid var(--line)}
+.test-detail-results input{width:110px;max-width:100%}.test-detail-results .task-end-grade{align-items:center;min-height:30px}
+[data-open-test-detail]{margin:6px auto 0;padding:4px 8px;font-size:.8rem}
+
+.exam-combined-page>.panel,.exam-calculation-section>.panel{border:0;box-shadow:none;margin:0;padding:0;background:transparent}
+.exam-combined-page>.section-title{margin-bottom:22px}.exam-combined-date{display:flex;align-items:center;gap:10px;margin-left:auto;font-weight:400}
+.exam-combined-date input{width:150px}.exam-calculation-section{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:18px}
+.exam-calculation-section>summary{cursor:pointer;font-weight:650;color:var(--ink)}.exam-calculation-section[open]>summary{margin-bottom:18px}
+.exam-combined-results .section-title h2{font-size:1rem}
+@media(max-width:540px){.exam-combined-date{margin-left:0}.exam-combined-page>.section-title{flex-wrap:wrap;gap:12px}}
+
+body[data-module=noten] .exam-combined-page>.section-title{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.exam-combined-page>.section-title [data-page-print]{display:none!important}
+.exam-combined-date input{box-sizing:border-box;border:1px solid var(--line);border-radius:9px;padding:7px 10px;font:inherit;color:var(--ink);background:white}
+
+.exam-combined-page>.exam-combined-results{margin-top:24px}
+.exam-combined-page>.section-title>.oral-display-actions{display:none!important}
+
+body[data-module=noten] #addPageQuick{display:none!important}
+/* Moderately softened assessment palette; seating keeps its lighter palette. */
+body[data-module=noten] .g1,body[data-module=noten] .notenspiegel-g1{background-color:#5ccc8f!important;color:#24334b!important}
+body[data-module=noten] .g2,body[data-module=noten] .notenspiegel-g2{background-color:#b9e18f!important;color:#24334b!important}
+body[data-module=noten] .g3,body[data-module=noten] .notenspiegel-g3{background-color:#fff65c!important;color:#24334b!important}
+body[data-module=noten] .g4,body[data-module=noten] .notenspiegel-g4{background-color:#ffd65c!important;color:#24334b!important}
+body[data-module=noten] .g5,body[data-module=noten] .notenspiegel-g5{background-color:#f68880!important;color:#24334b!important}
+body[data-module=noten] .g6,body[data-module=noten] .notenspiegel-g6{background-color:#d65c5c!important;color:#24334b!important}
+body[data-module=noten] .grade-four-fail{background-image:repeating-linear-gradient(135deg,#f68880 0 3px,#ffd65c 3px 8px)!important;color:#24334b!important}
+
+
+body[data-module=noten] .participation-grade-input,body[data-module=noten] .task-end-grade,body[data-module=noten] .compact-cell-value.g1,body[data-module=noten] .compact-cell-value.g2,body[data-module=noten] .compact-cell-value.g3,body[data-module=noten] .compact-cell-value.g4,body[data-module=noten] .compact-cell-value.g5,body[data-module=noten] .compact-cell-value.g6{font-family:ClassroomRoundO,Arial,sans-serif!important}
+
+@font-face{font-family:ClassroomRoundO;src:url(data:font/ttf;base64,AAEAAAAKAIAAAwAgT1MvMlmTarAAAACsAAAATmNtYXBD/N9LAAAA/AAAAERnbHlmLaEt2wAAAUAAAAMAaGVhZGFuQuQAAARAAAAANmhoZWEF4wHAAAAEeAAAACRobXR4CPwAmwAABJwAAAAQbG9jYQAACGwAAASsAAAAFG1heHAABwCCAAAEwAAAACRuYW1lC1sbpAAABOQAAACmcG9zdAADAAAAAAWMAAAAIAAAAlgCvAAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAABDTFJNAEAAKyISA4n/LAAAA4kA1AAAAAAAAQADAAEAAAAMAAQAOAAAAAoACAACAAIAKwAtAG8iEv//AAAAKwAtAG8iEv///9f/1v+S3fEAAQAAAAAAAAAAAAAAAgA3AAoCIQH0AD8AfwAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQECIf////z/+v/4//b/9P/x//D/7v/t/+v/6//p/+n/6P/o/+j/6P/p/+n/6//r/+3/7v/w//H/9P/2//j/+v/8//8AAQAEAAYACAAKAAwADwAQABIAEwAVABUAFwAXABgAGAAYABgAFwAXABUAFQATABIAEAAPAAwACgAIAAYABP+T/////v/9//z/+v/5//j/9//3//X/9f/0//P/8//z//P/8//z//P/8//0//X/9f/3//f/+P/5//r//P/9//7//wABAAIAAwAEAAYABwAIAAkACQALAAsADAANAA0ADQANAA0ADQANAA0ADAALAAsACQAJAAgABwAGAAQAAwACAP8AGAAYABcAFwAVABUAEwASABAADwAMAAoACAAGAAQAAf////z/+v/4//b/9P/x//D/7v/t/+v/6//p/+n/6P/o/+j/6P/p/+n/6//r/+3/7v/w//H/9P/2//j/+v/8//8AAQAEAAYACAAKAAwADwAQABIAEwAVABUAFwAXABgAGP/z//P/8//z//T/9f/1//f/9//4//n/+v/8//3//v//AAEAAgADAAQABgAHAAgACQAJAAsACwAMAA0ADQANAA0ADQANAA0ADQAMAAsACwAJAAkACAAHAAYABAADAAIAAf////7//f/8//r/+f/4//f/9//1//X/9P/z//P/8wABADIABQImAfkACwAAAQEBAQEBAQEBAQEBADIAyAAAAGQAAADIAAD/OAAA/5wAAP84AM0AAP84AAAAyAAAAGQAAADIAAD/OAAAAAAAAQAyAM0BwgExAAMAAAEBAQEAMgGQAAD+cADNAAAAZAAAAAAAAQAAAAEAABfQwMtfDzz1AAMD6AAAAAAAAAAAAAAAAAAAAAAANwAKAiEB9AAAAAgAAgABAAAAAAABAAADif8sAAACWAA3ADcCIQABAAAAAAAAAAAAAAAAAAAABAJYAAACWAA3AlgAMgH0ADIAAAAAAAAAAAAAApAAAALcAAADAAABAAAABACAAAIAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQANgADAAEECQABACIAAAADAAEECQACAA4AIgADAAEECQAEACIAMAADAAEECQAGAB4AUgBDAGwAYQBzAHMAcgBvAG8AbQAgAFIAbwB1AG4AZAAgAE8AUgBlAGcAdQBsAGEAcgBDAGwAYQBzAHMAcgBvAG8AbQAgAFIAbwB1AG4AZAAgAE8AQwBsAGEAcwBzAHIAbwBvAG0AUgBvAHUAbgBkAE8AAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA) format('truetype');font-weight:100 900;unicode-range:U+002B,U+002D,U+006F,U+2212;font-display:swap}
+body[data-module=noten] .participation-grade-input,body[data-module=noten] .task-end-grade,body[data-module=noten] .compact-cell-value.g1,body[data-module=noten] .compact-cell-value.g2,body[data-module=noten] .compact-cell-value.g3,body[data-module=noten] .compact-cell-value.g4,body[data-module=noten] .compact-cell-value.g5,body[data-module=noten] .compact-cell-value.g6{font-family:ClassroomRoundO,Arial,sans-serif!important}
+
+body[data-module=sitzplan] .classroom-aligned-symbol .classroom-symbol-sign{stroke-width:4}
+
+/* Consistent tendency signs; range hyphens retain their short text glyph. */
+@font-face{font-family:ClassroomGradeSigns;src:url(data:font/ttf;base64,AAEAAAAKAIAAAwAgT1MvMlmTarAAAACsAAAATmNtYXBD/N9LAAAA/AAAAERnbHlmLaEt2wAAAUAAAAMAaGVhZGFuQuQAAARAAAAANmhoZWEF4wHAAAAEeAAAACRobXR4CPwAmwAABJwAAAAQbG9jYQAACGwAAASsAAAAFG1heHAABwCCAAAEwAAAACRuYW1lC1sbpAAABOQAAACmcG9zdAADAAAAAAWMAAAAIAAAAlgCvAAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAABDTFJNAEAAKyISA4n/LAAAA4kA1AAAAAAAAQADAAEAAAAMAAQAOAAAAAoACAACAAIAKwAtAG8iEv//AAAAKwAtAG8iEv///9f/1v+S3fEAAQAAAAAAAAAAAAAAAgA3AAoCIQH0AD8AfwAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQECIf////z/+v/4//b/9P/x//D/7v/t/+v/6//p/+n/6P/o/+j/6P/p/+n/6//r/+3/7v/w//H/9P/2//j/+v/8//8AAQAEAAYACAAKAAwADwAQABIAEwAVABUAFwAXABgAGAAYABgAFwAXABUAFQATABIAEAAPAAwACgAIAAYABP+T/////v/9//z/+v/5//j/9//3//X/9f/0//P/8//z//P/8//z//P/8//0//X/9f/3//f/+P/5//r//P/9//7//wABAAIAAwAEAAYABwAIAAkACQALAAsADAANAA0ADQANAA0ADQANAA0ADAALAAsACQAJAAgABwAGAAQAAwACAP8AGAAYABcAFwAVABUAEwASABAADwAMAAoACAAGAAQAAf////z/+v/4//b/9P/x//D/7v/t/+v/6//p/+n/6P/o/+j/6P/p/+n/6//r/+3/7v/w//H/9P/2//j/+v/8//8AAQAEAAYACAAKAAwADwAQABIAEwAVABUAFwAXABgAGP/z//P/8//z//T/9f/1//f/9//4//n/+v/8//3//v//AAEAAgADAAQABgAHAAgACQAJAAsACwAMAA0ADQANAA0ADQANAA0ADQAMAAsACwAJAAkACAAHAAYABAADAAIAAf////7//f/8//r/+f/4//f/9//1//X/9P/z//P/8wABADIABQImAfkACwAAAQEBAQEBAQEBAQEBADIAyAAAAGQAAADIAAD/OAAA/5wAAP84AM0AAP84AAAAyAAAAGQAAADIAAD/OAAAAAAAAQAyAM0BwgExAAMAAAEBAQEAMgGQAAD+cADNAAAAZAAAAAAAAQAAAAEAABfQwMtfDzz1AAMD6AAAAAAAAAAAAAAAAAAAAAAANwAKAiEB9AAAAAgAAgABAAAAAAABAAADif8sAAACWAA3ADcCIQABAAAAAAAAAAAAAAAAAAAABAJYAAACWAA3AlgAMgH0ADIAAAAAAAAAAAAAApAAAALcAAADAAABAAAABACAAAIAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQANgADAAEECQABACIAAAADAAEECQACAA4AIgADAAEECQAEACIAMAADAAEECQAGAB4AUgBDAGwAYQBzAHMAcgBvAG8AbQAgAFIAbwB1AG4AZAAgAE8AUgBlAGcAdQBsAGEAcgBDAGwAYQBzAHMAcgBvAG8AbQAgAFIAbwB1AG4AZAAgAE8AQwBsAGEAcwBzAHIAbwBvAG0AUgBvAHUAbgBkAE8AAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA) format('truetype');font-weight:100 900;unicode-range:U+002B,U+2212;font-display:swap}
+body[data-module=noten] .task-grade-input,body[data-module=noten] .task-table select,body[data-module=noten] .task-end-grade,body[data-module=noten] .compact-cell-value,body[data-module=noten] .quarter-summary-edit-cell input{font-family:ClassroomGradeSigns,Arial,sans-serif!important}
+body[data-module=noten] .participation-grade-input{font-family:ClassroomRoundO,Arial,sans-serif!important}
+
+.classroom-room-selector{display:flex;align-items:flex-end;gap:8px;margin-bottom:20px;flex-wrap:wrap}.classroom-room-selector label{display:flex;flex-direction:column;gap:8px;flex:1;min-width:120px}.classroom-room-selector select{width:100%;min-height:40px;font:inherit;border:1px solid #d7dfed;border-radius:10px;padding:8px;color:#24334b;background:#fff}.classroom-room-selector .btn{width:auto;flex:none;margin:0}
+
+body[data-module=sitzplan] .class-selector-box>.classroom-room-selector{display:flex!important}
+/* 9.12: gespeicherte Sitzpläne stehen nach Datum und Raum */
+body[data-module=sitzplan] .class-selector-box>.classroom-plan-history-box{display:block!important}
+body[data-module=sitzplan] .class-selector-box>.classroom-date-only:has(+.classroom-room-selector){margin-bottom:20px}
+
+@supports (-webkit-touch-callout:none){body[data-module=sitzplan] .classroom-room-selector select{box-sizing:border-box;margin:0;min-height:40px;height:40px;padding:7px 8px}body[data-module=sitzplan] .classroom-room-selector>.btn{box-sizing:border-box;height:40px;min-height:40px}}
+
+/* Center dates in editable column headings, including native Safari controls. */
+body[data-module=noten] .task-date-input{text-align:center!important}
+body[data-module=noten] .task-date-input::-webkit-date-and-time-value{text-align:center}
+body[data-module=noten] .task-date-input::-webkit-datetime-edit{padding:0;text-align:center}
+body[data-module=noten] .task-date-input::-webkit-datetime-edit-fields-wrapper{display:flex;justify-content:center}
+
+body[data-module=noten] input.task-date-input[type=date]{display:inline-flex;align-items:center;justify-content:center;-webkit-appearance:none;appearance:none}
+body[data-module=noten] input.task-date-input[type=date]::-webkit-datetime-edit{display:flex;flex:1;width:100%;min-width:0;justify-content:center}
+body[data-module=noten] input.task-date-input[type=date]::-webkit-datetime-edit-fields-wrapper{display:flex;width:100%;justify-content:center;padding:0}
+body[data-module=noten] input.task-date-input[type=date]::-webkit-date-and-time-value{display:block;width:100%;min-width:0;text-align:center;margin:0}
+
+
+body[data-module=sitzplan] .grid-container:has(>#layoutView:not([hidden]))>.room-header{display:none}
+
+body[data-module=sitzplan] .student-search{grid-template-columns:max-content minmax(0,480px);padding-right:0;justify-content:start}body[data-module=sitzplan] .student-search #studentSearchInput{grid-column:2;grid-row:1;justify-self:start;min-width:0;width:100%;margin:0}body[data-module=sitzplan] .student-search-status{grid-column:1/-1}
+
+/* Keep the homework button as the pointer anchor; material occupies the other half. */
+.classroom-quick-top{display:flex;align-items:stretch;justify-content:space-between;gap:12px;margin:8px 0 16px}
+.classroom-quick-top #classroomQuickHomeworkButton{margin:0;min-width:0;flex:1;justify-content:center}
+#classroomQuickMaterialButton{flex:1;min-width:0;margin:0;padding:9px 12px;border:1px solid #d7e2f1;border-radius:10px;background:#f6f8fc;color:#405671;font:inherit;font-size:15px;line-height:1.3;cursor:pointer;white-space:nowrap}
+#classroomQuickMaterialButton[aria-pressed=true]{background:#fce8e6;border-color:#e8aaa3;color:#a33127}
+#classroomQuickMaterialButton:disabled{opacity:.5;cursor:default}
+.classroom-quick.classroom-homework-right .classroom-quick-top #classroomQuickHomeworkButton{margin:0}
+
+.classroom-name-suggestions{position:fixed;z-index:10000;box-sizing:border-box;max-height:220px;overflow:auto;background:#fff;border:1px solid #a8bdd8;border-radius:9px;padding:4px;box-shadow:0 5px 16px #24334b26}
+.classroom-name-suggestions[hidden]{display:none}
+.classroom-name-suggestions button{display:block;width:100%;border:0;border-radius:5px;background:white;color:#24334b;font:inherit;font-size:15px;text-align:left;padding:7px 9px;cursor:pointer}
+.classroom-name-suggestions button:hover,.classroom-name-suggestions button[aria-selected=true]{background:#e7edf6}
+body[data-module=noten] .test-mean-slider input[type=range][style*="position:1"]{background:#32649f}
+body[data-module=noten] .test-mean-slider input[type=range][style*="position:2"]{background:#7bc43b}.previous-quarter-table{overflow:auto;margin-bottom:12px}.previous-quarter-table table{min-width:600px}.previous-quarter-table input,.previous-quarter-table select{pointer-events:none}.previous-quarter-table span{display:inline-block}
+body[data-module=noten] .previous-quarter-table table{table-layout:fixed!important;min-width:0!important;max-width:none!important;background:#fff}
+body[data-module=noten] .previous-quarter-table table th,body[data-module=noten] .previous-quarter-table table td{width:auto!important;min-width:0!important;max-width:none!important;padding:10px 8px!important;height:auto!important;box-sizing:border-box}
+body[data-module=noten] .previous-quarter-table table thead{background:#f5f7fc}
+body[data-module=noten] .previous-quarter-table table tbody td{background:#fff}
+body[data-module=noten] .previous-quarter-table .previous-quarter-value{display:inline-flex!important;align-items:center;justify-content:center;box-sizing:border-box;width:136px!important;min-width:0!important;max-width:100%!important;height:38px!important;min-height:38px!important;margin:0!important;padding:4px 8px!important;border:1px solid #dbe3ef;border-radius:9px;font-size:19px!important;font-weight:700;line-height:1!important;vertical-align:middle}
+body[data-module=noten] .previous-quarter-table .task-date-input{display:inline-flex!important;justify-content:center;align-items:center;box-sizing:border-box;width:140px!important;max-width:100%!important;height:34px!important;min-height:0!important;padding:4px!important;font-size:15px!important;white-space:nowrap}
+body[data-module=noten] .previous-quarter-table .task-weight-control{font-size:14px;justify-content:center;margin:0 0 5px}
+body[data-module=noten] .previous-quarter-table .task-student-cell span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+body[data-module=noten] table.previous-quarter-inline .previous-quarter-history-cell{width:160px!important;min-width:160px!important;max-width:160px!important;padding:10px 8px!important;box-sizing:border-box;vertical-align:middle;background:#fff}
+body[data-module=noten] table.previous-quarter-inline th.previous-quarter-history-cell{background:#f5f7fc;white-space:normal}
+body[data-module=noten] table.previous-quarter-inline .previous-quarter-history-cell .previous-quarter-value{display:inline-flex!important;align-items:center;justify-content:center;box-sizing:border-box;width:136px!important;min-width:0!important;max-width:100%!important;height:38px!important;min-height:38px!important;margin:0!important;padding:4px 8px!important;border:1px solid #dbe3ef;border-radius:9px;font-size:19px!important;font-weight:700;line-height:1!important;vertical-align:middle}
+body[data-module=noten] table.previous-quarter-inline .previous-quarter-history-cell .task-date-input{display:inline-flex!important;align-items:center;justify-content:center;width:140px!important;max-width:100%!important;height:34px!important;min-height:0!important;font-size:15px!important;padding:4px!important;white-space:nowrap;box-sizing:border-box}
+.previous-quarter-label{display:block;font-size:11px;font-weight:500;color:#66758a;margin-bottom:6px;text-transform:none;letter-spacing:0}
+body[data-module=noten] table.previous-quarter-inline .previous-quarter-history-cell:has(+ :not(.previous-quarter-history-cell)){border-right:3px solid #9fb3ce}
+
+body[data-module=noten] table.previous-quarter-inline .previous-quarter-history-cell{width:130px!important;min-width:130px!important;max-width:130px!important;padding:8px 8px!important}
+body[data-module=noten] table.previous-quarter-inline .previous-quarter-history-cell .previous-quarter-value{width:110px!important}
+body[data-module=noten] table.previous-quarter-inline .previous-quarter-history-cell .task-date-input{width:114px!important;font-size:14px!important}
+
+/* Give the longer homework action more room than the material action. */
+.classroom-quick-top #classroomQuickHomeworkButton{flex:1 1 60%;padding-inline:8px;gap:7px}
+.classroom-quick-top #classroomQuickMaterialButton{flex:0 1 40%;padding-inline:8px}
+
+.test-variant-scales{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}.test-variant-card{flex:1 1 360px;min-width:0}.test-detail-results select{min-width:65px;font:inherit;padding:7px;border:1px solid var(--line);border-radius:8px;background:white}
+
+/* Random selection stays visible over assessment and group colours. */
+body[data-module=sitzplan] .room-grid .cell.random-selected{outline:3px solid #2f5f9b;outline-offset:2px;box-shadow:0 0 0 5px #2f5f9b30!important}
+
+/* Compact test creation: keep choices readable without oversized spacing. */
+body[data-module=noten] .test-create-dialog{padding:20px 24px}
+body[data-module=noten] .test-create-dialog h2{margin-bottom:6px}
+body[data-module=noten] .test-create-dialog form>p{margin:6px 0 12px}
+body[data-module=noten] .test-create-dialog form>label{margin:8px 0}
+body[data-module=noten] .test-create-dialog fieldset{margin:10px 0 0;padding:6px 12px 8px;min-width:0}
+body[data-module=noten] .test-create-dialog fieldset label{margin:4px 0;line-height:1.3;min-height:26px}
+body[data-module=noten] .test-create-dialog input[type=radio]{min-height:20px;padding:0}
+body[data-module=noten] .test-create-dialog .dialog-actions{margin-top:12px}
+
+body[data-module=sitzplan] .classroom-plan-actions>#studentSearchInput{flex:0 1 380px;min-width:120px;max-width:100%;width:380px;margin:0;box-sizing:border-box}
+body[data-module=sitzplan] .classroom-plan-actions>#studentSearchInput[hidden]{display:none!important}
+
+.test-rating-symbol{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;line-height:1;font-weight:700}
+.test-rating-glyph{display:block;width:.65em;height:1em;overflow:visible;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:butt;flex:none}
+.test-rating-symbol .test-rating-slash{margin-inline:-.13em}
+
+/* Keep test switches beside their captions and aligned with numeric controls. */
+.test-detail-settings>label.toggle{display:inline-flex;flex-direction:row;align-items:center;gap:10px;min-height:40px;white-space:nowrap;margin-bottom:0}
+
+.test-detail-date{display:inline-flex;align-items:center;gap:8px;margin:0;white-space:nowrap}.test-detail-date input[type=date]{width:150px;min-width:140px;text-align:center}
+
+
+.workspace{display:flex;flex-direction:column}.workspace>iframe{flex:1;min-height:0;height:0}@media print{}
+
+/* Keep the pattern switch aligned with the adjacent compact-view switch. */
+body[data-module=noten] [data-hatching-toggle]{font-size:.85rem;line-height:1.2;white-space:nowrap;margin:0;align-self:center;align-items:center;gap:9px}
+body[data-module=noten] [data-hatching-toggle] input,body[data-module=noten] [data-hatching-toggle] span{top:auto;transform:none}
+/* Q1 comparison headings share the unobstructed slanted faces of Q2. */
+body[data-module=noten] table.compact-entry-table.previous-quarter-inline th.previous-quarter-history-cell{background:transparent!important;border:0!important;border-bottom:1px solid var(--line,#dbe3ef)!important;padding:0!important;overflow:visible}
+
+/* Scale assignment belongs to each individual exam task. */
+body[data-module=noten] .task-header-editor:has(.task-basis-select) { width:220px; max-width:220px; grid-template-columns:minmax(0,1fr) 30px; }
+body[data-module=noten] .task-header-editor:has(.task-basis-select) .task-weight-control { grid-row:1; grid-column:1/-1; }
+body[data-module=noten] .task-header-editor:has(.task-basis-select) .task-config-name { grid-row:3; grid-column:1; }
+body[data-module=noten] .task-header-editor .task-basis-select { grid-row:2; grid-column:1/-1; width:100%; min-width:0; font:inherit; font-size:.8rem; text-transform:none; padding:5px; }
+body[data-module=noten] .task-header-editor:has(.task-basis-select) .task-remove { grid-row:3; grid-column:2; }
+
+.classroom-auto-backup{border:1px solid #d9e2ef;border-radius:16px;margin:20px 0;padding:16px;min-width:0}.classroom-auto-backup legend{font-weight:600;color:#63748e}.classroom-auto-backup p{font-size:.95rem;line-height:1.45}.classroom-auto-actions{display:flex;gap:10px;flex-wrap:wrap}.classroom-auto-actions [hidden]{display:none}
+
+/* Zoom actions keep their natural button width, including relocated fullscreen. */
+body[data-module=sitzplan] .classroom-plan-zoom>button{flex:0 0 auto;width:auto;max-width:100%;margin:0;align-self:center;white-space:nowrap}
+
+/* A single shared navigation row; only the manager content scrolls. */
+.compact-navigation{position:relative;flex:none;z-index:30;padding:5px 22px;background:#f6f8fc;border-bottom:1px solid #d8e1ee;color:#253349;font:inherit}
+.compact-navigation-bar{display:flex;gap:6px;align-items:center;min-height:32px;overflow-x:auto;scrollbar-width:thin}
+.compact-navigation-bar button{flex:none;min-height:28px;padding:3px 10px;border:1px solid #d8e1ee;border-radius:8px;background:white;color:#315f9b;font:inherit;font-size:14px;white-space:nowrap;cursor:pointer}
+.compact-navigation-bar .compact-navigation-arrow{border:0;background:transparent;padding:3px 7px}
+.compact-navigation-flyout{visibility:hidden;opacity:0;transform:translateY(-5px);transition:opacity .14s ease,transform .14s ease,visibility .14s;pointer-events:none;position:absolute;top:100%;left:22px;right:22px;max-height:65vh;overflow:auto;padding:12px;background:white;border:1px solid #d8e1ee;border-radius:0 0 14px 14px;box-shadow:0 12px 22px #25334924}
+.compact-navigation.is-open .compact-navigation-flyout{visibility:visible;opacity:1;transform:translateY(0);pointer-events:auto}
+.compact-navigation-row{display:flex;align-items:center;gap:8px;margin:0 0 7px;flex-wrap:wrap}
+.compact-navigation-row nav,.compact-navigation-row .page-nav-group{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
+.compact-navigation-row nav{padding:3px;border-radius:13px;background:#e7edf6}
+.compact-navigation-row button{font:inherit;font-size:15px;line-height:1.25;padding:8px 13px;border:1px solid transparent;border-radius:10px;background:transparent;color:#66778f;cursor:pointer}
+.compact-navigation-row button[aria-selected=true]{background:white;color:#253349;font-weight:700;box-shadow:0 1px 4px #25334914}
+.compact-navigation-row .rename-row-button{border-color:#d8e1ee;transform:scaleX(-1);padding:8px 10px}
+.compact-navigation-row .add-subject-button{border:1px dashed #aabbd3;color:#315f9b}
+.compact-navigation-row .hide{display:none!important}
+@keyframes navigation-in{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){.compact-navigation{padding:5px 12px}.compact-navigation-flyout{left:12px;right:12px}.compact-navigation-row button{font-size:14px}}
+@media print{.compact-navigation{display:none!important}}
+
+/* Breadcrumb styling matches the full navigation's selected tabs. */
+.compact-navigation{margin:10px 22px;padding:8px 12px;background:#fff;border:1px solid #d8e1ee;border-radius:15px}
+.compact-navigation-bar{gap:10px;min-height:36px}
+.compact-navigation-trail{display:flex;align-items:center;gap:0;flex:none;padding:3px;background:#e7edf6;border-radius:14px}
+.compact-navigation-bar .compact-navigation-chip{min-height:32px;padding:5px 16px;border:0;border-radius:11px;background:#fff;color:#253349;font-size:16px;font-weight:700!important;line-height:1.3;box-shadow:0 1px 3px #25334912}
+.compact-navigation-separator{display:block;width:28px;flex:none;height:30px;position:relative;cursor:pointer}
+.compact-navigation-separator:after{content:"";position:absolute;width:10px;height:10px;top:10px;left:calc(50% - 8.5px);border-top:1.5px solid #718096;border-right:1.5px solid #718096;transform:rotate(45deg)}
+.compact-navigation-bar .compact-navigation-arrow{position:relative;width:34px;height:34px;min-height:34px;padding:0;border:1px solid #ccd9e9;border-radius:10px;background:#fff;font-size:0}
+.compact-navigation-arrow:after{content:"";position:absolute;width:11px;height:11px;left:10px;top:8px;border-right:1.5px solid #718096;border-bottom:1.5px solid #718096;transform:rotate(45deg);transition:transform .14s}
+.is-open .compact-navigation-arrow:after{top:13px;transform:rotate(225deg)}
+.compact-navigation-flyout{left:0;right:0}
+@media(max-width:600px){.compact-navigation{margin:8px 12px;padding:6px 8px}.compact-navigation-bar .compact-navigation-chip{font-size:14px;padding:5px 11px}.compact-navigation-separator{width:22px}.compact-navigation-flyout{left:0;right:0}}
+
+.compact-navigation-bar{cursor:pointer}
+.compact-navigation-bar .compact-navigation-chip{display:inline-flex;align-items:center;white-space:nowrap}
+.compact-navigation-bar .compact-navigation-arrow{display:block;flex:none;box-sizing:border-box}
+
+/* Expanded navigation shares one uninterrupted outer frame. */
+.compact-navigation.is-open{border-bottom-color:transparent;border-radius:15px 15px 0 0}
+.compact-navigation.is-open .compact-navigation-flyout{top:100%;left:-1px;right:-1px;border-top:0;border-radius:0 0 15px 15px;box-shadow:0 12px 22px #25334918}
+
+.compact-navigation-row .rename-row-button{transform:none}
+
+.compact-navigation-row .rename-row-button{display:inline-flex;align-items:center;justify-content:center}
+.navigation-gear{display:block;width:22px;height:22px;flex:none}
+
+/* Gear buttons match the navigation disclosure button exactly. */
+.compact-navigation-row .rename-row-button{box-sizing:border-box;width:34px;height:34px;min-width:34px;min-height:34px;flex:0 0 34px;padding:0;border:1px solid #ccd9e9;border-radius:10px;background:#fff;box-shadow:none}
+
+/* Expanded navigation intercepts clicks before they reach either manager. */
+.compact-navigation-backdrop{position:fixed;inset:0;z-index:29;background:transparent}
+.compact-navigation-backdrop[hidden]{display:none}
+
+/* Prozentfelder der Notengrenzen: Platz für zwei Nachkommastellen neben den Pfeiltasten. */
+body[data-module=noten] .custom-manual-percent{width:7.2em!important;min-width:7.2em;padding-right:4px!important;text-align:right}
+
+/* Gewichtungsfelder (Quartals-/Halbjahresnote): Feld direkt neben der Bezeichnung, Bezeichnung einzeilig. */
+body[data-module=noten] .quarter-summary-weight-controls{justify-content:flex-start;gap:12px 32px}
+body[data-module=noten] .quarter-summary-weight-controls label{flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;margin:0;white-space:nowrap;font-weight:400}
+body[data-module=noten] .quarter-summary-weight-controls input[type=number]{flex:0 0 auto;width:6.2em!important;min-width:6.2em;height:32px;padding:3px 6px 3px 8px!important;border:1px solid var(--line,#dbe3ef)!important;border-radius:8px;background:#fff;text-align:right}
+
+/* Eingeblendete Q1-Spalten in der Quartalsübersicht: keine zusätzliche senkrechte Linie im Kopfbereich. */
+body[data-module=noten] table.compact-entry-table thead tr th.previous-quarter-history-cell{border-top:0!important;border-left:0!important;border-right:0!important;background:transparent!important}
+
+/* Schnellbewertung: „Hausaufgabe fehlt“ ohne Symbol, beide Buttons gleich breit und gleich hoch. */
+.classroom-quick-top #classroomQuickHomeworkButton,.classroom-quick-top #classroomQuickMaterialButton{flex:1 1 0;min-width:0;padding:9px 8px;font:inherit;font-size:15px;line-height:1.3;white-space:nowrap;justify-content:center;text-align:center}
+.classroom-quick-top #classroomQuickHomeworkButton svg{display:none}
+
+/* Zoomleiste im Unterrichts-Manager: alle Buttons in der Höhe von „Vollbild“ (36 px), auch „Bewertungen ausblenden“. */
+body[data-module=sitzplan] .classroom-plan-zoom button{box-sizing:border-box;height:40px!important;min-height:40px!important;padding-top:0!important;padding-bottom:0!important;align-self:center;line-height:1.2;font-size:14.4px}
+
+/* Raumauswahl: Auswahlfeld in Chrome und Safari gleich hoch wie „+ Raum“ und Stift, bündig in einer Linie. */
+body[data-module=sitzplan] .classroom-room-selector{align-items:flex-end!important}
+body[data-module=sitzplan] .classroom-room-selector label{margin:0!important}
+body[data-module=sitzplan] .classroom-room-selector select{-webkit-appearance:none;appearance:none;box-sizing:border-box;height:40px!important;min-height:40px!important;margin:0!important;padding:0 34px 0 12px!important;font:inherit;font-size:15.2px;line-height:38px;border:1px solid #d7dfed;border-radius:10px;color:#24334b;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23718096' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center/12px 8px}
+body[data-module=sitzplan] .classroom-room-selector>.btn{box-sizing:border-box;height:40px!important;min-height:40px!important;margin:0!important}
+
+/* Gespeicherte Sitzpläne: „Version löschen“ und „Tag bereinigen“ teilen sich genau die Breite des Auswahlfelds. */
+body[data-module=sitzplan] .classroom-plan-history-box .classroom-history-delete-actions{display:grid!important;grid-template-columns:1fr 1fr;gap:10px;width:100%;box-sizing:border-box}
+body[data-module=sitzplan] .classroom-plan-history-box .classroom-history-delete-actions .classroom-history-delete{width:100%!important;min-width:0;margin:0;align-self:stretch;box-sizing:border-box;padding-left:8px;padding-right:8px;white-space:nowrap}
+
+/* Backup: Dateiformat als zwei Auswahlkarten direkt über den Buttons; JSON ist Standard. */
+.classroom-backup-format{border:0;margin:20px 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.classroom-backup-format legend{grid-column:1/-1;padding:0;margin:0 0 8px;font-size:.9rem;font-weight:600;color:#243247}
+.classroom-backup-dialog .classroom-format-option{display:flex!important;flex-direction:row!important;align-items:flex-start;text-align:left;gap:10px;margin:0;padding:12px 14px;border:1px solid #d7e2f1;border-radius:12px;background:#fff;cursor:pointer;transition:border-color .12s,background .12s}
+.classroom-format-option:has(input:checked){border-color:#315f99;background:#eef4fb;box-shadow:0 0 0 1px #315f99}
+.classroom-backup-dialog .classroom-format-option input{width:18px!important;height:18px!important;min-width:18px;min-height:0!important;margin:2px 0 0!important;padding:0!important;accent-color:#315f99;flex:none}
+.classroom-format-option span{display:grid;gap:2px;min-width:0}
+.classroom-format-option strong{font-size:.95rem;color:#243247}
+.classroom-format-option small{font-size:.8rem;line-height:1.3;color:#65758a}
+@media(max-width:420px){.classroom-backup-format{grid-template-columns:1fr}}
+
+/* Schuljahr dezent hinter dem Untertitel. */
+.app-header .school-year{white-space:nowrap}
+
+/* Noten-Manager: Drucken immer im A4-Hochformat (Chrome übernimmt die Ausrichtung). */
+@media print{@page{size:A4 portrait}}
+
+/* Safari berechnet bei overflow-wrap:anywhere in Grid-Zellen zu hohe Zeilen: Tischanordnung/Gruppen einzeilig mit fester Höhe. */
+body[data-module=sitzplan] .layout-category-actions{grid-auto-rows:auto;align-items:start}
+body[data-module=sitzplan] .layout-category-actions>.btn{height:40px!important;min-height:40px!important;max-height:40px;align-self:start;white-space:nowrap!important;overflow-wrap:normal!important;overflow:hidden;text-overflow:ellipsis;display:inline-flex;align-items:center;justify-content:center}
+
+/* Neues App-Symbol bringt eigene Form und Farbe mit. */
+.app-header .brand-mark{background:transparent!important;border-radius:0!important}
+.app-header .brand-mark img{transform:scale(1.18)}
+
+/* 6.10/6.12: Versionsnummer dezent; Schuljahr klein ganz rechts in der kompakten Navigationsleiste */
+.app-header h1 .app-version{font-weight:400;color:#8a97aa;font-size:.8em;letter-spacing:-.01em}
+.compact-navigation-bar>.school-year{flex:none;margin-left:auto;padding:0 6px 0 12px;font-size:.8rem;line-height:1.2;color:#8a97aa;white-space:nowrap}
+@media(max-width:650px){.module-tabs button{white-space:nowrap;padding-left:10px;padding-right:10px}}
+/* 6.13: Datumsfeld bei Tests wie bei Klassenarbeiten/Klausuren */
+.test-detail-date{gap:10px;font-weight:400}
+.test-detail-date input[type=date]{box-sizing:border-box;width:150px;min-width:140px;height:auto;min-height:0;border:1px solid var(--line);border-radius:9px;padding:7px 10px;font:inherit;letter-spacing:normal;color:var(--ink);background:white;text-align:left}
+/* 6.14: „Tests-Übersicht“ (zurück zur Übersicht) als gefüllter Button in der Akzentfarbe – gleiche Form wie „Drucken“ */
+.oral-display-actions button[data-test-overview]{box-sizing:border-box;height:40px;padding:8px 14px;border:1px solid var(--primary,#2f5f9b);border-radius:9px;background:var(--primary,#2f5f9b);color:#fff;font:inherit;font-size:14.4px;font-weight:600;white-space:nowrap;cursor:pointer;box-shadow:0 1px 2px #25334918}
+.oral-display-actions button[data-test-overview]:hover{background:var(--primary-hover,#244c80);border-color:var(--primary-hover,#244c80)}
+.oral-display-actions button[data-test-overview]:focus-visible{outline:3px solid var(--primary,#2f5f9b);outline-offset:2px}
+/* 6.15: Gesperrte Datumsfelder (z. B. Beginn des 1. Quartals = Halbjahresbeginn) grau hinterlegt */
+input[type=date][readonly]{background:#f1f3f6!important;color:#7a8698!important;border-color:#e2e6ec!important;cursor:not-allowed;box-shadow:none!important}
+input[type=date][readonly]:focus{outline:none}
+/* 6.16: Rohpunkteskala bei Tests manuell anpassbar */
+.test-scale-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.test-scale-head .manual-actions{display:inline-flex;align-items:center;gap:8px}
+.test-scale-invalid td{color:#b42318}
+.test-detail-settings input[data-test-setting=pass]:disabled{opacity:.45;cursor:not-allowed}
+/* 6.18: Raum umbenennen – Stift als Liniensymbol wie das Menü-Symbol */
+body[data-module=sitzplan] .room-rename-button{display:inline-flex;align-items:center;justify-content:center;color:var(--primary,#2f5f9b)}
+body[data-module=sitzplan] .room-rename-button svg{display:block;width:18px;height:18px}
+/* 6.21: Kopfzeile auf dem iPad einzeilig – Untertitel ausgeblendet, kompaktere Abstände */
+@media (min-width:651px) and (max-width:1000px){
+ .app-header{flex-wrap:nowrap!important;gap:12px!important;padding:12px 16px!important}
+ .app-header .brand{gap:10px;min-width:0;flex:0 1 auto}
+ .app-header .brand p{display:none}
+ .app-header h1{font-size:1.15rem;white-space:nowrap}
+ .app-header .brand-mark{width:36px;height:36px}
+ .app-header .module-tabs{flex:0 0 auto}
+ .app-header .module-tabs button{padding:7px 12px;font-size:.88rem;white-space:nowrap}
+ .app-header .classroom-global-actions{flex:0 0 auto;margin-left:0}
+ .app-header .classroom-global-actions>button{padding:7px 11px;white-space:nowrap}
+}
+@media (min-width:651px) and (max-width:780px){
+ .app-header h1 .app-version{display:none}
+ .app-header .module-tabs button{padding:7px 9px;font-size:.84rem}
+}
+@media (min-width:651px) and (max-width:720px){.app-header .brand h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}}
+/* 6.24: Unterrichts-Manager – Abstand unter der Navigationsleiste wie im Noten-Manager */
+body[data-module=sitzplan]{padding-top:0!important}
+/* 6.26: „Bewertungen ausblenden“ (und Präsentieren) blendet auch fehlende Hausaufgaben aus; im Gruppenmodus erscheinen die Gruppenfarben */
+html.classroom-assessments-hidden body[data-module=sitzplan] .room-grid .cell.classroom-seat-homework-missing,html.classroom-beamer body[data-module=sitzplan] .room-grid .cell.classroom-seat-homework-missing{border:1px solid #a8bdd8!important;box-shadow:none!important}
+html.classroom-assessments-hidden body[data-module=sitzplan] .room-grid .cell.gruppenfarbe.classroom-seat-homework-missing,html.classroom-beamer body[data-module=sitzplan] .room-grid .cell.gruppenfarbe.classroom-seat-homework-missing{border-color:var(--group-stroke)!important}
+html.classroom-assessments-hidden body[data-module=sitzplan] .room-grid .cell.gruppenfarbe.classroom-seat-assessed,html.classroom-beamer body[data-module=sitzplan] .room-grid .cell.gruppenfarbe.classroom-seat-assessed{background:var(--group-fill)!important;background-image:none!important;color:var(--group-text)!important;border-color:var(--group-stroke)!important}
+html.classroom-assessments-hidden body[data-module=sitzplan] .room-grid .cell.classroom-seat-homework-missing::after,html.classroom-beamer body[data-module=sitzplan] .room-grid .cell.classroom-seat-homework-missing::after{display:none!important}
+/* 6.28: „Perspektive“ – aktive Schülerperspektive sichtbar markieren */
+body[data-module=sitzplan] #classroomRotateButton[aria-pressed="true"]{background:#eaf0fa!important;border-color:#2f5f9b!important;color:#2f5f9b!important;box-shadow:inset 0 0 0 1px #2f5f9b}
+/* 6.31: Buttonreihe unter dem Sitzplan im selben Maß wie die Zoomleiste (36 px, gleiche Schrift) */
+body[data-module=sitzplan] .classroom-plan-actions{gap:8px!important}
+body[data-module=sitzplan] .classroom-plan-actions .btn,body[data-module=sitzplan] .classroom-plan-actions .plan-actions-more-toggle,body[data-module=sitzplan] .classroom-plan-actions>.student-finder,body[data-module=sitzplan] .classroom-plan-actions>.student-finder>#studentSearchToggle,body[data-module=sitzplan] .classroom-plan-actions>.student-finder .student-finder-input,body[data-module=sitzplan] .classroom-plan-actions>.classroom-roll-split,body[data-module=sitzplan] .classroom-plan-actions>.classroom-roll-split *{font-size:14.4px!important;line-height:1.2!important}
+body[data-module=sitzplan] .classroom-plan-actions>.btn,body[data-module=sitzplan] .classroom-plan-actions .plan-actions-right>.btn,body[data-module=sitzplan] .classroom-plan-actions .plan-actions-more-toggle,body[data-module=sitzplan] .classroom-plan-actions>.student-finder,body[data-module=sitzplan] .classroom-plan-actions>.classroom-roll-split{height:40px!important;min-height:40px!important;border-radius:8px!important}
+body[data-module=sitzplan] .classroom-plan-actions .btn,body[data-module=sitzplan] .classroom-plan-actions .plan-actions-more-toggle{padding:0 12px!important}
+body[data-module=sitzplan] .classroom-plan-actions>.student-finder>#studentSearchToggle{padding:0 12px!important;border-radius:8px!important}
+body[data-module=sitzplan] .classroom-plan-actions .plan-actions-right{gap:8px!important}
+body[data-module=sitzplan] .classroom-plan-actions .plan-actions-more{height:40px!important}
+.plan-actions-sep{height:22px!important}
+body[data-module=sitzplan] .classroom-plan-actions .plan-actions-more>.plan-actions-more-toggle{margin:0!important;height:40px!important;min-height:40px!important;box-sizing:border-box;align-self:center}
+/* 6.36: Tischanordnung – „Anwenden“ in normaler Buttongröße, rechtsbündig */
+body[data-module=sitzplan] .layout-view .layout-apply-button{display:flex!important;align-items:center;justify-content:center;width:fit-content!important;min-width:0!important;max-width:none!important;height:40px!important;min-height:40px!important;padding:0 18px!important;margin:12px 0 0 auto!important;font-size:14.4px!important;border-radius:8px!important}
+/* 6.42: Kompaktansicht – Hausaufgaben-/Materialstatus farbig wie die Symbole */
+.compact-cell-value[data-hw-status]{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 4px;box-sizing:border-box;border-radius:6px;border:1px solid transparent;font-weight:700;line-height:1}
+.compact-cell-value[data-hw-status=done]{color:#15803d;background:#ecfdf3;border-color:#a7e3bd}
+.compact-cell-value[data-hw-status=missing]{color:#fff;background:#e5484d;border-color:#d93c42}
+.compact-cell-value[data-hw-status=missing].homework-warning{background:#b42318;border-color:#9b1c13}
+.compact-cell-value[data-hw-status=excused]{color:#315f99;background:#eef3fb;border-color:#c7d6ea}
+.compact-cell-value[data-hw-status=absent]{color:#5b6472;background:#f1f3f6;border-color:#d5dbe3}
+.compact-cell-value[data-hw-status=none]{color:#9aa5b5}
+@media print{.compact-cell-value[data-hw-status]{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+/* 6.47 Kompaktansicht: Hausaufgaben-/Material-Symbole in derselben Schrift wie in der normalen Ansicht (nicht die Notenschrift). */
+body[data-module=noten] .compact-cell-value[data-hw-status]{font-family:var(--hw-symbol-font,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif)!important;font-weight:700}
+/* 6.48 Eingeblendetes 1. Quartal: Spaltenkopf ohne Platz für den (entfernten) Löschen-Button, damit Datum und Feld mittig übereinander stehen. */
+body[data-module=noten] th.previous-quarter-history-cell .task-header-editor{grid-template-columns:minmax(0,1fr)!important;justify-items:center;width:auto!important;min-width:0!important;max-width:100%!important;margin-left:0!important;margin-right:0!important}
+body[data-module=noten] th.previous-quarter-history-cell .task-header-editor>*{grid-column:1!important}
+body[data-module=noten] th.previous-quarter-history-cell{padding-left:8px!important;padding-right:8px!important}
+/* 6.49 Kompaktansicht: „fehlt“-Kreuz als gezeichnetes Symbol – unabhängig von der Schrift immer genau mittig. */
+body[data-module=noten] .compact-cell-value[data-hw-status=missing]{font-size:0!important;color:transparent!important}
+body[data-module=noten] .compact-cell-value[data-hw-status=missing]::before{content:"";display:block;width:12px;height:12px;background:#fff;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8M10 2l-8 8' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8M10 2l-8 8' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat}
+@media print{body[data-module=noten] .compact-cell-value[data-hw-status=missing]::before{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+body[data-module=noten] .compact-cell-value[data-hw-status]{display:flex!important;align-items:center!important;justify-content:center!important;line-height:1!important;padding-top:0!important;padding-bottom:0!important}
+/* 6.79 Leere Rasterfelder im Sitzplan: helle Fläche mit feiner, echter 1-px-Strichlinie (bleibt beim Zoomen scharf). */
+body[data-module=sitzplan] .room-grid .cell:not(.tisch):not(.pult):not(.besetzt){background-image:none!important;background-color:#f4f7fb!important;border:1px dashed #b9c6d8!important;box-sizing:border-box!important;border-radius:8px!important;box-shadow:none!important}
+/* 6.52 Linke Leiste im Sitzplan: Buttons so groß wie im Hauptfenster (40 px hoch, 16 px Schrift – seit 6.80). Reiter bleiben unverändert. */
+body[data-module=sitzplan] .container>.panel .btn:not(.tab-btn){font-size:14.4px!important}
+body[data-module=sitzplan] .container>.panel .btn:not(.tab-btn):not(table .btn){box-sizing:border-box;height:40px!important;min-height:40px!important;padding-top:0!important;padding-bottom:0!important;display:inline-flex;align-items:center;justify-content:center;line-height:1.2}
+/* 6.57 Backup-Dialog: Auswahlpunkt in den Formatkästen unsichtbar – Rahmen und Hintergrund zeigen die Auswahl; Text bleibt an seiner Position. */
+.classroom-backup-dialog .classroom-format-option input{opacity:0!important}
+.classroom-backup-dialog .classroom-format-option:has(input:focus-visible){outline:3px solid #8ba9d1;outline-offset:2px}
+/* 6.63 Geschlecht: Vorschläge aus dem Vornamen (gestrichelt), Hinweise bei uneindeutigen/unbekannten Namen */
+.classroom-gender-dialog .classroom-gender-info{color:#66758a;font-size:.92rem;margin:0 0 10px}
+.classroom-gender-legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin:0 0 8px;padding:8px 12px;border-radius:10px;background:#f6f8fc;font-size:.82rem;color:#4a5b73}.classroom-gender-legend[hidden]{display:none}
+.classroom-gender-legend .gl-solid,.classroom-gender-legend .gl-sug{display:inline-flex;align-items:center;justify-content:center;width:24px;height:20px;margin-right:4px;border-radius:6px;font-size:12px;vertical-align:1px}
+.classroom-gender-legend .gl-solid{background:#2f5f9b;color:#fff}.classroom-gender-legend .gl-sug{background:#e8f0fb;color:#2f5f9b;border:2px dashed #2f5f9b;font-weight:700}
+.classroom-gender-tag,.classroom-gender-legend .gl-tag{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:#e8f0fb;color:#2f5f9b;font-size:.74rem;white-space:nowrap}
+.classroom-gender-tag.is-open,.classroom-gender-legend .gl-tag{background:#fff4e5;color:#9a5a12}.classroom-gender-legend .gl-tag{margin:0 4px 0 0}
+.classroom-gender-tag[hidden]{display:none}
+.classroom-gender-row .classroom-gender-choices{margin-left:auto}.classroom-gender-row .classroom-gender-name{margin-right:0}
+.classroom-gender-dialog .classroom-gender-choices button.is-suggestion{background:#e8f0fb!important;color:#2f5f9b!important;border:2px dashed #2f5f9b!important;font-weight:700}
+.classroom-gender-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.classroom-gender-foot [data-gender-count]{font-size:.84rem;color:#66758a}.classroom-gender-foot .classroom-dialog-actions{margin-left:auto}
+.classroom-gender-meta{display:flex;flex-direction:column;gap:2px}.classroom-gender-dialog .classroom-learned-link{padding:0!important;min-height:0!important;border:0!important;background:none!important;color:var(--primary,#2f5f9b)!important;font:inherit;font-size:.82rem!important;text-decoration:underline;cursor:pointer;width:auto!important;text-align:left}.classroom-learned-link[hidden]{display:none!important}
+
+/* 6.75: Buttonleisten im Noten-Manager – Bearbeiten/Import ohne „+“ und mit durchgezogenem Rahmen; Thema neben dem Datum. */
+body[data-module=noten] .student-add-button.is-plain{border-style:solid;border-color:#abc1df}
+.exam-combined-date.exam-combined-topic{margin-left:16px}.exam-combined-topic input{width:240px}
+@media(max-width:540px){.exam-combined-date.exam-combined-topic{margin-left:0}.exam-combined-topic input{width:100%}}
+body[data-module=noten] .section-title .previous-quarter-toggle,body[data-module=noten] .section-title .task-participation-display,body[data-module=noten] .section-title .task-tendency-toggle{display:inline-flex;align-items:center;gap:8px;line-height:1.2;font-size:.85rem;font-weight:400;color:var(--muted,#66758a);white-space:nowrap;margin:0}
+body[data-module=noten] .section-title .oral-display-actions .task-tendency-toggle input,body[data-module=noten] .section-title .oral-display-actions .task-participation-display input{top:0!important}body[data-module=noten] .section-title .oral-display-actions>.toggle{align-self:center}
+body[data-module=noten] .task-header-editor .task-basis-select{width:155px;max-width:100%;justify-self:center}
+body[data-module=sitzplan] .classroom-room-selector>.room-layout-button{flex:1 0 100%;width:100%!important;box-sizing:border-box;height:40px;min-height:40px;margin:2px 0 0!important}
+/* 6.80/6.81 Einheitliche Buttons überall: 40 px hoch, 14,4 px Schrift, Beschriftung exakt mittig (Großbuchstabenhöhe bis Grundlinie). */
+.classroom-global-actions button{box-sizing:border-box;height:40px;font-size:14.4px;padding-top:0;padding-bottom:0}
+
+html body[data-module=sitzplan] .container>.panel select{box-sizing:border-box;height:40px;min-height:40px;font-size:14.4px}
+/* 6.81 Alle Buttons: Kasten 40 px, Schrift 14,4 px. Ohne Innenabstand oben/unten, normale Zeilenhöhe; text-box schneidet die Zeile auf Großbuchstabenhöhe bis Grundlinie zu, so sitzt die Beschriftung unabhängig von der Schriftart exakt mittig (Chrome ab 133, Safari ab 18.2; ältere Browser zentrieren die Zeile). */
+html .classroom-global-actions button:not(#_),
+html body[data-module=noten] .student-add-button:not(#_),
+html body[data-module=noten] .student-overview-button:not(#_),
+html body[data-module=noten] .notenspiegel-button:not(#_),
+html body[data-module=noten] .clear-students-button:not(#_),
+html body[data-module=noten] .page-print-button:not(#_),
+html .oral-display-actions button[data-test-overview]:not(#_),
+html body[data-module=sitzplan] .container>.panel .btn:not(table .btn):not(#_),
+html body[data-module=sitzplan] .classroom-room-selector>.btn:not(#_),
+html body[data-module=sitzplan] .classroom-plan-zoom button:not(#_),
+html body[data-module=sitzplan] .classroom-plan-actions>.btn:not(#_),
+html body[data-module=sitzplan] .classroom-plan-actions .plan-actions-more-toggle:not(#_),
+html body[data-module=sitzplan] .plan-actions-right>.btn:not(#_),
+html body[data-module=sitzplan] .classroom-roll-split>button:not(#_),
+html body[data-module=sitzplan] .layout-view .layout-apply-button:not(#_),
+html body[data-module=sitzplan] .container>.panel .tab-btn:not(#_),
+html body[data-module=sitzplan] .classroom-plan-actions>.student-finder:not(#_){box-sizing:border-box!important;height:40px!important;min-height:40px!important;padding-top:0!important;padding-bottom:0!important;line-height:normal!important;font-size:14.4px!important;text-box:trim-both cap alphabetic}
+html body[data-module=sitzplan] .classroom-plan-actions>.student-finder>#studentSearchToggle:not(#_){padding-top:0!important;padding-bottom:0!important;line-height:normal!important;font-size:14.4px!important;text-box:trim-both cap alphabetic}
+/* 6.86 Klassenarbeit: „Thema“ vor „Datum“; das Thema wächst mit dem Text. Aufgabennamen sind änderbar (z. B. Übersetzung). */
+body[data-module=noten] .section-title>.exam-combined-date.exam-combined-topic{margin-left:auto}
+body[data-module=noten] .section-title>.exam-combined-topic+.exam-combined-date{margin-left:16px}
+body[data-module=noten] .exam-combined-topic input{min-width:240px;max-width:min(560px,52vw)}
+@media(max-width:540px){body[data-module=noten] .section-title>.exam-combined-date.exam-combined-topic,body[data-module=noten] .section-title>.exam-combined-topic+.exam-combined-date{margin-left:0}body[data-module=noten] .exam-combined-topic input{min-width:0;max-width:100%;width:100%!important}}
+body[data-module=noten] .task-header-editor .exam-task-name-input{width:100%;min-width:0;text-align:center;font-weight:400;color:var(--ink,#243247);background:#fff}
+/* 6.87 Spaltenköpfe einheitlich: Name/Bezeichnung (mit „−“) · Datum · Gewichtung · Skala – in Klassenarbeiten, Tests und Mitarbeit. */
+body[data-module=noten] .task-header-editor>.task-name-input,body[data-module=noten] .task-header-editor>.task-label-input{grid-row:1!important;grid-column:1!important}
+body[data-module=noten] .task-header-editor>.task-remove{grid-row:1!important;grid-column:2!important;align-self:center}
+body[data-module=noten] .task-header-editor>.task-date-input{grid-row:2!important;grid-column:1/-1!important}
+body[data-module=noten] .task-header-editor>.task-weight-control{grid-row:3!important;grid-column:1/-1!important;justify-content:center}
+body[data-module=noten] .task-header-editor:not(:has(>.task-date-input))>.task-weight-control{grid-row:2!important}
+body[data-module=noten] .task-header-editor>.task-basis-select{grid-row:3!important;grid-column:1/-1!important}
+/* 6.92 Ergebnis-Darstellung als Umschalter mit festen Feldern: 2,4 | 2− | 2 (Dezimal · Tendenz · Gerundet), bei Notenpunkten 10,6 | 11. */
+body[data-module=noten] .mean-seg{display:inline-flex;gap:2px;margin:0 auto 9px;padding:3px;border-radius:11px;background:#e7edf6;text-transform:none;letter-spacing:normal;white-space:nowrap}
+body[data-module=noten] .mean-seg>button{box-sizing:border-box;min-width:38px;height:30px;padding:0 9px;border:0;border-radius:8px;background:transparent;color:#66778f;font:inherit;font-size:.9rem;font-weight:600;cursor:pointer}
+body[data-module=noten] .mean-seg>button[aria-checked=true]{background:#fff;color:#243247;font-weight:750;box-shadow:0 2px 5px #233d6014}
+body[data-module=noten] .mean-seg>button:focus-visible{outline:2px solid #32649f;outline-offset:1px}
+@media print{body[data-module=noten] .mean-seg{display:none!important}}
+/* 6.93 Design E: einheitliche Überschriften in drei Stufen – Seitentitel 20 px · Rubrik 16,8 px · Kleintitel 14,4 px. Zurücknehmen: diesen Block entfernen. */
+body[data-module=noten] .panel>.section-title>h2,body[data-module=noten] [data-custom-panel]>.section-title>h2,body[data-module=noten] .exam-combined>.section-title>h2,body[data-module=noten] [data-exam-combined]>.section-title>h2,body[data-module=sitzplan] .room-header h2{font-size:20px!important;font-weight:700!important;line-height:1.25}
+body[data-module=noten] .panel h3,body[data-module=noten] .test-scale-head h3,body[data-module=noten] .test-variant-card h3,body[data-module=noten] .exam-calculation-section>summary,body[data-module=sitzplan] .seat-option-group h2,body[data-module=sitzplan] .panel h2:not(.room-header h2),.subject-grade-dialog .subject-scale-title h2,.subject-grade-dialog .subject-test-slider h3{font-size:16.8px!important;font-weight:650!important;line-height:1.3}
+dialog>form>h2:first-child,dialog>h2:first-child,.subject-grade-dialog #subjectGradeTitle,.ui-dialog h2{font-size:20px!important;font-weight:650!important;line-height:1.25}
+
+/* Hinweis „weniger als 3 mündliche Noten“ (Akzentfarbe, folgt der Farbgestaltung) */
+body[data-module=sitzplan] .room-grid .cell.classroom-seat-mm-low{position:relative;overflow:visible!important}
+body[data-module=sitzplan] .room-grid .cell.classroom-seat-mm-low:not(.classroom-seat-assessed):not(.gruppenfarbe):not(.random-selected){background:#eaf0fa!important;border-color:#8fb0dc}
+body[data-module=sitzplan] .room-grid .cell.classroom-seat-mm-low::before{content:attr(data-mm-count);position:absolute;top:-8px;right:-8px;z-index:2;padding:1px 6px;border-radius:999px;background:#2f5f9b;color:#fff;font-size:10.5px;font-weight:700;line-height:1.35;box-shadow:0 1px 3px #0003;pointer-events:none;white-space:nowrap}
+html.classroom-assessments-hidden body[data-module=sitzplan] .room-grid .cell.classroom-seat-mm-low::before,html.classroom-beamer body[data-module=sitzplan] .room-grid .cell.classroom-seat-mm-low::before{display:none!important}
+html.classroom-assessments-hidden body[data-module=sitzplan] .room-grid .cell.classroom-seat-mm-low:not(.classroom-seat-assessed):not(.gruppenfarbe):not(.random-selected),html.classroom-beamer body[data-module=sitzplan] .room-grid .cell.classroom-seat-mm-low:not(.classroom-seat-assessed):not(.gruppenfarbe):not(.random-selected){background:#fff!important;border-color:#a8bdd8!important}
+body[data-module=sitzplan] .room-grid .cell.classroom-seat-material-missing{position:relative;overflow:visible!important}
+body[data-module=sitzplan] .room-grid .cell.classroom-seat-material-missing::after{content:attr(data-material);position:absolute;left:-8px;bottom:-8px;z-index:2;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:999px;background:#e39a3b;color:#fff;font-size:10.5px;font-weight:800;line-height:18px;text-align:center;box-shadow:0 1px 3px #0003;pointer-events:none}
+html.classroom-assessments-hidden body[data-module=sitzplan] .room-grid .cell.classroom-seat-material-missing::after,html.classroom-beamer body[data-module=sitzplan] .room-grid .cell.classroom-seat-material-missing::after{display:none!important}
+/* 7.56: Umschalter Unterrichts-/Noten-Manager exakt mittig – drei Spalten (Titel | Umschalter | Knöpfe); reicht der Platz nicht, weichen die Spalten aus statt sich zu überlappen; schmaler als 1101 px (iPad) bleibt die bisherige Anordnung */
+@media (min-width:1101px){
+ .app-header{display:grid!important;grid-template-columns:minmax(max-content,1fr) auto minmax(max-content,1fr)}
+ .app-header>.brand{justify-self:start}
+ .app-header>.module-tabs{justify-self:center}
+ .app-header>.classroom-global-actions{justify-self:end}
+}
+/* 7.57: „1. Quartal“ und „Kompaktansicht“ als beschriftete Pillen-Knöpfe (aus: weiß, Symbol grau · an: hellblau, Symbol blau);
+   überall gleich, „Kompaktansicht“ direkt rechts neben „1. Quartal“ (per order, ohne die Reihenfolge im DOM zu ändern). */
+body[data-module] label:is(.previous-quarter-toggle,.compact-view-toggle,.notenspiegel-mode-toggle):not(#_){display:inline-flex!important;align-items:center!important;gap:7px!important;box-sizing:border-box;height:38px;min-height:38px;margin:0!important;padding:0 14px 0 12px!important;border:1px solid #cbd6e5;border-radius:999px;background:#fff;color:#66758a;font-size:.9rem!important;font-weight:600;line-height:1;white-space:nowrap;cursor:pointer;user-select:none;transition:background .15s,border-color .15s,color .15s}
+body[data-module] label:is(.previous-quarter-toggle,.compact-view-toggle,.notenspiegel-mode-toggle):not(#_):hover{border-color:#a8bdd8}
+body[data-module] label:is(.previous-quarter-toggle,.compact-view-toggle,.notenspiegel-mode-toggle):not(#_):has(input:checked){background:#eaf0fa;border-color:#8fb0dc;color:#2f5f9b}
+body[data-module] label:is(.previous-quarter-toggle,.compact-view-toggle,.notenspiegel-mode-toggle):not(#_) input{appearance:none;-webkit-appearance:none;position:static!important;flex:0 0 18px!important;width:18px!important;height:18px!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;color:inherit!important;background:currentColor!important;box-shadow:none!important;transform:none!important;cursor:pointer;-webkit-mask:var(--pill-icon) center/contain no-repeat;mask:var(--pill-icon) center/contain no-repeat}
+body[data-module] label:is(.previous-quarter-toggle,.compact-view-toggle,.notenspiegel-mode-toggle):not(#_) input::before{display:none!important}
+body[data-module] label:is(.previous-quarter-toggle,.compact-view-toggle,.notenspiegel-mode-toggle):not(#_) input:focus-visible{outline:none}
+body[data-module] label:is(.previous-quarter-toggle,.compact-view-toggle,.notenspiegel-mode-toggle):not(#_):has(input:focus-visible){outline:3px solid #2f5f9b55;outline-offset:2px}
+body[data-module] label:is(.previous-quarter-toggle,.compact-view-toggle,.notenspiegel-mode-toggle):not(#_) span{position:static!important;transform:none!important;color:inherit!important;font:inherit!important}
+body[data-module=noten] label.previous-quarter-toggle{--pill-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M3 21 21 3'/%3E%3C/svg%3E")}
+body[data-module=noten] label.previous-quarter-toggle:has(input:checked){--pill-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E")}
+body[data-module=noten] label.compact-view-toggle{--pill-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 4v16M12 4v16M16 4v16'/%3E%3Cpath d='m3 9 2.5 3L3 15M21 9l-2.5 3L21 15'/%3E%3C/svg%3E")}
+body[data-module=noten] :is(.oral-display-actions,.task-actions,.semester-table-tools,.section-title)>.previous-quarter-toggle:not(#_){order:-3!important}
+body[data-module=noten] :is(.oral-display-actions,.task-actions,.semester-table-tools,.section-title)>.compact-view-toggle:not(#_){order:-2!important;margin-left:0!important}
+/* 7.58: Platzhalter in leeren Eingabefeldern (z. B. „Punkte“, „Fehler“) heller und nicht fett – damit klar ist, dass dort noch etwas hineingehört */
+body[data-module=noten] :is(.task-table,.test-detail-results,.compact-entry-table) input::placeholder{color:#b9c3d1!important;font-weight:500!important;opacity:1!important}
+/* 7.59: „Als Noten“ im Notenspiegel als Pillen-Knopf (Sitzplan-Schalter: 11.00 eigener Farbfeld-Knopf in plan-zoom.js) */
+body[data-module] label.notenspiegel-mode-toggle{--pill-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Crect x='3' y='2' width='7' height='2' rx='.6'/%3E%3Crect x='3' y='5' width='11' height='2' rx='.6'/%3E%3Crect x='3' y='8' width='15' height='2' rx='.6'/%3E%3Crect x='3' y='11' width='17' height='2' rx='.6'/%3E%3Crect x='3' y='14' width='13' height='2' rx='.6'/%3E%3Crect x='3' y='17' width='9' height='2' rx='.6'/%3E%3Crect x='3' y='20' width='5' height='2' rx='.6'/%3E%3C/svg%3E")}
+body[data-module] label.notenspiegel-mode-toggle:has(input:checked){--pill-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Crect x='3' y='2' width='10' height='5' rx='1'/%3E%3Crect x='3' y='9.5' width='17' height='5' rx='1'/%3E%3Crect x='3' y='17' width='12' height='5' rx='1'/%3E%3C/svg%3E")}
+body[data-module] label.notenspiegel-mode-toggle:not(#_){margin:0 0 16px auto!important;width:max-content}
+body[data-module] label.notenspiegel-mode-toggle[style*="display: none"]:not(#_):not(#__){display:none!important}
+#notenspiegelDialog label.notenspiegel-mode-toggle:not(#_):has(input:focus-visible){outline:none}
+/* 7.61: iPad (Touch, ab 651 px): Knöpfe rechts in der Kopfzeile enger zusammen (halber Abstand) */
+@media (hover:none) and (pointer:coarse) and (min-width:651px){.app-header .classroom-global-actions:not(#_){gap:4px!important}}
+/* 7.62: iPad hochkant – App-Name ausgeblendet (nur Symbol), Umschalter mittig zwischen Symbol und Knöpfen */
+@media (min-width:651px) and (max-width:1000px) and (orientation:portrait){
+ .app-header .brand h1{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap}
+ .app-header .brand{flex:0 0 auto!important;gap:0!important}
+ .app-header>.module-tabs{margin-inline:auto!important}
+}
+@media (min-width:651px) and (max-width:760px) and (orientation:portrait){
+ .app-header:not(#_){gap:8px!important;padding-inline:12px!important}
+ .app-header .module-tabs{gap:2px!important;padding:3px!important}
+ .app-header .module-tabs button{padding:7px 8px!important}
+ .app-header .classroom-global-actions>button:not(.cb-split *){padding-inline:9px!important}
+ .app-header .cb-split>#classroomBackupButton{padding-inline:10px!important}
+ .app-header .cb-split>.cb-quick{width:36px!important}
+}
+/* 7.64: iPhone hochkant – Ansichts-Knöpfe (1. Quartal, Kompaktansicht, Tendenzen, Drucken …) als Pillen nebeneinander in einer wischbaren Reihe */
+@media screen and (max-width:540px) and (orientation:portrait){
+ body[data-module=noten] .panel>.section-title .oral-display-actions:not(#_){flex-direction:row!important;flex-wrap:nowrap!important;justify-content:flex-start!important;align-items:center!important;gap:8px!important;overflow-x:auto;overflow-y:hidden;padding:2px 2px 6px;margin:0 -2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ body[data-module=noten] .panel>.section-title .oral-display-actions::-webkit-scrollbar{display:none}
+ body[data-module=noten] .panel>.section-title .oral-display-actions>*:not(#_){flex:none!important;width:auto!important;align-self:center!important;margin:0!important}
+ body[data-module=noten] .panel>.section-title .oral-display-actions>button:not(#_),body[data-module=noten] .panel>.section-title .oral-display-actions>.page-print-button:not(#_){width:auto!important;min-height:38px!important;height:38px;padding:0 14px!important;border-radius:999px!important}
+ body[data-module=noten] .panel>.section-title .oral-display-actions label.toggle:not(.previous-quarter-toggle):not(.compact-view-toggle):not(#_){width:auto!important}
+}
+/* 7.66: iPhone quer – App-Name ausblenden (wurde abgeschnitten); Version steht unter Hilfe bzw. „Mehr“ */
+@media (max-height:500px) and (pointer:coarse) and (max-width:1000px){.app-header .brand>div{display:none!important}.app-header .brand{gap:0!important}}
+/* 7.67 iPhone: Bewertungsfenster als Blatt (hochkant unten, quer rechts) mit Zurück/Weiter, aktueller Tisch blau umrandet */
+.classroom-quick .cq-nav,.classroom-quick .cq-pos{display:none}
+.classroom-quick.is-sheet:not(#_){position:fixed;left:0;right:0;top:auto;bottom:0;width:auto;max-width:none;max-height:78%;overflow:auto;padding:16px 14px 12px;border:0;border-radius:20px 20px 0 0;box-shadow:0 -10px 30px #1c2b4633;box-sizing:border-box}
+.classroom-quick.is-sheet::before{content:"";position:absolute;top:6px;left:50%;width:40px;height:5px;margin-left:-20px;border-radius:3px;background:#cbd6e5}
+.classroom-quick.is-sheet .classroom-quick-top{margin:4px 0 10px}
+.classroom-quick.is-sheet .classroom-quick-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:4px}
+.classroom-quick.is-sheet .classroom-quick-heading strong{font-size:17px}
+.classroom-quick.is-sheet .cq-pos{display:inline;color:#66758a;font-size:12.5px;white-space:nowrap}
+.classroom-quick.is-sheet .classroom-quick-absence{margin-top:10px;padding-top:10px}
+.classroom-quick.is-sheet p:empty{display:none}
+.classroom-quick.is-sheet .cq-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.classroom-quick.is-sheet .cq-nav button{min-height:44px;border:1px solid #cbd6e5;border-radius:12px;background:#fff;color:#2f5f9b;font:inherit;font-size:15px;font-weight:650;cursor:pointer}
+.classroom-quick.is-sheet .cq-nav .cq-next{background:#2f5f9b;border-color:#2f5f9b;color:#fff}
+.classroom-quick.is-sheet .cq-nav button:disabled{opacity:.4;cursor:default}
+@media (orientation:landscape){.classroom-quick.is-sheet:not(#_){left:auto;top:0;bottom:0;right:0;width:min(360px,52vw);max-height:none;border-radius:20px 0 0 20px;box-shadow:-10px 0 30px #1c2b4633;padding-top:12px}.classroom-quick.is-sheet::before{display:none}}
+.room-grid .cell.classroom-seat-current{outline:5px solid #2f5f9b!important;outline-offset:3px;z-index:3}
+@media (max-height:500px) and (pointer:coarse) and (orientation:landscape){
+body[data-module=sitzplan]:not(#_){padding-left:8px;padding-right:8px}body[data-module=sitzplan] .grid-container:not(#_){padding:10px 12px}
+.classroom-quick.is-sheet:not(#_){width:min(330px,46vw);padding:8px 12px 0}
+.classroom-quick.is-sheet .classroom-quick-top:not(#_){margin:0 0 6px;gap:8px}.classroom-quick.is-sheet .classroom-quick-top button:not(#_){min-height:34px;padding:4px 6px;font-size:14px}
+.classroom-quick.is-sheet .classroom-quick-heading strong{font-size:15px}
+.classroom-quick.is-sheet .classroom-grade-buttons:not(#_){margin:2px 0 4px;gap:5px}.classroom-quick.is-sheet .classroom-grade-buttons legend{font-size:13px;margin-bottom:4px}
+.classroom-quick.is-sheet .classroom-grade-buttons button:not(#_){min-height:38px;padding:2px}
+.classroom-quick.is-sheet .classroom-quick-absence:not(#_){margin-top:4px;padding-top:6px;font-size:14px}
+.classroom-quick.is-sheet .cq-nav:not(#_){position:sticky;bottom:0;margin:6px -12px 0;padding:6px 12px 8px;background:#fff}.classroom-quick.is-sheet .cq-nav button{min-height:38px}
+}
+/* 7.68 iPhone-Sitzplan kompakt: kein Hinweistext, Zoom nur mit −/+, Raumtitel klein in einer Zeile mit dem Moduswechsel */
+@media (max-width:540px) and (orientation:portrait),(max-height:500px) and (pointer:coarse) and (orientation:landscape){
+body[data-module=sitzplan] #gridInstructions{display:none!important}
+body[data-module=sitzplan] .classroom-plan-zoom>input[type=range],body[data-module=sitzplan] .classroom-plan-zoom>output{display:none!important}
+body[data-module=sitzplan] .room-header:not(#_){display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+body[data-module=sitzplan] .room-header h2:not(#_){margin:0!important;min-width:0;font-size:17px!important;line-height:1.3!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body[data-module=sitzplan] .room-header .classroom-mode-toggle:not(#_){flex:none;margin:0;font-size:14px}
+@media (max-width:540px){body[data-module=sitzplan] .classroom-plan-zoom:not(#_){gap:6px}body[data-module=sitzplan] .classroom-plan-zoom>button:not(#_),body[data-module=sitzplan] .classroom-plan-zoom .zoom-more-toggle:not(#_){min-width:40px;min-height:38px;height:38px;padding:0 10px}}
+@media (max-width:540px){body[data-module=sitzplan] .classroom-plan-zoom .zoom-more-toggle:not(#_){font-size:0!important;padding:0 12px!important}body[data-module=sitzplan] .classroom-plan-zoom .zoom-more-toggle>span{display:none}body[data-module=sitzplan] .classroom-plan-zoom .zoom-more-toggle::before{content:"⋯";font-size:20px;line-height:1}}
+}
+
+/* 8.37: iPhone – Wischfenster ohne ✕ (seit 9.01 ist die Noteneingabe eine Seite mit „‹ Übersicht“) */
+@media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){
+ .help-head .help-close:not(#_):not(#__),.tt-x:not(#_),.sn-x:not(#_),.cq-x:not(#_){display:none!important}
+}
+
+/* 8.41: Alle Auswahlschalter (Segmentschalter) in Pillenform – passend zu den Ansichts-Pillen wie „Kompaktansicht“ */
+body :is(.mean-seg,.qs-seg,.pl-seg,.rg-seg,.appearance-seg):not(#_):not(#__){border-radius:999px!important}
+body :is(.mean-seg,.qs-seg,.pl-seg,.rg-seg,.appearance-seg):not(#_):not(#__)>:is(button,label,a){border-radius:999px!important}
+/* 9.37: Klassen bearbeiten – zwei Auswahlfelder (Notensystem, Epochal) nebeneinander statt übereinander gelegt */
+.rename-row-field:has(>select+select){grid-template-columns:38px minmax(0,1fr) 17ch 17ch}
+.rename-row-field>select+select{grid-column:4;grid-row:1}
+dialog:has(.rename-row-field>select+select){width:min(720px,calc(100vw - 32px));max-width:calc(100vw - 32px)}
+@media (max-width:600px){.rename-row-field:has(>select+select){grid-template-columns:38px minmax(0,1fr) minmax(0,1fr)}.rename-row-field:has(>select+select)>input{grid-column:2/-1}.rename-row-field>select:has(+select){grid-column:2;grid-row:2}.rename-row-field>select+select{grid-column:3;grid-row:2}}
+.rename-row-field>select:not(#_){height:40px;padding:0 24px 0 10px;line-height:1.2}
+
+/* 9.45: Pfad über dem Menü als schlichter Text – aktuelle Stelle blau (nur Computer/iPad; iPhone-Kopfzeile unverändert). */
+.compact-navigation:not(.app-header>.compact-navigation) .compact-navigation-trail:not(#_){padding:0;background:transparent;gap:0}
+.compact-navigation:not(.app-header>.compact-navigation) .compact-navigation-bar .compact-navigation-chip:not(#_){min-height:30px;padding:3px 4px;background:transparent;box-shadow:none;border-radius:6px;font-size:15.5px;font-weight:600!important;color:#243247}
+.compact-navigation:not(.app-header>.compact-navigation) .compact-navigation-bar .compact-navigation-chip:not(:has(~.compact-navigation-chip)):not(#_){-webkit-text-fill-color:#2f5f9b}
+.compact-navigation:not(.app-header>.compact-navigation) .compact-navigation-separator:not(#_){width:22px;height:30px}
+.compact-navigation:not(.app-header>.compact-navigation) .compact-navigation-separator:not(#_):after{width:7px;height:7px;top:11.5px;left:calc(50% - 5px);border-color:#b3bdca}
+
+/* 9.46: schräge Spaltenköpfe – zu lange Bezeichnungen enden an der Oberkante des Kopfbandes statt darüber hinauszuragen. */
+body[data-module=noten] .compact-slanted-heading:not(#_){overflow:hidden}
+
+/* 9.48: „Klausur erstellen“ – Bewertungsart mit Erklärzeile */
+#addExamUpperMode .exam-mode-opt{display:flex!important;align-items:flex-start;gap:10px}
+#addExamUpperMode .exam-mode-opt input{margin-top:4px;flex:none}
+#addExamUpperMode .exam-mode-opt small{display:block;margin-top:1px;color:#66758a;font-size:13px;line-height:1.35;font-weight:400}
+
+/* 9.56: „Geschlecht“ steckt jetzt in der Schülerübersicht (Knopf im Kopf) – nicht mehr in der Knopfzeile der Bewertungsseiten. */
+body[data-module=noten] [data-gender-roster]:not(#_){display:none!important}
+/* 9.58: ohne „Geschlecht“ übernimmt „＋ Schüler:in“ den Abstand – Schülerübersicht und ＋ Schüler:in bleiben links */
+body[data-module=noten] .task-actions>:is([data-task-action="add-student"],[data-homework-action="add-student"]){margin-right:auto}
+/* 9.67: Bewertungsart als runde Auswahlknöpfe */
+#addExamUpperMode input[type=radio]:not(#_){border-radius:50%!important}
+/* 9.87: iPad/iPhone – Seite positionsfest: kein seitliches Verschieben der ganzen Seite (breite Tabellen scrollen in ihrem eigenen Rahmen) und kein Gummiband-Nachfedern; normales Scrollen nach unten bleibt. */
+@media (pointer:coarse){html{overflow-x:clip;overscroll-behavior:none}body{overflow-x:clip;overscroll-behavior:none}.table-wrap{max-width:100%;overscroll-behavior-x:contain}}
+
+/* 10.06: Normalansicht – beim waagerechten Scrollen bleiben die Namen links stehen */
+body[data-module=noten] .table-wrap>table:not(.compact-entry-table)>tbody>tr>:first-child,
+body[data-module=noten] .table-wrap>table:not(.compact-entry-table)>tfoot>tr>:first-child{position:sticky;left:0;z-index:2;background:#fff;box-shadow:inset -1px 0 0 #dbe3ef,6px 0 8px -6px rgba(31,41,55,.18)}
+body[data-module=noten] .table-wrap>table:not(.compact-entry-table)>thead>tr>:first-child{position:sticky;left:0;z-index:3;background:#f6f8fc;box-shadow:inset -1px 0 0 #dbe3ef,6px 0 8px -6px rgba(31,41,55,.18)}
+
+/* 10.11: Schalter „% | x:y“ im Kopf „Schüler:in“ nicht bündig an der Spaltenlinie, sondern etwas nach links */
+body[data-module=noten] th.task-student-heading-with-weight .task-weight-menu-options>.mean-seg{position:relative;left:-16px}
+
+/* 10.43: Seitenrand links/rechts wie unten (12 px) */
+@media (min-width:701px){.compact-navigation:not(.cm-x){margin-left:12px;margin-right:12px}body[data-module=noten] main{padding-left:12px;padding-right:12px}body[data-module=sitzplan]{padding-left:12px;padding-right:12px}}
+
+/* 10.44: „Auge 1./2. Quartal“ als Symbolknopf mit Q1/Q2-Plakette (Mac/iPad) */
+html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_):not(#__){position:relative;width:42px;min-width:42px;height:40px;min-height:40px;padding:0!important;gap:0!important;justify-content:center!important;border-radius:10px;overflow:visible}
+html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_):not(#__) input{flex:0 0 20px!important;width:20px!important;height:20px!important}
+html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_):not(#__) span{position:absolute!important;right:-7px;top:-8px;font-size:0!important;line-height:0}
+html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_):not(#__) span::after{content:attr(data-q);display:block;min-width:20px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#9aa9bd;color:#fff;font:800 10.5px/18px system-ui,-apple-system,sans-serif;text-align:center;letter-spacing:.01em}
+html:not(.ph-lite) body[data-module=noten] label.previous-quarter-toggle:not(#_):not(#__):has(input:checked) span::after{background:#2f5f9b}
+
+/* 10.48: „−“ im Fenster „Fächer umbenennen“ so groß wie das Zahnrad */
+.rename-row-dialog .rename-row-remove:not(#_){width:34px;height:34px;min-width:34px;min-height:34px;padding:0;border-radius:10px;justify-self:center}
+/* 10.49: Kopfleiste – oben rund = Ansicht (1. Quartal, Kompakt, Sortierung, Farben, Vollbild), unten eckig = Aktionen (… Drucken · Auffällig · Löschen) */
+html:not(.ph-lite) body[data-module=noten] .panel>.section-title>.oral-display-actions>:is(.fs-btn,label.previous-quarter-toggle,label.compact-view-toggle):not(#_):not(#__):not(#___){width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;padding:0!important;border-radius:999px!important}
+body[data-module=noten] .panel>.section-title:has(>.oral-display-actions):not(#_){row-gap:10px}
+body[data-module=noten] .is-compact-view .task-actions>.ew-btn:not(#_){display:inline-flex!important}
+html:not(.ph-lite) body[data-module=noten] .panel>.section-title>.task-actions>.page-print-button:not(#_):not(#__){border-color:#a8bdd8!important}
