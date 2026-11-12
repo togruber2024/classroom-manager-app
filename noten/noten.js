@@ -4676,7 +4676,21 @@ html.fs-view .fs-hide{display:none!important}
   for(const f of files){try{if(/\.zip$/i.test(f.name)||f.type==='application/zip'){for(const x of await ttUnzip(await f.arrayBuffer()))await one(x.name,x.text)}else await one(f.name,await f.text())}catch(e){if(e?.name==='QuotaExceededError')throw e;out.bad++}}
   if(texts.length){const r=await ttImport(texts.map((t,i)=>new File([t],'t'+i+'.cmtext')));out.tt+=r.got.length;out.bad+=r.bad}
   return out}
- window.classroomBibliothek={lessons:bibLessons,lesson:bibLesson,units:bibUnits,list:bibList,ttHash:bibTtHash,act:bibAct,exportPkg:bibExport,importFiles:bibImport,
+ /* 11.23: Üben (ohne Note) – Wörter bzw. Aufgaben mit Lösungen reisen im Link (#…) zur Seite ueben.html, nicht zum Server */
+ const z1=async o=>{const bytes=new TextEncoder().encode(JSON.stringify(o));try{return 'z1.'+b64url(new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()))}catch{return 'j1.'+b64url(bytes)}};
+ const QRMAX=2300;
+ async function bibPractice(kind,k){const V=window.classroomVocabPdf,lab=V.lessonLabel(String(k)),c=leCls();let o;
+  if(kind==='v'||kind==='w'){const l=libOf(kind==='w'?'wh':'main'),L=l?.lessons?.[k];if(!L)return null;
+   const w=L.sections.filter(x=>kind==='w'||!/^(Wiederholung|Übungen)$/.test(x.name)).flatMap(x=>x.entries||[]).map(e=>[e.lemma||'',e.info||'',e.meaning||'']).filter(x=>x[0]&&x[2]);if(!w.length)return null;
+   o={k:'v',t:(kind==='w'?'Wiederholung ':'Vokabeln ')+lab,c,w}}
+  else if(kind==='g'){const g=glib(),L=g?.lessons?.[k],tps=L?topicsOf(L).filter(x=>x.g):[];if(!tps.length||!GR())return null;
+   const keep=it=>it.k==='tab'?{k:'tab',ti:it.ti,rw:it.rw,cl:it.cl,sol:it.sol,gv:it.gv}:it.k==='det'?{k:'det',ti:it.ti,f:it.f,d:it.d,sol:it.sol}:{k:'inp',ti:it.ti,p:it.p,sub:it.sub,sol:it.sol};
+   const seed=Math.floor(Math.random()*1e9),make=n=>{const r=GR().rngOf(seed);const out=[];for(const tp of tps){let gen=null;try{gen=GR().gen(tp.g,k)}catch{}if(!gen)continue;for(const [,,cnt,mk] of gen.types){try{out.push(...mk(r,cnt?n:1).map(keep))}catch{}}}return out};
+   let n=4,q=make(n);o={k:'g',t:'Grammatik '+lab,c,q};
+   /* passend für einen QR-Code: notfalls weniger Aufgaben */while(n>1&&(await z1(o)).length>QRMAX){n--;q=make(n);o.q=q}if(!q.length)return null}
+  else return null;
+  const h=await z1(o);return {hash:'#'+h,url:studentBase().replace(/vokabeltest\.html$/,'ueben.html')+'#'+h,qr:h.length<=QRMAX,n:o.k==='v'?o.w.length:o.q.length,title:o.t}}
+ window.classroomBibliothek={lessons:bibLessons,practice:bibPractice,qr:(u,o)=>classroomQrSvg(u,o),lesson:bibLesson,units:bibUnits,list:bibList,ttHash:bibTtHash,act:bibAct,exportPkg:bibExport,importFiles:bibImport,
   context:()=>({subject:currentSubject,classId:currentClassId,label:leCls()})};
  window.classroomLerneinheiten={open:openUnits,overview:leOverview,ingest:leIngest};
  window.classroomVocabTest={textTrainer:showTextTrainer,open:openManager,openBook,print:printTest,load:loadFile,fromPdf,normalizeTest,studentUrl};
