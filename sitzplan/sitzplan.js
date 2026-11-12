@@ -4345,9 +4345,9 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
 .ein-row .why{display:block;font-size:.78rem;color:#8a97aa;font-weight:500}
 .ein-pick{display:none}
 .ein-empty{color:#66758a;padding:10px 2px}
-.ein-jg{font-size:.78rem;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:#66758a;margin:14px 8px 4px}.ein-jg:first-child{margin-top:4px}
+.ein-ch{font-size:.86rem;font-weight:750;color:#243247;margin:10px 10px 2px;line-height:1.3}.ein-pt{font-size:.72rem;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:#8a97aa;margin:10px 10px 2px}.ein-jg{font-size:.78rem;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:#66758a;margin:14px 8px 4px}.ein-jg:first-child{margin-top:4px}
 .ein-row{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;border:0;background:transparent;border-radius:9px;padding:8px 10px;font:inherit;color:#243247;cursor:pointer}
-.ein-row:hover{background:#f3f6fb}.ein-row.on{background:#eaf0fa;color:#2f5f9b;font-weight:700}.ein-row span{flex:1;min-width:0}.ein-row small{color:#8a97aa;font-size:.8rem}.ein-row.dim span{color:#8a97aa}
+.ein-row:hover{background:#f3f6fb}.ein-row.on{background:#eaf0fa;color:#2f5f9b;font-weight:700}.ein-row span{flex:1;min-width:0}.ein-row small{color:#8a97aa;font-size:.8rem}.ein-row.dim span{color:#8a97aa}.ein-row.dim.on span{color:#2f5f9b}
 .ein-row .stand{font-size:.72rem;font-weight:700;color:#9a5400;background:#fff4e2;border:1px solid #f2c98a;border-radius:999px;padding:0 7px;flex:none}
 .ein-foot{color:#8a97aa;font-size:.82rem;margin:16px 8px 0;line-height:1.5}.ein-foot a{color:#2f5f9b;cursor:pointer;text-decoration:underline}
 .ein-tile b .gl-pill{vertical-align:2px}.ein-tile b .gl-pill i{display:inline-block;width:7px;height:7px;margin:0;border-radius:50%;background:#1f8a4c}
@@ -4393,20 +4393,28 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  const blocks=l=>(l.nV?1:0)+(l.nW?1:0)+(l.gr.length?1:0)+(l.ueb?1:0)+(l.tt.length?1:0);
  const lname=l=>l.tag+(l.name?' '+l.name:'');
  /* Stand = aktuelle Lektion/Einheit dieser Lerngruppe */
- const items=()=>cx.subject==='latein'?data.lessons.map(l=>'l:'+l.k):cx.subject==='erdkunde'?data.units.map(u=>'u:'+u.u):[];
+ /* 11.49: Unterrichtsreihen (Erdkunde) in der Reihenfolge des Inhaltsverzeichnisses – Themen ohne Lerneinheit erscheinen blass */
+ const REIHEN={erdkunde:{9:[{ch:'Globale Herausforderungen des 21. Jahrhunderts',parts:[
+  {h:'Globale Verflechtungen',t:[['auf','Auftaktseiten'],['glob','Was heißt Globalisierung?'],['han','Welche Rolle spielt der Handel?','welthandel'],['log','Welche Rolle spielt die Logistik?','logistik'],['dig','Welche Rolle spielt die Digitalisierung?','digitalisierung'],['gp','Welche Rolle spielen Global Player?'],['gg1','Gewusst – gekonnt: Globale Verflechtungen']]},
+  {h:'Facetten von Globalisierung',t:[['smart','Globalisierung in unserem Alltag – das Beispiel Smartphone'],['fash','Globalisierung hautnah – von Fast Fashion zu Slow Fashion'],['sing','Global Cities – das Beispiel Singapur'],['schat','Globale Vernetzungen – mit Schattenseiten?'],['deb','Macht die Globalisierung das Leben auf der Erde besser? Eine Debatte über Gewinner und Verlierer'],['proj','Projekt: Globalisierten Lebenswelten auf der Spur – eine Erkundung'],['gg2','Gewusst – gekonnt: Facetten von Globalisierung']]}]}]}};
+ const reihe=(subj,jg)=>REIHEN[subj]?.[jg]||null;
+ /* Themen einer Reihe: Lerneinheit vorhanden → „u:…“, sonst „t:Jahrgang:Kürzel“ */
+ const topics=(subj,jg)=>{const R=reihe(subj,jg);if(!R)return [];const o=[];for(const c of R)for(const p of c.parts)for(const [k,title,u] of p.t){const unit=u&&data.units.find(x=>x.u===u);o.push({id:unit?'u:'+u:'t:'+jg+':'+k,k,title,u:unit||null,ch:c.ch,part:p.h,jg})}return o};
+ const allTopics=()=>Object.keys(REIHEN.erdkunde||{}).flatMap(jg=>topics('erdkunde',+jg));
+ const items=()=>cx.subject==='latein'?data.lessons.map(l=>'l:'+l.k):cx.subject==='erdkunde'?[...data.units.map(u=>'u:'+u.u),...allTopics().filter(t=>!t.u).map(t=>t.id)]:[];
  function stand(){const s=rd(STAND)[cx.key];if(s&&items().includes(s))return s;
   /* 11.43: nur Inhalte dieser Lerngruppe (Fach + Jahrgang) – sonst nichts vorwählen */
-  const v=visIds();if(cx.subject==='erdkunde')return v[0]||'';
+  const v=visIds();if(cx.subject==='erdkunde')return v.find(id=>id.startsWith('u:'))||v[0]||'';
   if(cx.subject==='latein'){const ls=data.lessons.filter(l=>l.jg===cx.jg);const best=ls.filter(l=>blocks(l)).at(-1)||ls[0];return best?'l:'+best.k:''}return ''}
- const visIds=()=>cx.subject==='latein'?data.lessons.filter(l=>l.jg===cx.jg).map(l=>'l:'+l.k):cx.subject==='erdkunde'?data.units.filter(u=>u.subject!=='latein'&&u.jg===cx.jg).map(u=>'u:'+u.u):[];
+ const visIds=()=>{if(cx.subject==='latein')return data.lessons.filter(l=>l.jg===cx.jg).map(l=>'l:'+l.k);if(cx.subject!=='erdkunde')return [];const T=topics('erdkunde',cx.jg).map(t=>t.id),U=data.units.filter(u=>u.subject!=='latein'&&u.jg===cx.jg).map(u=>'u:'+u.u);return [...T,...U.filter(id=>!T.includes(id))]};
  const setStand=v=>{const s=rd(STAND);if(v)s[cx.key]=v;else delete s[cx.key];wr(STAND,s)};
  const isStand=id=>rd(STAND)[cx.key]===id;
- const find=id=>id?.startsWith('l:')?{l:data.lessons.find(x=>x.k===id.slice(2))}:id?.startsWith('u:')?{u:data.units.find(x=>x.u===id.slice(2))}:{};
+ const find=id=>id?.startsWith('l:')?{l:data.lessons.find(x=>x.k===id.slice(2))}:id?.startsWith('u:')?{u:data.units.find(x=>x.u===id.slice(2))}:id?.startsWith('t:')?{t:allTopics().find(x=>x.id===id)}:{};
  const sub=l=>[...l.formen.slice(0,3),l.syntax&&'Syntax: '+l.syntax].filter(Boolean).map(esc).join(' · ');
  /* 11.26: festes Seitenmenü (Breite per Schieber), Schalter „Aktuelle Lektion“, Punkte je Baustein, Suche nach Thema */
  async function render(){if(!on)return;cx=ctx();data=await load();
   if(!data){view.innerHTML='<div class="ein-body ein-empty">Der Unterricht ist gerade nicht erreichbar. Öffne einmal „Noten“ und versuche es erneut.</div>';return}
-  {const f=find(sel);if((!f.l&&!f.u)||!visIds().includes(sel))sel=stand()}draw()}
+  {const f=find(sel);if((!f.l&&!f.u&&!f.t)||!visIds().includes(sel))sel=stand()}draw()}
  /* 11.28: Buchstaben-Chips (V · G · Ü · W) in der Zeile unter dem Lektionstitel – kräftig = vorhanden, blass = fehlt noch */
  const chips=l=>'<span class="ein-chips">'+[['V',l.nV,'Vokabeln'],['G',l.gr.length,'Grammatik'],['Ü',l.tt.length,'Übersetzungs-Trainer','t'],['W',l.nW,'Wiederholung']].map(([c,n,t,o])=>'<i class="'+(n?(o?'on t':'on'):'')+'" title="'+t+(n?'':' – fehlt noch')+'">'+c+'</i>').join('')+'</span>';
  /* 11.29: Themen aus dem Inhaltsverzeichnis unter dem Lektionstitel (ohne Inhaltsverzeichnis: Grammatik-Themen) */
@@ -4422,10 +4430,14 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  const rowU=u=>'<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>'+esc(u.title)+(u.gl?GLP:'')+'</span>'+(isStand('u:'+u.u)?'<span class="stand">aktuell</span>':'')+'</button>';
  const norm=x=>String(x||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9äöüß]+/g,' ').trim();
  /* 11.43: Seitenmenü zeigt nur die Inhalte der gewählten Lerngruppe (Fach + Jahrgang), keine anderen Klassen oder Fächer */
+ const rowT=t=>'<button type="button" class="ein-row dim'+(sel===t.id?' on':'')+'" data-sel="'+esc(t.id)+'" title="Noch keine Lerneinheit"><span>'+esc(t.title)+'</span>'+(isStand(t.id)?'<span class="stand">aktuell</span>':'')+'</button>';
  function treeHtml(){const subj=SUBJ[cx.subject]||cx.subject||'',ids=visIds(),t=norm(q);
-  const L=ids.map(id=>find(id)).filter(x=>{if(!t)return true;if(x.l){const l=x.l,T=l.toc||{};return [lname(l),l.label,T.syn,T.form,T.wort,...(T.textk||[]),...(T.kult||[]),T.text,T.sach,...l.gr,...l.formen,l.syntax].filter(Boolean).some(v=>norm(v).includes(t))}return norm(x.u.title+' '+x.u.sub).includes(t)});
+  const L=ids.map(id=>find(id)).filter(x=>{if(!t)return true;if(x.t)return norm(x.t.title+' '+x.t.part).includes(t);if(x.l){const l=x.l,T=l.toc||{};return [lname(l),l.label,T.syn,T.form,T.wort,...(T.textk||[]),...(T.kult||[]),T.text,T.sach,...l.gr,...l.formen,l.syntax].filter(Boolean).some(v=>norm(v).includes(t))}return norm(x.u.title+' '+x.u.sub).includes(t)});
   if(!ids.length)return '<div class="ein-empty" style="padding:8px">Für die '+esc(cx.short||'Lerngruppe')+(subj?' ('+esc(subj)+')':'')+' sind noch keine Einheiten vorhanden.</div>';
   if(!L.length)return '<div class="ein-empty" style="padding:8px">Nichts gefunden.</div>';
+  const TP=cx.subject==='erdkunde'?topics('erdkunde',cx.jg):[];if(TP.length){const show=new Set(L.map(x=>x.l?'l:'+x.l.k:x.u?'u:'+x.u.u:x.t.id));let h='<div class="ein-jg">Jahrgang '+cx.jg+' · '+esc(subj)+'</div>',ch='',pt='';
+   for(const tp of TP){if(!show.has(tp.id))continue;if(tp.ch!==ch){ch=tp.ch;h+='<div class="ein-ch">'+esc(ch)+'</div>'}if(tp.part!==pt){pt=tp.part;h+='<div class="ein-pt">'+esc(pt)+'</div>'}h+=tp.u?rowU(tp.u):rowT(tp)}
+   const rest=L.filter(x=>x.u&&!TP.some(tp=>tp.id==='u:'+x.u.u));if(rest.length)h+='<div class="ein-pt">Weitere Einheiten</div>'+rest.map(x=>rowU(x.u)).join('');return h}
   return '<div class="ein-jg">Jahrgang '+cx.jg+' · '+esc(subj)+'</div>'+L.map(x=>x.l?rowL(x.l):rowU(x.u)).join('')}
  function wireTree(){const T=view.querySelector('.ein-list');
   T.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{sel=b.dataset.sel;sideOpen=false;draw()});
@@ -4433,17 +4445,17 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   }
  /* 11.43: Nadel rechts neben „Aktuelle Einheit“ – heftet diese Lektion/Einheit für die Lerngruppe an (Menü oben neben „?“) */
  const PINI='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path class="pp" d="M9 3h6l-1 6 4 3v2H6v-2l4-3z"/><path d="M12 14v7"/></svg>';
- function pinObj(l,u,cls,subj){return {kind:'ein',sel,s:cx.subject,c:cx.classId,cls,subj:'Unterricht · '+subj,page:l?lname(l):u.title,topic:'',id:'ein|'+cx.subject+'|'+cx.classId+'|'+sel}}
+ function pinObj(l,u,cls,subj){const tt=find(sel).t;return {kind:'ein',sel,s:cx.subject,c:cx.classId,cls,subj:'Unterricht · '+subj,page:l?lname(l):u?u.title:tt?tt.title:'',topic:'',id:'ein|'+cx.subject+'|'+cx.classId+'|'+sel}}
  function pinBtn(l,u,cls,subj){const P=top()?.classroomPins;if(!P?.has||!cx.key)return '';const on=P.has('ein|'+cx.subject+'|'+cx.classId+'|'+sel);return '<button type="button" class="ein-pinb'+(on?' on':'')+'" data-pinb title="'+(on?'Angeheftet – tippen zum Lösen':'Diese '+(l?'Lektion':'Einheit')+' anheften (oben über die Nadel neben „?“ wieder öffnen)')+'" aria-pressed="'+on+'">'+PINI+'</button>'}
- function draw(){const {l,u}=find(sel),cls=cx.short||'—',subj=SUBJ[cx.subject]||cx.subject||'';
-  const title=l?esc(l.label)+(l.name?' · '+esc(l.name):''):u?esc(u.title)+(u.gl?GLP:''):'';const st=isStand(sel);
+ function draw(){const {l,u,t:tp}=find(sel),cls=cx.short||'—',subj=SUBJ[cx.subject]||cx.subject||'';
+  const title=l?esc(l.label)+(l.name?' · '+esc(l.name):''):u?esc(u.title)+(u.gl?GLP:''):tp?esc(tp.title):'';const inR=u?topics('erdkunde',u.jg).find(x=>x.id==='u:'+u.u):null;const st=isStand(sel);
   view.style.setProperty('--ein-w',(ui.w||290)+'px');view.classList.toggle('side-open',sideOpen);
   view.innerHTML='<div class="ein-side"><input type="search" class="ein-q" placeholder="Lektion oder Thema suchen …" value="'+esc(q)+'" autocomplete="off" autocorrect="off" spellcheck="false"><div class="ein-list">'+treeHtml()+'</div>'
    +'<div class="ein-sacts"><button type="button" class="ein-b" data-load title="Paket (.cmpaket), Latein-Datenbank, Übersetzungs-Trainer-Dateien (.cmtext), Lerneinheiten (.cmeinheit) oder ein Zip – wird zusammengeführt">Paket laden …</button><button type="button" class="ein-b" data-exp>Exportieren …</button></div></div>'
    +'<div class="ein-handle" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Seitenmenü breiter oder schmaler ziehen" title="Ziehen: Seitenmenü breiter oder schmaler · Doppelklick: Standardbreite"><span class="sp-side-pill" aria-hidden="true">⋮</span><span class="sp-side-line" aria-hidden="true"></span><span class="sp-side-badge" aria-hidden="true"></span></div>'
-   +'<div class="ein-main"><button type="button" class="ein-pick" data-pick>☰ '+(l?esc(lname(l)):u?esc(u.title):'Einheit wählen')+' ▾</button>'
-   +(l||u?'<div class="ein-mh"><h2>'+title+'</h2><span class="sp"></span>'+(cx.key&&items().includes(sel)?'<span class="ein-togw"><span class="ein-curl'+(st?' on':'')+'">Aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+'</span><button type="button" class="ein-curb'+(st?' on':'')+'" data-stand aria-pressed="'+!!st+'" aria-label="Aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+'" title="'+(st?'Aktuell – „Unterricht“ öffnet für die '+esc(cls)+' automatisch diese '+(l?'Lektion':'Einheit')+'. Tippen zum Aufheben.':'Als aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+' markieren')+'"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path class="bm" d="M7 3h10v18l-5-4-5 4z"/></svg></button>'+pinBtn(l,u,cls,subj)+'</span>':cx.key?'<span class="ein-tog off" style="cursor:default" title="„Aktuell“ gilt je Lerngruppe. Wechsle in eine '+(l?'Latein':'Erdkunde')+'-Klasse, um diese '+(l?'Lektion':'Einheit')+' dort als aktuell zu markieren.">„Aktuell“ nur in einer '+(l?'Latein':'Erdkunde')+'-Klasse · gewählt: '+esc(cls)+' · '+esc(subj)+'</span>':'')+'</div>'
-     +(l?tocHtml(l)+lessonTiles(l):'<p class="ein-sub">'+esc(u.sub)+' · Jahrgang '+u.jg+'</p>'+unitTiles(u))
+   +'<div class="ein-main"><button type="button" class="ein-pick" data-pick>☰ '+(l?esc(lname(l)):u?esc(u.title):tp?esc(tp.title):'Einheit wählen')+' ▾</button>'
+   +(l||u||tp?'<div class="ein-mh"><h2>'+title+'</h2><span class="sp"></span>'+(cx.key&&items().includes(sel)?'<span class="ein-togw"><span class="ein-curl'+(st?' on':'')+'">Aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+'</span><button type="button" class="ein-curb'+(st?' on':'')+'" data-stand aria-pressed="'+!!st+'" aria-label="Aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+'" title="'+(st?'Aktuell – „Unterricht“ öffnet für die '+esc(cls)+' automatisch diese '+(l?'Lektion':'Einheit')+'. Tippen zum Aufheben.':'Als aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+' markieren')+'"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path class="bm" d="M7 3h10v18l-5-4-5 4z"/></svg></button>'+pinBtn(l,u,cls,subj)+'</span>':cx.key?'<span class="ein-tog off" style="cursor:default" title="„Aktuell“ gilt je Lerngruppe. Wechsle in eine '+(l?'Latein':'Erdkunde')+'-Klasse, um diese '+(l?'Lektion':'Einheit')+' dort als aktuell zu markieren.">„Aktuell“ nur in einer '+(l?'Latein':'Erdkunde')+'-Klasse · gewählt: '+esc(cls)+' · '+esc(subj)+'</span>':'')+'</div>'
+     +(l?tocHtml(l)+lessonTiles(l):tp?'<p class="ein-sub">'+esc(tp.ch)+' · '+esc(tp.part)+' · Jahrgang '+tp.jg+'</p><div class="ein-empty">Zu diesem Thema gibt es noch keine digitale Lerneinheit. Du kannst es trotzdem als aktuelles Thema der '+esc(cls)+' markieren oder anheften.</div>':'<p class="ein-sub">'+(inR?esc(inR.ch)+' · '+esc(inR.part)+' · ':esc(u.sub)+' · ')+'Jahrgang '+u.jg+'</p>'+unitTiles(u))
     :'<div class="ein-empty">Für die '+esc(cls)+(subj?' ('+esc(subj)+')':'')+' sind noch keine Einheiten vorhanden.</div>')+'</div>';
   wireTree();
   const qi=view.querySelector('.ein-q');qi.oninput=()=>{q=qi.value;const T=view.querySelector('.ein-list');T.innerHTML=treeHtml();wireTree()};
