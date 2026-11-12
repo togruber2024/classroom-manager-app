@@ -1,7 +1,7 @@
 <!doctype html>
-<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f6f8fc"><meta name="robots" content="noindex">
-<title>Text-Trainer</title>
-<!-- 11.06: Text-Trainer des Classroom-Managers. Diese Seite enthält KEINEN Text: Text und Aufgaben kommen aus dem Link (#…)
+<html lang="de"><head><meta charset="utf-8"><script>/* 11.22: Vorschau am Mac (?vorschau=1): Speicher nur im Arbeitsspeicher – nichts wird gespeichert, keine Abgabe */if(/[?&]vorschau=1/.test(location.search)){try{const m=new Map(),s={getItem:k=>m.has(k)?m.get(k):null,setItem:(k,v)=>{m.set(k,String(v))},removeItem:k=>{m.delete(k)},clear:()=>m.clear(),key:i=>[...m.keys()][i]??null,get length(){return m.size}};Object.defineProperty(window,"localStorage",{configurable:true,get:()=>s})}catch(e){}document.documentElement.classList.add("cm-vorschau");document.write("<style>.cm-vorschau #who{display:none!important}</style>")}</script><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f6f8fc"><meta name="robots" content="noindex">
+<title>Übersetzungs-Trainer</title>
+<!-- 11.06: Übersetzungs-Trainer des Classroom-Managers. Diese Seite enthält KEINEN Text: Text und Aufgaben kommen aus dem Link (#…)
      oder aus einer Datei der Lehrkraft. Läuft nach dem Laden ohne Internet; nichts wird an einen Server geschickt. -->
 <style>
 :root{--blue:#2f5f9b;--ink:#243247;--mut:#66758a;--line:#dce3ef;--bg:#f6f8fc;--ok:#1f8a4c;--okbg:#e5f5ea;--bad:#c2410c;--badbg:#fdeee6;--pred:#2f5f9b;--subj:#1f8a4c;--obj:#b45309}
@@ -16,7 +16,7 @@ h1{font-size:1.5rem;margin:4px 0 0}.muted{color:var(--mut)}
 .task{font-size:1.08rem;margin:0 0 10px}.hint{font-size:.9rem;color:var(--mut);margin-top:6px}
 .text{font-family:"Iowan Old Style","Palatino",Georgia,serif;font-size:1.3rem;line-height:2.05;user-select:none;-webkit-user-select:none}
 .w{display:inline;padding:2px 3px;border-radius:7px;cursor:pointer;transition:background .15s}
-.w.f{background:var(--okbg);color:var(--ok);font-weight:700}.w.x{background:var(--badbg);color:var(--bad)}.w.miss{box-shadow:inset 0 -3px 0 #f59e0b;background:#fff8e6}
+.w.sol{box-shadow:inset 0 -3px 0 #2f9e44;background:#ebfbee}.w.f{background:var(--okbg);color:var(--ok);font-weight:700}.w.x{background:var(--badbg);color:var(--bad)}.w.miss{box-shadow:inset 0 -3px 0 #f59e0b;background:#fff8e6}
 .w.hl{background:#fde7c2;color:#8a4b00;font-weight:700}.w.dim{color:#9aa6b6}
 .w.p{background:#e8f0fb;color:var(--pred);font-weight:700;box-shadow:inset 0 -3px 0 var(--pred)}.w.s{background:var(--okbg);color:var(--subj);font-weight:700;box-shadow:inset 0 -3px 0 var(--subj)}
 .w.g{text-decoration:underline dotted #9aa6b6;text-underline-offset:5px}
@@ -65,8 +65,8 @@ function valid(t){return t&&t.type==='classroom-text-trainer'&&Array.isArray(t.s
 function start(t){T=t;ST=ls.get(key())||{pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};ls.set('cm-texttrainer-last',t);render()}
 async function init(){let t=null;try{t=await fromHash(location.hash)}catch(e){console.warn(e)}
  if(!valid(t))t=ls.get('cm-texttrainer-last');if(valid(t))return start(t);
- app.innerHTML='<div class="card empty"><h1>Text-Trainer</h1><p class="muted">Hier ist noch kein Text geladen. Öffne den Link deiner Lehrkraft oder lade die Datei, die sie dir geschickt hat.</p><button class="pri" data-load>Datei laden …</button></div>';$('[data-load]').onclick=()=>$('#file').click()}
-$('#file').onchange=async()=>{const f=$('#file').files?.[0];if(!f)return;try{const t=JSON.parse(await f.text());if(!valid(t))throw 0;start(t)}catch{alert('Diese Datei ist kein Text für den Text-Trainer.')}};
+ app.innerHTML='<div class="card empty"><h1>Übersetzungs-Trainer</h1><p class="muted">Hier ist noch kein Text geladen. Öffne den Link deiner Lehrkraft oder lade die Datei, die sie dir geschickt hat.</p><button class="pri" data-load>Datei laden …</button></div>';$('[data-load]').onclick=()=>$('#file').click()}
+$('#file').onchange=async()=>{const f=$('#file').files?.[0];if(!f)return;try{const t=JSON.parse(await f.text());if(!valid(t))throw 0;start(t)}catch{alert('Diese Datei ist kein Text für den Übersetzungs-Trainer.')}};
 /* ---------- Hilfen für Wörter ---------- */
 const words=si=>T.s[si].t.split(' ');
 function textHtml(cls){return T.s.map((s,si)=>words(si).map((w,i)=>'<span class="w '+(cls?cls(si,i)||'':'')+'" data-s="'+si+'" data-i="'+i+'">'+esc(w)+'</span>').join(' ')).join(' ')}
@@ -201,5 +201,13 @@ function printNotes(name){let box=document.getElementById('printNotes');if(!box)
  document.body.classList.add('printing');const done=()=>{document.body.classList.remove('printing');removeEventListener('afterprint',done)};addEventListener('afterprint',done);setTimeout(()=>{print();setTimeout(done,1500)},50)}
 (()=>{const st=document.createElement('style');st.textContent='#printNotes{display:none}@media print{@page{margin:14mm}body{background:#fff;padding:0}.wrap,.pop{display:none!important}#printNotes{display:block;font:11pt/1.45 -apple-system,Inter,"Segoe UI",sans-serif;color:#000}#printNotes h1{font-size:17pt;margin:0}#printNotes h2{font-size:12.5pt;margin:16px 0 6px;color:#2f5f9b;border-bottom:1px solid #c9d3e3;padding-bottom:2px}.pn-h{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}.pn-n{text-align:right;font-size:10pt}.pn-t{font-family:Georgia,"Palatino",serif;font-size:12pt;line-height:1.7;margin:0}.pn-t u{text-decoration-thickness:2px;text-underline-offset:3px;font-weight:700}.pn-k{font-size:9pt;color:#555;margin:4px 0 0}.pn-s{break-inside:avoid;margin:0 0 9px;padding:0 0 7px;border-bottom:1px dotted #c9d3e3}.pn-la{font-family:Georgia,serif;font-size:11.5pt}.pn-la b{display:inline-block;min-width:20px;color:#2f5f9b;font-family:inherit}.pn-row{display:grid;grid-template-columns:140px 1fr;gap:8px;font-size:10pt;margin-top:2px}.pn-row span{color:#555}.pn-m div{color:#1f6b3d}#printNotes table{border-collapse:collapse}#printNotes td{padding:2px 14px 2px 0;border:0;font-size:10.5pt}}';document.head.append(st)})();
 addEventListener('hashchange',init);
+/* 11.22: Vorschau am Mac – Schalter „mit Lösungen“ */
+let SOL=false;
+{const pp=renderPP,ev=renderEV,pr=showPR,ss=showSent,box=h=>'<div class="fb ok cm-sol"><b>Lösung:</b> '+h+'</div>';
+ renderPP=function(b){pp(b);if(!SOL)return;for(const [si,ws] of T.pp)for(const j of ws)b.querySelector('.w[data-s="'+si+'"][data-i="'+j+'"]')?.classList.add('sol')};
+ renderEV=function(b){ev(b);if(SOL)b.insertAdjacentHTML('beforeend',box('<ol style="margin:4px 0 0;padding-left:20px">'+T.ev.map(e=>'<li>'+esc(e)+'</li>').join('')+'</ol>'))};
+ showPR=function(b,k){pr(b,k);if(SOL)b.querySelector('.card')?.insertAdjacentHTML('beforeend',box(esc(T.pron[k][2])))};
+ showSent=function(b,si){ss(b,si);const S=T.s[si];if(SOL&&S?.de)b.insertAdjacentHTML('beforeend',box(esc(S.de)))};}
+window.cmPreviewSolutions=on=>{SOL=!!on;if(T)render()};
 init();
 </script></body></html>

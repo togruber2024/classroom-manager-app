@@ -4290,3 +4290,184 @@ html.sp-fit .sp-fit-box{overflow:auto;overscroll-behavior:auto;-webkit-overflow-
  document.head.append(st);
 })();
 ;
+
+/* ==== sitzplan/einheiten.js ==== */
+/* 11.22: Einheiten – Umschalter „Sitzplan | Einheiten“ im Kopf der Sitzplan-Karte (kein eigener Bereich).
+   Links nach Jahrgang geordnet, rechts die Bausteine. Daten und Dialoge kommen aus dem Noten-Manager (classroomBibliothek).
+   Paket laden/exportieren (.cmpaket) – Schulbuchmaterial bleibt auf dem Gerät und ist nie Teil des Backups. */
+(()=>{
+ const grid=document.querySelector('.grid-container'),head=grid?.querySelector('.room-header');if(!grid||!head)return;
+ const UIKEY='classroom-einheiten-ui-v1';
+ const ui=(()=>{try{return JSON.parse(localStorage.getItem(UIKEY)||'{}')||{}}catch{return {}}})();ui.sel??={};
+ const saveUi=()=>{try{localStorage.setItem(UIKEY,JSON.stringify(ui))}catch{}};
+ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const top=()=>{try{return parent!==window?parent:null}catch{return null}};
+ const B=()=>{try{return top().document.getElementById('view-noten').contentWindow.classroomBibliothek||null}catch{return null}};
+ const SUBJ={latein:'Latein',erdkunde:'Erdkunde'};
+ const css=`.ein-seg{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:#e7edf6;flex:none}
+.ein-seg>button{height:34px;padding:0 16px;border:0;border-radius:999px;background:transparent;color:#66778f;font:inherit;font-size:.95rem;font-weight:650;cursor:pointer}
+.ein-seg>button[aria-checked=true]{background:#fff;color:#243247;font-weight:750;box-shadow:0 2px 5px #233d6014}
+.ein-head{display:none;align-items:center;gap:10px;flex:1;min-width:0}
+.ein-head h2{margin:0;font-size:1.25rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.ein-head button,.ein-btn{height:40px;border-radius:10px;border:1px solid #c9d5e6;background:#fff;color:#2f5f9b;font:inherit;font-weight:650;padding:0 14px;cursor:pointer;white-space:nowrap}
+.ein-head button:hover,.ein-btn:hover{background:#f3f7fd}
+.room-header .ein-seg{order:-1}
+.grid-container.ein-on>*:not(.room-header):not(#einView):not(.ein-ph){display:none!important}
+.ein-ph{display:none}html.ph-lite .ein-ph{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
+html.ph-lite .ein-ph .ein-seg{flex:1}html.ph-lite .ein-ph .ein-seg>button{flex:1}
+html.ph-lite .ein-ph .ein-head h2{display:none}html.ph-lite .ein-ph .ein-head{flex-basis:100%;flex-wrap:nowrap}html.ph-lite .ein-ph .ein-head button{flex:1}
+.grid-container.ein-on .room-header>*:not(.ein-seg):not(.ein-head){display:none!important}
+.grid-container.ein-on .ein-head{display:flex}
+#einView{display:none;grid-template-columns:minmax(210px,270px) 1fr;border-top:1px solid var(--border-color,#dce3ef);margin:4px -20px -20px;min-height:320px}
+.grid-container.ein-on{display:flex!important;flex-direction:column}
+.grid-container.ein-on #einView{display:grid;flex:1;min-height:0}
+.grid-container.ein-on .ein-tree,.grid-container.ein-on .ein-main{overflow:auto;min-height:0}
+.ein-tree{border-right:1px solid var(--border-color,#dce3ef);padding:12px 12px 16px;overflow:auto}
+.ein-jg{font-size:.78rem;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:#66758a;margin:14px 8px 4px}
+.ein-jg:first-child{margin-top:4px}
+.ein-row{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;border:0;background:transparent;border-radius:9px;padding:8px 10px;font:inherit;color:#243247;cursor:pointer}
+.ein-row:hover{background:#f3f6fb}.ein-row.on{background:#eaf0fa;color:#2f5f9b;font-weight:700}
+.ein-row span{flex:1;min-width:0}.ein-row small{color:#8a97aa;font-size:.8rem}.ein-row.sub{padding-left:22px}
+.ein-row.dim span{color:#8a97aa}
+.ein-foot{color:#8a97aa;font-size:.82rem;margin:16px 8px 0;line-height:1.5}
+.ein-foot a{color:#2f5f9b;cursor:pointer;text-decoration:underline}
+.ein-main{padding:16px 20px 22px;min-width:0}
+.ein-main h3{margin:0;font-size:1.35rem;color:#243247}
+.ein-main .ein-sub{color:#66758a;margin:4px 0 14px}
+.ein-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.ein-tile{border:1px solid #dce3ef;border-radius:12px;padding:14px;background:#fff;display:flex;flex-direction:column;gap:4px}
+.ein-tile i{font-style:normal;display:inline-grid;place-items:center;width:32px;height:32px;border-radius:9px;background:#eaf0fa;color:#2f5f9b;font-weight:800;margin-bottom:4px}
+.ein-tile b{color:#2f5f9b;font-size:1.05rem}.ein-tile small{color:#66758a}
+.ein-tile.t2 i{background:#e6f6ea;color:#2f7d46}.ein-tile.t3 i{background:#fff1e3;color:#c2570c}
+.ein-tile.off{background:#fbfcfe}.ein-tile.off b,.ein-tile.off small,.ein-tile.off i{opacity:.55}
+.ein-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ein-acts button{height:40px;border-radius:10px;border:1px solid #c9d5e6;background:#fff;color:#2f5f9b;font:inherit;font-size:.9rem;font-weight:650;padding:0 12px;cursor:pointer}
+.ein-acts button.look{background:#fff4e2;border-color:#f2c98a;color:#9a5400}
+.ein-acts button:hover{filter:brightness(.97)}
+.ein-empty{color:#66758a;padding:20px 4px}
+#einExp{border:0;border-radius:14px;padding:0;max-width:640px;width:calc(100% - 32px);box-shadow:0 20px 60px #0004}
+#einExp form{padding:20px 22px}#einExp h2{margin:0 0 2px}#einExp .muted{color:#66758a;margin:0 0 10px}
+#einExp label{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #eef2f7;cursor:pointer}
+#einExp label.l2{padding-left:30px}#einExp label small{margin-left:auto;color:#8a97aa}
+#einExp input[type=checkbox]{width:20px;height:20px;accent-color:#2f5f9b;margin:0}
+#einExp .parts{display:flex;flex-wrap:wrap;gap:4px 14px;margin:12px 0}#einExp .parts label{border:0;padding:4px 0}
+#einExp .note{background:#eef3fa;border-radius:10px;padding:10px 12px;color:#3c4d66;font-size:.9rem}
+#einExp .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+#einExp .acts button{height:40px;border-radius:10px;border:1px solid #c9d5e6;background:#fff;color:#2f5f9b;font:inherit;font-weight:650;padding:0 14px;cursor:pointer}
+#einExp .acts button.pri{background:#2f5f9b;border-color:#2f5f9b;color:#fff}
+@media (max-width:760px){#einView{grid-template-columns:1fr;margin:4px -12px -12px}.ein-tree{border-right:0;border-bottom:1px solid var(--border-color,#dce3ef);max-height:38vh}
+ .ein-head{flex-basis:100%;flex-wrap:wrap}.ein-head h2{flex-basis:100%;font-size:1.1rem}.ein-tiles{grid-template-columns:1fr}}`;
+ const st=document.createElement('style');st.textContent=css;document.head.append(st);
+ /* Kopf: Umschalter + Einheiten-Titel und Knöpfe */
+ const seg=document.createElement('div');seg.className='ein-seg';seg.setAttribute('role','radiogroup');seg.setAttribute('aria-label','Ansicht');
+ seg.innerHTML='<button type="button" role="radio" data-v="s" aria-checked="true">Sitzplan</button><button type="button" role="radio" data-v="e" aria-checked="false">Einheiten</button>';
+ const eh=document.createElement('div');eh.className='ein-head';eh.innerHTML='<h2 id="einTitle">Einheiten</h2><button type="button" data-load title="Paket (.cmpaket), Latein-Datenbank, Übersetzungs-Trainer-Dateien (.cmtext), Lerneinheiten (.cmeinheit) oder ein Zip – wird zusammengeführt">Paket laden …</button><button type="button" data-exp>Exportieren …</button>';
+ head.prepend(seg);head.append(eh);
+ /* iPhone: der Kartenkopf ist dort ausgeblendet – Umschalter oben in der Unterricht-Karte */
+ const phb=document.createElement('div');phb.className='ein-ph';grid.prepend(phb);
+ const place=()=>{const ph=document.documentElement.classList.contains('ph-lite');if(ph&&seg.parentElement!==phb){phb.append(seg,eh)}else if(!ph&&seg.parentElement!==head){head.prepend(seg);head.append(eh)}};
+ place();new MutationObserver(place).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+ const view=document.createElement('div');view.id='einView';grid.append(view);
+ let on=false;
+ function setOn(v){on=v;grid.classList.toggle('ein-on',on);seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-checked',String((b.dataset.v==='e')===on)));if(on)render()}
+ seg.onclick=e=>{const b=e.target.closest('button');if(b)setOn(b.dataset.v==='e')};
+ window.classroomEinheiten={show:()=>setOn(true),hide:()=>setOn(false),get on(){return on}};
+ /* Kontext der Lerngruppe */
+ function ctx(){const b=B();let c={};try{c=b?.context()||{}}catch{}const lab=c.label||'';const m=/(\d{1,2})\s*[a-zäöü]?\s*$/i.exec(lab)||/(\d{1,2})/.exec(lab);return {subject:c.subject||'',label:lab,classId:c.classId||'',jg:m?+m[1]:0,key:(c.subject||'')+'::'+(c.classId||'')}}
+ let data=null,openJg=new Set(),cx=null;
+ async function load(){const b=B();if(!b)return null;const [lessons,units]=[b.lessons(),await b.units()];return {lessons,units}}
+ const blocks=l=>(l.nV?1:0)+(l.nW?1:0)+(l.gr.length?1:0)+(l.ueb?1:0)+(l.tt.length?1:0);
+ const lname=l=>l.tag+(l.name?' '+l.name:'');
+ function selKey(){return ui.sel[cx.key]}
+ async function render(){cx=ctx();data=await load();
+  if(!data){view.innerHTML='<div class="ein-empty" style="padding:20px">Die Einheiten sind gerade nicht erreichbar. Öffne einmal den Noten-Manager und versuche es erneut.</div>';return}
+  const subj=SUBJ[cx.subject]||'',showAll=ui.all||!subj;
+  document.getElementById('einTitle').textContent='Einheiten'+(cx.label?' · '+(subj?subj+' ':'')+cx.label.replace(/^Klasse\s+/i,''):'');
+  let sel=selKey();
+  const latOk=showAll||cx.subject==='latein',ekOk=showAll||cx.subject==='erdkunde';
+  if(!sel){if(cx.subject==='erdkunde'){const u=data.units.find(x=>x.jg===cx.jg)||data.units[0];sel=u?'u:'+u.u:''}else{const ls=data.lessons.filter(l=>l.jg===cx.jg);const best=ls.filter(l=>blocks(l)).at(-1)||ls[0]||data.lessons[0];sel=best?'l:'+best.k:''}}
+  const selL=sel.startsWith('l:')?data.lessons.find(l=>l.k===sel.slice(2)):null,selU=sel.startsWith('u:')?data.units.find(u=>u.u===sel.slice(2)):null;
+  if(selL)openJg.add(selL.jg);else if(cx.jg)openJg.add(cx.jg);
+  const jgs=[...new Set([...(latOk?data.lessons.map(l=>l.jg):[]),...(ekOk?data.units.map(u=>u.jg):[])])].sort((a,b)=>a-b);
+  let tree='';
+  for(const jg of jgs){tree+='<div class="ein-jg">Jahrgang '+jg+'</div>';
+   if(latOk){const ls=data.lessons.filter(l=>l.jg===jg);if(ls.length){const n=ls.filter(l=>blocks(l)).length;
+    if(openJg.has(jg))tree+=ls.map(l=>'<button type="button" class="ein-row'+(selL===l?' on':'')+(blocks(l)?'':' dim')+'" data-l="'+esc(l.k)+'"><span>Latein · '+esc(lname(l))+'</span><small>'+(blocks(l)||'')+'</small></button>').join('');
+    else tree+='<button type="button" class="ein-row" data-jg="'+jg+'"><span>Latein · '+esc(ls[0].tag)+' – '+esc(ls.at(-1).tag)+'</span><small>'+(n||'')+' ›</small></button>'}}
+   if(ekOk)tree+=data.units.filter(u=>u.jg===jg).map(u=>'<button type="button" class="ein-row'+(selU===u?' on':'')+'" data-u="'+esc(u.u)+'"><span>Erdkunde · '+esc(u.title)+'</span><small>'+(u.book?'1':'')+'</small></button>').join('')}
+  tree+='<div class="ein-foot">'+(subj?(ui.all?'<a data-all>nur '+esc(subj)+'</a> · alle Fächer':'nur '+esc(subj)+' · <a data-all>alle Fächer</a>')+'<br>':'')+'Schulbuchmaterial bleibt auf diesem Gerät · nicht im Backup</div>';
+  view.innerHTML='<div class="ein-tree">'+tree+'</div><div class="ein-main">'+(selL?lessonHtml(selL):selU?unitHtml(selU):'<div class="ein-empty">Links eine Einheit wählen.</div>')+'</div>';
+  view.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ui.sel[cx.key]='l:'+b.dataset.l;saveUi();render()});
+  view.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{ui.sel[cx.key]='u:'+b.dataset.u;saveUi();render()});
+  view.querySelectorAll('[data-jg]').forEach(b=>b.onclick=()=>{openJg.add(+b.dataset.jg);render()});
+  view.querySelector('[data-all]')?.addEventListener('click',()=>{ui.all=!ui.all;saveUi();render()});
+  view.querySelectorAll('[data-do]').forEach(b=>b.onclick=()=>run(b.dataset.do,b.dataset.k));
+  view.querySelector('.ein-main').scrollTop=0}
+ const tile=(ic,cls,t,sub,acts,off)=>'<div class="ein-tile '+cls+(off?' off':'')+'"><i>'+ic+'</i><b>'+t+'</b><small>'+sub+'</small>'+(acts?'<div class="ein-acts">'+acts+'</div>':'')+'</div>';
+ const btn=(d,k,t,look)=>'<button type="button" '+(look?'class="look" ':'')+'data-do="'+d+'" data-k="'+esc(k)+'">'+(look?'👁 ':'')+t+'</button>';
+ function lessonHtml(l){const k=l.k,tt=l.tt[0];
+  const sub=[...l.formen.slice(0,3),l.syntax&&'Syntax: '+l.syntax].filter(Boolean).map(esc).join(' · ');
+  return '<h3>'+esc(l.label)+(l.name?' · '+esc(l.name):'')+'</h3><div class="ein-sub">'+(sub||'&nbsp;')+'</div><div class="ein-tiles">'
+   +tile('V','','Vokabeltest',l.nV?l.nV+' neue Vokabeln':'kein Vokabular geladen',l.nV?btn('lv',k,'Ansehen',1)+btn('voc',k,'Test erstellen'):'',!l.nV)
+   +tile('W','','Wiederholung',l.nW?l.nW+' Wörter · auch mehrere Lektionen':'keine Liste geladen',l.nW?btn('lw',k,'Ansehen',1)+btn('wh',k,'Test erstellen'):'',!l.nW)
+   +tile('G','','Grammatiktest',l.gr.length?l.gr.length+(l.gr.length>1?' Themen':' Thema'):'kein Test zu dieser Lektion',l.gr.length?btn('lg',k,'Ansehen',1)+btn('gr',k,'Test erstellen'):'',!l.gr.length)
+   +tile('Ü','t2','Übungen',l.ueb?'interaktiv, 3 Stufen':'für diese Lektion noch keine',l.ueb?btn('pu',k,'Ansehen',1)+btn('ueb',k,'Start-QR'):'',!l.ueb)
+   +tile('Ü','t3','Übersetzungs-Trainer',tt?tt.n+' Sätze'+(tt.hunt?' · '+esc(tt.hunt):'')+(l.tt.length>1?' · '+l.tt.length+' Texte':''):'noch kein Text – Datei laden',tt?btn('pt',k,'Ansehen',1)+btn('tt',k,'Link senden …'):btn('load','','Datei laden …'),!tt)
+   +tile('+','','Lerneinheit','für diese Lektion keine','',true)+'</div>'}
+ function unitHtml(u){return '<h3>'+esc(u.title)+'</h3><div class="ein-sub">'+esc(u.sub)+' · Jahrgang '+u.jg+'</div><div class="ein-tiles">'
+   +tile('L','t2','Lerneinheit (iPad)',(u.book?'mit Schulbuchmaterial':'ohne Schulbuchmaterial')+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':'')+' gescannt':''),btn('pl',u.u,'Ansehen',1)+btn('qr',u.u,'Start-QR')+btn('scan',u.u,'Abgaben scannen')+btn('ov',u.u,'Übersicht'))
+   +tile('B','t3','Schulbuchmaterial',u.book?'auf diesem Gerät geladen ✓':'noch nicht geladen (.cmeinheit)',btn('load','',u.book?'Neu laden …':'Datei laden …'))+'</div>'}
+ /* Aktionen */
+ const prev=o=>{try{top().classroomPreview(o)}catch(e){alert('Vorschau nicht möglich: '+e.message)}};
+ function listHtml(secs,note){return (note?'<p class="cmpv-note">'+esc(note)+'</p>':'')+secs.map(s=>(secs.length>1?'<h3>'+esc(s.name)+'</h3>':'')+'<table>'+s.rows.map(r=>'<tr><td>'+esc(r[0])+'</td><td class="info">'+esc(r[1])+'</td><td><span class="sol">'+esc(r[2])+'</span></td></tr>').join('')+'</table>').join('')}
+ async function run(d,k){const b=B();if(!b)return;const l=data.lessons.find(x=>x.k===k),u=data.units.find(x=>x.u===k);
+  if(d==='lv')return prev({title:'Vokabeln '+l.label,html:listHtml(b.list('main',k),'Lateinisch und Angaben – die Bedeutungen erscheinen mit „mit Lösungen“.'),solutions:true});
+  if(d==='lw')return prev({title:'Wiederholung '+l.label,html:listHtml(b.list('wh',k)),solutions:true});
+  if(d==='lg')return prev({title:'Grammatik '+l.label,html:'<h3>Themen für den Grammatiktest</h3><ul>'+l.gr.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>'+(l.syntax?'<h3>Syntax</h3><p>'+esc(l.syntax)+'</p>':'')});
+  if(d==='pu')return prev({title:'Übungen '+l.label,url:'uebungen.html?vorschau=1'});
+  if(d==='pt'){const h=await b.ttHash(k);if(!h)return;return prev({title:'Übersetzungs-Trainer '+lname(l),url:'texttrainer.html?vorschau=1'+h})}
+  if(d==='pl')return prev({title:u.title,url:u.file+'?vorschau=1'});
+  if(d==='load')return loadPkg();
+  /* Dialoge des Noten-Managers: kurz dorthin wechseln, nach dem Schließen zurück zum Sitzplan */
+  const T=top()?.document;const tn=T?.getElementById('tab-noten'),ts=T?.getElementById('tab-sitzplan');const was=ts?.getAttribute('aria-selected')==='true';
+  tn?.click();await new Promise(r=>setTimeout(r,60));let dl=null;try{dl=b.act(d,k)}catch(e){alert(e.message);return}
+  if(dl&&was){const back=()=>{setTimeout(()=>{const W=T.getElementById('view-noten').contentWindow.document;if([...W.querySelectorAll('dialog')].some(x=>x.open)){W.addEventListener('close',back,{capture:true,once:true});return}ts.click();setOn(true)},0)};dl.addEventListener('close',back,{once:true})}}
+ /* Paket laden */
+ function pickFiles(){return new Promise(res=>{const i=document.createElement('input');i.type='file';i.multiple=true;i.hidden=true;document.body.append(i);i.onchange=()=>{res([...i.files]);i.remove()};i.addEventListener('cancel',()=>{res([]);i.remove()});i.click()})}
+ async function loadPkg(){const b=B();if(!b)return;const fs=await pickFiles();if(!fs.length)return;let r;
+  try{r=await b.importFiles(fs)}catch(e){alert('Laden nicht möglich: '+(e.name==='QuotaExceededError'?'Speicher voll.':e.message));return}
+  const parts=[r.voc&&'Vokabular +'+r.voc+' Wörter',r.wh&&'Wiederholung +'+r.wh+' Wörter',r.gr&&'Grammatik +'+r.gr+' Themen',r.tt&&r.tt+' Übersetzungs-Trainer-Text'+(r.tt>1?'e':''),r.le&&r.le+' Lerneinheit'+(r.le>1?'en':'')+' (Schulbuchmaterial)'].filter(Boolean);
+  alert(parts.length?'Geladen und zusammengeführt:\n'+parts.join('\n')+(r.bad||r.unknown?'\n\n'+(r.bad+r.unknown)+' Datei(en) nicht erkannt.':''):'Nichts Neues gefunden'+(r.bad||r.unknown?' – '+(r.bad+r.unknown)+' Datei(en) nicht erkannt.':' – alles war schon vorhanden.'));render()}
+ eh.querySelector('[data-load]').onclick=loadPkg;
+ /* Exportieren */
+ eh.querySelector('[data-exp]').onclick=async()=>{const b=B();if(!b)return;if(!data)data=await load();cx=ctx();
+  let dlg=document.getElementById('einExp');if(!dlg){dlg=document.createElement('dialog');dlg.id='einExp';document.body.append(dlg)}
+  const groups=[6,7,8,9].map(jg=>{const ls=data.lessons.filter(l=>l.jg===jg);const n=ls.filter(l=>blocks(l)).length;return {jg,ls,n,lab:'Jahrgang '+jg+' · '+(ls[0]?.tag||'')+' – '+(ls.at(-1)?.tag||'')}}).filter(g=>g.ls.length);
+  const pre=cx.subject==='latein'?cx.jg:0,preU=cx.subject==='erdkunde'?cx.jg:0;
+  dlg.innerHTML='<form method="dialog"><h2>Paket exportieren</h2><p class="muted">Was soll in die Datei?</p>'
+   +'<label><input type="checkbox" data-all="lat"><b>Latein · Pontes</b><small>'+groups.reduce((a,g)=>a+g.n,0)+' Lektionen mit Inhalt</small></label>'
+   +groups.map(g=>'<label class="l2"><input type="checkbox" data-g="'+g.jg+'"'+(g.jg===pre?' checked':'')+(g.n?'':' disabled')+'>'+esc(g.lab)+'<small>'+(g.n||'leer')+'</small></label>').join('')
+   +'<label><input type="checkbox" data-all="ek"><b>Erdkunde</b><small>'+data.units.length+' Lerneinheiten</small></label>'
+   +data.units.map(u=>'<label class="l2"><input type="checkbox" data-u="'+u.u+'"'+(u.jg===preU&&u.book?' checked':'')+(u.book?'':' disabled')+'>Jahrgang '+u.jg+' · '+esc(u.title)+'<small>'+(u.book?'mit Schulbuchbildern':'kein Material geladen')+'</small></label>').join('')
+   +'<div class="parts">Bausteine: '+[['voc','Vokabular'],['wh','Wiederholung'],['gr','Grammatik'],['tt','Übersetzungs-Trainer'],['le','Lerneinheiten']].map(([k,t])=>'<label><input type="checkbox" data-p="'+k+'" checked>'+t+'</label>').join('')+'</div>'
+   +'<div class="note">Dateiname: <b data-fn></b> · Enthält Schulbuchmaterial – nur für den eigenen Unterricht, nicht veröffentlichen. Keine Schülerdaten, keine Noten.</div>'
+   +'<div class="acts"><button type="button" data-x>Abbrechen</button><button type="button" data-everything>Alles exportieren</button><button type="submit" class="pri">Auswahl exportieren</button></div></form>';
+  const q=s=>[...dlg.querySelectorAll(s)];
+  const sync=()=>{for(const [a,s] of [['lat','[data-g]:not(:disabled)'],['ek','[data-u]:not(:disabled)']]){const xs=q(s),c=xs.filter(x=>x.checked).length,m=dlg.querySelector('[data-all="'+a+'"]');m.checked=xs.length>0&&c===xs.length;m.indeterminate=c>0&&c<xs.length;m.disabled=!xs.length}dlg.querySelector('[data-fn]').textContent=fname()};
+  const selection=()=>{const gs=q('[data-g]:checked').map(x=>+x.dataset.g),us=q('[data-u]:checked').map(x=>x.dataset.u);return {gs,lessons:data.lessons.filter(l=>gs.includes(l.jg)).map(l=>l.k),units:us,parts:Object.fromEntries(q('[data-p]').map(x=>[x.dataset.p,x.checked]))}};
+  const fname=()=>{const s=selection(),p=[];if(s.gs.length){const ls=data.lessons.filter(l=>s.gs.includes(l.jg));p.push('Latein_Jg'+s.gs.join('-')+'_Pontes_'+ls[0].tag+'-'+ls.at(-1).tag)}if(s.units.length)p.push('Erdkunde_'+s.units.map(u=>data.units.find(x=>x.u===u).title).join('_'));
+   /* nur einfache Zeichen im Dateinamen (AirDrop, Windows, USB-Stick) */return (p.join('_')||'Einheiten').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/Ä/g,'Ae').replace(/Ö/g,'Oe').replace(/Ü/g,'Ue').replace(/ß/g,'ss').replace(/\s+/g,'-').replace(/[^A-Za-z0-9_+.-]/g,'')+'.cmpaket'};
+  q('[data-all]').forEach(m=>m.onchange=()=>{q(m.dataset.all==='lat'?'[data-g]:not(:disabled)':'[data-u]:not(:disabled)').forEach(x=>x.checked=m.checked);sync()});
+  q('input').forEach(x=>{if(!x.dataset.all)x.addEventListener('change',sync)});sync();
+  const go=async all=>{if(all){q('[data-g]:not(:disabled),[data-u]:not(:disabled),[data-p]').forEach(x=>x.checked=true);sync()}
+   const s=selection(),name=fname();const pk=await b.exportPkg(s,name.replace(/\.cmpaket$/,''));if(!pk){alert('In der Auswahl ist nichts zum Exportieren.');return}
+   const file=new File([JSON.stringify(pk)],name,{type:'application/json'});
+   try{if(navigator.canShare?.({files:[file]})&&matchMedia('(pointer:coarse)').matches){await navigator.share({files:[file],title:name});dlg.close();return}}catch(err){if(err?.name==='AbortError')return}
+   const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);dlg.close()};
+  dlg.querySelector('[data-x]').onclick=()=>dlg.close();dlg.querySelector('[data-everything]').onclick=()=>go(true);dlg.querySelector('form').onsubmit=e=>{e.preventDefault();go(false)};
+  dlg.showModal()};
+ /* Lerngruppe gewechselt → neu zeichnen */
+ const title=document.getElementById('titelKlasse');if(title)new MutationObserver(()=>{if(on)render()}).observe(title,{childList:true,characterData:true,subtree:true});
+ window.addEventListener('storage',e=>{if(on&&e.key&&/^classroom-(vocab|grammar|text-trainer|lerneinheiten)/.test(e.key))render()});
+})();
+;
