@@ -4332,6 +4332,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
 .ein-b{height:40px;border-radius:10px;border:1px solid #c9d5e6;background:#fff;color:#2f5f9b;font:inherit;font-size:.92rem;font-weight:650;padding:0 14px;cursor:pointer;white-space:nowrap}.ein-b:hover{background:#f3f7fd}
 .ein-tog{display:inline-flex;align-items:center;gap:9px;font-weight:650;font-size:.9rem;color:#9a5400;background:#fff4e2;border:1px solid #f2c98a;border-radius:999px;padding:5px 12px 5px 8px;cursor:pointer;user-select:none}
 .ein-tog.off{color:#66758a;background:#fff;border-color:#dce3ef}.ein-tog input{position:absolute;opacity:0;pointer-events:none}
+.ein-togw{display:inline-flex;align-items:center;flex:none;margin-left:auto}.ein-pinb{flex:none;width:42px;height:40px;margin-left:8px;display:inline-grid;place-items:center;border:1px solid #a8bdd8;border-radius:10px;background:#fff;color:#2f5f9b;cursor:pointer;padding:0}.ein-pinb svg{width:20px;height:20px}.ein-pinb.on{background:#fff4e0;border-color:#e8a23a;color:#c2410c}.ein-pinb.on .pp{fill:#f6c27a}
 .ein-tog .sw{width:38px;height:22px;border-radius:11px;background:#e8590c;position:relative;flex:none;transition:background .15s}.ein-tog .sw::after{content:'';position:absolute;top:3px;left:19px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
 .ein-tog.off .sw{background:#c9d2df}.ein-tog.off .sw::after{left:3px}
 .ein-dots{display:inline-flex;gap:3px;flex:none}.ein-dots b{width:7px;height:7px;border-radius:50%;background:#d5dde9}.ein-dots b.dv{background:#2f5f9b}.ein-dots b.dg{background:#6b8fc4}.ein-dots b.dt{background:#e8590c}.ein-dots b.dw{background:#9db4d6}
@@ -4381,7 +4382,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  const view=document.createElement('div');view.id='einView';grid.append(view);
  let on=false,sel=null,q='',sideOpen=false;
  function mode(v){on=!!v;document.documentElement.classList.toggle('cm-unterricht',on);if(on){sel=null;q='';sideOpen=false;render()}}
- window.classroomEinheiten={mode,show:()=>mode(true),hide:()=>mode(false),get on(){return on}};
+ window.classroomEinheiten={mode,show:()=>mode(true),hide:()=>mode(false),get on(){return on},/* 11.43: von einer Nadel aus öffnen */open:async id=>{sel=id;await render()},pinId:()=>on&&cx&&sel?'ein|'+cx.subject+'|'+cx.classId+'|'+sel:null};
  /* Kontext der Lerngruppe (der Noten-Manager führt; der Sitzplan folgt ihm) */
  function ctx(){const b=B();let c={};try{c=b?.context()||{}}catch{}const lab=c.label||'';const m=/(\d{1,2})\s*[a-zäöü]?\s*$/i.exec(lab)||/(\d{1,2})/.exec(lab);
   return {subject:c.subject||'',label:lab,short:lab.replace(/^Klasse\s+/i,''),classId:c.classId||'',jg:m?+m[1]:0,key:(c.subject||'')+'::'+(c.classId||'')}}
@@ -4392,8 +4393,10 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  /* Stand = aktuelle Lektion/Einheit dieser Lerngruppe */
  const items=()=>cx.subject==='latein'?data.lessons.map(l=>'l:'+l.k):cx.subject==='erdkunde'?data.units.map(u=>'u:'+u.u):[];
  function stand(){const s=rd(STAND)[cx.key];if(s&&items().includes(s))return s;
-  if(cx.subject==='erdkunde'){const u=data.units.find(x=>x.jg===cx.jg)||data.units[0];return u?'u:'+u.u:''}
-  if(cx.subject==='latein'){const ls=data.lessons.filter(l=>l.jg===cx.jg);const best=ls.filter(l=>blocks(l)).at(-1)||ls[0]||data.lessons[0];return best?'l:'+best.k:''}return ''}
+  /* 11.43: nur Inhalte dieser Lerngruppe (Fach + Jahrgang) – sonst nichts vorwählen */
+  const v=visIds();if(cx.subject==='erdkunde')return v[0]||'';
+  if(cx.subject==='latein'){const ls=data.lessons.filter(l=>l.jg===cx.jg);const best=ls.filter(l=>blocks(l)).at(-1)||ls[0];return best?'l:'+best.k:''}return ''}
+ const visIds=()=>cx.subject==='latein'?data.lessons.filter(l=>l.jg===cx.jg).map(l=>'l:'+l.k):cx.subject==='erdkunde'?data.units.filter(u=>u.subject!=='latein'&&u.jg===cx.jg).map(u=>'u:'+u.u):[];
  const setStand=v=>{const s=rd(STAND);if(v)s[cx.key]=v;else delete s[cx.key];wr(STAND,s)};
  const isStand=id=>rd(STAND)[cx.key]===id;
  const find=id=>id?.startsWith('l:')?{l:data.lessons.find(x=>x.k===id.slice(2))}:id?.startsWith('u:')?{u:data.units.find(x=>x.u===id.slice(2))}:{};
@@ -4401,7 +4404,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  /* 11.26: festes Seitenmenü (Breite per Schieber), Schalter „Aktuelle Lektion“, Punkte je Baustein, Suche nach Thema */
  async function render(){if(!on)return;cx=ctx();data=await load();
   if(!data){view.innerHTML='<div class="ein-body ein-empty">Der Unterricht ist gerade nicht erreichbar. Öffne einmal „Noten“ und versuche es erneut.</div>';return}
-  {const f=find(sel);if(!f.l&&!f.u)sel=stand()}draw()}
+  {const f=find(sel);if((!f.l&&!f.u)||!visIds().includes(sel))sel=stand()}draw()}
  /* 11.28: Buchstaben-Chips (V · G · Ü · W) in der Zeile unter dem Lektionstitel – kräftig = vorhanden, blass = fehlt noch */
  const chips=l=>'<span class="ein-chips">'+[['V',l.nV,'Vokabeln'],['G',l.gr.length,'Grammatik'],['Ü',l.tt.length,'Übersetzungs-Trainer','t'],['W',l.nW,'Wiederholung']].map(([c,n,t,o])=>'<i class="'+(n?(o?'on t':'on'):'')+'" title="'+t+(n?'':' – fehlt noch')+'">'+c+'</i>').join('')+'</span>';
  /* 11.29: Themen aus dem Inhaltsverzeichnis unter dem Lektionstitel (ohne Inhaltsverzeichnis: Grammatik-Themen) */
@@ -4416,22 +4419,20 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  const GLP='<em class="gl-pill" title="Digitale Lerneinheit „Grundlagen“ (AFB I): Wissen aufbauen mit Wischen, Ziehen und Antippen"><i></i>Grundlagen</em>';
  const rowU=u=>'<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>'+esc(u.title)+(u.gl?GLP:'')+'</span>'+(isStand('u:'+u.u)?'<span class="stand">aktuell</span>':'')+'</button>';
  const norm=x=>String(x||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9äöüß]+/g,' ').trim();
- function treeHtml(){const subj=SUBJ[cx.subject]||'',known=cx.subject in {latein:1,erdkunde:1},showAll=ui.all||!known,latOk=showAll||cx.subject==='latein',ekOk=showAll||cx.subject==='erdkunde';
-  if(q.trim()){const t=norm(q),hit=x=>norm(x).includes(t);let out='';
-   for(const l of data.lessons){const T=l.toc||{},why=[T.syn,T.form,T.wort,...(T.textk||[]),...(T.kult||[]),T.text,T.sach,...l.gr,...l.formen,l.syntax,...l.tt.map(x=>x.hunt)].filter(Boolean).find(hit);if(hit(lname(l))||hit(l.label)||why)out+='<button type="button" class="ein-row'+(sel==='l:'+l.k?' on':'')+'" data-sel="l:'+esc(l.k)+'"><span>Latein · '+esc(lname(l))+(why&&!hit(lname(l))?'<small class="why">'+esc(why)+'</small>':'')+'</span></button>'}
-   for(const u of data.units.filter(u=>u.subject!=='latein'))if(hit(u.title)||hit(u.sub))out+='<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>Erdkunde · '+esc(u.title)+(u.gl?GLP:'')+'</span></button>';
-   return out||'<div class="ein-empty" style="padding:8px">Nichts gefunden.</div>'}
-  const {l:selL,u:selU}=find(sel);const openNow=new Set(openJg);if(cx.jg)openNow.add(cx.jg);if(selL)openNow.add(selL.jg);if(selU)openNow.add(selU.jg);
-  const jgs=[...new Set([...(latOk?data.lessons.map(l=>l.jg):[]),...(ekOk?data.units.filter(u=>u.subject!=='latein').map(u=>u.jg):[])])].sort((a,b)=>(b===cx.jg)-(a===cx.jg)||a-b);let tree='';
-  for(const jg of jgs){const mine=jg===cx.jg;
-   if(latOk){const ls=data.lessons.filter(l=>l.jg===jg);if(ls.length){if(openNow.has(jg))tree+='<div class="ein-jg">Jahrgang '+jg+' · Latein</div>'+ls.map(rowL).join('');
-    else tree+=(tree.includes('data-jgh')||mine?'':'<div class="ein-jg" data-jgh>Andere Jahrgänge</div>')+'<button type="button" class="ein-row dim" data-jg="'+jg+'"><span>Jg. '+jg+' · Latein '+esc(ls[0].tag)+' – '+esc(ls.at(-1).tag)+'</span><small>›</small></button>'}}
-   if(ekOk){const us=data.units.filter(u=>u.jg===jg&&u.subject!=='latein');if(us.length)tree+='<div class="ein-jg">Jahrgang '+jg+' · Erdkunde</div>'+us.map(rowU).join('')}}
-  return tree+(known?'<div class="ein-foot">'+(ui.all?'<a data-all>nur '+esc(subj)+'</a> · alle Fächer':'nur '+esc(subj)+' · <a data-all>alle Fächer</a>')+'</div>':'')}
+ /* 11.43: Seitenmenü zeigt nur die Inhalte der gewählten Lerngruppe (Fach + Jahrgang), keine anderen Klassen oder Fächer */
+ function treeHtml(){const subj=SUBJ[cx.subject]||cx.subject||'',ids=visIds(),t=norm(q);
+  const L=ids.map(id=>find(id)).filter(x=>{if(!t)return true;if(x.l){const l=x.l,T=l.toc||{};return [lname(l),l.label,T.syn,T.form,T.wort,...(T.textk||[]),...(T.kult||[]),T.text,T.sach,...l.gr,...l.formen,l.syntax].filter(Boolean).some(v=>norm(v).includes(t))}return norm(x.u.title+' '+x.u.sub).includes(t)});
+  if(!ids.length)return '<div class="ein-empty" style="padding:8px">Für die '+esc(cx.short||'Lerngruppe')+(subj?' ('+esc(subj)+')':'')+' sind noch keine Einheiten vorhanden.</div>';
+  if(!L.length)return '<div class="ein-empty" style="padding:8px">Nichts gefunden.</div>';
+  return '<div class="ein-jg">Jahrgang '+cx.jg+' · '+esc(subj)+'</div>'+L.map(x=>x.l?rowL(x.l):rowU(x.u)).join('')}
  function wireTree(){const T=view.querySelector('.ein-list');
   T.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{sel=b.dataset.sel;sideOpen=false;draw()});
   T.querySelectorAll('[data-jg]').forEach(b=>b.onclick=()=>{openJg.add(+b.dataset.jg);T.innerHTML=treeHtml();wireTree()});
-  T.querySelector('[data-all]')?.addEventListener('click',()=>{ui.all=!ui.all;saveUi();T.innerHTML=treeHtml();wireTree()})}
+  }
+ /* 11.43: Nadel rechts neben „Aktuelle Einheit“ – heftet diese Lektion/Einheit für die Lerngruppe an (Menü oben neben „?“) */
+ const PINI='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path class="pp" d="M9 3h6l-1 6 4 3v2H6v-2l4-3z"/><path d="M12 14v7"/></svg>';
+ function pinObj(l,u,cls,subj){return {kind:'ein',sel,s:cx.subject,c:cx.classId,cls,subj:'Unterricht · '+subj,page:l?lname(l):u.title,topic:'',id:'ein|'+cx.subject+'|'+cx.classId+'|'+sel}}
+ function pinBtn(l,u,cls,subj){const P=top()?.classroomPins;if(!P?.has||!cx.key)return '';const on=P.has('ein|'+cx.subject+'|'+cx.classId+'|'+sel);return '<button type="button" class="ein-pinb'+(on?' on':'')+'" data-pinb title="'+(on?'Angeheftet – tippen zum Lösen':'Diese '+(l?'Lektion':'Einheit')+' anheften (oben über die Nadel neben „?“ wieder öffnen)')+'" aria-pressed="'+on+'">'+PINI+'</button>'}
  function draw(){const {l,u}=find(sel),cls=cx.short||'—',subj=SUBJ[cx.subject]||cx.subject||'';
   const title=l?esc(l.label)+(l.name?' · '+esc(l.name):''):u?esc(u.title)+(u.gl?GLP:''):'';const st=isStand(sel);
   view.style.setProperty('--ein-w',(ui.w||290)+'px');view.classList.toggle('side-open',sideOpen);
@@ -4439,14 +4440,15 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    +'<div class="ein-sacts"><button type="button" class="ein-b" data-load title="Paket (.cmpaket), Latein-Datenbank, Übersetzungs-Trainer-Dateien (.cmtext), Lerneinheiten (.cmeinheit) oder ein Zip – wird zusammengeführt">Paket laden …</button><button type="button" class="ein-b" data-exp>Exportieren …</button></div></div>'
    +'<div class="ein-handle" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Seitenmenü breiter oder schmaler ziehen" title="Ziehen: Seitenmenü breiter oder schmaler · Doppelklick: Standardbreite"><span class="sp-side-pill" aria-hidden="true">⋮</span><span class="sp-side-line" aria-hidden="true"></span><span class="sp-side-badge" aria-hidden="true"></span></div>'
    +'<div class="ein-main"><button type="button" class="ein-pick" data-pick>☰ '+(l?esc(lname(l)):u?esc(u.title):'Einheit wählen')+' ▾</button>'
-   +(l||u?'<div class="ein-mh"><h2>'+title+'</h2><span class="sp"></span>'+(cx.key&&items().includes(sel)?'<label class="ein-tog'+(st?'':' off')+'" title="Eingeschaltet: „Unterricht“ öffnet für die '+esc(cls)+' automatisch diese '+(l?'Lektion':'Einheit')+'"><input type="checkbox" data-stand'+(st?' checked':'')+'><span class="sw"></span>Aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+'</label>':cx.key?'<span class="ein-tog off" style="cursor:default" title="„Aktuell“ gilt je Lerngruppe. Wechsle in eine '+(l?'Latein':'Erdkunde')+'-Klasse, um diese '+(l?'Lektion':'Einheit')+' dort als aktuell zu markieren.">„Aktuell“ nur in einer '+(l?'Latein':'Erdkunde')+'-Klasse · gewählt: '+esc(cls)+' · '+esc(subj)+'</span>':'')+'</div>'
+   +(l||u?'<div class="ein-mh"><h2>'+title+'</h2><span class="sp"></span>'+(cx.key&&items().includes(sel)?'<span class="ein-togw"><label class="ein-tog'+(st?'':' off')+'" title="Eingeschaltet: „Unterricht“ öffnet für die '+esc(cls)+' automatisch diese '+(l?'Lektion':'Einheit')+'"><input type="checkbox" data-stand'+(st?' checked':'')+'><span class="sw"></span>Aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+'</label>'+pinBtn(l,u,cls,subj)+'</span>':cx.key?'<span class="ein-tog off" style="cursor:default" title="„Aktuell“ gilt je Lerngruppe. Wechsle in eine '+(l?'Latein':'Erdkunde')+'-Klasse, um diese '+(l?'Lektion':'Einheit')+' dort als aktuell zu markieren.">„Aktuell“ nur in einer '+(l?'Latein':'Erdkunde')+'-Klasse · gewählt: '+esc(cls)+' · '+esc(subj)+'</span>':'')+'</div>'
      +(l?tocHtml(l)+lessonTiles(l):'<p class="ein-sub">'+esc(u.sub)+' · Jahrgang '+u.jg+'</p>'+unitTiles(u))
-    :'<div class="ein-empty">Für '+esc(subj||'dieses Fach')+' gibt es noch keine Einheiten. Links findest du alles, was geladen ist („alle Fächer“).</div>')+'</div>';
+    :'<div class="ein-empty">Für die '+esc(cls)+(subj?' ('+esc(subj)+')':'')+' sind noch keine Einheiten vorhanden.</div>')+'</div>';
   wireTree();
   const qi=view.querySelector('.ein-q');qi.oninput=()=>{q=qi.value;const T=view.querySelector('.ein-list');T.innerHTML=treeHtml();wireTree()};
   view.querySelector('[data-load]').onclick=loadPkg;view.querySelector('[data-exp]').onclick=exportPkg;
   view.querySelector('[data-pick]').onclick=()=>{sideOpen=!sideOpen;view.classList.toggle('side-open',sideOpen)};
   view.querySelector('[data-stand]')?.addEventListener('change',e=>{setStand(e.target.checked?sel:null);draw()});
+  view.querySelector('[data-pinb]')?.addEventListener('click',()=>{const {l,u}=find(sel),P=top()?.classroomPins;if(!P)return;P.toggleObj(pinObj(l,u,cx.short||'—',SUBJ[cx.subject]||cx.subject||''));draw();P.render?.()});
   /* 11.27: derselbe Griff wie im Sitzplan (Pille ⋮, beim Ziehen blaue Linie und Größenschild, Doppelklick = Standard) */
   const h=view.querySelector('.ein-handle'),bd=h.querySelector('.sp-side-badge'),W0=290,pct=w=>Math.round(w/W0*100)+' %',setW=w=>{ui.w=Math.max(200,Math.min(560,Math.round(w)));view.style.setProperty('--ein-w',ui.w+'px');bd.textContent=pct(ui.w)};
   h.onpointerdown=e=>{if(e.button>0)return;e.preventDefault();try{h.setPointerCapture(e.pointerId)}catch{}const x0=e.clientX,w0=ui.w||W0;view.classList.add('ein-dragging');document.documentElement.classList.add('ein-dragging');bd.textContent=pct(w0);
@@ -4454,7 +4456,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    h.onpointerup=h.onpointercancel=()=>{h.onpointermove=null;h.onpointerup=null;h.onpointercancel=null;view.classList.remove('ein-dragging');document.documentElement.classList.remove('ein-dragging');saveUi()}};
   h.ondblclick=e=>{e.preventDefault();setW(W0);saveUi()};
   h.onkeydown=e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();setW((ui.w||W0)+(e.key==='ArrowRight'?36:-36));saveUi()}};
-  wire();prefetchAir()}
+  wire();prefetchAir();try{top()?.classroomPins?.render?.()}catch{}}
  const tile=(ic,cls,t,s,acts,off)=>'<div class="ein-tile '+cls+(off?' off':'')+'"><i>'+ic+'</i><b>'+t+'</b><small>'+s+'</small>'+(acts?'<div class="ein-acts">'+acts+'</div>':'')+'</div>';
  const btn=(d,k,t,c)=>'<button type="button" '+(c?'class="'+c+'" ':'')+'data-do="'+d+'" data-k="'+esc(k)+'">'+(c==='look'?'👁 ':'')+t+'</button>';
  function lessonTiles(l){const k=l.k,tt=l.tt[0];
