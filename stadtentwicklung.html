@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f6f8fc"><meta name="robots" content="noindex">
+<title>Städte im Wandel – Braunschweig</title>
+<!-- 11.12: Lerneinheit des Classroom-Managers (Erdkunde). Alle Karten sind eigene, vereinfachte Zeichnungen; alle Texte eigene Formulierungen.
+     Läuft nach dem Laden ohne Internet; nichts wird an einen Server geschickt. -->
+<style>
+:root{--blue:#2f5f9b;--ink:#243247;--mut:#66758a;--line:#dce3ef;--bg:#f6f8fc;--ok:#1f8a4c;--okbg:#e5f5ea;--bad:#c2410c;--badbg:#fdeee6;--m:#2f5f9b;--f:#7c3aed;--i:#b45309;--h:#1f8a4c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Segoe UI",sans-serif}
+body{padding:max(14px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left))}
+.wrap{max-width:1080px;margin:0 auto}button{font:inherit;color:inherit;cursor:pointer}
+h1{font-size:1.55rem;margin:4px 0 0}h2{font-size:1.2rem;margin:0 0 6px}.muted{color:var(--mut)}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:14px}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:12px}.top .sp{flex:1}
+.back{min-height:44px;padding:0 14px;border:1px solid #b9c6da;border-radius:10px;background:#fff;color:var(--blue)}
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;align-items:center}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:6px}
+.step{display:flex;gap:12px;align-items:center;min-height:78px;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:#fff;text-align:left}
+.step:hover{background:#f4f8fe}.step .n{flex:none;width:40px;height:40px;border-radius:12px;background:#eaf0fa;color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800}.step b{display:block}.step small{color:var(--mut)}.step .st{margin-left:auto;flex:none;font-size:.85rem;color:var(--mut)}.step .st.done{color:var(--ok);font-weight:700}
+.map{width:100%;height:auto;display:block;border-radius:14px;background:#f3ecd8;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.map text{font:600 11px -apple-system,Inter,sans-serif;fill:#3d4a5c;pointer-events:none}.map .big{font-size:13px;font-weight:800}
+.era{opacity:0;transition:opacity .45s}.era.on{opacity:1}
+.hot{cursor:pointer}.hot circle.hc{fill:#fff;stroke:var(--blue);stroke-width:2.5}.hot text.ht{fill:var(--blue);font-size:12px;font-weight:800;text-anchor:middle}
+.hot.seen circle.hc{fill:var(--blue)}.hot.seen text.ht{fill:#fff}
+.slider{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}.slider button{min-height:54px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:700;color:var(--mut)}.slider button small{display:block;font-weight:500;font-size:.75rem}.slider button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+input[type=range]{width:100%;margin:14px 0 2px;accent-color:var(--blue);height:30px}
+.info{min-height:120px;padding:14px 16px;border-radius:14px;background:#eef3fa;border:1px solid #d3e0f2}.info b{color:var(--blue)}
+.two{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;align-items:start}
+.cols{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}.col{min-height:210px;padding:10px;border:2px dashed #cfd8e6;border-radius:14px;background:#fbfcfe;display:flex;flex-direction:column;gap:6px}.col.tgt{border-color:var(--blue);background:#f1f6fd}.col h3{margin:0 0 4px;font-size:.85rem;color:var(--c);text-transform:uppercase;letter-spacing:.4px}
+.pool{display:flex;flex-wrap:wrap;gap:8px}.chip{min-height:46px;padding:6px 14px;border:1px solid #cfd8e6;border-radius:12px;background:#fff;font-weight:600;font-size:.95rem;text-align:left}.chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}.chip.ok{background:var(--okbg);border-color:#7cc69a;color:var(--ok)}.chip.no{background:var(--badbg);border-color:#f0a982;color:var(--bad)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}.row .sp{flex:1}
+.pri{min-height:48px;padding:0 20px;border:0;border-radius:12px;background:var(--blue);color:#fff;font-weight:650}.pri:disabled{opacity:.4}
+.sec{min-height:48px;padding:0 16px;border:1px solid #b9c6da;border-radius:12px;background:#fff;color:var(--blue)}
+.fb{margin-top:12px;padding:10px 14px;border-radius:12px;font-weight:600}.fb.ok{background:var(--okbg);color:var(--ok)}.fb.no{background:var(--badbg);color:var(--bad)}.fb.info{background:#eef3fa;color:#2f4f7a}
+.opt{display:block;width:100%;min-height:52px;margin:0 0 8px;padding:10px 14px;border:1px solid #cfd8e6;border-radius:12px;background:#fff;text-align:left;font-size:1rem}.opt.ok{background:var(--okbg);border-color:#7cc69a;color:var(--ok);font-weight:700}.opt.no{background:var(--badbg);border-color:#f0a982;color:var(--bad)}
+.ev{display:flex;align-items:center;gap:10px;min-height:54px;margin:0 0 8px;padding:8px 10px 8px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}.ev .tx{flex:1}.ev .yr{flex:none;font-weight:800;color:var(--ok);min-width:70px;text-align:right}.ev button{flex:none;width:42px;height:42px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--blue)}.ev.ok{background:var(--okbg);border-color:#7cc69a}.ev.no{background:var(--badbg);border-color:#f0a982}
+.prog{display:flex;align-items:center;gap:10px;margin-bottom:10px;color:var(--mut);font-size:.9rem}.bar{flex:1;height:8px;border-radius:4px;background:#e6ebf3;overflow:hidden}.bar i{display:block;height:100%;background:var(--blue)}
+.find{position:relative}.find .ping{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;border:3px solid var(--bad);pointer-events:none}.find .ping.ok{border-color:var(--ok);background:#1f8a4c33}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#fff4e0;color:#8a5a00;font-weight:700}
+textarea{width:100%;min-height:90px;padding:12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit}
+#printBox{display:none}
+@media (max-width:820px){.hero,.two{grid-template-columns:1fr}.cols{grid-template-columns:repeat(2,1fr)}}
+@media print{@page{margin:14mm}body{background:#fff;padding:0}.wrap{display:none}#printBox{display:block;font:11pt/1.45 -apple-system,Inter,sans-serif;color:#000}#printBox h1{font-size:18pt;margin:0 0 4px}#printBox h2{font-size:12.5pt;color:#2f5f9b;border-bottom:1px solid #c9d3e3;margin:14px 0 6px}#printBox .map{max-width:520px}#printBox table{border-collapse:collapse;width:100%}#printBox td,#printBox th{border:1px solid #c9d3e3;padding:4px 6px;font-size:10pt;vertical-align:top}.urk{border:2px solid #2f5f9b;border-radius:10px;padding:10px 14px;margin-top:12px}}
+</style></head><body><div class="wrap" id="app"></div><div id="printBox"></div>
+<script>
+'use strict';
+const $=s=>document.querySelector(s),app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+let ac=null;const beep=ok=>{try{ac??=new (window.AudioContext||window.webkitAudioContext)();const g=ac.createGain(),o=ac.createOscillator();o.frequency.value=ok?880:240;g.gain.value=.05;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.12)}catch{}};
+const KEY='cm-stadt-bs-v1';let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch{}const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ST))}catch{}};
+const ERAS=[['1400','Mittelalter','m'],['1775','Frühe Neuzeit','f'],['1875','Industrialisierung','i'],['heute','Nach 1945 · heute','h']];
+/* ---------- Eigene schematische Karte (vereinfacht, nicht maßstäblich) ---------- */
+const STAR=(()=>{const pts=[];for(let i=0;i<24;i++){const a=i/24*Math.PI*2-Math.PI/2,r=i%2?150:182;pts.push([300+Math.cos(a)*r*0.92,220+Math.sin(a)*r*1.08])}return pts.map(p=>p.map(Math.round).join(',')).join(' ')})();
+function mapSvg(o={}){const L=o.labels!==false;const t=(x,y,s,c)=>L?'<text x="'+x+'" y="'+y+'" class="'+(c||'')+'">'+s+'</text>':'';
+ const houses=(x0,y0,w,h,step,col)=>{let r='';for(let x=x0;x<x0+w;x+=step)for(let y=y0;y<y0+h;y+=step)r+='<rect x="'+x+'" y="'+y+'" width="'+(step-4)+'" height="'+(step-4)+'" rx="1.5" fill="'+col+'"/>';return r};
+ return '<svg class="map" viewBox="0 0 600 440" role="img" aria-label="Vereinfachte Karte einer Stadt am Fluss">'
+ +'<rect width="600" height="440" fill="#f3ecd8"/>'
+ /* heute: Umland mit Siedlungen, Autobahn, Fachmarkt */
+ +'<g class="era" data-from="3">'+houses(20,20,110,90,14,'#e8c3bb')+houses(470,330,110,90,14,'#e8c3bb')+houses(20,330,90,60,14,'#e8c3bb')+'<rect x="30" y="395" width="70" height="34" rx="4" fill="#b99a6a"/>'+t(36,416,'Fachmarkt')+'<path d="M8 0 L8 440" stroke="#9aa6b6" stroke-width="9"/><path d="M8 0 L8 440" stroke="#fff" stroke-width="1.5" stroke-dasharray="8 8"/>'+'<text x="22" y="312" transform="rotate(-90 22 312)">Autobahn</text>'+'</g>'
+ /* 1875: Gründerzeit-Viertel (Raster), Industrie im Osten, Villen im Westen, Bahn */
+ +'<g class="era" data-from="2">'+houses(470,40,110,140,16,'#e9a79c')+t(478,34,'Mietskasernen')+'<rect x="470" y="200" width="115" height="110" fill="#c9b6e4"/>'+houses(478,208,100,96,24,'#a58bd0')+t(480,326,'Industrie')
+ +houses(40,140,90,120,22,'#f0c9c1')+'<g fill="#bfdcae">'+[0,1,2,3,4].map(i=>'<circle cx="'+(52+i*18)+'" cy="'+(270)+'" r="6"/>').join('')+'</g>'+t(40,132,'Villenviertel')
+ +'<path d="M600 300 L440 380 L330 440" stroke="#5b6573" stroke-width="5" fill="none"/><path d="M600 300 L440 380 L330 440" stroke="#fff" stroke-width="2" stroke-dasharray="6 6" fill="none"/><rect x="420" y="368" width="44" height="18" rx="3" fill="#5b6573"/>'+t(470,398,'Bahnhof')+'</g>'
+ /* Fluss mit zwei Armen um die Altstadt */
+ +'<path d="M300 0 L300 34 C190 62 140 160 160 250 C178 334 236 392 300 412 L300 440" stroke="#8ec5e8" stroke-width="12" fill="none"/><path d="M300 34 C414 70 462 160 442 250 C426 334 362 392 300 412" stroke="#8ec5e8" stroke-width="12" fill="none"/>'+t(306,18,'Fluss')
+ /* 1775: Festung mit Bastionen und Graben – verschwindet ab 1875 */
+ +'<g class="era" data-from="1" data-until="1"><polygon points="'+STAR+'" fill="#cfe7f5" stroke="#8ec5e8" stroke-width="14"/><polygon points="'+STAR+'" fill="none" stroke="#6b5b3e" stroke-width="5"/>'+t(470,120,'Festungsanlage')+'</g>'
+ /* ab 1875: Promenade/Grünring auf der alten Festung, heute mit Ringstraße */
+ +'<g class="era" data-from="2"><ellipse cx="300" cy="220" rx="150" ry="182" fill="none" stroke="#a9d39a" stroke-width="18"/>'+t(410,64,'Grünring')+'</g>'
+ +'<g class="era" data-from="3"><ellipse cx="300" cy="220" rx="150" ry="182" fill="none" stroke="#9aa6b6" stroke-width="6"/>'+t(410,78,'Ringstraße')+'</g>'
+ /* Altstadt: Wohnbebauung */
+ +'<ellipse cx="300" cy="220" rx="118" ry="150" fill="#f2b8b0"/>'+houses(205,95,190,250,12,'#eaa59b')
+ /* Mittelalter: Stadtmauer mit Toren – verschwindet ab 1875 */
+ +'<g class="era" data-from="0" data-until="1"><ellipse cx="300" cy="220" rx="118" ry="150" fill="none" stroke="#3d3a36" stroke-width="4"/>'+[[300,70],[402,150],[402,290],[300,370],[198,220]].map(([x,y])=>'<rect x="'+(x-7)+'" y="'+(y-7)+'" width="14" height="14" fill="#3d3a36"/>').join('')+t(180,70,'Stadtmauer mit Toren')+'</g>'
+ /* Straßen vom Markt zu den Toren */
+ +'<g stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"><path d="M268 205 L300 70"/><path d="M268 205 L402 150"/><path d="M268 205 L402 290"/><path d="M268 205 L300 370"/><path d="M268 205 L198 220"/></g>'
+ /* Kern: Markt mit Rathaus und Kirche, Burg, Dom */
+ +'<rect x="252" y="192" width="32" height="26" rx="3" fill="#fff8e6" stroke="#c49a3a" stroke-width="2"/><rect x="258" y="198" width="10" height="10" fill="#d1453b"/><path d="M276 196 l4 -7 l4 7 z" fill="#7a5aa6"/>'+t(232,186,'Markt','big')
+ +'<rect x="320" y="200" width="26" height="22" fill="#d1453b"/>'+t(318,194,'Burg','big')+'<path d="M330 232 h22 v18 h-22 z M341 222 l6 10 h-12 z" fill="#7a5aa6"/>'+t(320,266,'Dom')
+ /* Frühe Neuzeit: Residenzschloss mit Park */
+ +'<g class="era" data-from="1" data-until="2"><rect x="360" y="262" width="36" height="20" fill="#d1453b"/><rect x="352" y="286" width="50" height="26" rx="6" fill="#a9d39a"/>'+t(352,326,'Residenzschloss')+'</g>'
+ +'<g class="era" data-from="3"><rect x="360" y="262" width="36" height="20" fill="#b99a6a"/>'+t(340,300,'Einkaufszentrum')+'</g>'
+ /* heute: Fußgängerzone und Parkhäuser */
+ +'<g class="era" data-from="3"><path d="M268 205 L300 120 M268 205 L360 175 M268 205 L300 300" stroke="#4aa3df" stroke-width="5" stroke-dasharray="2 6" stroke-linecap="round" fill="none"/>'+[[238,128],[384,206],[236,310]].map(([x,y])=>'<rect x="'+(x-9)+'" y="'+(y-9)+'" width="18" height="18" rx="4" fill="#2f5f9b"/><text x="'+x+'" y="'+(y+4)+'" style="fill:#fff;font-size:12px;font-weight:800;text-anchor:middle">P</text>').join('')+t(188,140,'Parkhaus')+t(222,124,'')+'</g>'
+ +(o.hot?HOTS.map((h,i)=>'<g class="hot era" data-from="'+h.from+'" data-until="'+(h.until??3)+'" data-h="'+i+'"><circle class="hc" cx="'+h.x+'" cy="'+h.y+'" r="13"/><text class="ht" x="'+h.x+'" y="'+(h.y+4)+'">i</text></g>').join(''):'')
+ +'</svg>'}
+const HOTS=[
+ {x:246,y:238,from:0,t:'Markt mit Rathaus und Kirche',d:'Das Zentrum der mittelalterlichen Stadt. Hier wurde gehandelt; Rathaus und Hauptkirche zeigen Macht und Bedeutung der Bürger. Von hier führen die Straßen zu den Stadttoren.'},
+ {x:366,y:200,from:0,t:'Burg am Flussübergang',d:'Städte entstanden oft an Furten, Handelswegen oder bei Burgen. In Braunschweig liegen Burg (Burgplatz) und Dom eng beieinander – der Burgplatz ist noch heute zu sehen.'},
+ {x:198,y:196,from:0,until:1,t:'Stadtmauer und Tore',d:'Die Mauer schützte die Stadt. Wer hinein wollte, musste durch ein Tor – dort wurde oft auch Zoll verlangt. Innen war es eng: dichte Bebauung, schmale Gassen.'},
+ {x:448,y:150,from:1,until:1,t:'Festung mit Bastionen',d:'In der Frühen Neuzeit gab es viele Kriege und Kanonen. Mittelalterliche Mauern reichten nicht mehr – die Städte bauten sternförmige Festungen mit Wällen und Wassergräben.'},
+ {x:414,y:272,from:1,until:2,t:'Residenzschloss',d:'Wurde eine Stadt Sitz eines Fürsten, entstanden Schloss, Park, Theater, Kasernen und Zeughaus. Braunschweig wurde so zur Residenzstadt.'},
+ {x:420,y:44,from:2,t:'Promenade statt Festung',d:'Als die Festungen überflüssig wurden, legte man auf den Wällen Grünanlagen und Promenaden an. Daraus wurde später oft eine Ringstraße – sie zeigt bis heute, wo die Stadt einmal endete.'},
+ {x:540,y:214,from:2,t:'Industrie im Osten',d:'Fabriken lagen meist im Osten, weil der Wind in Mitteleuropa meist von Westen weht – so zogen Rauch und Abgase von der Stadt weg.'},
+ {x:440,y:398,from:2,t:'Bahnhof und Eisenbahn',d:'Mit der Eisenbahn kamen Rohstoffe, Waren und Menschen in die Stadt. Braunschweig hatte schon 1838 eine der ersten Staatsbahnen Deutschlands.'},
+ {x:520,y:110,from:2,t:'Mietskasernen',d:'Viele Menschen zogen zum Arbeiten in die Städte. Für sie entstanden dicht bebaute Viertel mit Blockrandbebauung und geradem Straßenraster.'},
+ {x:86,y:206,from:2,t:'Villenviertel',d:'Wohlhabende Familien bauten Villen mit Gärten – meist im Westen, wo die Luft sauberer war.'},
+ {x:300,y:150,from:3,t:'Fußgängerzone',d:'Nach dem Zweiten Weltkrieg wurden viele Innenstädte autogerecht wieder aufgebaut. Später machte man die Einkaufsstraßen zu Fußgängerzonen, umgeben von Parkhäusern.'},
+ {x:66,y:384,from:3,t:'Stadtrand und Umland',d:'Mit dem Auto zogen viele Menschen ins Umland (Suburbanisierung). Am Stadtrand entstanden große Fachmärkte, Gewerbegebiete und Wohnsiedlungen.'}];
+function setEra(root,n){root.querySelectorAll('.era').forEach(g=>{const f=+g.dataset.from,u=g.dataset.until!=null?+g.dataset.until:3;g.classList.toggle('on',n>=f&&n<=u)})}
+/* ---------- Startseite ---------- */
+const STEPS=[['zeit','Zeitreise','Regler ziehen – sieh zu, wie die Stadt wächst',()=>runZeit()],['sort','Phasen-Detektiv','Merkmale den vier Phasen zuordnen',()=>runSort()],['find','Karte lesen','Orte auf der Karte finden',()=>runFind()],['quiz','Warum dort?','Gründe verstehen',()=>runQuiz()],['line','Zeitstrahl','Ereignisse ordnen',()=>runLine()],['end','Meine Stadtforscher-Urkunde','Ergebnis sichern (PDF)',()=>runEnd()]];
+function home(){const st=k=>ST[k]?'<span class="st done">'+(ST[k].p!=null?ST[k].p+'/'+ST[k].t:'✓')+'</span>':'<span class="st">'+(k==='end'?'':'offen')+'</span>';
+ app.innerHTML='<div class="card hero"><div><div class="muted">Erdkunde · Städte im Wandel</div><h1>Wie Braunschweig gewachsen ist</h1><p>Vom Markt mit Stadtmauer bis zur Fußgängerzone: In jeder Stadt stecken Spuren aus vielen Jahrhunderten. Reise durch vier Zeitabschnitte und werde Stadtforscherin oder Stadtforscher!</p><span class="badge">⭐ '+Object.keys(ST).filter(k=>ST[k]).length+' von 6 Stationen</span></div><div id="heroMap">'+mapSvg({labels:false})+'</div></div>'
+  +'<div class="steps">'+STEPS.map(([k,t,d],i)=>'<button class="step" data-s="'+k+'"><span class="n">'+(i+1)+'</span><span><b>'+t+'</b><small>'+d+'</small></span>'+st(k)+'</button>').join('')+'</div>';
+ setEra($('#heroMap'),3);app.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>STEPS.find(x=>x[0]===b.dataset.s)[3]());scrollTo(0,0)}
+function frame(title,inner){app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+esc(title)+'</b></div>'+inner;app.querySelector('[data-home]').onclick=home;scrollTo(0,0)}
+/* ---------- 1 Zeitreise ---------- */
+function runZeit(){let era=0;const seen=new Set();
+ frame('Zeitreise','<div class="two"><div class="card"><div id="m">'+mapSvg({hot:true})+'</div><input type="range" min="0" max="3" step="1" value="0" id="rg" aria-label="Zeit"><div class="slider">'+ERAS.map(([y,l],i)=>'<button data-e="'+i+'">'+y+'<small>'+l+'</small></button>').join('')+'</div></div><div><div class="card info" id="inf"><b>So geht’s:</b> Ziehe den Regler oder tippe auf ein Jahr. Tippe dann auf die <b>i</b>-Punkte in der Karte.</div><div class="card"><div class="muted" style="font-size:.9rem">Entdeckt: <b id="cnt">0</b> von '+HOTS.length+'</div><div class="bar" style="margin-top:6px"><i id="cb" style="width:0"></i></div><div class="hint muted" style="margin-top:8px;font-size:.9rem">Achte darauf, was in jeder Zeit <b>neu dazukommt</b> – und was <b>verschwindet</b>.</div></div></div></div>');
+ const m=$('#m'),upd=()=>{setEra(m,era);$('#rg').value=era;app.querySelectorAll('[data-e]').forEach(b=>b.classList.toggle('on',+b.dataset.e===era))};
+ $('#rg').oninput=e=>{era=+e.target.value;upd()};app.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{era=+b.dataset.e;upd()});
+ m.addEventListener('click',e=>{const h=e.target.closest('.hot.on');if(!h)return;const k=+h.dataset.h,H=HOTS[k];seen.add(k);h.classList.add('seen');$('#inf').innerHTML='<b>'+esc(H.t)+'</b><br>'+esc(H.d);$('#cnt').textContent=seen.size;$('#cb').style.width=seen.size/HOTS.length*100+'%';beep(true);if(seen.size===HOTS.length){ST.zeit={p:seen.size,t:HOTS.length};save();$('#inf').insertAdjacentHTML('beforeend','<div class="fb ok">⭐ Alle Spuren entdeckt!</div>')}});upd()}
+/* ---------- 2 Phasen-Detektiv ---------- */
+const SORT=[['Marktplatz mit Rathaus und Kirche',0],['Stadtmauer mit Toren',0],['Enge Gassen der Handwerker',0],['Gründung an einem Flussübergang',0],['Festung mit Bastionen und Gräben',1],['Residenzschloss mit Park',1],['Kasernen und Zeughaus',1],['Theater für den Hof',1],['Bahnhof und Eisenbahn',2],['Fabriken im Osten der Stadt',2],['Mietskasernen mit Blockrandbebauung',2],['Villenviertel mit Gärten',2],['Fußgängerzone',3],['Parkhäuser um die Innenstadt',3],['Fachmärkte am Stadtrand',3],['Wohnen im Umland (Suburbanisierung)',3]];
+function runSort(){let pick=null,first=null;const place={},cols=['m','f','i','h'];
+ const draw=()=>{frame('Phasen-Detektiv','<div class="card"><p style="margin:0">Tippe ein Merkmal an und dann die passende Zeit. <b>'+Object.keys(place).length+' von '+SORT.length+'</b> eingeordnet.</p><div class="pool" style="margin-top:12px">'+SORT.map((s,i)=>place[i]==null?'<button class="chip'+(pick===i?' on':'')+'" data-c="'+i+'">'+esc(s[0])+'</button>':'').join('')+'</div>'
+  +'<div class="cols">'+ERAS.map(([y,l],e)=>'<div class="col'+(pick!=null?' tgt':'')+'" data-col="'+e+'" style="--c:var(--'+cols[e]+')"><h3>'+y+' · '+l+'</h3>'+SORT.map((s,i)=>place[i]===e?'<button class="chip'+(first?(s[1]===e?' ok':' no'):'')+'" data-back="'+i+'">'+esc(s[0])+'</button>':'').join('')+'</div>').join('')+'</div>'
+  +'<div class="row"><div class="sp"></div><button class="pri" data-chk '+(Object.keys(place).length<SORT.length?'disabled':'')+'>Prüfen</button></div><div id="fb"></div></div>');
+  app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{pick=+b.dataset.c;draw()});
+  app.querySelectorAll('[data-col]').forEach(c=>c.onclick=e=>{if(e.target.closest('[data-back]')||pick==null)return;place[pick]=+c.dataset.col;pick=null;first=null;draw()});
+  app.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{delete place[+b.dataset.back];first=null;draw()});
+  app.querySelector('[data-chk]').onclick=()=>{first=true;const ok=SORT.filter((s,i)=>place[i]===s[1]).length;if(!ST.sort)ST.sort={p:ok,t:SORT.length};if(ok===SORT.length)ST.sort={p:Math.max(ST.sort.p,ok),t:SORT.length};save();draw();beep(ok===SORT.length);$('#fb').innerHTML=ok===SORT.length?'<div class="fb ok">⭐ Alles richtig zugeordnet!</div>':'<div class="fb no">'+ok+' von '+SORT.length+' richtig. Tippe rote Karten an, um sie zurückzulegen, und versuche es noch einmal.</div>'}};draw()}
+/* ---------- 3 Karte lesen ---------- */
+const FIND=[['Tippe auf den Markt – das Zentrum der alten Stadt.',268,205,3],['Tippe auf die Burg.',333,211,3],['Wo verlief früher die Festung? Tippe auf die Ringstraße.',null,null,3,'ring'],['Wo liegt das Industriegebiet?',527,255,3],['Tippe auf den Bahnhof.',442,377,3],['Wo stand das Residenzschloss? Tippe auf das heutige Einkaufszentrum.',378,272,3],['Tippe auf ein Parkhaus.',null,null,3,'park'],['Wo liegt der Fachmarkt am Stadtrand?',65,412,3]];
+function hit(q,x,y){if(q[4]==='ring'){const d=Math.hypot((x-300)/150,(y-220)/182);return Math.abs(d-1)<.09}if(q[4]==='park')return [[238,128],[384,206],[236,310]].some(([a,b])=>Math.hypot(x-a,y-b)<20);return Math.hypot(x-q[1],y-q[2])<30}
+function runFind(){let i=0,pts=0,tries=0;const qs=FIND;
+ const show=()=>{if(i>=qs.length){ST.find={p:pts,t:qs.length};save();frame('Karte lesen','<div class="card" style="text-align:center"><div style="font-size:2.6rem;font-weight:800;color:var(--blue)">'+pts+' / '+qs.length+'</div><p>'+(pts>=7?'⭐ Super – du kannst Stadtpläne lesen!':'Gut! Schau dir die Zeitreise noch einmal an und versuche es erneut.')+'</p><div class="row" style="justify-content:center"><button class="sec" data-h2>Zur Übersicht</button><button class="pri" data-again>Noch einmal</button></div></div>');app.querySelector('[data-h2]').onclick=home;app.querySelector('[data-again]').onclick=runFind;return}
+  tries=0;frame('Karte lesen','<div class="prog"><span>Aufgabe '+(i+1)+' von '+qs.length+'</span><div class="bar"><i style="width:'+i/qs.length*100+'%"></i></div><span>'+pts+' P</span></div><div class="card"><p style="font-size:1.15rem;margin:0 0 10px"><b>'+esc(qs[i][0])+'</b></p><div class="find" id="fm">'+mapSvg({labels:false})+'</div><div id="fb"></div></div>');
+  const fm=$('#fm');setEra(fm,qs[i][3]);const svg=fm.querySelector('svg');
+  svg.addEventListener('click',e=>{const r=svg.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*600,y=(e.clientY-r.top)/r.height*440,ok=hit(qs[i],x,y);tries++;
+   const p=document.createElement('div');p.className='ping'+(ok?' ok':'');p.style.left=(e.clientX-fm.getBoundingClientRect().left)+'px';p.style.top=(e.clientY-fm.getBoundingClientRect().top)+'px';fm.append(p);beep(ok);
+   if(ok){if(tries===1)pts++;$('#fb').innerHTML='<div class="fb ok">✓ Gefunden!</div>';setTimeout(()=>{i++;show()},800)}else if(tries>=3){$('#fb').innerHTML='<div class="fb no">Schau in der Zeitreise nach, wo das liegt. Weiter geht’s.</div>';setTimeout(()=>{i++;show()},1600)}else $('#fb').innerHTML='<div class="fb no">Noch nicht – versuch es noch einmal ('+(3-tries)+' Versuche).</div>'})};show()}
+/* ---------- 4 Warum dort? ---------- */
+const QUIZ=[['Warum lagen Fabriken meist im Osten der Städte?',['Dort war mehr Platz für Gärten.','Der Wind weht meist von Westen – Rauch zog von der Stadt weg.','Im Osten gab es keine Flüsse.'],1],
+ ['Warum entstanden viele Städte an Flussübergängen (Furten)?',['Dort trafen sich Handelswege – Händler mussten den Fluss überqueren.','Dort war der Boden besonders fruchtbar.','Dort gab es keine Überschwemmungen.'],0],
+ ['Was erinnert in vielen Städten heute noch an die alte Festung?',['Die Fußgängerzone','Ein Grünring oder eine Ringstraße um die Altstadt','Die Fachmärkte am Stadtrand'],1],
+ ['Warum wurden in der Frühen Neuzeit sternförmige Festungen gebaut?',['Weil Kanonen mittelalterliche Mauern leicht zerstören konnten','Weil sie schöner aussahen','Weil die Städte kleiner wurden'],0],
+ ['Was bedeutet „Suburbanisierung“?',['Viele Menschen ziehen aus der Stadt ins Umland.','Die Innenstadt bekommt eine Fußgängerzone.','In der Stadt werden neue Fabriken gebaut.'],0],
+ ['Wofür wurden Mietskasernen gebaut?',['Für Soldaten des Fürsten','Für die vielen Arbeiterinnen und Arbeiter der Fabriken','Für Touristen'],1]];
+function runQuiz(){let i=0,pts=0;const qs=shuffle(QUIZ);
+ const show=()=>{if(i>=qs.length){ST.quiz={p:pts,t:qs.length};save();frame('Warum dort?','<div class="card" style="text-align:center"><div style="font-size:2.6rem;font-weight:800;color:var(--blue)">'+pts+' / '+qs.length+'</div><div class="row" style="justify-content:center"><button class="sec" data-h2>Zur Übersicht</button><button class="pri" data-again>Noch einmal</button></div></div>');app.querySelector('[data-h2]').onclick=home;app.querySelector('[data-again]').onclick=runQuiz;return}
+  const [q,o,a]=qs[i],ord=shuffle(o.map((_,k)=>k));frame('Warum dort?','<div class="prog"><span>Frage '+(i+1)+' von '+qs.length+'</span><div class="bar"><i style="width:'+i/qs.length*100+'%"></i></div><span>'+pts+' P</span></div><div class="card"><p style="font-size:1.15rem;margin:0 0 12px"><b>'+esc(q)+'</b></p>'+ord.map(k=>'<button class="opt" data-o="'+k+'">'+esc(o[k])+'</button>').join('')+'<div id="nx"></div></div>');
+  app.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{if(app.querySelector('.opt.ok'))return;const ok=+b.dataset.o===a;if(ok)pts++;b.classList.add(ok?'ok':'no');app.querySelector('[data-o="'+a+'"]').classList.add('ok');beep(ok);$('#nx').innerHTML='<div class="row"><div class="sp"></div><button class="pri" data-n>Weiter</button></div>';$('[data-n]').onclick=()=>{i++;show()}})};show()}
+/* ---------- 5 Zeitstrahl ---------- */
+const LINE=[['Am Flussübergang entsteht eine Siedlung mit Burg','um 1000'],['Der Löwe wird auf dem Burgplatz aufgestellt','1166'],['Die Stadt wird zur Festung ausgebaut','ab 1600'],['Auf den alten Wällen entstehen Promenaden','um 1800'],['Die erste Staatsbahn fährt ab Braunschweig','1838'],['Bomben zerstören einen Großteil der Innenstadt','1944'],['Die Schlossfassade wird mit einem Einkaufszentrum neu gebaut','2007']];
+function runLine(){let ord;do{ord=shuffle(LINE.map((_,i)=>i))}while(ord.every((x,i)=>x===i));let marks=null,first=null;
+ const draw=()=>{frame('Zeitstrahl','<div class="card"><p style="margin:0 0 10px">Bringe die Ereignisse in die richtige Reihenfolge – das älteste oben. Die Jahreszahlen erscheinen nach dem Prüfen.</p>'+ord.map((e,p)=>'<div class="ev'+(marks?(marks[p]?' ok':' no'):'')+'"><span class="tx">'+esc(LINE[e][0])+'</span>'+(marks?'<span class="yr">'+LINE[e][1]+'</span>':'')+'<button data-u="'+p+'" aria-label="nach oben">↑</button><button data-d="'+p+'" aria-label="nach unten">↓</button></div>').join('')+'<div class="row"><div class="sp"></div><button class="pri" data-chk>Prüfen</button></div><div id="fb"></div></div>');
+  const mv=(a,b)=>{if(b<0||b>=ord.length)return;[ord[a],ord[b]]=[ord[b],ord[a]];marks=null;draw()};
+  app.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>mv(+b.dataset.u,+b.dataset.u-1));app.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>mv(+b.dataset.d,+b.dataset.d+1));
+  app.querySelector('[data-chk]').onclick=()=>{marks=ord.map((e,p)=>e===p);const n=marks.filter(Boolean).length;if(first==null){first=n;ST.line={p:n,t:LINE.length};save()}draw();beep(n===LINE.length);$('#fb').innerHTML=n===LINE.length?'<div class="fb ok">⭐ Perfekt!</div>':'<div class="fb no">'+n+' von '+LINE.length+' an der richtigen Stelle.</div>'}};draw()}
+/* ---------- 6 Urkunde / Unterlagen ---------- */
+function runEnd(){frame('Meine Stadtforscher-Urkunde','<div class="card"><h2>Spurensuche in deiner eigenen Stadt</h2><p class="muted" style="margin-top:0">Welche Spuren der vier Zeitabschnitte findest du in deinem Wohnort oder deiner Schulstadt? (z. B. Straßennamen wie „Wallstraße“, ein Stadttor, alte Fabrikgebäude, eine Fußgängerzone)</p><textarea id="own" placeholder="Meine Spuren …">'+esc(ST.own||'')+'</textarea>'
+ +'<div class="row"><input id="nm" placeholder="Dein Name" value="'+esc(ST.name||'')+'" style="min-height:48px;padding:0 12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;flex:1;min-width:200px"><button class="pri" data-pdf>Für meine Unterlagen sichern</button></div><p class="muted" style="font-size:.9rem">Am iPad: im Druckfenster auf <b>Teilen</b> tippen und GoodNotes, Notability oder „In Dateien sichern“ wählen.</p></div>');
+ $('#own').oninput=e=>{ST.own=e.target.value;save()};$('#nm').oninput=e=>{ST.name=e.target.value;save()};
+ app.querySelector('[data-pdf]').onclick=()=>{ST.end={};save();const r=k=>ST[k]&&ST[k].p!=null?ST[k].p+' / '+ST[k].t:'—';
+  $('#printBox').innerHTML='<h1>Städte im Wandel – Braunschweig</h1><div>'+(ST.name?esc(ST.name)+' · ':'')+new Date().toLocaleDateString('de-DE')+'</div><h2>Die Stadt heute – mit Spuren aus allen Zeiten</h2><div id="pm">'+mapSvg({})+'</div>'
+   +'<h2>Die vier Phasen</h2><table><tr>'+ERAS.map(([y,l])=>'<th>'+y+' · '+l+'</th>').join('')+'</tr><tr>'+ERAS.map((_,e)=>'<td>'+SORT.filter(s=>s[1]===e).map(s=>esc(s[0])).join('<br>')+'</td>').join('')+'</tr></table>'
+   +'<h2>Wichtige Gründe</h2><ul>'+QUIZ.map(q=>'<li><b>'+esc(q[0])+'</b> '+esc(q[1][q[2]])+'</li>').join('')+'</ul>'
+   +'<h2>Zeitstrahl</h2><ul>'+LINE.map(l=>'<li>'+l[1]+': '+esc(l[0])+'</li>').join('')+'</ul>'
+   +(ST.own?'<h2>Spuren in meiner Stadt</h2><p>'+esc(ST.own).replace(/\n/g,'<br>')+'</p>':'')
+   +'<div class="urk"><b>Stadtforscher-Urkunde</b> · Phasen-Detektiv '+r('sort')+' · Karte lesen '+r('find')+' · Warum dort? '+r('quiz')+' · Zeitstrahl '+r('line')+'</div>';
+  setEra($('#pm'),3);print()}}
+home();
+</script></body></html>
