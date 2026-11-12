@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 12.11.2026 · Version 11.36
+Stand: 12.11.2026 · Version 11.37
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1415,3 +1415,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.34: Lerneinheit: Präsentationsmodus fürs Smartboard (ohne Namen); höchstens zwei Versuche, Punkte nur beim ersten; „Für meine Unterlagen sichern“ als PDF-Datei (Teilen → GoodNotes) statt Druckdialog.
 11.35: Welthandel: Station Textarbeit (Interview M3: Chancen/Risiken markieren, Belege finden); PDF-Unterlagen mit dem genutzten Material, ohne zerrissene Tabellen und Bilder; „Städte im Wandel“ und Text-Trainer ebenfalls als PDF-Datei.
 11.36: Klassenarbeit mit einer Aufgabe: Spalte „Rohpunkte“ statt „Aufgabe 1“, ohne „100 %“; Knopf „Klassenarbeiten-Übersicht“ wieder kompakt; Welthandel: Stationstitel nennen den Inhalt.
+11.37: Neue Lerneinheit „Welche Rolle spielt die Logistik?“ (Grundlagen, AFB I); Kennzeichnung „Grundlagen“ und Hinweis „Vertiefen (GoodNotes)“ in der Unterricht-Ansicht.

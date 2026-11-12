@@ -4376,7 +4376,8 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
 #einQr.big{max-width:none;width:calc(100% - 32px);height:calc(100% - 32px)}#einQr.big .qr svg{width:min(78vh,90vw);height:min(78vh,90vw)}
 #einQr code{display:block;font-size:.75rem;color:#66758a;word-break:break-all;max-height:3.2em;overflow:hidden}
 @media (max-width:760px){html.cm-unterricht #einView{grid-template-columns:1fr}.ein-handle{display:none}.ein-side{display:none;border-right:0;border-bottom:1px solid var(--border-color,#dce3ef);max-height:60vh;padding:10px}#einView.side-open .ein-side{display:flex}#einView.side-open{grid-template-rows:auto 1fr}#einView.side-open .ein-main{order:-1;flex:none;padding-bottom:6px}#einView.side-open .ein-main>:not(.ein-pick){display:none}.ein-pick{display:block;width:100%;height:44px;border:1px solid #c9d5e6;border-radius:12px;background:#fff;color:#2f5f9b;font:inherit;font-weight:700;text-align:left;padding:0 14px;margin-bottom:12px}.ein-main{padding:12px}.ein-mh h2{font-size:1.15rem;flex-basis:100%}.ein-tiles{grid-template-columns:1fr}}`;
- const st=document.createElement('style');st.textContent=css;document.head.append(st);
+ {const g=document.createElement('style');g.textContent='.gl-pill{display:inline-flex;align-items:center;gap:5px;margin-left:8px;padding:1px 9px;border-radius:999px;background:#e5f5ea;color:#1f8a4c;font-size:.74rem;font-weight:750;font-style:normal;vertical-align:middle;white-space:nowrap;letter-spacing:.01em}.gl-pill i{width:7px;height:7px;border-radius:50%;background:#2f9e44}.ein-mh h2 .gl-pill{font-size:.8rem;padding:2px 11px;transform:translateY(-2px)}.gl-meta{display:flex;gap:5px;flex-wrap:wrap;margin:4px 0 4px}.gl-meta span{font-size:.76rem;padding:2px 8px;border-radius:999px;background:#eef3fa;color:#2f5f9b;font-weight:650}.ein-tile.gl-next{border:1.5px dashed #c9b8f0!important;background:#fcfaff!important}.ein-tile.gl-next>i{background:#f3ecfd!important;color:#7c3aed!important}.ein-tile.gl-next>b{color:#7c3aed!important}';document.head.append(g)}
+  const st=document.createElement('style');st.textContent=css;document.head.append(st);
  const view=document.createElement('div');view.id='einView';grid.append(view);
  let on=false,sel=null,q='',sideOpen=false;
  function mode(v){on=!!v;document.documentElement.classList.toggle('cm-unterricht',on);if(on){sel=null;q='';sideOpen=false;render()}}
@@ -4412,12 +4413,13 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   return (head?'<p class="ein-sub">'+head+'</p>':'')+'<div class="ein-toc"><div>'+(L?'<div class="ein-tk">Sprachkompetenz</div>'+L:'')+'</div><div>'+R+O+'</div></div>'}
  const dots=l=>'<span class="ein-dots" title="Vokabeln · Grammatik · Übersetzungs-Trainer · Wiederholung">'+[['dv',l.nV],['dg',l.gr.length],['dt',l.tt.length],['dw',l.nW]].map(([c,n])=>'<b class="'+(n?c:'')+'"></b>').join('')+'</span>';
  const rowL=l=>'<button type="button" class="ein-row'+(sel==='l:'+l.k?' on':'')+(blocks(l)?'':' dim')+'" data-sel="l:'+esc(l.k)+'"><span>'+esc(lname(l))+'</span>'+(isStand('l:'+l.k)?'<span class="stand">aktuell</span>':'')+'</button>';
- const rowU=u=>'<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>'+esc(u.title)+'</span>'+(isStand('u:'+u.u)?'<span class="stand">aktuell</span>':'')+'</button>';
+ const GLP='<em class="gl-pill" title="Digitale Lerneinheit „Grundlagen“ (AFB I): Wissen aufbauen mit Wischen, Ziehen und Antippen"><i></i>Grundlagen</em>';
+ const rowU=u=>'<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>'+esc(u.title)+(u.gl?GLP:'')+'</span>'+(isStand('u:'+u.u)?'<span class="stand">aktuell</span>':'')+'</button>';
  const norm=x=>String(x||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9äöüß]+/g,' ').trim();
  function treeHtml(){const subj=SUBJ[cx.subject]||'',known=cx.subject in {latein:1,erdkunde:1},showAll=ui.all||!known,latOk=showAll||cx.subject==='latein',ekOk=showAll||cx.subject==='erdkunde';
   if(q.trim()){const t=norm(q),hit=x=>norm(x).includes(t);let out='';
    for(const l of data.lessons){const T=l.toc||{},why=[T.syn,T.form,T.wort,...(T.textk||[]),...(T.kult||[]),T.text,T.sach,...l.gr,...l.formen,l.syntax,...l.tt.map(x=>x.hunt)].filter(Boolean).find(hit);if(hit(lname(l))||hit(l.label)||why)out+='<button type="button" class="ein-row'+(sel==='l:'+l.k?' on':'')+'" data-sel="l:'+esc(l.k)+'"><span>Latein · '+esc(lname(l))+(why&&!hit(lname(l))?'<small class="why">'+esc(why)+'</small>':'')+'</span></button>'}
-   for(const u of data.units)if(hit(u.title)||hit(u.sub))out+='<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>Erdkunde · '+esc(u.title)+'</span></button>';
+   for(const u of data.units)if(hit(u.title)||hit(u.sub))out+='<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>Erdkunde · '+esc(u.title)+(u.gl?GLP:'')+'</span></button>';
    return out||'<div class="ein-empty" style="padding:8px">Nichts gefunden.</div>'}
   const {l:selL,u:selU}=find(sel);const openNow=new Set(openJg);if(cx.jg)openNow.add(cx.jg);if(selL)openNow.add(selL.jg);if(selU)openNow.add(selU.jg);
   const jgs=[...new Set([...(latOk?data.lessons.map(l=>l.jg):[]),...(ekOk?data.units.map(u=>u.jg):[])])].sort((a,b)=>(b===cx.jg)-(a===cx.jg)||a-b);let tree='';
@@ -4431,7 +4433,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   T.querySelectorAll('[data-jg]').forEach(b=>b.onclick=()=>{openJg.add(+b.dataset.jg);T.innerHTML=treeHtml();wireTree()});
   T.querySelector('[data-all]')?.addEventListener('click',()=>{ui.all=!ui.all;saveUi();T.innerHTML=treeHtml();wireTree()})}
  function draw(){const {l,u}=find(sel),cls=cx.short||'—',subj=SUBJ[cx.subject]||cx.subject||'';
-  const title=l?esc(l.label)+(l.name?' · '+esc(l.name):''):u?esc(u.title):'';const st=isStand(sel);
+  const title=l?esc(l.label)+(l.name?' · '+esc(l.name):''):u?esc(u.title)+(u.gl?GLP:''):'';const st=isStand(sel);
   view.style.setProperty('--ein-w',(ui.w||290)+'px');view.classList.toggle('side-open',sideOpen);
   view.innerHTML='<div class="ein-side"><input type="search" class="ein-q" placeholder="Lektion oder Thema suchen …" value="'+esc(q)+'" autocomplete="off" autocorrect="off" spellcheck="false"><div class="ein-list">'+treeHtml()+'</div>'
    +'<div class="ein-sacts"><button type="button" class="ein-b" data-load title="Paket (.cmpaket), Latein-Datenbank, Übersetzungs-Trainer-Dateien (.cmtext), Lerneinheiten (.cmeinheit) oder ein Zip – wird zusammengeführt">Paket laden …</button><button type="button" class="ein-b" data-exp>Exportieren …</button></div></div>'
@@ -4463,8 +4465,9 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    +tile('W','','Wiederholung',l.nW?l.nW+' alte Vokabeln aus dem Lektionstext':'keine Liste geladen',l.nW?btn('lw',k,'Ansehen','look')+btn('uw',k,'Üben (QR)','pri')+btn('wh',k,'Als Test …','ghost'):'',!l.nW)
    +(l.ueb?tile('Ü','t2','Übungen','interaktiv, 3 Stufen',btn('pu',k,'Ansehen','look')+btn('ueb',k,'Start-QR','pri')):'')+'</div>'}
  function unitTiles(u){return '<div class="ein-tiles">'
-   +tile('L','t2','Lerneinheit (iPad)',(u.book?'mit Schulbuchmaterial':'ohne Schulbuchmaterial')+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':'')+' gescannt':''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Abgaben scannen')+btn('ov',u.u,'Übersicht'))
-   +tile('B','t3','Schulbuchmaterial',u.book?'auf diesem Gerät geladen ✓':'noch nicht geladen (.cmeinheit)',btn('load','',u.book?'Neu laden …':'Datei laden …'))+'</div>'}
+   /* 11.37: „Grundlagen“-Einheiten (AFB I) mit Kurzinfo und dem Hinweis auf die Vertiefung in GoodNotes */
+   +tile('L','t2',u.gl?'Grundlagen erarbeiten (iPad)':'Lerneinheit (iPad)',(u.gl?'<span class="gl-meta"><span>AFB I</span><span>'+u.gl.n+' Stationen</span><span>ca. '+u.gl.min+' Min.</span><span>wischen · ziehen · antippen</span></span>':'')+(u.book?'mit Schulbuchmaterial':'ohne Schulbuchmaterial')+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':'')+' gescannt':''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Abgaben scannen')+btn('ov',u.u,'Übersicht'))
+   +(u.gl?'<div class="ein-tile gl-next"><i>V</i><b>Vertiefen (GoodNotes)</b><small>AFB II/III mit dem Stift – Grundlage ist die PDF „Für meine Unterlagen“, die jeder Schüler am Ende speichert.</small></div>':'')+tile('B','t3','Schulbuchmaterial',u.book?'auf diesem Gerät geladen ✓':'noch nicht geladen (.cmeinheit)',btn('load','',u.book?'Neu laden …':'Datei laden …'))+'</div>'}
  const wire=()=>view.querySelectorAll('[data-do]').forEach(b=>b.onclick=()=>run(b.dataset.do,b.dataset.k,b));
  /* Aktionen */
  const prev=o=>{try{top().classroomPreview(o)}catch(e){alert('Vorschau nicht möglich: '+e.message)}};
