@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 12.11.2026 · Version 11.49
+Stand: 12.11.2026 · Version 11.50
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1428,3 +1428,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.47: Lektionsseite in der Reihenfolge des Buchs mit einheitlichen Knöpfen und „Für Kollegen …“ überall; Lösungen in der Seite und Lösungsblatt in jeder Vorschau.
 11.48: Rubrik „Digitale Lerneinheit(en)“ mit Gewichtung 70:15:15 bzw. 80:20, Lesezeichen-Knopf „Aktuelle Lektion“, „Zurück: …“ in den Lerneinheiten, iPhone randlos, Stecknadel wie „?“, Logistik nach Lehrerband (Computer-Kosten, Luftfracht, Mindmap-Station).
 11.49: Neue Lerneinheit „Welche Rolle spielt die Digitalisierung?“ (Erdkunde 9, AFB I, 11 Stationen), Unterrichtsreihe Erdkunde 9 wie im Inhaltsverzeichnis, Fehlerlisten der Logistik-Einheit aktualisiert.
+11.50: Lesezeichen ohne Beschriftung, Stecknadel-Menü „Noten · Fach“, Grammatik „Ansehen“ zeigt die Aufgaben, Digitalisierung auf 10 Stationen / 20 Minuten (Klima und Sparen zusammengelegt).
