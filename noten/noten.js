@@ -4551,8 +4551,8 @@ html.fs-view .fs-hide{display:none!important}
  /* ---------- 11.16: Lerneinheiten (iPad) – Start-QR mit Vornamen der Klasse, Abgabe-QR scannen, Übersicht ---------- */
  const LE_KEY='classroom-lerneinheiten-v1';
  const UNITS={'bs-stadt':{title:'Städte im Wandel',sub:'Erdkunde · Stadtentwicklung am Beispiel Braunschweig',file:'stadtentwicklung.html',
-  cols:[['ein','Einstieg'],['info','Phasen'],['mod','Modelle'],['zeit','Zeitreise'],['sort','Detektiv'],['find','Karte'],['quiz','Warum?'],['line','Zeitstrahl'],['end','Urkunde']],
-  book:[['bz','Karten'],['bf','Aufg. 1'],['bb','Profi'],['bfe_all','Aufg. 2A'],['bp','Aufg. 2B'],['bs','Ausschnitt']],
+  cols:[['ein','Einstieg'],['info','Phasen'],['bz','Karten'],['bf','Aufg. 1'],['bb','Profi'],['bfe_all','Aufg. 2A'],['bp','Aufg. 2B'],['mod','Modelle'],['bs','Ausschnitt'],['sort','Detektiv'],['quiz','Warum?'],['zeit','Zeitreise'],['find','Karte'],['line','Zeitstrahl'],['end','Urkunde']],
+  book:[],modes:{b:['ein','info','bz','bf','bb','bfe_all','bp','mod','bs','sort','quiz','end'],n:['ein','info','mod','zeit','sort','find','quiz','line','end']},
   qs:['Was liegt im Zentrum der mittelalterlichen Stadt?','Warum sternförmige Festungen?','Warum lagen Fabriken im Osten?','Was bedeutet Suburbanisierung?']},
   'welthandel':{title:'Welthandel',sub:'Erdkunde Klasse 9 · Welche Rolle spielt der Handel?',file:'welthandel.html',cols:[['ein','Einstieg'],['wis','Wissen'],['dia','Diagramm'],['exp','Exporte'],['str','Ströme'],['bue','Bündnisse'],['cr','Chancen'],['pol','Politik'],['end','Ergebnis']],book:[],qs:[]}};
  const leAll=()=>{try{return JSON.parse(localStorage.getItem(LE_KEY)||'{}')||{}}catch{return {}}};
@@ -4602,7 +4602,7 @@ html.fs-view .fs-hide{display:none!important}
   $('[data-fin]').onclick=()=>{stop();o.remove();leOverview(u)};$('[data-flip]').onclick=()=>{facing=facing==='environment'?'user':'environment';start()};
   dlg.addEventListener('close',stop,{once:true});window.classroomLeHandle=handle;upd();jsqr().then(()=>{start();tick()}).catch(e=>msg(e.message))}
  function leOverview(u,sel){const U=UNITS[u],names=leNames(),R=leAll()[leId(u)]||{subs:{}},subs=R.subs,absent=new Set(vtAbsentNames({subject:currentSubject,classId:currentClassId}).map(a=>matchName(a,names.map(x=>x.full))||a));
-  const useBook=Object.values(subs).some(x=>x.b),cols=[...U.cols,...(useBook?U.book:[])];
+  const SV=Object.values(subs),cols0=[...U.cols,...U.book],want=U.modes?new Set(U.modes[SV.some(x=>x.b)?'b':'n']):null,cols=cols0.filter(([k])=>!want||want.has(k)||SV.some(x=>x.s&&x.s[k]!=null));
   const rows=[...names.map(x=>({key:x.full,disp:x.disp,abs:absent.has(x.full)})),...Object.keys(subs).filter(k=>!names.some(x=>x.full===k)).map(k=>({key:k,disp:subs[k].n+' (?)'}))];
   const pct=v=>Array.isArray(v)&&v[1]?v[0]/v[1]:null,cell=v=>v==null?'<span class="le-no">–</span>':v===1?'<span class="le-c le-ok">✓</span>':(()=>{const p=pct(v);return '<span class="le-c '+(p>=.85?'le-ok':p>=.6?'le-mid':'le-low')+'">'+v[0]+'/'+v[1]+'</span>'})();
   const got=rows.filter(r=>subs[r.key]),present=rows.filter(r=>!r.abs);
