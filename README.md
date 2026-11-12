@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 12.11.2026 · Version 11.20
+Stand: 12.11.2026 · Version 11.21
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1399,3 +1399,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.18: Neue Lerneinheit „Welthandel“ (Erdkunde 9) mit Abgabe-QR.
 11.19: Städte im Wandel mit Schulbuch-Datei: eine gemeinsame Stationenliste, Buchmaterial statt eigener Karten.
 11.20: Text-Trainer mit Formen-Jäger je Lektion (L17: relativer Satzanschluss).
+11.21: Text-Trainer: mehrere Dateien oder Zip laden, automatische Zuordnung zur Lektion.

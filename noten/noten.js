@@ -4122,19 +4122,34 @@ html.fs-view .fs-hide{display:none!important}
  /* 11.06: Text-Trainer – Lektionstexte bleiben privat: Die Datei (.cmtext) liegt nur auf diesem Gerät, der Text reist im Link (#…) zu den iPads */
  const TTKEY='classroom-text-trainer-v1';
  const ttStore=()=>{try{return JSON.parse(localStorage.getItem(TTKEY)||'{}')}catch{return {}}};
+ /* 11.21: Text-Trainer-Dateien der richtigen Lektion zuordnen; mehrere Dateien oder ein Zip auf einmal laden */
+ const ttLesson=t=>{if(t?.lesson!=null)return String(t.lesson);const ti=String(t?.title||'');let m=/^\s*(?:Lektion|L)\s*0*(\d+)\b/i.exec(ti);if(m)return m[1];if(/^\s*Salv/i.test(ti))return '0';m=/^\s*Transitio\s*(\d+)/i.exec(ti);return m?'T'+m[1]:''};
+ async function ttUnzip(buf){const u=new Uint8Array(buf),dv=new DataView(buf);let e=u.length-22;while(e>=0&&dv.getUint32(e,true)!==0x06054b50)e--;if(e<0)throw new Error('Die Zip-Datei ist beschädigt.');
+  const n=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);const out=[],td=new TextDecoder();
+  for(let i=0;i<n;i++){const meth=dv.getUint16(p+10,true),cs=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),xl=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),off=dv.getUint32(p+42,true),name=td.decode(u.subarray(p+46,p+46+nl));p+=46+nl+xl+cl;
+   if(name.endsWith('/')||/(^|\/)(__MACOSX|\.)/.test(name))continue;const st=off+30+dv.getUint16(off+26,true)+dv.getUint16(off+28,true),data=u.subarray(st,st+cs);
+   const bytes=meth===0?data:meth===8?new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()):null;if(bytes)out.push({name,text:td.decode(bytes)})}return out}
+ async function ttImport(files){const texts=[];let bad=0;
+  for(const f of files){try{if(/\.zip$/i.test(f.name)||f.type==='application/zip'){for(const x of await ttUnzip(await f.arrayBuffer()))texts.push(x.text)}else texts.push(await f.text())}catch{bad++}}
+  const s2=ttStore(),got=[];
+  for(const tx of texts){try{const t=JSON.parse(tx);if(t?.type!=='classroom-text-trainer'||!Array.isArray(t.s))throw 0;t.lesson=ttLesson(t);
+   for(const [id,x] of Object.entries(s2))if(x.t.title===t.title)delete s2[id];s2[Math.random().toString(36).slice(2,8)]={t,added:Date.now()};got.push(t)}catch{bad++}}
+  ttSave(s2);return {got,bad}}
  const ttSave=x=>{try{localStorage.setItem(TTKEY,JSON.stringify(x))}catch{alert('Speicher voll – der Text konnte nicht gespeichert werden.')}};
  async function ttUrl(t){const bytes=new TextEncoder().encode(JSON.stringify(t));let h;try{h='z1.'+b64url(new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()))}catch{h='j1.'+b64url(bytes)}return studentBase().replace(/vokabeltest\.html$/,'texttrainer.html')+'#'+h}
- async function showTextTrainer(){let g=document.getElementById('vtTT');if(!g){g=document.createElement('dialog');g.id='vtTT';g.className='classroom-dialog vt-guide';document.body.append(g)}
-  const st=ttStore(),list=Object.entries(st).sort((a,b)=>b[1].added-a[1].added),base=studentBase().replace(/vokabeltest\.html$/,'texttrainer.html');
-  g.innerHTML='<form method="dialog"><h2 tabindex="-1" autofocus style="outline:none">Text-Trainer</h2><p class="vt-sub">Übersetzungstraining zu einem Lektionstext: Passiv-Jäger, Zeitstrahl, „Wer ist gemeint?“ und Satz für Satz übersetzen mit gestuften Hilfen. Der Text liegt nur auf diesem Gerät und im Link – nicht auf dem Server.</p>'
-   +(list.length?'<div class="vt-list">'+list.map(([id,x])=>'<div class="vt-li"><div><b>'+esc(x.t.title)+'</b><div class="vt-sub">'+esc(x.t.sub||'')+' · '+x.t.s.length+' Sätze</div></div><span><button type="button" class="vt-btn" data-ttsend="'+id+'">Link senden</button><button type="button" class="vt-btn" data-ttcopy="'+id+'">Link kopieren</button><button type="button" class="vt-btn vt-del" data-ttdel="'+id+'" title="Entfernen">✕</button></span></div>').join('')+'</div>':'<p class="vt-sub">Noch kein Text geladen.</p>')
-   +'<div class="hbox vt-card" style="margin-top:12px"><b>So kommt der Text auf die iPads</b><ol style="margin:6px 0 0;padding-left:20px;line-height:1.5"><li>In Jamf zusätzlich diese Adresse freigeben:<code>'+esc(base)+'</code></li><li>„Link senden“ und den Link per Jamf Teacher („Webseite öffnen“) oder AirDrop an die Klasse schicken. Der Link ist für einen QR-Code zu lang.</li><li>Alternativ die .cmtext-Datei per AirDrop schicken – auf der Seite „Datei laden …“.</li></ol></div>'
-   +'<div class="dialog-actions"><button type="button" data-ttload>Datei laden …</button><button type="button" class="primary" data-ttx>Schließen</button></div></form>';
+ async function showTextTrainer(les){let g=document.getElementById('vtTT');if(!g){g=document.createElement('dialog');g.id='vtTT';g.className='classroom-dialog vt-guide';document.body.append(g)}
+  const st=ttStore(),V=window.classroomVocabPdf,ord=k=>k===''?1e9:V?V.lessonOrder(k):+k||0,all=Object.entries(st).sort((a,b)=>ord(ttLesson(a[1].t))-ord(ttLesson(b[1].t))),list=les!=null?all.filter(([,x])=>ttLesson(x.t)===String(les)):all,base=studentBase().replace(/vokabeltest\.html$/,'texttrainer.html');
+  g.innerHTML='<form method="dialog"><h2 tabindex="-1" autofocus style="outline:none">Text-Trainer'+(les!=null&&V?' · '+esc(V.lessonLabel(String(les))):'')+'</h2><p class="vt-sub">Übersetzungstraining zu einem Lektionstext: Formen-Jäger zur neuen Grammatik, Zeitstrahl, „Wer ist gemeint?“ und Satz für Satz übersetzen mit gestuften Hilfen. Der Text liegt nur auf diesem Gerät und im Link – nicht auf dem Server.</p>'
+   +(list.length?'<div class="vt-list">'+list.map(([id,x])=>'<div class="vt-li"><div><b>'+esc(x.t.title)+'</b><div class="vt-sub">'+(les==null&&V&&ttLesson(x.t)?esc(V.lessonLabel(ttLesson(x.t)))+' · ':'')+esc(x.t.sub||'')+' · '+x.t.s.length+' Sätze</div></div><span><button type="button" class="vt-btn" data-ttsend="'+id+'">Link senden</button><button type="button" class="vt-btn" data-ttcopy="'+id+'">Link kopieren</button><button type="button" class="vt-btn vt-del" data-ttdel="'+id+'" title="Entfernen">✕</button></span></div>').join('')+'</div>':'<p class="vt-sub">'+(les!=null?'Für diese Lektion ist noch kein Text geladen. Lade die Datei (oder das Zip mit allen Lektionen) – sie wird automatisch der richtigen Lektion zugeordnet.':'Noch kein Text geladen.')+'</p>')+(les!=null&&all.length>list.length?'<p class="vt-sub" style="margin:6px 0 0">'+all.length+' Texte insgesamt geladen · <a href="#" data-ttall>alle anzeigen</a></p>':'')
+   +'<div class="hbox vt-card" style="margin-top:12px"><b>So kommt der Text auf die iPads</b><ol style="margin:6px 0 0;padding-left:20px;line-height:1.5"><li>In Jamf zusätzlich diese Adresse freigeben:<code>'+esc(base)+'</code></li><li>„Link senden“ und den Link per Jamf Teacher („Webseite öffnen“) oder AirDrop an die Klasse schicken. Der Link ist für einen QR-Code zu lang.</li><li>Alternativ die .cmtext-Datei per AirDrop schicken – auf der Seite „Datei laden …“.</li></ol><p class="vt-sub" style="margin:6px 0 0">„Dateien laden …“: mehrere .cmtext-Dateien oder ein Zip auf einmal; jeder Text landet automatisch bei seiner Lektion.</p></div>'
+   +'<div class="dialog-actions"><button type="button" data-ttload>Dateien laden …</button><button type="button" class="primary" data-ttx>Schließen</button></div></form>';
   g.querySelector('[data-ttx]').onclick=()=>g.close();
-  g.querySelector('[data-ttload]').onclick=async()=>{const [f]=await pick('.cmtext,.json,application/json');if(!f)return;try{const t=JSON.parse(await f.text());if(t?.type!=='classroom-text-trainer'||!Array.isArray(t.s))throw new Error('Das ist keine Text-Trainer-Datei.');const s2=ttStore();s2[Math.random().toString(36).slice(2,8)]={t,added:Date.now()};ttSave(s2);showTextTrainer()}catch(e){alert('Text-Trainer: '+(e.message||e))}};
+  g.querySelector('[data-ttload]').onclick=async()=>{const fs=await pick('',true);if(!fs.length)return;const r=await ttImport(fs);if(!r.got.length){alert('Text-Trainer: Keine Text-Trainer-Datei gefunden.');return}
+   const labs=r.got.slice().sort((x,y)=>ord(ttLesson(x))-ord(ttLesson(y))).map(t=>V&&ttLesson(t)?lesTag(ttLesson(t)):t.title);if(r.got.length>1||r.bad)alert(r.got.length+' Text'+(r.got.length>1?'e':'')+' geladen und den Lektionen zugeordnet: '+labs.join(', ')+(r.bad?'\n'+r.bad+' Datei(en) konnten nicht gelesen werden.':''));showTextTrainer(les)};
+  {const a=g.querySelector('[data-ttall]');if(a)a.onclick=e=>{e.preventDefault();showTextTrainer()}}
   g.querySelectorAll('[data-ttcopy]').forEach(b=>b.onclick=async()=>{const u=await ttUrl(ttStore()[b.dataset.ttcopy].t);try{await navigator.clipboard.writeText(u);b.textContent='Kopiert ✓'}catch{prompt('Link:',u)}});
   g.querySelectorAll('[data-ttsend]').forEach(b=>b.onclick=async()=>{const x=ttStore()[b.dataset.ttsend];const u=await ttUrl(x.t);if(navigator.share){try{await navigator.share({title:x.t.title,url:u})}catch{}}else{try{await navigator.clipboard.writeText(u);b.textContent='Kopiert ✓'}catch{prompt('Link:',u)}}});
-  g.querySelectorAll('[data-ttdel]').forEach(b=>b.onclick=()=>{if(!confirm('Diesen Text aus dem Text-Trainer entfernen?'))return;const s2=ttStore();delete s2[b.dataset.ttdel];ttSave(s2);showTextTrainer()});
+  g.querySelectorAll('[data-ttdel]').forEach(b=>b.onclick=()=>{if(!confirm('Diesen Text aus dem Text-Trainer entfernen?'))return;const s2=ttStore();delete s2[b.dataset.ttdel];ttSave(s2);showTextTrainer(les)});
   if(!g.open)g.showModal()}
  function showGuide(){let g=document.getElementById('vtGuide');if(!g){g=document.createElement('dialog');g.id='vtGuide';g.className='classroom-dialog vt-guide';document.body.append(g)}
   const url=studentBase();
@@ -4415,16 +4430,16 @@ html.fs-view .fs-hide{display:none!important}
   dlg.querySelector('[data-hvoc]').onclick=()=>{cur='main';bookSel=new Set();openBook()};dlg.querySelector('[data-hgr]').onclick=()=>{gSel=null;openGrammar()};
   dlg.querySelectorAll('[data-hles]').forEach(b=>b.onclick=()=>openLesson(b.dataset.hles));dlg.querySelector('[data-x]').onclick=()=>dlg.close();addDb();if(!dlg.open)dlg.showModal()}
  function openLesson(k){const V=window.classroomVocabPdf,m=libOf('main'),w=libOf('wh'),g=glib(),L=g?.lessons?.[k],tps=L?topicsOf(L).filter(x=>x.g):[];
-  const nV=m?.lessons?.[k]?m.lessons[k].sections.filter(x=>!/^(Wiederholung|Übungen)$/.test(x.name)).reduce((a,x)=>a+x.entries.length,0):0,hasW=!!w?.lessons?.[k],ex=k==='16',tt=Object.keys(ttStore()).length;
+  const nV=m?.lessons?.[k]?m.lessons[k].sections.filter(x=>!/^(Wiederholung|Übungen)$/.test(x.name)).reduce((a,x)=>a+x.entries.length,0):0,hasW=!!w?.lessons?.[k],ex=k==='16',tt=Object.values(ttStore()).filter(x=>ttLesson(x.t)===String(k)).length;
   const tile=(id,ic,cls,t,sub,on)=>'<button type="button" class="vt-tile '+cls+'" data-tile="'+id+'"'+(on?'':' disabled')+'><i>'+ic+'</i><b>'+t+'</b><small>'+sub+'</small></button>';
   dlg.innerHTML='<form method="dialog" class="vt-mid vt-home"><div class="vt-lhead"><button type="button" class="vt-btn" data-hback>‹ Lektionen</button><h2>'+esc(V.lessonLabel(k))+'</h2></div>'
    +'<div class="vt-sub" style="margin:6px 0 4px">'+[nV?nV+' neue Vokabeln':'',L?.formen?.length?(L.formen.map(x=>x.t).slice(0,3).join(' · ')):'',L?.syntax?'Syntax: '+L.syntax:''].filter(Boolean).map(esc).join(' · ')+'</div>'
    +'<div class="vt-tiles">'+tile('voc','V','','Vokabeltest',nV?nV+' neue Vokabeln':'kein Vokabular geladen',nV)+tile('wh','W','','Wiederholung',hasW?'auch mehrere Lektionen':'keine Liste geladen',hasW)+tile('gr','G','','Grammatiktest',tps.length?tps.length+(tps.length>1?' Themen':' Thema'):'kein Test zu dieser Lektion',tps.length)
-   +tile('ueb','Ü','vt-t2','Übungen',ex?'interaktiv, 3 Stufen':'für diese Lektion noch keine',ex)+tile('tt','T','vt-t3','Text-Trainer',tt?'Lektionstext übersetzen':'Text-Datei laden',true)+'</div>'
+   +tile('ueb','Ü','vt-t2','Übungen',ex?'interaktiv, 3 Stufen':'für diese Lektion noch keine',ex)+tile('tt','T','vt-t3','Text-Trainer',tt?'Lektionstext übersetzen':'noch kein Text – Datei laden',true)+'</div>'
    +'<div class="dialog-actions"><span style="flex:1"></span><button type="button" data-x>Schließen</button></div></form>';
   dlg.querySelector('[data-hback]').onclick=()=>openHome();dlg.querySelector('[data-x]').onclick=()=>dlg.close();
   const on=(id,fn)=>dlg.querySelector('[data-tile="'+id+'"]').onclick=fn;
-  on('voc',()=>{cur='main';bookSel=new Set([k]);fromBook([k])});on('wh',()=>{cur='wh';bookSel=new Set([k]);openBook()});on('gr',()=>{gSel=k;openGrammar()});on('ueb',()=>showExercises());on('tt',()=>showTextTrainer());
+  on('voc',()=>{cur='main';bookSel=new Set([k]);fromBook([k])});on('wh',()=>{cur='wh';bookSel=new Set([k]);openBook()});on('gr',()=>{gSel=k;openGrammar()});on('ueb',()=>showExercises());on('tt',()=>showTextTrainer(k));
   if(!dlg.open)dlg.showModal()}
 
  function openBook(note,id){if(id&&id!==cur){cur=id;bookSel=new Set()}if(cur==='gr'){openGrammar(note);return}const l=lib(),V=window.classroomVocabPdf;
@@ -4625,7 +4640,7 @@ html.fs-view .fs-hide{display:none!important}
   +'.le-c{display:inline-block;min-width:34px;padding:2px 6px;border-radius:7px;font-weight:700}.le-ok{background:#e5f5ea;color:#1f8a4c}.le-mid{background:#fff4e0;color:#8a5a00}.le-low{background:#fdeee6;color:#c2410c}.le-no{color:#b6c0cf}.le-ts{color:#66758a;font-size:.8rem}'
   +'.le-eval{padding:10px 14px;border-radius:12px;background:#f6f8fc;font-size:.92rem}.le-det{padding:12px 14px;border:1px solid #dce3ef;border-radius:12px;display:grid;gap:8px}.le-det small{display:block;color:#66758a;font-size:.78rem;font-weight:700}.le-del{justify-self:start;color:#c2410c}';document.head.append(st)}
  window.classroomLerneinheiten={open:openUnits,overview:leOverview,ingest:leIngest};
- window.classroomVocabTest={open:openManager,openBook,print:printTest,load:loadFile,fromPdf,normalizeTest,studentUrl};
+ window.classroomVocabTest={textTrainer:showTextTrainer,open:openManager,openBook,print:printTest,load:loadFile,fromPdf,normalizeTest,studentUrl};
  const st=document.createElement('style');st.textContent=`
 .vt-dialog{width:min(1180px,calc(100vw - 24px));max-height:calc(100dvh - 24px);box-sizing:border-box}
 .vt-dialog form{display:flex;flex-direction:column;gap:14px}.vt-dialog h2{margin:0}.vt-dialog h3{margin:0 0 10px}.vt-sub{color:#66758a;font-size:.88rem}
