@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 12.11.2026 · Version 11.53
+Stand: 12.11.2026 · Version 11.54
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1432,3 +1432,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.51: Farbige Material-Etiketten (Symbol + M-Nummer) in allen Lerneinheiten, iPad-mit-Stift-Symbol für „Unterricht“ auf dem iPhone.
 11.52: Neue Lerneinheit „Die Gliederung der Tropen“ (Erdkunde 7, AFB I, 10 Stationen), Etikett auch für „Info 2“, neuer Baustein „Reihenfolge antippen“.
 11.53: Abschnitt 7 „Alternative Lateinarbeit“ ab Lektion 15 (private Datei, Vorschau mit Erwartungshorizont, Druck), Knopf „Alle Lektionen von Pontes einblenden“.
+11.54: Alternative Lateinarbeit in die Noten (A · B · C, eigener Notenschlüssel), Vorschau-Fehler behoben, Lerneinheiten Global Player, Globale Verflechtungen, Smartphone, Fast Fashion, „Material ansehen“ in allen Einheiten, Info-2-Anzeige in Tropen korrigiert.
