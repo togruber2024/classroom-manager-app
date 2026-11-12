@@ -3469,7 +3469,7 @@ document.addEventListener('keydown',event=>{
    Bleibt beim Neuladen im selben Tab aktiv. */
 (()=>{
  const key='classroom-manager-beamer-v1';
- let on=false;try{on=sessionStorage.getItem(key)==='on'}catch{}
+ /* 11.27: Knopf „Klassenansicht“ entfernt (wird nicht gebraucht) – Modus bleibt aus */let on=false;try{sessionStorage.removeItem(key)}catch{}
  const button=document.createElement('button');button.type='button';button.className='classroom-beamer-button';button.dataset.buttonHelp='';
  function apply(){
   document.documentElement.classList.toggle('classroom-beamer',on);
@@ -3482,7 +3482,7 @@ document.addEventListener('keydown',event=>{
  }
  button.onclick=()=>{on=!on;apply()};
  const hideLabels=['Schüler zuweisen','Vorlage speichern','Drucken','Start','Verteilen','Zurücksetzen','Zurücksetzen …','Zuweisen abbrechen'];
- function place(){const bar=document.querySelector('.classroom-plan-zoom');if(bar&&button.parentElement!==bar)bar.append(button);
+ function place(){button.remove();
   // Bearbeitende Aktionen unter dem Plan ausblenden; Zufallsauswahl, Rollen, Perspektive und Schüler finden bleiben.
   for(const b of document.querySelectorAll('.classroom-plan-actions button'))if(hideLabels.includes(b.textContent.trim())&&!b.dataset.beamerHide)b.dataset.beamerHide='1'}
  // Klicks und Ziehen auf Sitzplätze sind in der Klassenansicht gesperrt (keine Bewertungsfenster).
@@ -4317,13 +4317,15 @@ html.sp-fit .sp-fit-box{overflow:auto;overscroll-behavior:auto;-webkit-overflow-
 html.cm-unterricht .container>.panel,html.cm-unterricht .sp-side-handle,html.cm-unterricht .classroom-sidebar-toggle{display:none!important}
 html.cm-unterricht .grid-container{display:flex!important;flex-direction:column;padding:0!important;overflow:hidden}
 html.cm-unterricht .grid-container>*:not(#einView){display:none!important}
-#einView{display:none;flex:1;min-height:0;--ein-w:290px}html.cm-unterricht #einView{display:grid;grid-template-columns:var(--ein-w) 12px 1fr}
-.ein-side{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--border-color,#dce3ef);padding:12px 10px 10px 12px}
+#einView{display:none;flex:1;min-height:0;--ein-w:290px}html.cm-unterricht #einView{display:grid;grid-template-columns:var(--ein-w) 24px 1fr}
+.ein-side{display:flex;flex-direction:column;min-height:0;padding:12px 10px 10px 12px}
 .ein-q{height:38px;border:1px solid #dce3ef;border-radius:10px;padding:0 10px;font:inherit;font-size:.92rem;margin-bottom:6px;background:#fff;color:#243247}
 .ein-list{flex:1;min-height:0;overflow:auto}
 .ein-sacts{display:flex;gap:6px;border-top:1px solid #eef2f7;padding-top:10px;margin-top:6px}.ein-sacts .ein-b{flex:1;padding:0 8px}
-.ein-handle{display:flex;align-items:center;justify-content:center;cursor:col-resize;touch-action:none}.ein-handle i{display:block;width:4px;height:36px;border-radius:3px;background:repeating-linear-gradient(#b8c4d6 0 3px,transparent 3px 6px)}
-.ein-handle:hover i{background:repeating-linear-gradient(#2f5f9b 0 3px,transparent 3px 6px)}
+.ein-handle{position:relative;display:flex;align-items:center;justify-content:center;cursor:col-resize;touch-action:none;outline:none;background:var(--bg-color,#f6f8fc);border-left:1px solid var(--border-color,#dce3ef);border-right:1px solid var(--border-color,#dce3ef)}
+.ein-handle:hover .sp-side-pill,.ein-handle:focus-visible .sp-side-pill{background:#2f5f9b;border-color:#2f5f9b;color:#fff}
+.ein-handle .sp-side-line{left:50%;margin-left:-2px}#einView.ein-dragging .sp-side-line,#einView.ein-dragging .sp-side-badge{display:block}#einView.ein-dragging .sp-side-pill{opacity:0}
+html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:none!important;-webkit-user-select:none!important}
 .ein-main{padding:16px 20px 22px;min-width:0;overflow:auto}
 .ein-mh{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.ein-mh h2{margin:0;font-size:1.4rem;color:#243247}.ein-mh .sp{flex:1}
 .ein-sub{color:#66758a;margin:4px 0 14px}
@@ -4418,7 +4420,7 @@ html.cm-unterricht .grid-container>*:not(#einView){display:none!important}
   view.style.setProperty('--ein-w',(ui.w||290)+'px');view.classList.toggle('side-open',sideOpen);
   view.innerHTML='<div class="ein-side"><input type="search" class="ein-q" placeholder="Lektion oder Thema suchen …" value="'+esc(q)+'" autocomplete="off" autocorrect="off" spellcheck="false"><div class="ein-list">'+treeHtml()+'</div>'
    +'<div class="ein-sacts"><button type="button" class="ein-b" data-load title="Paket (.cmpaket), Latein-Datenbank, Übersetzungs-Trainer-Dateien (.cmtext), Lerneinheiten (.cmeinheit) oder ein Zip – wird zusammengeführt">Paket laden …</button><button type="button" class="ein-b" data-exp>Exportieren …</button></div></div>'
-   +'<div class="ein-handle" title="Ziehen: Seitenmenü breiter oder schmaler"><i></i></div>'
+   +'<div class="ein-handle" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Seitenmenü breiter oder schmaler ziehen" title="Ziehen: Seitenmenü breiter oder schmaler · Doppelklick: Standardbreite"><span class="sp-side-pill" aria-hidden="true">⋮</span><span class="sp-side-line" aria-hidden="true"></span><span class="sp-side-badge" aria-hidden="true"></span></div>'
    +'<div class="ein-main"><button type="button" class="ein-pick" data-pick>☰ '+(l?esc(lname(l)):u?esc(u.title):'Einheit wählen')+' ▾</button>'
    +(l||u?'<div class="ein-mh"><h2>'+title+'</h2><span class="sp"></span>'+(cx.key&&items().includes(sel)?'<label class="ein-tog'+(st?'':' off')+'" title="Eingeschaltet: „Unterricht“ öffnet für die '+esc(cls)+' automatisch diese '+(l?'Lektion':'Einheit')+'"><input type="checkbox" data-stand'+(st?' checked':'')+'><span class="sw"></span>Aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+'</label>':'')+'</div>'
      +(l?'<p class="ein-sub">'+(sub(l)||'&nbsp;')+'</p>'+lessonTiles(l):'<p class="ein-sub">'+esc(u.sub)+' · Jahrgang '+u.jg+'</p>'+unitTiles(u))
@@ -4428,9 +4430,13 @@ html.cm-unterricht .grid-container>*:not(#einView){display:none!important}
   view.querySelector('[data-load]').onclick=loadPkg;view.querySelector('[data-exp]').onclick=exportPkg;
   view.querySelector('[data-pick]').onclick=()=>{sideOpen=!sideOpen;view.classList.toggle('side-open',sideOpen)};
   view.querySelector('[data-stand]')?.addEventListener('change',e=>{setStand(e.target.checked?sel:null);draw()});
-  const h=view.querySelector('.ein-handle');h.onpointerdown=e=>{e.preventDefault();h.setPointerCapture(e.pointerId);const x0=e.clientX,w0=ui.w||290;
-   h.onpointermove=ev=>{ui.w=Math.max(200,Math.min(520,w0+ev.clientX-x0));view.style.setProperty('--ein-w',ui.w+'px')};
-   h.onpointerup=()=>{h.onpointermove=null;h.onpointerup=null;saveUi()}};
+  /* 11.27: derselbe Griff wie im Sitzplan (Pille ⋮, beim Ziehen blaue Linie und Größenschild, Doppelklick = Standard) */
+  const h=view.querySelector('.ein-handle'),bd=h.querySelector('.sp-side-badge'),W0=290,pct=w=>Math.round(w/W0*100)+' %',setW=w=>{ui.w=Math.max(200,Math.min(560,Math.round(w)));view.style.setProperty('--ein-w',ui.w+'px');bd.textContent=pct(ui.w)};
+  h.onpointerdown=e=>{if(e.button>0)return;e.preventDefault();try{h.setPointerCapture(e.pointerId)}catch{}const x0=e.clientX,w0=ui.w||W0;view.classList.add('ein-dragging');document.documentElement.classList.add('ein-dragging');bd.textContent=pct(w0);
+   h.onpointermove=ev=>setW(w0+ev.clientX-x0);
+   h.onpointerup=h.onpointercancel=()=>{h.onpointermove=null;h.onpointerup=null;h.onpointercancel=null;view.classList.remove('ein-dragging');document.documentElement.classList.remove('ein-dragging');saveUi()}};
+  h.ondblclick=e=>{e.preventDefault();setW(W0);saveUi()};
+  h.onkeydown=e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();setW((ui.w||W0)+(e.key==='ArrowRight'?36:-36));saveUi()}};
   wire()}
  const tile=(ic,cls,t,s,acts,off)=>'<div class="ein-tile '+cls+(off?' off':'')+'"><i>'+ic+'</i><b>'+t+'</b><small>'+s+'</small>'+(acts?'<div class="ein-acts">'+acts+'</div>':'')+'</div>';
  const btn=(d,k,t,c)=>'<button type="button" '+(c?'class="'+c+'" ':'')+'data-do="'+d+'" data-k="'+esc(k)+'">'+(c==='look'?'👁 ':'')+t+'</button>';
