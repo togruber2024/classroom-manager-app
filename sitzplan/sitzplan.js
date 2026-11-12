@@ -142,7 +142,13 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
   // iPhone-Karten und Detailblatt (Noten): Namen unscharf, Noten unkenntlich mit Zufallsfarben
   rules+='html.classroom-privacy :is(.qs-name,.qd-title b,.qs-stand,.qs-note,.tt-row b,.tt-last b){color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:0 0 7px rgba(36,51,71,.75)!important;-webkit-user-select:none!important;user-select:none!important}'
    +'html.classroom-privacy :is(.qs-big,.qs-val i,.qs-sq i,.qs-q1chip i,.qs-miss-n,.qs-chip i){color:transparent!important;text-shadow:0 0 8px rgba(36,51,71,.6)!important;background-image:none!important;box-shadow:none!important;border-color:transparent!important}'
-   +'html.classroom-privacy :is(.qs-card,.qd-panel){pointer-events:none!important}html.classroom-privacy .qd-head{pointer-events:auto!important}';
+   +'html.classroom-privacy :is(.qs-card,.qd-panel){pointer-events:none!important}html.classroom-privacy .qd-head{pointer-events:auto!important}'
+   /* 11.25: iPhone quer – Namensliste links und Übersicht rechts (.qsl) ebenfalls unkenntlich */
+   +'html.classroom-privacy :is(.qsl-it b,.qsl-sec h4 b){color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:0 0 7px rgba(36,51,71,.75)!important;-webkit-user-select:none!important;user-select:none!important}'
+   +'html.classroom-privacy .qsl-m{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:0 0 8px rgba(36,51,71,.6)!important;background-image:none!important;box-shadow:none!important;border-color:transparent!important}'
+   +'html.classroom-privacy :is(.qsl-it,.qsl-sec){pointer-events:none!important}';
+  for(let a=0;a<5;a++)for(let c=0;c<4;c++)rules+='html.classroom-privacy .qsl-sec:nth-of-type(5n+'+(a+1)+') .qsl-row:nth-child(4n+'+(c+1)+') .qsl-m{background-color:'+pick()+'!important}';
+  for(let a=0;a<7;a++)rules+='html.classroom-privacy .qsl-it:nth-child(7n+'+(a+1)+') .qs-big,html.classroom-privacy .qsl-sec:nth-of-type(7n+'+(a+1)+') h4 .qs-big{background-color:'+pick()+'!important;box-shadow:none!important;border-color:transparent!important}';
   for(let a=0;a<5;a++){rules+='html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-big,html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-q1chip i{background-color:'+pick()+'!important}';
    for(let c=0;c<4;c++)rules+='html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-sect:nth-child(4n+'+(c+1)+') .qs-val i:not(.qs-none),html.classroom-privacy .qd-sec:nth-child(5n+'+(a+1)+') .qd-item:nth-child(4n+'+(c+1)+') .qd-val,html.classroom-privacy .qd-sec:nth-child(5n+'+(a+1)+') .qd-row:nth-child(4n+'+(c+1)+') .qd-val{background-color:'+pick()+'!important}'
     +'html.classroom-privacy .qs-card:nth-child(5n+'+(a+1)+') .qs-sq:nth-child(4n+'+(c+1)+') i:not(.qs-x){background-color:'+pick()+'!important}'}
@@ -182,6 +188,7 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
   +'@media screen and (max-width:540px) and (orientation:portrait){.app-header .classroom-global-actions:has(>.classroom-privacy-button){grid-template-columns:42px 42px minmax(0,1fr) minmax(0,1fr)!important}.app-header .classroom-global-actions>.classroom-privacy-button{order:-1;width:42px!important;padding:0!important}.app-header .classroom-global-actions>.classroom-help-button{order:-2}}'
   /* iPhone: Hinweis über der unteren Leiste statt hinter der Kopfzeile */
   +'@media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){.classroom-privacy-banner{top:auto;bottom:calc(84px + env(safe-area-inset-bottom));font-size:11px;white-space:nowrap;padding:5px 12px}}'
+  /* 11.25: iPhone quer – die Leiste ist links, der Hinweis gehört ganz nach unten (nicht über den Inhalt) */+'@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){.classroom-privacy-banner{bottom:calc(6px + env(safe-area-inset-bottom))}}'
   +'@media print{.classroom-privacy-banner{display:none}}';(document.head||document.documentElement).append(st)}
 })();
 ;
@@ -4416,7 +4423,7 @@ html.cm-unterricht .grid-container>*:not(#einView){display:none!important}
    +tile('V','','Vokabeln',l.nV?l.nV+' neue Vokabeln':'kein Vokabular geladen',l.nV?btn('lv',k,'Ansehen','look')+btn('uv',k,'Üben (QR)','pri')+btn('voc',k,'Als Test …','ghost'):'',!l.nV)
    +tile('G','','Grammatik',l.gr.length?l.gr.length+(l.gr.length>1?' Themen':' Thema')+' · Formen bilden und bestimmen':'für diese Lektion keine',l.gr.length?btn('lg',k,'Ansehen','look')+btn('ug',k,'Üben (QR)','pri')+btn('gr',k,'Als Test …','ghost'):'',!l.gr.length)
    +tile('Ü','t3','Übersetzungs-Trainer',tt?tt.n+' Sätze'+(tt.hunt?' · '+esc(tt.hunt):'')+(l.tt.length>1?' · '+l.tt.length+' Texte':''):'noch kein Text – Datei laden',tt?btn('pt',k,'Ansehen','look')+btn('tt',k,'Link senden …','pri'):btn('load','','Datei laden …'),!tt)
-   +tile('W','','Wiederholung',l.nW?l.nW+' Wörter aus früheren Lektionen':'keine Liste geladen',l.nW?btn('lw',k,'Ansehen','look')+btn('uw',k,'Üben (QR)','pri')+btn('wh',k,'Als Test …','ghost'):'',!l.nW)
+   +tile('W','','Wiederholung',l.nW?l.nW+' alte Vokabeln aus dem Lektionstext':'keine Liste geladen',l.nW?btn('lw',k,'Ansehen','look')+btn('uw',k,'Üben (QR)','pri')+btn('wh',k,'Als Test …','ghost'):'',!l.nW)
    +(l.ueb?tile('Ü','t2','Übungen','interaktiv, 3 Stufen',btn('pu',k,'Ansehen','look')+btn('ueb',k,'Start-QR','pri')):'')+'</div>'}
  function unitTiles(u){return '<div class="ein-tiles">'
    +tile('L','t2','Lerneinheit (iPad)',(u.book?'mit Schulbuchmaterial':'ohne Schulbuchmaterial')+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':'')+' gescannt':''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Abgaben scannen')+btn('ov',u.u,'Übersicht'))
