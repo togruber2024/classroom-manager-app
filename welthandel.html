@@ -105,10 +105,11 @@ details summary{cursor:pointer;color:var(--blue);font-weight:600;min-height:40px
 .pb{min-height:56px;padding:8px 12px;border:1px solid #cfd8e6;border-radius:12px;background:#fff;text-align:left;font-size:.98rem}.pb.t{font-weight:700}.pb.on{border-color:var(--blue);box-shadow:0 0 0 3px #2f5f9b33}.pb.ok{background:var(--okbg);border-color:#7cc69a;color:#17603a}.pb.no{background:var(--badbg);border-color:#f0a982}
 .seq{display:grid;gap:8px;margin-top:10px}.seqc{display:flex;gap:12px;align-items:center;min-height:62px;padding:8px 12px;border:1px solid var(--line);border-radius:14px;background:#fff;text-align:left;width:100%}.seqc .ti{font-size:1.5rem;width:36px;text-align:center}.seqc small{display:block;color:var(--mut)}.seqc .nr{margin-left:auto;flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--blue);color:#fff;font-weight:800}.seqc.ok{background:var(--okbg);border-color:#7cc69a}.seqc.no{background:var(--badbg);border-color:#f0a982}.seqc.dim{opacity:.45}
 .cloze{font-size:1.08rem;line-height:2.4}.gapb{display:inline-block;min-width:130px;min-height:42px;margin:0 3px;padding:2px 12px;border:2px dashed #b9c6da;border-radius:10px;background:#fbfcfe;color:var(--blue);font-weight:700;vertical-align:middle;line-height:1.4}.gapb.full{border-style:solid;background:#fff}.gapb.on{border-color:var(--blue);box-shadow:0 0 0 3px #2f5f9b33}.gapb.ok{background:var(--okbg);border-color:#7cc69a;color:var(--ok)}.gapb.no{background:var(--badbg);border-color:#f0a982;color:var(--bad)}
+.chip.sol{background:#fff8e1;border:2px solid #e8a23a;color:#7a4b00}.chip.retry{border-color:#e8a23a}.gapb.sol{background:#fff8e1;border:2px solid #e8a23a;color:#7a4b00}.seqc.sol{background:#fff8e1;border-color:#e8a23a}.pb.sol{background:#fff8e1;border-color:#e8a23a;color:#7a4b00}
 .time{display:inline-flex;align-items:center;gap:6px;margin-left:8px;padding:6px 12px;border-radius:999px;background:#eaf0fa;color:var(--blue);font-weight:700}
 .urkunde{text-align:center;padding:22px;border:3px solid var(--blue);border-radius:20px;background:linear-gradient(#fff,#f1f6fd)}.urkunde .big{font-size:2.4rem;font-weight:800;color:var(--blue)}
 </style></head><body><button type="button" id="who" hidden aria-label="Abgabe-QR zeigen"></button><div class="wrap" id="app"></div><div id="printBox"></div>
-<script src="qr-code.js"></script>
+<script src="qr-code.js"></script><script src="unit-pdf.js"></script>
 <script>
 'use strict';
 const $=s=>document.querySelector(s),app=$('#app');
@@ -161,18 +162,24 @@ function dragify(onDrop){app.querySelectorAll('[data-dg]').forEach(el=>el.addEve
  addEventListener('pointermove',mv,{passive:false});addEventListener('pointerup',up);addEventListener('pointercancel',up)}))}
 
 /* ---------- Bausteine ---------- */
-/* Zuordnen: Karten in Gruppen ziehen (oder Karte und dann Gruppe antippen) */
-function sorter(k,o){let pick=null,mk=!!ST[k];const pl=ST[k+'P']??={};const ord=shuffleOnce(k,o.items.map((_,i)=>i));
- const draw=()=>keep(k,()=>{const n=Object.keys(pl).length,N=o.items.length;
-  frame(o.title,(o.before||'')+'<div class="card"><h2>'+o.h+'</h2><p style="margin:0">'+o.task+' <b>'+n+' von '+N+'</b></p><div class="pool" style="margin-top:12px">'+ord.map(i=>pl[i]==null?'<button class="chip'+(pick===i?' on':'')+'" data-c="'+i+'" data-dg="'+i+'">'+esc(o.items[i][0])+'</button>':'').join('')+(n===N?'<span class="muted">Alle Karten liegen in einer Gruppe.</span>':'')+'</div>'
-   +'<div class="cols c'+o.cats.length+'">'+o.cats.map((c,e)=>'<div class="col'+(pick!=null?' tgt':'')+'" data-col="'+e+'" data-drop="'+e+'"><h3>'+esc(c)+'</h3>'+ord.map(i=>pl[i]===e?'<button class="chip'+(mk?(o.items[i][1]===e?' ok':' no'):'')+'" data-back="'+i+'" data-dg="'+i+'">'+esc(o.items[i][0])+'</button>':'').join('')+'</div>').join('')+'</div>'
-   +'<div class="row"><div class="sp"></div><button class="pri" data-chk '+(n<N?'disabled':'')+'>Prüfen</button></div>'+(mk&&n===N?(()=>{const r=o.items.filter((x,i)=>pl[i]===x[1]).length;return r===N?fb(1,'⭐ Alles richtig! '+(o.done||'')):fb(0,r+' von '+N+' richtig. Ziehe die roten Karten in die richtige Gruppe.')})():'')+'</div>'+(o.after||''));
+/* Zuordnen: Karten in Gruppen ziehen (oder Karte und dann Gruppe antippen).
+   11.34: Nicht raten – nach „Prüfen“ sind richtige Karten fest; für falsche gibt es genau einen zweiten Versuch (ohne Punkte), danach steht die Lösung da. */
+const tries=(r,N,wrong)=>r===0?'':r===1?fb(0,'⚠︎ '+(N-wrong)+' von '+N+' richtig – diese Punkte zählen. Die falschen Karten liegen wieder oben: <b>ein</b> zweiter Versuch (ohne Punkte).'):'';
+function sorter(k,o){let pick=null;const pl=ST[k+'P']??={},N=o.items.length,R=()=>ST[k+'R']||0,sol=ST[k+'S']??=[];const ord=shuffleOnce(k,o.items.map((_,i)=>i));
+ const fixed=i=>R()>0&&pl[i]===o.items[i][1];
+ const draw=()=>keep(k,()=>{const n=Object.keys(pl).length,r=R();
+  frame(o.title,(o.before||'')+'<div class="card"><h2>'+o.h+'</h2><p style="margin:0">'+o.task+' <b>'+n+' von '+N+'</b></p><div class="pool" style="margin-top:12px">'+ord.map(i=>pl[i]==null?'<button class="chip'+(pick===i?' on':'')+(r===1?' retry':'')+'" data-c="'+i+'" data-dg="'+i+'">'+esc(o.items[i][0])+'</button>':'').join('')+(n===N&&r<2?'<span class="muted">Alle Karten liegen in einer Gruppe.</span>':'')+'</div>'
+   +'<div class="cols c'+o.cats.length+'">'+o.cats.map((c,e)=>'<div class="col'+(pick!=null?' tgt':'')+'" data-col="'+e+'" data-drop="'+e+'"><h3>'+esc(c)+'</h3>'+ord.map(i=>pl[i]!==e?'':sol.includes(i)?'<span class="chip sol" title="richtige Lösung">'+esc(o.items[i][0])+'</span>':fixed(i)?'<span class="chip ok">'+esc(o.items[i][0])+'</span>':'<button class="chip" data-back="'+i+'" data-dg="'+i+'">'+esc(o.items[i][0])+'</button>').join('')+'</div>').join('')+'</div>'
+   +(r<2?'<div class="row"><div class="sp"></div><button class="pri" data-chk '+(n<N?'disabled':'')+'>'+(r?'Zweiter Versuch: prüfen':'Prüfen')+'</button></div>':'')
+   +(r===1?tries(1,N,N-ST[k].p):r===2?(ST[k].p===N?fb(1,'⭐ Alles auf Anhieb richtig! '+(o.done||'')):fb(0,ST[k].p+' von '+N+' beim ersten Versuch richtig. '+(sol.length?'Gelb umrandet: die richtige Lösung. ':'')+(o.done||''))):'')+'</div>'+(o.after||''));
   app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{if(b.dataset.moved)return;pick=pick===+b.dataset.c?null:+b.dataset.c;draw()});
   app.querySelectorAll('[data-col]').forEach(c=>c.onclick=e=>{if(e.target.closest('[data-back]')||pick==null)return;pl[pick]=+c.dataset.col;pick=null;save();draw()});
   app.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{if(b.dataset.moved)return;delete pl[+b.dataset.back];save();draw()});
-  dragify((i,e)=>{pl[+i]=+e;pick=null;save();draw()});
-  app.querySelector('[data-chk]').onclick=()=>{mk=true;fin(k,o.items.filter((x,i)=>pl[i]===x[1]).length,o.items.length,o.items.map((x,i)=>pl[i]===x[1]?-1:i).filter(i=>i>=0));draw()};
-  o.wire?.()});draw()}
+  dragify((i,e)=>{if(fixed(+i)||R()>=2)return;pl[+i]=+e;pick=null;save();draw()});
+  const chk=app.querySelector('[data-chk]');if(chk)chk.onclick=()=>{const wrong=o.items.map((x,i)=>pl[i]===x[1]?-1:i).filter(i=>i>=0);
+   if(R()===0){fin(k,N-wrong.length,N,wrong);if(wrong.length){wrong.forEach(i=>delete pl[i]);ST[k+'R']=1}else ST[k+'R']=2}
+   else{wrong.forEach(i=>{pl[i]=o.items[i][1];sol.push(i)});ST[k+'R']=2}save();draw()};
+  o.wire?.(draw)});draw()}
 /* Wischen: rechts / links */
 function swiper(k,o){const A=ST[k+'A']??=[];const ord=shuffleOnce(k,o.cards.map((_,i)=>i));let show=null;
  const draw=()=>keep(k,()=>{const n=A.length,N=o.cards.length,cur=n<N?ord[n]:null;
@@ -200,26 +207,30 @@ function quiz(k,o){const A=ST[k+'A']??=[];let qi=Math.min(A.length,o.qs.length-1
 
 /* ---------- 1 Die Reise eines Smartphones: Reihenfolge antippen ---------- */
 const TRIP=[['⛏️','Rohstoffe abbauen','Lithium, Kobalt, Kupfer – z. B. in Chile, im Kongo, in Australien'],['🏭','Bauteile herstellen','Chips, Display und Akku – z. B. in Taiwan, Südkorea, Japan'],['🔧','Zusammenbauen (Montage)','z. B. in China, Indien oder Vietnam'],['🚢','Transportieren','mit dem Containerschiff bis zu 20.000 km nach Europa'],['🛒','Verkaufen','im Laden oder online – auch an dich']];
-function runEin(){const seq=ST.einS??=[];const ord=shuffleOnce('ein',TRIP.map((_,i)=>i));let mk=!!ST.ein;
- const draw=()=>{const N=TRIP.length,c=i=>{const t=TRIP[i];return '<span class="ti">'+t[0]+'</span><span><b>'+esc(t[1])+'</b><small>'+esc(t[2])+'</small></span>'};
-  frame('Die Reise eines Smartphones','<div class="two"><div class="card"><h2>In welcher Reihenfolge?</h2><p style="margin:0 0 4px">Ein Smartphone reist um die halbe Welt. Tippe die Schritte in der richtigen Reihenfolge an – vom Rohstoff bis zum Laden.</p><div class="seq">'+ord.map(i=>'<button class="seqc'+(seq.includes(i)?' dim':'')+'" data-t="'+i+'">'+c(i)+'</button>').join('')+'</div></div>'
-   +'<div class="card"><h2>Deine Lieferkette</h2>'+(seq.length?'':'<p class="muted">Noch leer – tippe links den ersten Schritt an.</p>')+'<div class="seq">'+seq.map((i,j)=>'<button class="seqc'+(mk&&seq.length===N?(i===j?' ok':' no'):'')+'" data-u="'+j+'">'+c(i)+'<span class="nr">'+(j+1)+'</span></button>').join('')+'</div>'
-   +'<div class="row"><span class="muted" style="font-size:.88rem">Falsch getippt? Schritt rechts antippen, dann ist er wieder frei.</span><div class="sp"></div><button class="pri" data-chk '+(seq.length<N?'disabled':'')+'>Prüfen</button></div>'
-   +(mk&&seq.length===N?(seq.every((i,j)=>i===j)?fb(1,'⭐ Richtig! Alle Schritte zusammen heißen <b>Lieferkette</b>. Teile eines Smartphones stammen oft aus mehr als zehn Ländern – das ist <b>Globalisierung</b>.'):fb(0,seq.filter((i,j)=>i===j).length+' von '+N+' an der richtigen Stelle. Tippe rote Schritte an und ordne neu.')):'')+'</div></div>');
-  app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{const i=+b.dataset.t;if(seq.includes(i))return;seq.push(i);save();draw()});
-  app.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{seq.splice(+b.dataset.u,1);save();draw()});
-  app.querySelector('[data-chk]').onclick=()=>{mk=true;fin('ein',seq.filter((i,j)=>i===j).length,N,seq.map((i,j)=>i===j?-1:j).filter(i=>i>=0));draw()}};draw()}
+function runEin(){const N=TRIP.length;let sl=ST.einS;if(!Array.isArray(sl)||sl.length!==N)sl=ST.einS=Array(N).fill(null);const ord=shuffleOnce('ein',TRIP.map((_,i)=>i)),sol=ST.einX??=[],R=()=>ST.einR||0;
+ const fixed=j=>R()>0&&sl[j]===j;
+ const draw=()=>{const r=R(),c=i=>{const t=TRIP[i];return '<span class="ti">'+t[0]+'</span><span><b>'+esc(t[1])+'</b><small>'+esc(t[2])+'</small></span>'},full=sl.every(x=>x!=null);
+  frame('Die Reise eines Smartphones','<div class="two"><div class="card"><h2>In welcher Reihenfolge?</h2><p style="margin:0 0 4px">Ein Smartphone reist um die halbe Welt. Tippe die Schritte in der richtigen Reihenfolge an – vom Rohstoff bis zum Laden.</p><div class="seq">'+ord.map(i=>'<button class="seqc'+(sl.includes(i)?' dim':'')+'" data-t="'+i+'" '+(sl.includes(i)||r>=2?'disabled':'')+'>'+c(i)+'</button>').join('')+'</div></div>'
+   +'<div class="card"><h2>Deine Lieferkette</h2><div class="seq">'+sl.map((i,j)=>i==null?'<div class="seqc" style="border-style:dashed;color:var(--mut)"><span class="ti"></span><span>Schritt '+(j+1)+' …</span><span class="nr" style="background:#c9d3e3">'+(j+1)+'</span></div>':'<button class="seqc'+(sol.includes(j)?' sol':fixed(j)?' ok':'')+'" data-u="'+j+'" '+(fixed(j)||r>=2?'disabled':'')+'>'+c(i)+'<span class="nr">'+(j+1)+'</span></button>').join('')+'</div>'
+   +(r<2?'<div class="row"><span class="muted" style="font-size:.88rem">Falsch getippt? Vor dem Prüfen kannst du einen Schritt rechts antippen, dann ist er wieder frei.</span><div class="sp"></div><button class="pri" data-chk '+(full?'':'disabled')+'>'+(r?'Zweiter Versuch: prüfen':'Prüfen')+'</button></div>':'')
+   +(r===1?tries(1,N,N-ST.ein.p):r===2?(ST.ein.p===N?fb(1,'⭐ Auf Anhieb richtig! Alle Schritte zusammen heißen <b>Lieferkette</b>. Teile eines Smartphones stammen oft aus mehr als zehn Ländern – das ist <b>Globalisierung</b>.'):fb(0,ST.ein.p+' von '+N+' beim ersten Versuch richtig. Alle Schritte zusammen heißen <b>Lieferkette</b>.')):'')+'</div></div>');
+  app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{const i=+b.dataset.t,j=sl.indexOf(null);if(sl.includes(i)||j<0)return;sl[j]=i;save();draw()});
+  app.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{const j=+b.dataset.u;if(fixed(j)||R()>=2)return;sl[j]=null;save();draw()});
+  const chk=app.querySelector('[data-chk]');if(chk)chk.onclick=()=>{const wrong=sl.map((i,j)=>i===j?-1:j).filter(j=>j>=0);
+   if(R()===0){fin('ein',N-wrong.length,N,wrong);if(wrong.length){wrong.forEach(j=>sl[j]=null);ST.einR=1}else ST.einR=2}else{wrong.forEach(j=>{sl[j]=j;sol.push(j)});ST.einR=2}save();draw()}};draw()}
 
 /* ---------- 2 Fachbegriffe: Paare finden ---------- */
 const PAIRS=['Welthandel','Export','Import','Globalisierung','Lieferkette','Zoll'];
-function runBeg(){const P=ST.begP??={ok:[],err:[]};const dord=shuffleOnce('begD',PAIRS.map((_,i)=>i)),tord=shuffleOnce('begT',PAIRS.map((_,i)=>i));let pick=null,bad=null;
- const draw=()=>{const N=PAIRS.length;
-  frame('Fachbegriffe','<div class="card"><h2>Welche Erklärung passt?</h2><p style="margin:0">Tippe einen Begriff an und dann die passende Erklärung. <b>'+P.ok.length+' von '+N+'</b></p><div class="pairs"><div>'+tord.map(i=>'<button class="pb t'+(P.ok.includes(i)?' ok':pick===i?' on':bad&&bad[0]===i?' no':'')+'" data-p="'+i+'">'+esc(PAIRS[i])+'</button>').join('')+'</div><div>'
-   +dord.map(i=>'<button class="pb'+(P.ok.includes(i)?' ok':bad&&bad[1]===i?' no':'')+'" data-d="'+i+'">'+esc(GLOSS[PAIRS[i]])+'</button>').join('')+'</div></div>'
-   +(P.ok.length===N?fb(ST.beg.p===N,(ST.beg.p===N?'⭐ Alles auf Anhieb richtig!':ST.beg.p+' von '+N+' auf Anhieb richtig.')+' Diese Begriffe brauchst du in den nächsten Stationen.'):'')+'</div>');
+/* 11.34: höchstens zwei Versuche je Begriff – nach dem zweiten Fehler wird die Lösung gezeigt */
+function runBeg(){const P=ST.begP??={ok:[],err:[]};P.sol??=[];P.n??={};const dord=shuffleOnce('begD',PAIRS.map((_,i)=>i)),tord=shuffleOnce('begT',PAIRS.map((_,i)=>i));let pick=null,bad=null;
+ const draw=()=>{const N=PAIRS.length,cls=i=>P.sol.includes(i)?' sol':P.ok.includes(i)?' ok':'';
+  frame('Fachbegriffe','<div class="card"><h2>Welche Erklärung passt?</h2><p style="margin:0">Tippe einen Begriff an und dann die passende Erklärung. Je Begriff hast du <b>zwei Versuche</b> – Punkte gibt es nur beim ersten. <b>'+P.ok.length+' von '+N+'</b></p><div class="pairs"><div>'+tord.map(i=>'<button class="pb t'+(cls(i)||(pick===i?' on':bad&&bad[0]===i?' no':''))+'" data-p="'+i+'">'+esc(PAIRS[i])+(P.n[i]===1&&!P.ok.includes(i)?' <small style="color:var(--bad)">· 1 Versuch übrig</small>':'')+'</button>').join('')+'</div><div>'
+   +dord.map(i=>'<button class="pb'+(cls(i)||(bad&&bad[1]===i?' no':''))+'" data-d="'+i+'">'+(P.ok.includes(i)?'<b>'+esc(PAIRS[i])+':</b> ':'')+esc(GLOSS[PAIRS[i]])+'</button>').join('')+'</div></div>'
+   +(P.ok.length===N?fb(ST.beg.p===N,(ST.beg.p===N?'⭐ Alles auf Anhieb richtig!':ST.beg.p+' von '+N+' auf Anhieb richtig.'+(P.sol.length?' Gelb: die richtige Lösung.':''))+' Diese Begriffe brauchst du in den nächsten Stationen.'):'')+'</div>');
   app.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{const i=+b.dataset.p;if(P.ok.includes(i))return;pick=i;bad=null;draw()});
   app.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{const d=+b.dataset.d;if(pick==null||P.ok.includes(d))return;
-   if(d===pick){P.ok.push(d);pick=null;bad=null;if(P.ok.length===N)fin('beg',N-P.err.length,N,P.err);else save()}else{if(!P.err.includes(pick))P.err.push(pick);bad=[pick,d];pick=null;save()}draw()})};draw()}
+   if(d===pick){P.ok.push(d);pick=null;bad=null}else{P.n[pick]=(P.n[pick]||0)+1;if(!P.err.includes(pick))P.err.push(pick);bad=[pick,d];if(P.n[pick]>=2){P.ok.push(pick);P.sol.push(pick);bad=null}pick=null}
+   if(P.ok.length===N)fin('beg',N-P.err.length,N,P.err);else save();draw()})};draw()}
 
 /* ---------- 3 Was wird gehandelt? ---------- */
 const runWis=()=>sorter('wis',{title:'Was wird gehandelt?',h:'Waren und Dienstleistungen',task:'Ziehe jede Karte in die passende Gruppe.',cats:['Rohstoffe','Agrarprodukte','Industrieprodukte','Dienstleistungen'],
@@ -270,18 +281,20 @@ const runBue=()=>{const T=BOOK&&BOOK.m6;sorter('bue',{title:'Wirtschaftsbündnis
 /* ---------- 8 WTO und Handelspolitik: Lückentext mit Wort-Chips ---------- */
 const CLZ=['Die ',0,' (Welthandelsorganisation) legt seit 1995 Regeln für den Welthandel fest. Ein ',1,' ist eine Abgabe auf eingeführte Waren – er macht ausländische Waren teurer. In einer ',2,' verzichten die Mitgliedsstaaten untereinander auf Zölle. Zahlt der Staat einer Branche Geld, damit sie günstiger produzieren kann, ist das eine ',3,'. Werden Häfen, Straßen und Bahnen ausgebaut, verbessert das die ',4,'. Wer Waren ins Ausland verkauft, betreibt ',5,'.'];
 const CLW=['WTO','Zoll','Freihandelszone','Subvention','Infrastruktur','Export','Import','Binnenhandel'];
-function runPol(){const G=ST.polG??={};const ord=shuffleOnce('pol',CLW.map((_,i)=>i));let gap=null,mk=!!ST.pol;const N=6;
- const draw=()=>keep('pol',()=>{const used=Object.values(G),n=used.length;
+function runPol(){const G=ST.polG??={},sol=ST.polX??=[],R=()=>ST.polR||0;const ord=shuffleOnce('pol',CLW.map((_,i)=>i));let gap=null;const N=6,GS=[0,1,2,3,4,5];
+ const fixed=g=>R()>0&&G[g]===g;
+ const draw=()=>keep('pol',()=>{const used=Object.values(G),n=used.length,r=R();
   const m2=BOOK&&BOOK.img&&BOOK.img.m2;frame('WTO und Handelspolitik',(m2?'<div class="two"><div class="card">'+bimg('m2')+'</div>':'<div>')
    +'<div class="card"><h2>Setze die passenden Wörter ein</h2><p style="margin:0 0 8px">Ziehe ein Wort in eine Lücke – oder tippe erst die Lücke, dann das Wort. Zwei Wörter bleiben übrig. <b>'+n+' von '+N+'</b></p>'
-   +'<div class="pool">'+ord.map(i=>used.includes(i)?'':'<button class="chip'+(gap!=null?' on':'')+'" data-w="'+i+'" data-dg="'+i+'">'+CLW[i]+'</button>').join('')+'</div>'
-   +'<p class="cloze">'+CLZ.map(x=>typeof x==='string'?esc(x):'<button class="gapb'+(G[x]!=null?' full':'')+(gap===x?' on':'')+(mk&&G[x]!=null?(G[x]===x?' ok':' no'):'')+'" data-g="'+x+'" data-drop="'+x+'">'+(G[x]!=null?CLW[G[x]]:'…')+'</button>').join('')+'</p>'
-   +'<div class="row"><span class="muted" style="font-size:.88rem">Volle Lücke antippen = Wort zurücklegen.</span><div class="sp"></div><button class="pri" data-chk '+(n<N?'disabled':'')+'>Prüfen</button></div>'
-   +(mk&&n===N?(()=>{const r=[0,1,2,3,4,5].filter(g=>G[g]===g).length;return r===N?fb(1,'⭐ Alles richtig! Mit Zöllen, Freihandel, Subventionen und Regeln der WTO steuert die Politik den Handel.'):fb(0,r+' von '+N+' richtig. Tippe rote Lücken an und setze neu ein.')})():'')+termBox(['WTO','Zoll','Freihandelszone','Subvention'])+'</div></div>');
-  app.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{const g=+b.dataset.g;if(G[g]!=null){delete G[g];gap=null;save()}else gap=gap===g?null:g;draw()});
-  app.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{if(b.dataset.moved)return;let g=gap;if(g==null)g=[0,1,2,3,4,5].find(x=>G[x]==null);if(g==null)return;G[g]=+b.dataset.w;gap=null;save();draw()});
-  dragify((w,g)=>{G[+g]=+w;gap=null;save();draw()});
-  app.querySelector('[data-chk]').onclick=()=>{mk=true;fin('pol',[0,1,2,3,4,5].filter(g=>G[g]===g).length,N,[0,1,2,3,4,5].filter(g=>G[g]!==g));draw()}});draw()}
+   +(r<2?'<div class="pool">'+ord.map(i=>used.includes(i)?'':'<button class="chip'+(gap!=null?' on':'')+'" data-w="'+i+'" data-dg="'+i+'">'+CLW[i]+'</button>').join('')+'</div>':'')
+   +'<p class="cloze">'+CLZ.map(x=>typeof x==='string'?esc(x):'<button class="gapb'+(G[x]!=null?' full':'')+(gap===x?' on':'')+(sol.includes(x)?' sol':fixed(x)?' ok':'')+'" data-g="'+x+'" data-drop="'+x+'" '+(fixed(x)||r>=2?'disabled':'')+'>'+(G[x]!=null?CLW[G[x]]:'…')+'</button>').join('')+'</p>'
+   +(r<2?'<div class="row"><span class="muted" style="font-size:.88rem">Volle Lücke antippen = Wort zurücklegen.</span><div class="sp"></div><button class="pri" data-chk '+(n<N?'disabled':'')+'>'+(r?'Zweiter Versuch: prüfen':'Prüfen')+'</button></div>':'')
+   +(r===1?tries(1,N,N-ST.pol.p):r===2?(ST.pol.p===N?fb(1,'⭐ Alles auf Anhieb richtig! Mit Zöllen, Freihandel, Subventionen und Regeln der WTO steuert die Politik den Handel.'):fb(0,ST.pol.p+' von '+N+' beim ersten Versuch richtig.'+(sol.length?' Gelb: die richtige Lösung.':''))):'')+termBox(['WTO','Zoll','Freihandelszone','Subvention'])+'</div></div>');
+  app.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{const g=+b.dataset.g;if(fixed(g)||R()>=2)return;if(G[g]!=null){delete G[g];gap=null;save()}else gap=gap===g?null:g;draw()});
+  app.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{if(b.dataset.moved)return;let g=gap;if(g==null)g=GS.find(x=>G[x]==null);if(g==null)return;G[g]=+b.dataset.w;gap=null;save();draw()});
+  dragify((w,g)=>{if(fixed(+g)||R()>=2)return;G[+g]=+w;gap=null;save();draw()});
+  const chk=app.querySelector('[data-chk]');if(chk)chk.onclick=()=>{const wrong=GS.filter(g=>G[g]!==g);
+   if(R()===0){fin('pol',N-wrong.length,N,wrong);if(wrong.length){wrong.forEach(g=>delete G[g]);ST.polR=1}else ST.polR=2}else{wrong.forEach(g=>{G[g]=g;sol.push(g)});ST.polR=2}save();draw()}});draw()}
 
 /* ---------- 9 Chancen und Risiken: wischen ---------- */
 const runCr=()=>swiper('cr',{title:'Chancen und Risiken',h:'Chance oder Risiko?',task:'Wische nach rechts (Chance) oder links (Risiko).',l:'Risiko',r:'Chance',
@@ -296,26 +309,32 @@ const CHK=[['Was ist ein Export?',['Waren werden ins Ausland verkauft.','Waren w
  ['Was bewirkt ein Zoll?',['Ausländische Waren werden billiger.','Ausländische Waren werden teurer.','Der Handel wird verboten.'],1,'Ein Zoll schützt heimische Firmen.'],
  ['Zu welchem Bündnis gehört Brasilien?',['ASEAN','EU','Mercosur'],2,'Mercosur: der Gemeinsame Markt Südamerikas.'],
  ['Was ist ein Risiko des Welthandels?',['Große Auswahl zu günstigen Preisen','Lieferketten können reißen.','Häfen und Handelsstädte wachsen.'],1,'Die anderen beiden sind Chancen.']];
-function doPrint(){let inFrame=false;try{inFrame=window.top!==window}catch{inFrame=true}const sa=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
- if(!inFrame&&!sa){try{print();return}catch{}}
- const w=window.open('','_blank');if(!w){alert('Bitte Pop-ups erlauben – oder die Seite direkt in Safari öffnen und noch einmal tippen.');return}
- const css=[...document.querySelectorAll('style')].map(x=>x.textContent).join('\n');
- w.document.write('<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(document.title)+'</title><style>'+css+'</style><style>#printBox{display:block!important;font:11pt/1.45 -apple-system,Inter,sans-serif;color:#000;padding:14mm;max-width:900px;margin:0 auto;background:#fff}body{background:#fff}</style></head><body><div id="printBox">'+$('#printBox').innerHTML+'</div><scr'+'ipt>setTimeout(function(){print()},400)</scr'+'ipt></body></html>');w.document.close()}
-function sheet(){const r=k=>ST[k]&&ST[k].p!=null?ST[k].p+' / '+ST[k].t:'—';
- return '<h1>Welthandel – Welche Rolle spielt der Handel?</h1><div>'+(ST.name||ST.me?esc(ST.name||ST.me)+' · ':'')+new Date().toLocaleDateString('de-DE')+'</div>'
-  +'<h2>Fachbegriffe</h2><table>'+Object.entries(GLOSS).map(([k,v])=>'<tr><th style="text-align:left;width:26%">'+k+'</th><td>'+esc(v)+'</td></tr>').join('')+'</table>'
-  +'<h2>Die Lieferkette eines Smartphones</h2><p>'+TRIP.map((t,i)=>(i+1)+'. <b>'+esc(t[1])+'</b> – '+esc(t[2])).join('<br>')+'</p>'
-  +'<h2>Welthandel und Weltwirtschaftsleistung seit 1950</h2><div style="max-width:520px">'+chartSvg(null)+'</div><p>Der Welthandel stieg von 1950 bis 2022 auf etwa das 45-Fache, die Weltwirtschaftsleistung nur auf etwa das 14-Fache. Krisen (2009, 2020) lassen den Handel einbrechen.</p>'
-  +'<h2>Die zehn größten Exportländer (2022)</h2><p>'+Object.entries(REG).map(([k,l])=>'<b>'+l+':</b> '+EXP.filter(x=>x[2]===k).map(x=>x[0]).join(', ')).join('<br>')+'</p>'
-  +'<h2>Handelsvolumen 2019</h2><table><tr><th style="text-align:left">Wirtschaftsraum</th><th>Mrd. US-Dollar</th><th>Anteil innerhalb des Raumes</th></tr>'+VOL.map(v=>'<tr><td>'+v[0]+'</td><td>'+fmt(v[1])+'</td><td>'+String(v[2]).replace('.',',')+' %</td></tr>').join('')+'</table>'
-  +'<h2>Wirtschaftsbündnisse</h2><p><b>EU</b>: z. B. Frankreich, Polen · <b>USMCA</b>: USA, Kanada, Mexiko · <b>ASEAN</b>: z. B. Vietnam, Thailand · <b>Mercosur</b>: z. B. Brasilien, Argentinien</p>'
-  +'<h2>Politik und Handel</h2><p>'+CLZ.map(x=>typeof x==='string'?esc(x):'<b>'+CLW[x]+'</b>').join('')+'</p>'
-  +'<h2>Chancen und Risiken</h2><table><tr><th>Chancen</th><th>Risiken</th></tr><tr><td>Große Auswahl zu günstigen Preisen<br>Arbeitsplätze und Wohlstand in Exportländern<br>Herstellung dort, wo es am günstigsten ist<br>Häfen und Handelsstädte wachsen<br>Gemeinsame Regeln (WTO)</td><td>Arme Länder bleiben Rohstofflieferanten<br>Abstand zwischen Arm und Reich wächst<br>Lieferketten können reißen<br>Transport belastet Klima und Umwelt<br>Arbeitsplätze wandern ab</td></tr></table>'
-  +'<div class="urk"><b>Ergebnisse</b> · '+STEPS.map(s=>s[1]+' '+r(s[0])).join(' · ')+'</div>'}
+/* 11.34: Unterlagen als PDF-Datei (Teilen → GoodNotes) statt Druckdialog – der klappte in der Web-App und im eingebetteten Fenster nicht */
+function pdfBlocks(){const nm=ST.name||ST.me||'',tot=STEPS.reduce((a,s)=>a+(ST[s[0]]?.p||0),0),max=STEPS.reduce((a,s)=>a+(ST[s[0]]?.t||0),0);
+ return [{t:'h1',s:'Welthandel – Welche Rolle spielt der Handel?'},{t:'sub',s:'Erdkunde · Klasse 9'+(ST.cls?' · '+ST.cls:'')+' · '+(nm?nm+' · ':'')+new Date().toLocaleDateString('de-DE')},
+  {t:'box',s:'**Meine Ergebnisse:** '+tot+' von '+max+' Punkten · '+STEPS.filter(s=>ST[s[0]]).length+' von '+STEPS.length+' Stationen'},
+  {t:'table',w:[.7,.3],head:['Station','Punkte (erster Versuch)'],rows:STEPS.map(s=>[s[1].replace(/­/g,''),ST[s[0]]?ST[s[0]].p+' von '+ST[s[0]].t:'–'])},
+  {t:'h2',s:'Fachbegriffe'},{t:'table',w:[.27,.73],firstBold:true,rows:Object.entries(GLOSS).map(([k,v])=>[k,v])},
+  {t:'h2',s:'Die Lieferkette eines Smartphones'},{t:'list',items:TRIP.map((t,i)=>'**'+(i+1)+'. '+t[1]+'** – '+t[2])},
+  {t:'h2',s:'Was wird gehandelt?'},{t:'p',s:'**Rohstoffe:** Erdöl, Kupfer, Eisenerz · **Agrarprodukte:** Kaffee, Bananen, Sojabohnen · **Industrieprodukte:** Autos, Smartphones · **Dienstleistungen:** Urlaubsreisen, Software-Wartung. Auch Ideen wie Patente werden gehandelt.'},
+  {t:'h2',s:'Welthandel und Weltwirtschaftsleistung seit 1950 (Index 1950 = 100)'},
+  {t:'chart',xr:[1950,2022],yr:[0,5000],xt:[1950,1960,1970,1980,1990,2000,2010,2020],yt:[0,1000,2000,3000,4000,5000],series:[{color:'#2f5f9b',pts:M1.map(r=>[r[0],r[1]])},{color:'#d9622b',pts:M1.filter(r=>r[2]!=null).map(r=>[r[0],r[2]])}],labels:[{x:1963,y:1500,s:'Welthandel (Exporte)',color:'#2f5f9b'},{x:1995,y:350,s:'Weltwirtschaftsleistung (BIP)',color:'#d9622b'}]},
+  {t:'list',items:['Der Welthandel stieg von 1950 bis 2022 auf etwa das **45-Fache**, die Weltwirtschaftsleistung nur auf etwa das **14-Fache**.','Zwischen 1990 und 2000 hat sich der Welthandel fast verdoppelt.','Krisen lassen den Handel einbrechen: Finanzkrise **2009**, Corona-Pandemie **2020**.','**Index:** Das Startjahr wird gleich 100 gesetzt; 200 bedeutet doppelt so viel.']},
+  {t:'h2',s:'Die zehn größten Exportländer (2022)'},{t:'table',w:[.25,.75],firstBold:true,rows:Object.entries(REG).map(([k,l])=>[l,EXP.filter(x=>x[2]===k).map(x=>x[0]+' ('+fmt(x[1])+' Mrd. $)').join(', ')])},
+  {t:'p',s:'Nordamerika, Europa und Ost-/Südostasien bilden die **Triade** – dort findet der größte Teil des Welthandels statt.'},
+  {t:'h2',s:'Handelsvolumen 2019 nach Wirtschaftsräumen'},{t:'table',w:[.46,.24,.30],head:['Wirtschaftsraum','Mrd. US-Dollar','Anteil innerhalb des Raumes'],rows:VOL.map(v=>[v[0],fmt(v[1]),String(v[2]).replace('.',',')+' %'])},
+  {t:'h2',s:'Wirtschaftsbündnisse'},{t:'table',w:[.22,.78],firstBold:true,rows:[['EU','27 Mitglieder in Europa, z. B. Frankreich, Polen'],['USMCA','USA, Kanada, Mexiko'],['ASEAN','10 Mitglieder in Südostasien, z. B. Vietnam, Thailand'],['Mercosur','Südamerika, z. B. Brasilien, Argentinien']]},
+  {t:'h2',s:'Politik und Handel'},{t:'p',s:CLZ.map(x=>typeof x==='string'?x:'**'+CLW[x]+'**').join('')},
+  {t:'h2',s:'Chancen und Risiken des Welthandels'},{t:'table',w:[.5,.5],head:['Chancen','Risiken'],rows:[0,1,2,3,4].map(i=>{const C=[['Große Auswahl zu günstigen Preisen','Arme Länder bleiben Rohstofflieferanten'],['Arbeitsplätze und Wohlstand in Exportländern','Abstand zwischen Arm und Reich wächst'],['Herstellung dort, wo es am günstigsten ist','Lieferketten können reißen'],['Häfen und Handelsstädte wachsen','Transport belastet Klima und Umwelt'],['Gemeinsame Regeln (WTO)','Arbeitsplätze wandern ab']];return C[i]})}]}
+let pdfBusy=false;
+async function savePdf(btn){if(pdfBusy)return;pdfBusy=true;const t=btn.textContent;btn.textContent='PDF wird erstellt …';
+ try{const blob=cmPdf.build(pdfBlocks(),{title:'Welthandel',foot:'Welthandel · '+(ST.name||ST.me||'')});const nm='Welthandel'+((ST.name||ST.me)?' - '+String(ST.name||ST.me).replace(/[\\/:*?"<>|]/g,''):'')+'.pdf';
+  const how=await cmPdf.save(blob,nm);btn.textContent=how==='download'?'✓ PDF geladen':how==='share'?'✓ Geteilt':t}
+ catch(e){alert('Die PDF konnte nicht erstellt werden: '+(e&&e.message||e));btn.textContent=t}finally{pdfBusy=false;setTimeout(()=>{if(btn.isConnected)btn.textContent=t},2500)}}
 const runEnd=()=>quiz('end',{title:'Abschluss-Check',qs:CHK,before:'<div class="card"><h2>Was weißt du jetzt?</h2><p style="margin:0">Sechs Fragen zu allen Stationen – tippe die richtige Antwort an.</p></div>',
  end:()=>{const tot=STEPS.reduce((a,s)=>a+(ST[s[0]]?.p||0),0),max=STEPS.reduce((a,s)=>a+(ST[s[0]]?.t||0),0);return '<div class="card urkunde"><div class="muted">Urkunde · Welthandel</div><div class="big">'+tot+' von '+max+' Punkten</div><div>'+esc(ST.me||ST.name||'')+' · '+STEPS.filter(s=>ST[s[0]]).length+' von '+STEPS.length+' Stationen</div></div>'
-  +'<div class="card"><div class="row" style="margin-top:0"><input id="nm" placeholder="Dein Name" value="'+esc(ST.name||ST.me||'')+'" style="min-height:48px;padding:0 12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;flex:1;min-width:200px"><button class="pri" data-pdf>Für meine Unterlagen sichern</button>'+(ST.me?'<button class="sec" data-qr>Abgabe-QR zeigen</button>':'')+'</div><p class="muted" style="font-size:.9rem">Die Seite enthält alle Fachbegriffe und Ergebnisse – deine Grundlage für die Aufgaben in GoodNotes. Am iPad: im Druckfenster auf <b>Teilen</b> tippen und GoodNotes wählen.</p></div>'},
- wire:()=>{const nm=$('#nm');if(nm)nm.oninput=e=>{ST.name=e.target.value;save()};const p=app.querySelector('[data-pdf]');if(p)p.onclick=()=>{$('#printBox').innerHTML=sheet();doPrint()};const q=app.querySelector('[data-qr]');if(q)q.onclick=showQr}});
+  +'<div class="card"><div class="row" style="margin-top:0"><input id="nm" placeholder="Dein Name" value="'+esc(ST.name||ST.me||'')+'" style="min-height:48px;padding:0 12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;flex:1;min-width:200px"><button class="pri" data-pdf>Für meine Unterlagen sichern</button>'+(ST.me?'<button class="sec" data-qr>Abgabe-QR zeigen</button>':'')+'</div><p class="muted" style="font-size:.9rem">Die Seite enthält alle Fachbegriffe und Ergebnisse – deine Grundlage für die Aufgaben in GoodNotes. Am iPad öffnet sich das Teilen-Menü: GoodNotes wählen.</p></div>'},
+ wire:()=>{const nm=$('#nm');if(nm)nm.oninput=e=>{ST.name=e.target.value;save()};const p=app.querySelector('[data-pdf]');if(p)p.onclick=()=>savePdf(p);const q=app.querySelector('[data-qr]');if(q)q.onclick=showQr}});
 
 /* ---------- Startseite ---------- */
 const STEPS=[['ein','Die Reise eines Smartphones','Schritte der Lieferkette ordnen',1,runEin],['beg','Fachbegriffe','Begriff und Erklärung verbinden',2,runBeg],['wis','Was wird gehandelt?','Waren in Gruppen ziehen',2,runWis],['dia','Diagramm M1','Aussagen prüfen: wischen',2,runDia],['exp','Exportländer','Top 10 den Regionen zuordnen',1.5,runExp],['str','Handelsströme','Im Diagramm antippen',1.5,runStr],['bue','Wirtschafts­bündnisse','Länder ihrem Bündnis zuordnen',2,runBue],['pol','WTO und Handelspolitik','Lückentext mit Wort-Chips',2,runPol],['cr','Chancen und Risiken','Aussagen wischen',2,runCr],['end','Abschluss-Check','6 Fragen · Urkunde · Unterlagen',2,runEnd]];

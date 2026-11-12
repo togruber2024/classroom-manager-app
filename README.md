@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 12.11.2026 · Version 11.33
+Stand: 12.11.2026 · Version 11.34
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1412,3 +1412,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.31: Lerneinheiten: „Weiter“ zur nächsten Station, Druckseite auch in Vorschau/Web-App, Übernahme mit 0 % Gewicht.
 11.32: iPad-Test-Abgaben nachschlagen (auch per „i“ im Noten-Manager); Lerneinheiten: alle Antworten per QR (mehrteilig), Ansicht „Antworten“ mit Einzelbewertung und Druck.
 11.33: Welthandel neu (nur AFB I): zehn Stationen mit Wischen, Ziehen und Antippen, ca. 18 Minuten, Abgabe in einem QR-Code; Punktzahl im Kasten „Wirtschaftsbündnisse“ korrigiert; Knopf „Tests-Übersicht“ wieder kompakt.
+11.34: Lerneinheit: Präsentationsmodus fürs Smartboard (ohne Namen); höchstens zwei Versuche, Punkte nur beim ersten; „Für meine Unterlagen sichern“ als PDF-Datei (Teilen → GoodNotes) statt Druckdialog.
