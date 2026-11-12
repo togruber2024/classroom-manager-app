@@ -4317,20 +4317,29 @@ html.sp-fit .sp-fit-box{overflow:auto;overscroll-behavior:auto;-webkit-overflow-
 html.cm-unterricht .container>.panel,html.cm-unterricht .sp-side-handle,html.cm-unterricht .classroom-sidebar-toggle{display:none!important}
 html.cm-unterricht .grid-container{display:flex!important;flex-direction:column;padding:0!important;overflow:hidden}
 html.cm-unterricht .grid-container>*:not(#einView){display:none!important}
-#einView{display:none;flex:1;min-height:0;flex-direction:column}html.cm-unterricht #einView{display:flex}
-.ein-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 20px 12px;border-bottom:1px solid var(--border-color,#dce3ef)}
-.ein-bar h2{margin:0;font-size:1.4rem;color:#243247;min-width:0}.ein-bar .sp{flex:1}.ein-bar .st{color:#66758a;font-size:.9rem}
-.ein-b{height:40px;border-radius:10px;border:1px solid #c9d5e6;background:#fff;color:#2f5f9b;font:inherit;font-size:.92rem;font-weight:650;padding:0 14px;cursor:pointer;white-space:nowrap}
-.ein-b:hover{background:#f3f7fd}.ein-b:disabled{opacity:.35;cursor:default}.ein-b.nav{padding:0 12px}
-.ein-body{flex:1;min-height:0;overflow:auto;padding:14px 20px 22px}
-.ein-sub{color:#66758a;margin:0 0 14px}
-.ein-lib{flex:1;min-height:0;display:grid;grid-template-columns:minmax(210px,270px) 1fr}
-.ein-tree{border-right:1px solid var(--border-color,#dce3ef);padding:12px 12px 16px;overflow:auto}
-.ein-main{padding:16px 20px 22px;min-width:0;overflow:auto}.ein-main h3{margin:0;font-size:1.3rem;color:#243247}
+#einView{display:none;flex:1;min-height:0;--ein-w:290px}html.cm-unterricht #einView{display:grid;grid-template-columns:var(--ein-w) 12px 1fr}
+.ein-side{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--border-color,#dce3ef);padding:12px 10px 10px 12px}
+.ein-q{height:38px;border:1px solid #dce3ef;border-radius:10px;padding:0 10px;font:inherit;font-size:.92rem;margin-bottom:6px;background:#fff;color:#243247}
+.ein-list{flex:1;min-height:0;overflow:auto}
+.ein-sacts{display:flex;gap:6px;border-top:1px solid #eef2f7;padding-top:10px;margin-top:6px}.ein-sacts .ein-b{flex:1;padding:0 8px}
+.ein-handle{display:flex;align-items:center;justify-content:center;cursor:col-resize;touch-action:none}.ein-handle i{display:block;width:4px;height:36px;border-radius:3px;background:repeating-linear-gradient(#b8c4d6 0 3px,transparent 3px 6px)}
+.ein-handle:hover i{background:repeating-linear-gradient(#2f5f9b 0 3px,transparent 3px 6px)}
+.ein-main{padding:16px 20px 22px;min-width:0;overflow:auto}
+.ein-mh{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.ein-mh h2{margin:0;font-size:1.4rem;color:#243247}.ein-mh .sp{flex:1}
+.ein-sub{color:#66758a;margin:4px 0 14px}
+.ein-b{height:40px;border-radius:10px;border:1px solid #c9d5e6;background:#fff;color:#2f5f9b;font:inherit;font-size:.92rem;font-weight:650;padding:0 14px;cursor:pointer;white-space:nowrap}.ein-b:hover{background:#f3f7fd}
+.ein-tog{display:inline-flex;align-items:center;gap:9px;font-weight:650;font-size:.9rem;color:#9a5400;background:#fff4e2;border:1px solid #f2c98a;border-radius:999px;padding:5px 12px 5px 8px;cursor:pointer;user-select:none}
+.ein-tog.off{color:#66758a;background:#fff;border-color:#dce3ef}.ein-tog input{position:absolute;opacity:0;pointer-events:none}
+.ein-tog .sw{width:38px;height:22px;border-radius:11px;background:#e8590c;position:relative;flex:none;transition:background .15s}.ein-tog .sw::after{content:'';position:absolute;top:3px;left:19px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
+.ein-tog.off .sw{background:#c9d2df}.ein-tog.off .sw::after{left:3px}
+.ein-dots{display:inline-flex;gap:3px;flex:none}.ein-dots b{width:7px;height:7px;border-radius:50%;background:#d5dde9}.ein-dots b.dv{background:#2f5f9b}.ein-dots b.dg{background:#6b8fc4}.ein-dots b.dt{background:#e8590c}.ein-dots b.dw{background:#9db4d6}
+.ein-row .why{display:block;font-size:.78rem;color:#8a97aa;font-weight:500}
+.ein-pick{display:none}
+.ein-empty{color:#66758a;padding:10px 2px}
 .ein-jg{font-size:.78rem;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:#66758a;margin:14px 8px 4px}.ein-jg:first-child{margin-top:4px}
 .ein-row{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;border:0;background:transparent;border-radius:9px;padding:8px 10px;font:inherit;color:#243247;cursor:pointer}
 .ein-row:hover{background:#f3f6fb}.ein-row.on{background:#eaf0fa;color:#2f5f9b;font-weight:700}.ein-row span{flex:1;min-width:0}.ein-row small{color:#8a97aa;font-size:.8rem}.ein-row.dim span{color:#8a97aa}
-.ein-row .stand{font-size:.72rem;font-weight:700;color:#9a5400;background:#fff4e2;border-radius:999px;padding:1px 7px;flex:none}
+.ein-row .stand{font-size:.72rem;font-weight:700;color:#9a5400;background:#fff4e2;border:1px solid #f2c98a;border-radius:999px;padding:0 7px;flex:none}
 .ein-foot{color:#8a97aa;font-size:.82rem;margin:16px 8px 0;line-height:1.5}.ein-foot a{color:#2f5f9b;cursor:pointer;text-decoration:underline}
 .ein-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
 .ein-tile{border:1px solid #dce3ef;border-radius:12px;padding:14px;background:#fff;display:flex;flex-direction:column;gap:3px}
@@ -4358,11 +4367,11 @@ html.cm-unterricht .grid-container>*:not(#einView){display:none!important}
 #einQr{max-height:calc(100dvh - 24px);overflow:auto}#einQr .qr{display:flex;justify-content:center;margin:8px 0}#einQr .qr svg{width:300px;height:300px;max-width:100%}
 #einQr.big{max-width:none;width:calc(100% - 32px);height:calc(100% - 32px)}#einQr.big .qr svg{width:min(78vh,90vw);height:min(78vh,90vw)}
 #einQr code{display:block;font-size:.75rem;color:#66758a;word-break:break-all;max-height:3.2em;overflow:hidden}
-@media (max-width:760px){.ein-bar{padding:12px}.ein-bar h2{flex-basis:100%;order:-1;font-size:1.15rem}.ein-body{padding:12px}.ein-lib{grid-template-columns:1fr;grid-template-rows:auto 1fr}.ein-tree{border-right:0;border-bottom:1px solid var(--border-color,#dce3ef);max-height:34vh}.ein-tiles{grid-template-columns:1fr}}`;
+@media (max-width:760px){html.cm-unterricht #einView{grid-template-columns:1fr}.ein-handle{display:none}.ein-side{display:none;border-right:0;border-bottom:1px solid var(--border-color,#dce3ef);max-height:60vh;padding:10px}#einView.side-open .ein-side{display:flex}#einView.side-open{grid-template-rows:auto 1fr}#einView.side-open .ein-main{order:-1;flex:none;padding-bottom:6px}#einView.side-open .ein-main>:not(.ein-pick){display:none}.ein-pick{display:block;width:100%;height:44px;border:1px solid #c9d5e6;border-radius:12px;background:#fff;color:#2f5f9b;font:inherit;font-weight:700;text-align:left;padding:0 14px;margin-bottom:12px}.ein-main{padding:12px}.ein-mh h2{font-size:1.15rem;flex-basis:100%}.ein-tiles{grid-template-columns:1fr}}`;
  const st=document.createElement('style');st.textContent=css;document.head.append(st);
  const view=document.createElement('div');view.id='einView';grid.append(view);
- let on=false,lib=false;
- function mode(v){on=!!v;document.documentElement.classList.toggle('cm-unterricht',on);if(on){lib=false;render()}}
+ let on=false,sel=null,q='',sideOpen=false;
+ function mode(v){on=!!v;document.documentElement.classList.toggle('cm-unterricht',on);if(on){sel=null;q='';sideOpen=false;render()}}
  window.classroomEinheiten={mode,show:()=>mode(true),hide:()=>mode(false),get on(){return on}};
  /* Kontext der Lerngruppe (der Noten-Manager führt; der Sitzplan folgt ihm) */
  function ctx(){const b=B();let c={};try{c=b?.context()||{}}catch{}const lab=c.label||'';const m=/(\d{1,2})\s*[a-zäöü]?\s*$/i.exec(lab)||/(\d{1,2})/.exec(lab);
@@ -4376,46 +4385,53 @@ html.cm-unterricht .grid-container>*:not(#einView){display:none!important}
  function stand(){const s=rd(STAND)[cx.key];if(s&&items().includes(s))return s;
   if(cx.subject==='erdkunde'){const u=data.units.find(x=>x.jg===cx.jg)||data.units[0];return u?'u:'+u.u:''}
   if(cx.subject==='latein'){const ls=data.lessons.filter(l=>l.jg===cx.jg);const best=ls.filter(l=>blocks(l)).at(-1)||ls[0]||data.lessons[0];return best?'l:'+best.k:''}return ''}
- const setStand=v=>{const s=rd(STAND);s[cx.key]=v;wr(STAND,s)};
+ const setStand=v=>{const s=rd(STAND);if(v)s[cx.key]=v;else delete s[cx.key];wr(STAND,s)};
+ const isStand=id=>rd(STAND)[cx.key]===id;
  const find=id=>id?.startsWith('l:')?{l:data.lessons.find(x=>x.k===id.slice(2))}:id?.startsWith('u:')?{u:data.units.find(x=>x.u===id.slice(2))}:{};
- const idLabel=id=>{const {l,u}=find(id);return l?l.tag:u?u.title:''};
+ const sub=l=>[...l.formen.slice(0,3),l.syntax&&'Syntax: '+l.syntax].filter(Boolean).map(esc).join(' · ');
+ /* 11.26: festes Seitenmenü (Breite per Schieber), Schalter „Aktuelle Lektion“, Punkte je Baustein, Suche nach Thema */
  async function render(){if(!on)return;cx=ctx();data=await load();
   if(!data){view.innerHTML='<div class="ein-body ein-empty">Der Unterricht ist gerade nicht erreichbar. Öffne einmal „Noten“ und versuche es erneut.</div>';return}
-  return lib?renderLib():renderNow()}
- function renderNow(){const cls=cx.short||'—',subj=SUBJ[cx.subject]||cx.subject||'',s=stand(),its=items(),i=its.indexOf(s),{l,u}=find(s);
-  const title=l?esc(l.label)+(l.name?' · '+esc(l.name):''):u?esc(u.title):'Keine Einheit';
-  view.innerHTML='<div class="ein-bar"><button type="button" class="ein-b nav" data-prev'+(i>0?'':' disabled')+'>‹ '+esc(i>0?idLabel(its[i-1]):'')+'</button><h2>'+title+'</h2><button type="button" class="ein-b nav" data-next'+(i>=0&&i<its.length-1?'':' disabled')+'>'+esc(i>=0&&i<its.length-1?idLabel(its[i+1]):'')+' ›</button>'
-   +'<span class="sp"></span><span class="st">Stand der '+esc(cls)+'</span><button type="button" class="ein-b" data-lib>Alle Einheiten …</button></div>'
-   +'<div class="ein-body">'+(l?'<p class="ein-sub">'+(sub(l)||'&nbsp;')+'</p>'+lessonTiles(l):u?'<p class="ein-sub">'+esc(u.sub)+' · Jahrgang '+u.jg+'</p>'+unitTiles(u)
-    :'<div class="ein-empty">Für '+esc(subj||'dieses Fach')+' gibt es noch keine Einheiten. Unter „Alle Einheiten …“ findest du alles, was geladen ist.</div>')+'</div>';
-  view.querySelector('[data-prev]').onclick=()=>{if(i>0){setStand(its[i-1]);renderNow()}};
-  view.querySelector('[data-next]').onclick=()=>{if(i<its.length-1){setStand(its[i+1]);renderNow()}};
-  view.querySelector('[data-lib]').onclick=()=>{lib=true;renderLib()};wire()}
- const sub=l=>[...l.formen.slice(0,3),l.syntax&&'Syntax: '+l.syntax].filter(Boolean).map(esc).join(' · ');
- function renderLib(){const subj=SUBJ[cx.subject]||'',showAll=ui.all||!(cx.subject in {latein:1,erdkunde:1}),cur=stand();let sel=ui.sel[cx.key]||cur;
-  const latOk=showAll||cx.subject==='latein',ekOk=showAll||cx.subject==='erdkunde';const {l:selL,u:selU}=find(sel);
-  if(selL)openJg.add(selL.jg);else if(cx.jg)openJg.add(cx.jg);
-  const jgs=[...new Set([...(latOk?data.lessons.map(l=>l.jg):[]),...(ekOk?data.units.map(u=>u.jg):[])])].sort((a,b)=>a-b);
-  const tag=id=>id===cur?'<span class="stand">Stand '+esc(cx.short)+'</span>':'';let tree='';
-  for(const jg of jgs){tree+='<div class="ein-jg">Jahrgang '+jg+'</div>';
-   if(latOk){const ls=data.lessons.filter(l=>l.jg===jg);if(ls.length){const n=ls.filter(l=>blocks(l)).length;
-    if(openJg.has(jg))tree+=ls.map(l=>'<button type="button" class="ein-row'+(selL===l?' on':'')+(blocks(l)?'':' dim')+'" data-sel="l:'+esc(l.k)+'"><span>Latein · '+esc(lname(l))+'</span>'+tag('l:'+l.k)+'<small>'+(blocks(l)||'')+'</small></button>').join('');
-    else tree+='<button type="button" class="ein-row" data-jg="'+jg+'"><span>Latein · '+esc(ls[0].tag)+' – '+esc(ls.at(-1).tag)+'</span><small>'+(n||'')+' ›</small></button>'}}
-   if(ekOk)tree+=data.units.filter(u=>u.jg===jg).map(u=>'<button type="button" class="ein-row'+(selU===u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>Erdkunde · '+esc(u.title)+'</span>'+tag('u:'+u.u)+'<small>'+(u.book?'1':'')+'</small></button>').join('')}
-  tree+='<div class="ein-foot">'+(subj&&(cx.subject in {latein:1,erdkunde:1})?(ui.all?'<a data-all>nur '+esc(subj)+'</a> · alle Fächer':'nur '+esc(subj)+' · <a data-all>alle Fächer</a>')+'<br>':'')+'Lektionstexte und Schulbuchbilder bleiben auf diesem Gerät.</div>';
-  const canStand=sel&&sel!==cur&&items().includes(sel);
-  view.innerHTML='<div class="ein-bar"><button type="button" class="ein-b" data-back>‹ Zurück zur '+esc(cx.short||'Klasse')+'</button><h2>Alle Einheiten</h2><span class="sp"></span>'
-   +'<button type="button" class="ein-b" data-load title="Paket (.cmpaket), Latein-Datenbank, Übersetzungs-Trainer-Dateien (.cmtext), Lerneinheiten (.cmeinheit) oder ein Zip – wird zusammengeführt">Paket laden …</button><button type="button" class="ein-b" data-exp>Exportieren …</button></div>'
-   +'<div class="ein-lib"><div class="ein-tree">'+tree+'</div><div class="ein-main">'
-   +(selL?'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h3>'+esc(selL.label)+(selL.name?' · '+esc(selL.name):'')+'</h3><span style="flex:1"></span>'+(canStand?'<button type="button" class="ein-b" data-stand>Als Stand der '+esc(cx.short)+' setzen</button>':'')+'</div><p class="ein-sub" style="margin-top:4px">'+(sub(selL)||'&nbsp;')+'</p>'+lessonTiles(selL)
-    :selU?'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h3>'+esc(selU.title)+'</h3><span style="flex:1"></span>'+(canStand?'<button type="button" class="ein-b" data-stand>Als Stand der '+esc(cx.short)+' setzen</button>':'')+'</div><p class="ein-sub" style="margin-top:4px">'+esc(selU.sub)+' · Jahrgang '+selU.jg+'</p>'+unitTiles(selU)
-    :'<div class="ein-empty">Links eine Einheit wählen.</div>')+'</div></div>';
-  view.querySelector('[data-back]').onclick=()=>{lib=false;renderNow()};
-  view.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{ui.sel[cx.key]=b.dataset.sel;saveUi();renderLib()});
-  view.querySelectorAll('[data-jg]').forEach(b=>b.onclick=()=>{openJg.add(+b.dataset.jg);renderLib()});
-  view.querySelector('[data-all]')?.addEventListener('click',()=>{ui.all=!ui.all;saveUi();renderLib()});
-  view.querySelector('[data-stand]')?.addEventListener('click',()=>{setStand(sel);lib=false;renderNow()});
-  view.querySelector('[data-load]').onclick=loadPkg;view.querySelector('[data-exp]').onclick=exportPkg;wire()}
+  {const f=find(sel);if(!f.l&&!f.u)sel=stand()}draw()}
+ const dots=l=>'<span class="ein-dots" title="Vokabeln · Grammatik · Übersetzungs-Trainer · Wiederholung">'+[['dv',l.nV],['dg',l.gr.length],['dt',l.tt.length],['dw',l.nW]].map(([c,n])=>'<b class="'+(n?c:'')+'"></b>').join('')+'</span>';
+ const rowL=l=>'<button type="button" class="ein-row'+(sel==='l:'+l.k?' on':'')+(blocks(l)?'':' dim')+'" data-sel="l:'+esc(l.k)+'"><span>'+esc(lname(l))+'</span>'+(isStand('l:'+l.k)?'<span class="stand">aktuell</span>':dots(l))+'</button>';
+ const rowU=u=>'<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>'+esc(u.title)+'</span>'+(isStand('u:'+u.u)?'<span class="stand">aktuell</span>':'<span class="ein-dots"><b class="'+(u.book?'dt':'')+'" title="Schulbuchmaterial"></b></span>')+'</button>';
+ const norm=x=>String(x||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9äöüß]+/g,' ').trim();
+ function treeHtml(){const subj=SUBJ[cx.subject]||'',known=cx.subject in {latein:1,erdkunde:1},showAll=ui.all||!known,latOk=showAll||cx.subject==='latein',ekOk=showAll||cx.subject==='erdkunde';
+  if(q.trim()){const t=norm(q),hit=x=>norm(x).includes(t);let out='';
+   for(const l of data.lessons){const why=[...l.gr,...l.formen,l.syntax,...l.tt.map(x=>x.hunt)].filter(Boolean).find(hit);if(hit(lname(l))||hit(l.label)||why)out+='<button type="button" class="ein-row'+(sel==='l:'+l.k?' on':'')+'" data-sel="l:'+esc(l.k)+'"><span>Latein · '+esc(lname(l))+(why&&!hit(lname(l))?'<small class="why">'+esc(why)+'</small>':'')+'</span>'+dots(l)+'</button>'}
+   for(const u of data.units)if(hit(u.title)||hit(u.sub))out+='<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>Erdkunde · '+esc(u.title)+'</span></button>';
+   return out||'<div class="ein-empty" style="padding:8px">Nichts gefunden.</div>'}
+  const {l:selL,u:selU}=find(sel);const openNow=new Set(openJg);if(cx.jg)openNow.add(cx.jg);if(selL)openNow.add(selL.jg);if(selU)openNow.add(selU.jg);
+  const jgs=[...new Set([...(latOk?data.lessons.map(l=>l.jg):[]),...(ekOk?data.units.map(u=>u.jg):[])])].sort((a,b)=>(b===cx.jg)-(a===cx.jg)||a-b);let tree='';
+  for(const jg of jgs){const mine=jg===cx.jg;
+   if(latOk){const ls=data.lessons.filter(l=>l.jg===jg);if(ls.length){if(openNow.has(jg))tree+='<div class="ein-jg">Jahrgang '+jg+' · Latein</div>'+ls.map(rowL).join('');
+    else tree+=(tree.includes('data-jgh')||mine?'':'<div class="ein-jg" data-jgh>Andere Jahrgänge</div>')+'<button type="button" class="ein-row dim" data-jg="'+jg+'"><span>Jg. '+jg+' · Latein '+esc(ls[0].tag)+' – '+esc(ls.at(-1).tag)+'</span><small>›</small></button>'}}
+   if(ekOk){const us=data.units.filter(u=>u.jg===jg);if(us.length)tree+='<div class="ein-jg">Jahrgang '+jg+' · Erdkunde</div>'+us.map(rowU).join('')}}
+  return tree+(known?'<div class="ein-foot">'+(ui.all?'<a data-all>nur '+esc(subj)+'</a> · alle Fächer':'nur '+esc(subj)+' · <a data-all>alle Fächer</a>')+'</div>':'')}
+ function wireTree(){const T=view.querySelector('.ein-list');
+  T.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{sel=b.dataset.sel;sideOpen=false;draw()});
+  T.querySelectorAll('[data-jg]').forEach(b=>b.onclick=()=>{openJg.add(+b.dataset.jg);T.innerHTML=treeHtml();wireTree()});
+  T.querySelector('[data-all]')?.addEventListener('click',()=>{ui.all=!ui.all;saveUi();T.innerHTML=treeHtml();wireTree()})}
+ function draw(){const {l,u}=find(sel),cls=cx.short||'—',subj=SUBJ[cx.subject]||cx.subject||'';
+  const title=l?esc(l.label)+(l.name?' · '+esc(l.name):''):u?esc(u.title):'';const st=isStand(sel);
+  view.style.setProperty('--ein-w',(ui.w||290)+'px');view.classList.toggle('side-open',sideOpen);
+  view.innerHTML='<div class="ein-side"><input type="search" class="ein-q" placeholder="Lektion oder Thema suchen …" value="'+esc(q)+'" autocomplete="off" autocorrect="off" spellcheck="false"><div class="ein-list">'+treeHtml()+'</div>'
+   +'<div class="ein-sacts"><button type="button" class="ein-b" data-load title="Paket (.cmpaket), Latein-Datenbank, Übersetzungs-Trainer-Dateien (.cmtext), Lerneinheiten (.cmeinheit) oder ein Zip – wird zusammengeführt">Paket laden …</button><button type="button" class="ein-b" data-exp>Exportieren …</button></div></div>'
+   +'<div class="ein-handle" title="Ziehen: Seitenmenü breiter oder schmaler"><i></i></div>'
+   +'<div class="ein-main"><button type="button" class="ein-pick" data-pick>☰ '+(l?esc(lname(l)):u?esc(u.title):'Einheit wählen')+' ▾</button>'
+   +(l||u?'<div class="ein-mh"><h2>'+title+'</h2><span class="sp"></span>'+(cx.key&&items().includes(sel)?'<label class="ein-tog'+(st?'':' off')+'" title="Eingeschaltet: „Unterricht“ öffnet für die '+esc(cls)+' automatisch diese '+(l?'Lektion':'Einheit')+'"><input type="checkbox" data-stand'+(st?' checked':'')+'><span class="sw"></span>Aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+'</label>':'')+'</div>'
+     +(l?'<p class="ein-sub">'+(sub(l)||'&nbsp;')+'</p>'+lessonTiles(l):'<p class="ein-sub">'+esc(u.sub)+' · Jahrgang '+u.jg+'</p>'+unitTiles(u))
+    :'<div class="ein-empty">Für '+esc(subj||'dieses Fach')+' gibt es noch keine Einheiten. Links findest du alles, was geladen ist („alle Fächer“).</div>')+'</div>';
+  wireTree();
+  const qi=view.querySelector('.ein-q');qi.oninput=()=>{q=qi.value;const T=view.querySelector('.ein-list');T.innerHTML=treeHtml();wireTree()};
+  view.querySelector('[data-load]').onclick=loadPkg;view.querySelector('[data-exp]').onclick=exportPkg;
+  view.querySelector('[data-pick]').onclick=()=>{sideOpen=!sideOpen;view.classList.toggle('side-open',sideOpen)};
+  view.querySelector('[data-stand]')?.addEventListener('change',e=>{setStand(e.target.checked?sel:null);draw()});
+  const h=view.querySelector('.ein-handle');h.onpointerdown=e=>{e.preventDefault();h.setPointerCapture(e.pointerId);const x0=e.clientX,w0=ui.w||290;
+   h.onpointermove=ev=>{ui.w=Math.max(200,Math.min(520,w0+ev.clientX-x0));view.style.setProperty('--ein-w',ui.w+'px')};
+   h.onpointerup=()=>{h.onpointermove=null;h.onpointerup=null;saveUi()}};
+  wire()}
  const tile=(ic,cls,t,s,acts,off)=>'<div class="ein-tile '+cls+(off?' off':'')+'"><i>'+ic+'</i><b>'+t+'</b><small>'+s+'</small>'+(acts?'<div class="ein-acts">'+acts+'</div>':'')+'</div>';
  const btn=(d,k,t,c)=>'<button type="button" '+(c?'class="'+c+'" ':'')+'data-do="'+d+'" data-k="'+esc(k)+'">'+(c==='look'?'👁 ':'')+t+'</button>';
  function lessonTiles(l){const k=l.k,tt=l.tt[0];
@@ -4492,8 +4508,8 @@ html.cm-unterricht .grid-container>*:not(#einView){display:none!important}
    const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);dlg.close()};
   dlg.querySelector('[data-x]').onclick=()=>dlg.close();dlg.querySelector('[data-everything]').onclick=()=>go(true);dlg.querySelector('form').onsubmit=e=>{e.preventDefault();go(false)};
   dlg.showModal()}
- /* Lerngruppe gewechselt → neu zeichnen (mit der Bibliothek zurück zur Lerngruppe) */
- const title=document.getElementById('titelKlasse');if(title)new MutationObserver(()=>{if(on){lib=false;render()}}).observe(title,{childList:true,characterData:true,subtree:true});
+ /* Lerngruppe gewechselt → neu zeichnen, mit ihrer aktuellen Lektion */
+ const title=document.getElementById('titelKlasse');if(title)new MutationObserver(()=>{if(on){sel=null;q='';render()}}).observe(title,{childList:true,characterData:true,subtree:true});
  window.addEventListener('storage',e=>{if(on&&e.key&&/^classroom-(vocab|grammar|text-trainer|lerneinheiten)/.test(e.key))render()});
  /* Beim Laden: Modus vom Hauptfenster übernehmen */
  try{if(frameElement?.dataset.mode==='unterricht')setTimeout(()=>mode(true),0)}catch{}

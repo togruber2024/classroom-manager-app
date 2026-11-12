@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 12.11.2026 · Version 11.25
+Stand: 12.11.2026 · Version 11.26
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1404,3 +1404,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.23: Drei Bereiche Sitzplan · Unterricht · Noten; Unterricht zeigt die aktuelle Lerngruppe mit Stand; Üben (QR) für Vokabeln, Wiederholung, Grammatik (ueben.html), Test optional; Lerneinheiten-Ergebnisse und Stand im Backup.
 11.24: Dauerhafter Speicher (navigator.storage.persist); Wiederherstellen führt Vokabular und Grammatik-Themen zusammen statt zu ersetzen.
 11.25: iPhone startet immer mit dem Stundenplan; Datenschutzmodus im Querformat (Namensliste und Übersicht); Hinweis unten; Wiederholung: alte Vokabeln aus dem Lektionstext.
+11.26: Unterricht mit festem Seitenmenü (Schieber), Schalter „Aktuelle Lektion“, Punkte je Baustein, Suche nach Lektion/Thema; iPhone-Auswahlblatt.
