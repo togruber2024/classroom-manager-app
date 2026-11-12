@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><script>/* Vorschau am Mac (?vorschau=1): nichts wird gespeichert */</script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Alternative Lateinarbeit</title>
+<!-- 11.53: Alternative Lateinarbeit (Latein ab Lektion 15). Die Seite selbst enthält keine Aufgaben: Die Arbeit kommt aus einer
+     privaten Lehrkraft-Datei (.cmeinheit, kind „lateinarbeit“), gespeichert nur lokal in IndexedDB – nie im Repo. -->
+<style>
+:root{--blue:#2f5f9b;--ink:#1d2b40;--mut:#5c6b80;--line:#d5dce8;--ok:#1f6f43;--okbg:#eaf6ee}
+*{box-sizing:border-box}
+html,body{margin:0;background:#eef1f6;color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif}
+.bar{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;justify-content:flex-end;padding:10px 16px;background:#eef1f6cc;backdrop-filter:blur(6px)}
+.bar button{height:40px;padding:0 16px;border-radius:10px;border:1px solid #a8bdd8;background:#fff;color:var(--blue);font:inherit;font-weight:600;cursor:pointer}
+.bar button.on{background:#fff4e0;border-color:#e8a23a;color:#c2410c}
+.sheet{max-width:820px;margin:0 auto 40px;background:#fff;padding:34px 44px;box-shadow:0 2px 14px #1d2b4014;border-radius:6px}
+.hd{display:grid;grid-template-columns:1fr auto;gap:6px 20px;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:16px}
+.hd h1{margin:0;font-size:1.45rem}.hd .sub{color:var(--mut)}.hd .meta{grid-column:1/-1;display:flex;gap:26px;font-size:.92rem}.hd .meta span{flex:1;border-bottom:1px solid var(--line);padding:14px 0 2px}
+h2{font-size:1.1rem;margin:22px 0 6px}h3{font-size:1rem;margin:18px 0 6px;color:var(--blue)}
+.intro{font-style:italic;color:var(--mut);margin:0 0 8px}
+table.lt{width:100%;border-collapse:collapse;font-size:1.02rem}table.lt td{vertical-align:top;padding:2px 0}table.lt td.n{width:34px;color:var(--mut);font-size:.82rem;padding-top:5px}
+table.lt.de{font-size:.95rem}
+.notes{columns:2;column-gap:26px;font-size:.88rem;margin:8px 0 0;padding:8px 12px;border:1px solid var(--line);border-radius:6px}.notes div{break-inside:avoid}.notes b{font-weight:650}
+.dn{font-size:.85rem;color:var(--mut);margin:4px 0 0}
+.fld{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);margin-top:22px}.fld h3{margin:0 0 4px}.fld span{font-size:.85rem;color:var(--mut)}
+.task{display:grid;grid-template-columns:30px 1fr 56px;gap:8px;margin:10px 0}.task .nr{font-weight:700}.task .pt{text-align:right;font-weight:650;white-space:nowrap}.task .tx{white-space:pre-line}.task small{display:block;color:var(--mut);font-size:.78rem}
+.sol{grid-column:2/4;background:var(--okbg);border-left:4px solid #6dbb8a;border-radius:4px;padding:6px 10px;font-size:.9rem;color:var(--ok)}.sol ul{margin:0;padding-left:18px}
+.lines{grid-column:2/4;height:70px;background:repeating-linear-gradient(#fff 0 22px,#e4e9f1 22px 23px)}
+.sum{margin-top:18px;font-size:.92rem}.scale{border-collapse:collapse;margin-top:6px}.scale td{border:1px solid var(--line);padding:3px 10px;text-align:center}
+.foot{margin-top:18px;font-size:.78rem;color:var(--mut)}
+.empty{max-width:640px;margin:60px auto;background:#fff;border-radius:14px;padding:28px;text-align:center}
+.empty button{margin-top:12px;height:44px;padding:0 18px;border-radius:10px;border:1px solid #a8bdd8;background:#fff;color:var(--blue);font:inherit;font-weight:600}
+body.sol-on .lines{display:none}
+@media (max-width:700px){.sheet{padding:20px 16px}.notes{columns:1}}
+@media print{@page{size:A4;margin:14mm 16mm}html,body{background:#fff}.bar{display:none}.sheet{box-shadow:none;margin:0;max-width:none;padding:0}.task{break-inside:avoid}h2,h3{break-after:avoid}}
+</style></head><body>
+<div class="bar"><button type="button" id="bPrint">Drucken / als PDF</button></div>
+<div id="app"></div>
+<script>
+'use strict';
+const $=s=>document.querySelector(s),app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ID=(new URLSearchParams(location.search).get('id')||'').replace(/[^a-z0-9-]/gi,'');
+let D=null,SOL=false;
+const IDB=(mode,fn)=>new Promise((res,rej)=>{try{const r=indexedDB.open('cm-lerneinheiten',1);r.onupgradeneeded=()=>r.result.createObjectStore('u');r.onerror=()=>rej(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('u',mode),q=fn(tx.objectStore('u'));tx.oncomplete=()=>{res(q&&q.result);db.close()};tx.onerror=()=>rej(tx.error)}}catch(e){rej(e)}});
+const ok=u=>!!(u&&u.type==='classroom-lerneinheit'&&u.kind==='lateinarbeit'&&(!ID||u.id===ID));
+function render(){if(!D){app.innerHTML='<div class="empty"><h2>Alternative Lateinarbeit</h2><p>Auf diesem Gerät ist noch keine Arbeit gespeichert. Lade die private Datei (.cmeinheit) – sie bleibt nur auf diesem Gerät.</p><button type="button" id="ld">Datei laden …</button></div>';$('#ld').onclick=pick;return}
+ const X=D.text||{},tasks=D.tasks||[],F=D.fields||{},sumF=f=>tasks.filter(t=>t.f===f).reduce((a,t)=>a+t.pts,0),tot=D.total||tasks.reduce((a,t)=>a+t.pts,0);let n=0;
+ const tbl=(arr,cls)=>'<table class="lt '+(cls||'')+'">'+arr.map((l,i)=>'<tr><td class="n">'+(i+1)+'</td><td>'+esc(l)+'</td></tr>').join('')+'</table>';
+ app.innerHTML='<div class="sheet"><div class="hd"><div><h1>'+esc(D.title)+(SOL?' · Erwartungshorizont':'')+'</h1><div class="sub">'+esc(D.sub||'')+'</div></div><div class="sub" style="text-align:right">Gesamt: '+tot+' BE</div>'
+  +(SOL?'':'<div class="meta"><span>Name:</span><span>Klasse:</span><span>Datum:</span></div>')+'</div>'
+  +'<h2>'+esc(X.t||'')+'</h2>'+(X.intro?'<p class="intro">'+esc(X.intro)+'</p>':'')+tbl(X.la||[])
+  +(X.notes?.length?'<div class="notes">'+X.notes.map(([a,b])=>'<div><b>'+esc(a)+'</b>: '+esc(b)+'</div>').join('')+'</div>':'')
+  +(X.de?.length?'<h3>Übersetzung</h3>'+tbl(X.de,'de')+(X.deNote?'<p class="dn">'+esc(X.deNote)+'</p>':''):'')
+  +['A','B','C'].map(f=>{const ts=tasks.filter(t=>t.f===f);if(!ts.length)return '';const p=sumF(f);return '<div class="fld"><h3>'+f+' – '+esc(F[f]||'')+'</h3><span>'+p+' BE · '+Math.round(p/tot*100)+' %</span></div>'
+   +ts.map(t=>{n++;return '<div class="task"><div class="nr">'+n+'.</div><div class="tx">'+esc(t.t)+'<small>Aufgabenfeld '+t.a+'</small></div><div class="pt">'+t.pts+' BE</div>'+(SOL?'<div class="sol"><ul>'+(t.s||[]).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'<div class="lines"></div>')+'</div>'}).join('')}).join('')
+  +'<div class="sum"><b>Notenschlüssel</b> ('+tot+' BE; ausreichend ab 50 %)<table class="scale"><tr>'+(D.scale||[]).map(([g])=>'<td><b>'+g+'</b></td>').join('')+'</tr><tr>'+(D.scale||[]).map(([g,m],i,a)=>'<td>'+(i?m+'–'+(a[i-1][1]-1):m+'–'+tot)+'</td>').join('')+'</tr></table></div>'
+  +'<div class="foot">'+esc(D.src||'')+(D.note?' · '+esc(D.note):'')+'</div></div>';
+ document.body.classList.toggle('sol-on',SOL)}
+function pick(){const i=document.createElement('input');i.type='file';i.accept='.cmeinheit,.json';i.style.display='none';document.body.append(i);
+ i.onchange=async()=>{const f=i.files[0];i.remove();if(!f)return;try{const u=JSON.parse(await f.text());if(!ok(u))throw 0;D=u;try{await IDB('readwrite',st=>st.put(u,u.id))}catch{}render()}catch{alert('Diese Datei ist keine passende Lateinarbeit.')}};i.click()}
+$('#bPrint').onclick=()=>window.print();
+window.cmPreviewSolutions=on=>{SOL=!!on;render()};
+(async()=>{try{const u=window.CM_EMBED_BOOK||(ID?await IDB('readonly',st=>st.get(ID)):null);if(ok(u))D=u}catch{}render()})();
+</script></body></html>

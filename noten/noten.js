@@ -4952,7 +4952,7 @@ window.LP=LP;window.lpLabels=labels;
     if(d.toc?.lessons){const own=tocStore()||{};const m={...own,...d.toc,lessons:{...(own.lessons||{}),...d.toc.lessons}};localStorage.setItem(TOCKEY,JSON.stringify(m));out.toc=(out.toc||0)+Object.keys(d.toc.lessons).length}
     for(const t of d.texts||[])texts.push(JSON.stringify(t));for(const u of d.units||[])await unit(u);if(d.type===DBT&&d.tests?.length)out.tests=(out.tests||0)+d.tests.length}
    else if(d?.type==='classroom-text-trainer')texts.push(text);else if(d?.type==='classroom-lerneinheit')await unit(d);else out.unknown++};
-  const unit=async u=>{if(!u?.id||!(UNITS[u.id]||Object.values(UNITS).some(x=>x.bookId===u.id))){out.unknown++;return}for(const x of Object.values(UNITS))if(x.bookId===u.id)delete x._book;try{await leIDB('readwrite',st=>st.put(u,u.id));out.le++}catch{out.bad++}};
+  const unit=async u=>{if(!u?.id||!(UNITS[u.id]||Object.values(UNITS).some(x=>x.bookId===u.id)||(u.kind==='lateinarbeit'&&/^ala-\d+$/.test(u.id)))){out.unknown++;return}for(const x of Object.values(UNITS))if(x.bookId===u.id)delete x._book;try{await leIDB('readwrite',st=>st.put(u,u.id));out.le++}catch{out.bad++}};
   for(const f of files){try{if(/\.zip$/i.test(f.name)||f.type==='application/zip'){for(const x of await ttUnzip(await f.arrayBuffer()))await one(x.name,x.text)}else await one(f.name,await f.text())}catch(e){if(e?.name==='QuotaExceededError')throw e;out.bad++}}
   if(texts.length){const r=await ttImport(texts.map((t,i)=>new File([t],'t'+i+'.cmtext')));out.tt+=r.got.length;out.bad+=r.bad}
   return out}
@@ -4973,7 +4973,7 @@ window.LP=LP;window.lpLabels=labels;
  /* 11.42: Schulbuch-Datei einer Lerneinheit zum Weitergeben (AirDrop) – dieselbe Datei, die die Schüler mit „Datei laden …“ öffnen */
  const BOOKNAMES={'bs-stadt':'Braunschweig','welthandel':'Welthandel','logistik':'Logistik','digitalisierung':'Digitalisierung','tropen':'Tropen','pontes-l16':'Pontes-L16-Uebungen'};
  async function bibBookFile(u){const U=UNITS[u];if(!U)return null;const id=U.bookId||u;const x=await leIDB('readonly',st=>st.get(id));if(!x)return null;return {name:(BOOKNAMES[id]||String(id).replace(/[^\w-]+/g,'-'))+'.cmeinheit',text:JSON.stringify(x)}}
- window.classroomBibliothek={lessons:bibLessons,bookFile:bibBookFile,practice:bibPractice,qr:(u,o)=>classroomQrSvg(u,o),lesson:bibLesson,units:bibUnits,list:bibList,ttHash:bibTtHash,act:bibAct,exportPkg:bibExport,importFiles:bibImport,
+ window.classroomBibliothek={/* 11.53: Alternative Lateinarbeit je Lektion (private Datei) */ala:k=>leIDB('readonly',st=>st.get('ala-'+k)).catch(()=>null),lessons:bibLessons,bookFile:bibBookFile,practice:bibPractice,qr:(u,o)=>classroomQrSvg(u,o),lesson:bibLesson,units:bibUnits,list:bibList,ttHash:bibTtHash,act:bibAct,exportPkg:bibExport,importFiles:bibImport,
   context:()=>({subject:currentSubject,classId:currentClassId,label:leCls()})};
  window.classroomLerneinheiten={open:openUnits,overview:leOverview,ingest:leIngest};
  window.classroomVocabTest={textTrainer:showTextTrainer,open:openManager,openBook,print:printTest,load:loadFile,fromPdf,normalizeTest,studentUrl};

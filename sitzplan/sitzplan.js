@@ -4345,7 +4345,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
 .ein-row .why{display:block;font-size:.78rem;color:#8a97aa;font-weight:500}
 .ein-pick{display:none}
 .ein-empty{color:#66758a;padding:10px 2px}
-.ein-ch{font-size:.86rem;font-weight:750;color:#243247;margin:10px 10px 2px;line-height:1.3}.ein-pt{font-size:.72rem;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:#8a97aa;margin:10px 10px 2px}.ein-jg{font-size:.78rem;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:#66758a;margin:14px 8px 4px}.ein-jg:first-child{margin-top:4px}
+.ein-all{display:block;width:calc(100% - 16px);margin:12px 8px 4px;min-height:40px;border:1px dashed #a8bdd8;border-radius:10px;background:#f7f9fd;color:#2f5f9b;font:inherit;font-size:.9rem;font-weight:600;cursor:pointer}.ein-all:hover{background:#eef3fb}.ein-tile.t4 i{background:#f1ebfe;color:#7c3aed}.ein-ch{font-size:.86rem;font-weight:750;color:#243247;margin:10px 10px 2px;line-height:1.3}.ein-pt{font-size:.72rem;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:#8a97aa;margin:10px 10px 2px}.ein-jg{font-size:.78rem;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:#66758a;margin:14px 8px 4px}.ein-jg:first-child{margin-top:4px}
 .ein-row{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;border:0;background:transparent;border-radius:9px;padding:8px 10px;font:inherit;color:#243247;cursor:pointer}
 .ein-row:hover{background:#f3f6fb}.ein-row.on{background:#eaf0fa;color:#2f5f9b;font-weight:700}.ein-row span{flex:1;min-width:0}.ein-row small{color:#8a97aa;font-size:.8rem}.ein-row.dim span{color:#8a97aa}.ein-row.dim.on span{color:#2f5f9b}
 .ein-row .stand{font-size:.72rem;font-weight:700;color:#9a5400;background:#fff4e2;border:1px solid #f2c98a;border-radius:999px;padding:0 7px;flex:none}
@@ -4388,7 +4388,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  /* Kontext der Lerngruppe (der Noten-Manager führt; der Sitzplan folgt ihm) */
  function ctx(){const b=B();let c={};try{c=b?.context()||{}}catch{}const lab=c.label||'';const m=/(\d{1,2})\s*[a-zäöü]?\s*$/i.exec(lab)||/(\d{1,2})/.exec(lab);
   return {subject:c.subject||'',label:lab,short:lab.replace(/^Klasse\s+/i,''),classId:c.classId||'',jg:m?+m[1]:0,key:(c.subject||'')+'::'+(c.classId||'')}}
- let data=null,openJg=new Set(),cx=null;
+ let data=null,openJg=new Set(),cx=null,ALA={};
  const load=async()=>{const b=B();if(!b)return null;return {lessons:b.lessons(),units:await b.units()}};
  const blocks=l=>(l.nV?1:0)+(l.nW?1:0)+(l.gr.length?1:0)+(l.ueb?1:0)+(l.tt.length?1:0);
  const lname=l=>l.tag+(l.name?' '+l.name:'');
@@ -4406,13 +4406,14 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   /* 11.43: nur Inhalte dieser Lerngruppe (Fach + Jahrgang) – sonst nichts vorwählen */
   const v=visIds();if(cx.subject==='erdkunde')return v.find(id=>id.startsWith('u:'))||v[0]||'';
   if(cx.subject==='latein'){const ls=data.lessons.filter(l=>l.jg===cx.jg);const best=ls.filter(l=>blocks(l)).at(-1)||ls[0];return best?'l:'+best.k:''}return ''}
- const visIds=()=>{if(cx.subject==='latein')return data.lessons.filter(l=>l.jg===cx.jg).map(l=>'l:'+l.k);if(cx.subject!=='erdkunde')return [];const T=topics('erdkunde',cx.jg).map(t=>t.id),U=data.units.filter(u=>u.subject!=='latein'&&u.jg===cx.jg).map(u=>'u:'+u.u);return [...T,...U.filter(id=>!T.includes(id))]};
+ const visIds=()=>{if(cx.subject==='latein')return data.lessons.filter(l=>ui.allL||l.jg===cx.jg).map(l=>'l:'+l.k);if(cx.subject!=='erdkunde')return [];const T=topics('erdkunde',cx.jg).map(t=>t.id),U=data.units.filter(u=>u.subject!=='latein'&&u.jg===cx.jg).map(u=>'u:'+u.u);return [...T,...U.filter(id=>!T.includes(id))]};
  const setStand=v=>{const s=rd(STAND);if(v)s[cx.key]=v;else delete s[cx.key];wr(STAND,s)};
  const isStand=id=>rd(STAND)[cx.key]===id;
  const find=id=>id?.startsWith('l:')?{l:data.lessons.find(x=>x.k===id.slice(2))}:id?.startsWith('u:')?{u:data.units.find(x=>x.u===id.slice(2))}:id?.startsWith('t:')?{t:allTopics().find(x=>x.id===id)}:{};
  const sub=l=>[...l.formen.slice(0,3),l.syntax&&'Syntax: '+l.syntax].filter(Boolean).map(esc).join(' · ');
  /* 11.26: festes Seitenmenü (Breite per Schieber), Schalter „Aktuelle Lektion“, Punkte je Baustein, Suche nach Thema */
  async function render(){if(!on)return;cx=ctx();data=await load();
+  /* 11.53: Alternative Lateinarbeiten (private Dateien) ab Lektion 15 */ALA={};try{const b=B();if(data&&b?.ala)for(const l of data.lessons)if(/^\d+$/.test(l.k)&&+l.k>=15){const x=await b.ala(l.k);if(x)ALA[l.k]=x}}catch{}
   if(!data){view.innerHTML='<div class="ein-body ein-empty">Der Unterricht ist gerade nicht erreichbar. Öffne einmal „Noten“ und versuche es erneut.</div>';return}
   {const f=find(sel);if((!f.l&&!f.u&&!f.t)||!visIds().includes(sel))sel=stand()}draw()}
  /* 11.28: Buchstaben-Chips (V · G · Ü · W) in der Zeile unter dem Lektionstitel – kräftig = vorhanden, blass = fehlt noch */
@@ -4433,15 +4434,18 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  const rowT=t=>'<button type="button" class="ein-row dim'+(sel===t.id?' on':'')+'" data-sel="'+esc(t.id)+'" title="Noch keine Lerneinheit"><span>'+esc(t.title)+'</span>'+(isStand(t.id)?'<span class="stand">aktuell</span>':'')+'</button>';
  function treeHtml(){const subj=SUBJ[cx.subject]||cx.subject||'',ids=visIds(),t=norm(q);
   const L=ids.map(id=>find(id)).filter(x=>{if(!t)return true;if(x.t)return norm(x.t.title+' '+x.t.part).includes(t);if(x.l){const l=x.l,T=l.toc||{};return [lname(l),l.label,T.syn,T.form,T.wort,...(T.textk||[]),...(T.kult||[]),T.text,T.sach,...l.gr,...l.formen,l.syntax].filter(Boolean).some(v=>norm(v).includes(t))}return norm(x.u.title+' '+x.u.sub).includes(t)});
-  if(!ids.length)return '<div class="ein-empty" style="padding:8px">Für die '+esc(cx.short||'Lerngruppe')+(subj?' ('+esc(subj)+')':'')+' sind noch keine Einheiten vorhanden.</div>';
+  if(!ids.length)return '<div class="ein-empty" style="padding:8px">Für die '+esc(cx.short||'Lerngruppe')+(subj?' ('+esc(subj)+')':'')+' sind noch keine Einheiten vorhanden.</div>'+(cx.subject==='latein'?'<button type="button" class="ein-all" data-all>Alle Lektionen von Pontes einblenden</button>':'');
   if(!L.length)return '<div class="ein-empty" style="padding:8px">Nichts gefunden.</div>';
   const TP=cx.subject==='erdkunde'?topics('erdkunde',cx.jg):[];if(TP.length){const show=new Set(L.map(x=>x.l?'l:'+x.l.k:x.u?'u:'+x.u.u:x.t.id));let h='<div class="ein-jg">Jahrgang '+cx.jg+' · '+esc(subj)+'</div>',ch='',pt='';
    for(const tp of TP){if(!show.has(tp.id))continue;if(tp.ch!==ch){ch=tp.ch;h+='<div class="ein-ch">'+esc(ch)+'</div>'}if(tp.part!==pt){pt=tp.part;h+='<div class="ein-pt">'+esc(pt)+'</div>'}h+=tp.u?rowU(tp.u):rowT(tp)}
    const rest=L.filter(x=>x.u&&!TP.some(tp=>tp.id==='u:'+x.u.u));if(rest.length)h+='<div class="ein-pt">Weitere Einheiten</div>'+rest.map(x=>rowU(x.u)).join('');return h}
-  return '<div class="ein-jg">Jahrgang '+cx.jg+' · '+esc(subj)+'</div>'+L.map(x=>x.l?rowL(x.l):rowU(x.u)).join('')}
+  /* 11.53: Latein – Knopf „Alle Lektionen von Pontes einblenden“ */const allB=cx.subject==='latein'?'<button type="button" class="ein-all" data-all>'+(ui.allL?'Nur Jahrgang '+cx.jg+' zeigen':'Alle Lektionen von Pontes einblenden')+'</button>':'';
+  if(cx.subject==='latein'&&ui.allL){let h='',jg=null;for(const x of L){if(!x.l)continue;if(x.l.jg!==jg){jg=x.l.jg;h+='<div class="ein-jg">'+(jg?'Jahrgang '+jg:'ohne Jahrgang')+' · '+esc(subj)+'</div>'}h+=rowL(x.l)}return h+allB}
+  return '<div class="ein-jg">Jahrgang '+cx.jg+' · '+esc(subj)+'</div>'+L.map(x=>x.l?rowL(x.l):rowU(x.u)).join('')+allB}
  function wireTree(){const T=view.querySelector('.ein-list');
   T.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{sel=b.dataset.sel;sideOpen=false;draw()});
   T.querySelectorAll('[data-jg]').forEach(b=>b.onclick=()=>{openJg.add(+b.dataset.jg);T.innerHTML=treeHtml();wireTree()});
+  T.querySelector('[data-all]')?.addEventListener('click',()=>{ui.allL=!ui.allL;saveUi();T.innerHTML=treeHtml();wireTree();if(!ui.allL&&!visIds().includes(sel)){sel=stand();draw()}});
   }
  /* 11.43: Nadel rechts neben „Aktuelle Einheit“ – heftet diese Lektion/Einheit für die Lerngruppe an (Menü oben neben „?“) */
  const PINI='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path class="pp" d="M9 3h6l-1 6 4 3v2H6v-2l4-3z"/><path d="M12 14v7"/></svg>';
@@ -4498,7 +4502,8 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
     +(l.ueb?tile('+','t2','Training: Relativpronomen · Passiv','7 Übungen · 3 Stufen',btn('pu',k,'Ansehen','look')+btn('ueb',k,'Start-QR','pri')+AB('px')+KOL('x|'+k)):''))
    +sec(5,'Übungen','Ü und Differenzierung',part('ueb').map(lpCard).join(''))
    +sec(6,'Ponticulus','',part('pont').map(lpCard).join(''))
-   +(rest.length?sec(7,'Weitere Lernpakete','',rest.map(lpCard).join('')):'')}
+   +(/^\d+$/.test(k)&&+k>=15?sec(7,'Alternative Lateinarbeit','Klassenarbeit nach den Grundsätzen · A Sprache · B Text · C Kontext',ALA[k]?tile('A','t4','Alternative Lateinarbeit','„'+esc(ALA[k].text?.t||'')+'“ · '+(ALA[k].tasks||[]).length+' Aufgaben · '+(ALA[k].total||'')+' BE',btn('ala',k,'Ansehen','look')):tile('A','t4','Alternative Lateinarbeit','noch keine Arbeit für diese Lektion – private Datei (.cmeinheit) laden',btn('load','','Datei laden …'),true)):'')
+   +(rest.length?sec(/^\d+$/.test(k)&&+k>=15?8:7,'Weitere Lernpakete','',rest.map(lpCard).join('')):'')}
  function unitTiles(u){return '<div class="ein-tiles">'
    /* 11.37: „Grundlagen“-Einheiten (AFB I) mit Kurzinfo und dem Hinweis auf die Vertiefung in GoodNotes */
    +tile('L','t2',u.gl?'Grundlagen erarbeiten (iPad)':'Lerneinheit (iPad)',(u.gl?'<span class="gl-meta"><span>AFB I</span><span>'+u.gl.n+' Stationen</span><span>ca. '+u.gl.min+' Min.</span><span>wischen · ziehen · antippen</span></span>':'')+(u.book?'mit Schulbuchmaterial ✓':'ohne Schulbuchmaterial')+(u.subs?' · '+u.subs+' Abgabe'+(u.subs>1?'n':'')+' gescannt':''),btn('pl',u.u,'Ansehen','look')+btn('qr',u.u,'Start-QR','pri')+btn('scan',u.u,'Abgaben scannen')+btn('ov',u.u,'Übersicht')+(u.book?btn('air',u.u,'Material per AirDrop','air'):'')+btn('kol',u.u,'Für Kollegen …','ghost'))
@@ -4546,6 +4551,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   /* 11.50: „Ansehen“ zeigt die Grammatik-Aufgaben selbst (wie die Schüler sie üben), nicht nur die Themen */
   if(d==='lg'){let r=null;try{r=await b.practice('g',k,true)}catch{}if(r&&r.hash)return prev({title:'Grammatik '+l.label,url:'ueben.html?vorschau=1'+r.hash})}
   if(d==='lg')return prev({title:'Grammatik '+l.label,html:'<h3>Themen</h3><ul>'+l.gr.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul>'+(l.syntax?'<h3>Syntax</h3><p>'+esc(l.syntax)+'</p>':'')});
+  if(d==='ala')return prev({title:'Alternative Lateinarbeit '+l.label,url:'lateinarbeit.html?vorschau=1&id=ala-'+encodeURIComponent(k),noStudent:true});
   if(d==='pu')return prev({title:'Übungen '+l.label,url:'uebungen.html?vorschau=1'});
   if(d==='pt'){const [kk,ii]=String(k).split('|'),L2=data.lessons.find(x=>x.k===kk);const h=await b.ttHash(kk,+ii||0);if(!h)return;return prev({title:'Übersetzungs-Trainer '+lname(L2),url:'texttrainer.html?vorschau=1'+h})}
   if(d==='pl')return prev({title:u.title,url:u.file+(u.file.includes('?')?'&':'?')+'vorschau=1'});
