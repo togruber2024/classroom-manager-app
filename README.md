@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 12.11.2026 · Version 11.40
+Stand: 12.11.2026 · Version 11.41
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1419,3 +1419,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.38: Lernpakete zu Latein L16 (Sachinfo, Formen, Relativpronomen, Ponticulus) mit Memory, Drehrädern, Baukasten, Pfeil zum Bezugswort, Tarnwörtern und Pantomime; Erdkunde-Einheiten heißen wie im Buch.
 11.39: Noten-Seiten anheften: Leiste unter der Navigation mit bis zu 6 Pins und den zuletzt bearbeiteten Seiten.
 11.40: Stadtentwicklung (Braunschweig) nach den AFB-I-Vorgaben neu; „Test erstellen“ mit Reitern Ich korrigiere / Digital; L16-Sachinfo mit Lesetext und Text-Knopf.
+11.41: Anheften neu: Nadel auf jeder Noten-Seite neben dem Papierkorb (orange = angeheftet) und in der Kopfleiste neben „?“ mit kleinem Menü; alte Leiste entfernt.
