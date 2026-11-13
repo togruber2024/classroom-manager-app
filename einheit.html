@@ -243,6 +243,7 @@ const HEROSVG=()=>SAFE(D.hero||'');
 const PDFX=im=>(D.pdf||[]).map(b=>b&&b.__img?im(b.__img,b.w,b.h):b&&b.t==='img'&&b.img&&b.img.__img?(IM[b.img.__img]?Object.assign({},b,{img:IM[b.img.__img]}):null):b);
 const WIDGET={sorter:(k,o)=>sorter(k,o),swiper:(k,o)=>swiper(k,o),quiz:(k,o)=>quiz(k,o),seqTask:(k,o)=>seqTask(k,o),pol:()=>runPol(),beg:()=>runBeg(),txt:()=>runTxt(),end:()=>runEnd(),txtmap:(k,o)=>wTxtMap(k,o),find:(k,o)=>wFind(k,o),feat:(k,o)=>wFeat(k,o)};
 const STEPS=(D.steps||[]).filter(s=>WIDGET[s.w]).map(s=>{const o=s.o?UV(s.o):null;return [s.k,s.t,s.d,s.min,()=>WIDGET[s.w](s.key||s.k,o)]});
+/* 11.61: Vorschau – Pfeiltasten blättern durch die Stationen (nicht beim Tippen, nicht im Schülermodus) */if(/[?&]vorschau=1/.test(location.search)){window.cmPreviewStep=d=>{const ks=STEPS.map(s=>s[0]),i=CURK?ks.indexOf(CURK):-1,j=i+d;if(j<0){if(CURK)home();return}if(j<ks.length)goStep(ks[j])};addEventListener('keydown',e=>{if((e.key!=='ArrowLeft'&&e.key!=='ArrowRight')||e.altKey||e.metaKey||e.ctrlKey||e.shiftKey)return;const t=e.target;if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))return;e.preventDefault();cmPreviewStep(e.key==='ArrowRight'?1:-1)})}
 
 const SOLVW={txtmap:(k,o)=>{ST.txtA={...o.ph};ST.txtR=2;ST.txtXA=[];ST.txtB=o.tq.map((q,i)=>({w:[],r:o.ans[i],e:1}));ST.txt={p:4+o.tq.length,t:4+o.tq.length}},
  find:(k,o)=>{ST.bfA=o.qs.map(()=>({n:1,ok:1,e:1}));ST.bf={p:o.qs.length,t:o.qs.length}},
