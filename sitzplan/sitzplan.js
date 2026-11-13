@@ -4400,9 +4400,9 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  /* 11.57: Unterrichtsreihen kommen aus Reihen-Dateien (.cmreihe). Eigene Änderungen (Reihenfolge, Namen, ausgeblendet, gelöscht,
     eigene Einträge) liegen nur auf diesem Gerät und bleiben erhalten, wenn eine neuere Fassung der Reihe geladen wird. */
  const EKEY='classroom-reihen-edit-v1';const edAll=()=>rd(EKEY),edOf=id=>edAll()[id]||{},edSet=(id,e)=>{const a=edAll();a[id]=e;wr(EKEY,a)};
- function eff(r){const e=edOf(r.id),del=new Set(e.del||[]),names=e.names||{},hid=new Set(e.hid||[]);const L=[...(r.entries||[]),...(e.own||[]).map(x=>({...x,own:1}))].filter(x=>!del.has(x.k));
+ function eff(r){const e=edOf(r.id),del=new Set(e.del||[]),names=e.names||{},hid=new Set(e.hid||[]),show=new Set(e.show||[]);const L=[...(r.entries||[]),...(e.own||[]).map(x=>({...x,own:1}))].filter(x=>!del.has(x.k));
   const ord=e.order||[],pos=k=>{const i=ord.indexOf(k);return i<0?1e6:i};
-  return L.map((x,i)=>({...x,i})).sort((a,b)=>pos(a.k)-pos(b.k)||a.i-b.i).map(x=>({k:x.k,t:names[x.k]||x.t,t0:x.t,u:x.u||null,...(x.les!=null?{les:String(x.les)}:{}),own:!!x.own,hid:hid.has(x.k)||!!x.hid}))}
+  return L.map((x,i)=>({...x,i})).sort((a,b)=>pos(a.k)-pos(b.k)||a.i-b.i).map(x=>({k:x.k,t:names[x.k]||x.t,t0:x.t,u:x.u||null,...(x.les!=null?{les:String(x.les)}:{}),own:!!x.own,hid:hid.has(x.k)||(!!x.hid&&!show.has(x.k))}))}
  const lesJg=k=>(data?.lessons||[]).find(l=>l.k===String(k))?.jg;
  const reihenOf=(subj,jg)=>(data?.reihen||[]).filter(r=>r.subject===subj&&(subj==='latein'?(r.entries||[]).some(e=>e.les!=null&&lesJg(e.les)===+jg):+r.jg===+jg)).sort((a,b)=>(+a.n||0)-(+b.n||0)||String(a.ch).localeCompare(String(b.ch))||String(a.title).localeCompare(String(b.title)));
  const topicId=(r,jg,x,unit)=>x.les!=null?'l:'+x.les:unit?'u:'+x.u:r.subject==='latein'?'t:'+r.id+'.'+x.k:'t:'+jg+':'+(x.own?r.id+'.'+x.k:x.k);
@@ -4640,11 +4640,11 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   M.querySelector('[data-redit]')?.addEventListener('click',()=>{rEdit=!rEdit;draw()});
   M.querySelector('[data-rexp]')?.addEventListener('click',e=>reiheExp(r,e.currentTarget));
   if(!rEdit)return;const e=()=>{const x=edOf(r.id);x.names??={};x.hid??=[];x.del??=[];x.own??=[];return x};
-  const save=x=>{for(const k of ['names','hid','del','own','order'])if(x[k]&&(Array.isArray(x[k])?!x[k].length:!Object.keys(x[k]).length))delete x[k];edSet(r.id,x)};
+  const save=x=>{for(const k of ['names','hid','show','del','own','order'])if(x[k]&&(Array.isArray(x[k])?!x[k].length:!Object.keys(x[k]).length))delete x[k];edSet(r.id,x)};
   const rows=()=>[...M.querySelectorAll('.rh-er')];
   M.querySelectorAll('[data-name]').forEach(inp=>inp.onchange=()=>{const k=inp.closest('.rh-er').dataset.k,x=e(),own=x.own.find(o=>o.k===k),v=inp.value.trim();
    if(own){own.t=v||own.t}else{const base=(r.entries||[]).find(o=>o.k===k);if(!v||v===base?.t)delete x.names[k];else x.names[k]=v}save(x);draw()});
-  M.querySelectorAll('[data-hid]').forEach(b=>b.onclick=()=>{const k=b.closest('.rh-er').dataset.k,x=e(),i=x.hid.indexOf(k);if(i>=0)x.hid.splice(i,1);else x.hid.push(k);save(x);draw()});
+  M.querySelectorAll('[data-hid]').forEach(b=>b.onclick=()=>{const k=b.closest('.rh-er').dataset.k,x=e(),it=eff(r).find(o=>o.k===k);x.show??=[];const i=x.hid.indexOf(k),j=x.show.indexOf(k);if(it&&it.hid){if(i>=0)x.hid.splice(i,1);else if(j<0)x.show.push(k)}else{if(j>=0)x.show.splice(j,1);else x.hid.push(k)}save(x);draw()});
   M.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const k=b.closest('.rh-er').dataset.k,x=e(),it=eff(r).find(o=>o.k===k);if(!it)return;
    if(!confirm('„'+it.t+'“ aus der Reihe löschen?'+(it.u?'\n\nDie Lerneinheit und die Ergebnisse der Schüler bleiben erhalten. Über „Ursprüngliche Reihe wiederherstellen“ kommt der Eintrag zurück.':'')))return;
    if(it.own)x.own=x.own.filter(o=>o.k!==k);else x.del.push(k);save(x);draw()});
@@ -4655,7 +4655,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    g.onpointermove=m=>{let before=null;for(const o of rows()){if(o===row)continue;const bx=o.getBoundingClientRect();if(m.clientY<bx.top+bx.height/2){before=o;break}}const ref=before||list.querySelector('[data-add]');if(ref&&ref!==row&&row.nextSibling!==ref)list.insertBefore(row,ref)};
    g.onpointerup=g.onpointercancel=()=>{g.onpointermove=g.onpointerup=g.onpointercancel=null;row.classList.remove('drag');const x=e();x.order=rows().map(o=>o.dataset.k);save(x);draw()}})}
  async function reiheExp(r,el){const b=B();if(!b?.reiheExport)return;const t0=el?.textContent;try{if(el){el.disabled=true}
-   const E=eff(r).map(x=>({k:x.k,t:x.t,...(x.u?{u:x.u}:{}),...(x.les!=null?{les:x.les}:{}),...(x.own?{own:1}:{}),...(x.hid?{hid:1}:{})}));const f=await b.reiheExport(r.id,E);
+   const E=eff(r).map(x=>({k:x.k,t:x.t,...(x.u?{u:x.u}:{}),...(x.les!=null?{les:x.les}:{}),...(x.own?{own:1}:{}),...(x.hid?{hid:1}:{})}));const LE={};for(const x of E)if(x.les!=null){const v=edOf('les:'+x.les);if(Object.keys(v).length)LE[x.les]=v}const f=await b.reiheExport(r.id,E,LE);
    if(touchDev()){const N=navigator;try{if(N.canShare&&N.canShare({files:[f]})){await N.share({files:[f],title:f.name});return}}catch(e){if(e&&e.name==='AbortError')return}}
    saveFile(f);alert('„'+f.name+'“ ('+Math.round(f.size/1024)+' KB) liegt jetzt in „Downloads“.')}catch(e){alert('Export nicht möglich: '+(e&&e.message||e))}finally{if(el){el.disabled=false}}}
  /* Reihe laden: Datei wählen → Dialog (neu / neuere Fassung) → speichern */
