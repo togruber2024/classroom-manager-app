@@ -1,6 +1,6 @@
 /* 11.45: Abgabe-QR für Üben, Übungen und Übersetzungs-Trainer – wie bei den Lerneinheiten:
    Name aus der Klassenliste wählen (kommt mit dem Link der Lehrkraft), oben rechts „Abgabe-QR“ zeigen, die Lehrkraft scannt.
-   Im QR stehen nur Punkte je Teil (CMLE1) – keine Texte. In der Lehrkraft-Vorschau (?vorschau=1) gibt es keinen Abgabe-QR.
+   Im QR stehen Punkte je Teil (CMLE1); seit 11.73 beim Übersetzungs-Trainer auch die Übersetzungen (dann ggf. mehrere Codes, CMLE2). In der Lehrkraft-Vorschau (?vorschau=1) gibt es keinen Abgabe-QR.
    window.cmAbgabe({u,title,cls,names,score:()=>({s:{…},x:{}})}) → {update()} */
 (()=>{
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -29,9 +29,18 @@
     ov.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{pick=b.dataset.n;draw()});const inp=ov.querySelector('#cmabIn');if(inp)inp.oninput=()=>{pick=inp.value.trim();ov.querySelector('[data-ok]').textContent=pick?'Das bin ich: '+pick:'Speichern'};
     ov.querySelector('[data-x]').onclick=()=>ov.remove();ov.querySelector('[data-ok]').onclick=()=>{if(!pick||pick.length<2)return;S.me=pick;save();ov.remove();update();showQr()}};
    draw();document.body.append(ov)}
-  function showQr(){if(!S.me){who();return}const ov=document.createElement('div');ov.className='cmab-o';let q='';try{q=classroomQrSvg(payload(),{ecc:'L',boost:false,dark:'#243247',border:3}).replace('<svg','<svg class="q"')}catch(e){q='<p>QR-Code nicht möglich: '+esc(e.message)+'</p>'}
-   ov.innerHTML='<div style="color:#66758a">Abgabe · '+esc(o.title||'')+(S.cls?' · '+esc(S.cls):'')+'</div><div class="nm">'+esc(S.me)+'</div>'+q+'<div style="color:#66758a;font-size:.9rem">Stand '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' · '+prog()+' Punkte</div><button type="button" class="p" data-c>Schließen</button><button type="button" class="lnk" data-ch>Nicht dein Name? Ändern</button>';
-   ov.querySelector('[data-c]').onclick=()=>ov.remove();ov.querySelector('[data-ch]').onclick=()=>{if(confirm('Deinen Namen wirklich ändern? Deine Lehrkraft sieht den neuen Namen.')){ov.remove();who()}};document.body.append(ov)}
+  /* 11.73: lange Abgaben (z. B. Übersetzungen) gehen komprimiert auf mehrere QR-Codes (CMLE2/id/k/n/…), die Lehrkraft scannt sie nacheinander */
+  async function codes(){const r=sc(),full=JSON.stringify({u:o.u,v:2,c:S.cls||'',n:S.me,dv:S.dv,ts:Date.now(),b:0,s:r.s||{},x:r.x||{},...(r.w&&Object.keys(r.w).length?{w:r.w}:{})});if(full.length<=900)return ['CMLE1:'+full];
+   let b64;try{const z=new Uint8Array(await new Response(new Blob([new TextEncoder().encode(full)]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());let bin='';for(const c of z)bin+=String.fromCharCode(c);b64='z'+btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}catch{const u8=new TextEncoder().encode(full);let bin='';for(const c of u8)bin+=String.fromCharCode(c);b64='j'+btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+   const id=Math.random().toString(36).slice(2,8),CH=650,n=Math.ceil(b64.length/CH);return Array.from({length:n},(_,i)=>'CMLE2/'+id+'/'+(i+1)+'/'+n+'/'+b64.slice(i*CH,(i+1)*CH))}
+  async function showQr(){if(!S.me){who();return}const ov=document.createElement('div');ov.className='cmab-o';document.body.append(ov);ov.innerHTML='<div style="color:#66758a">QR-Code wird erstellt …</div>';
+   let C=[];try{C=await codes()}catch(e){C=[payload()]}let k=0;
+   const draw=()=>{let q='';try{q=classroomQrSvg(C[k],{ecc:'L',boost:false,dark:'#243247',border:3}).replace('<svg','<svg class="q"')}catch(e){q='<p>QR-Code nicht möglich: '+esc(e.message)+'</p>'}
+    ov.innerHTML='<div style="color:#66758a">Abgabe · '+esc(o.title||'')+(S.cls?' · '+esc(S.cls):'')+'</div><div class="nm">'+esc(S.me)+'</div>'+(C.length>1?'<div style="font-weight:800;color:#c2410c">Code '+(k+1)+' von '+C.length+'</div>':'')+q+'<div style="color:#66758a;font-size:.9rem">Stand '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' · '+prog()+' Punkte'+(C.length>1?' · nach dem Scannen „Nächster Code“':'')+'</div>'
+     +'<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">'+(C.length>1?'<button type="button" data-pv'+(k?'':' disabled')+'>‹ Zurück</button><button type="button" class="p" data-nx'+(k<C.length-1?'':' disabled')+'>Nächster Code ›</button>':'')+'<button type="button"'+(C.length>1?'':' class="p"')+' data-c>Schließen</button></div><button type="button" class="lnk" data-ch>Nicht dein Name? Ändern</button>';
+    ov.querySelector('[data-pv]')?.addEventListener('click',()=>{k=Math.max(0,k-1);draw()});ov.querySelector('[data-nx]')?.addEventListener('click',()=>{k=Math.min(C.length-1,k+1);draw()});
+    ov.querySelector('[data-c]').onclick=()=>ov.remove();ov.querySelector('[data-ch]').onclick=()=>{if(confirm('Deinen Namen wirklich ändern? Deine Lehrkraft sieht den neuen Namen.')){ov.remove();who()}}};draw()}
+  window.cmAbgabeCodes=codes;
   btn.onclick=showQr;update();if(roster&&!S.me)setTimeout(who,400);
   return {update}};
 })();

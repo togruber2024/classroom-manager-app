@@ -37,7 +37,7 @@ h1{font-size:1.5rem;margin:4px 0 0}.muted{color:var(--mut)}
 .steps{display:flex;gap:6px;margin:0 0 12px;flex-wrap:wrap}.steps span{padding:4px 10px;border-radius:999px;background:#eef2f8;color:var(--mut);font-size:.85rem;font-weight:600}.steps span.on{background:var(--blue);color:#fff}.steps span.done{background:var(--okbg);color:var(--ok)}
 .clause{display:block}.clause.sub{margin-left:2.2em;padding-left:.8em;border-left:3px solid #c9d6ea}.clause .lab{display:block;font-family:-apple-system,Inter,sans-serif;font-size:.75rem;color:var(--mut);line-height:1.2;margin-top:6px}
 textarea{width:100%;min-height:96px;padding:12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;font-size:1.05rem;resize:vertical}
-.hbox{margin-top:10px;padding:10px 14px;border-radius:12px;background:#f4f7fc;border:1px solid #e1e8f2}.hbox b{color:var(--blue)}
+.lock{background:#f1f3f7!important;color:#3a475c;border-style:dashed!important}.lockt{font-size:.82rem;color:#66758a;margin:6px 0 0}.vbx{margin-top:12px}.vbx b{color:#b45309}.vbx textarea{margin-top:6px;border-color:#f0c27a;background:#fffaf2;min-height:70px}.hbox{margin-top:10px;padding:10px 14px;border-radius:12px;background:#f4f7fc;border:1px solid #e1e8f2}.hbox b{color:var(--blue)}
 .build{min-height:52px;margin-top:8px;padding:8px;border:2px dashed #cfd8e6;border-radius:12px;display:flex;flex-wrap:wrap;gap:6px}.build .chip{min-height:40px}
 .model{margin-top:12px;padding:12px 14px;border-radius:12px;background:#eef6f0;border:1px solid #cfe7d7}.model b{display:block;color:var(--ok);font-size:.85rem;margin-bottom:2px}
 .rate{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.rate button{min-height:48px;padding:0 16px;border:1px solid #cfd8e6;border-radius:12px;background:#fff;font-weight:600}
@@ -64,7 +64,9 @@ async function fromHash(h){const m=/^#?(z1|j1)\.(.+)$/.exec(h||'');if(!m)return 
 function valid(t){return t&&t.type==='classroom-text-trainer'&&Array.isArray(t.s)&&t.s.length}
 let AB=null;
 /* 11.45: Abgabe-QR – gezählt: fertige Sätze (mit Selbsteinschätzung) und davon ohne Hilfe; Klassenliste kommt mit dem Link (t.cm) */
-function ttScore(){const N=T.s.length,X=ST.sent||{};let fe=0,oh=0;for(let i=0;i<N;i++){const x=X[i];if(x&&x.r!=null){fe++;if(!x.h)oh++}}return {s:{fe:[fe,N],oh:[oh,N]},x:{}}}
+function ttScore(){const N=T.s.length,X=ST.sent||{};let fe=0,oh=0,og=0,vb=0;const w={},RT=['✗ noch nicht','≈ teilweise','✓ passt'];for(let i=0;i<N;i++){const x=X[i];if(!x)continue;if(x.r!=null){fe++;if(!x.h&&!x.og)oh++}if(x.og&&x.cmp)og++;if(x.vb&&x.vb.trim())vb++;
+  /* 11.73: Übersetzungen gehen mit der Abgabe – eigene Fassung, Verbesserung, Selbsteinschätzung */if((x.tx||'').trim()||(x.vb||'').trim()||x.cmp)w['Satz '+String(i+1).padStart(2,'0')]=((x.tx||'').trim()||'(nichts geschrieben)')+(x.vb&&x.vb.trim()?'\n↳ Verbesserung: '+x.vb.trim():'')+(x.og&&x.cmp?'\n⚠ Musterübersetzung ohne eigene Übersetzung angesehen':'')+(x.r!=null?'\nSelbst: '+RT[x.r]:'')+(x.h?' · '+x.h+' Hilfe'+(x.h>1?'n':''):'')}
+ let rs=0;try{rs=+localStorage.getItem(key()+'-rs')||0}catch{}const hin=[og?og+(og>1?' Sätze':' Satz')+' ohne eigene Übersetzung verglichen':'',vb?vb+'× verbessert':'',rs?rs+'× alles zurückgesetzt':''].filter(Boolean);return {s:{fe:[fe,N],oh:[oh,N]},x:{},w:hin.length?{'Hinweise':hin.join(' · '),...w}:w}}
 function start(t){T=t;ST=ls.get(key())||{pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};ls.set('cm-texttrainer-last',t);if(t.cm&&t.cm.u&&window.cmAbgabe&&!AB)AB=cmAbgabe({u:t.cm.u,title:t.title,cls:t.cm.c,names:t.cm.n,score:ttScore});render()}
 async function init(){let t=null;try{t=await fromHash(location.hash||window.CM_EMBED_HASH||'')}catch(e){console.warn(e)}
  if(!valid(t))t=ls.get('cm-texttrainer-last');if(valid(t))return start(t);
@@ -154,15 +156,17 @@ function showSent(b,si){const S=T.s[si],X=sstate(si),ws=words(si);if(X.step===2&
  b.querySelector('[data-solve]')?.addEventListener('click',()=>{X.h++;if(X.step===0)X.p=[...S.p];else if(X.step===1)X.s=S.su.length?[...S.su]:true;else X.g=S.g.map((_,k)=>k);X.step++;save();showSent(b,si)});
  if(X.step===3)renderTranslate($('#trc'),si)}
 function renderTranslate(c,si){const S=T.s[si],X=sstate(si);const H=S.h;
- c.innerHTML='<textarea id="ta" placeholder="Deine Übersetzung …">'+esc(X.tx)+'</textarea>'
-  +'<div class="row"><button class="sec" data-h="1">Hilfe 1</button><button class="sec" data-h="2">Hilfe 2</button><button class="sec" data-h="3">Hilfe 3: Bausteine</button><div class="sp"></div><button class="pri" data-cmp>Vergleichen</button></div><div id="hl"></div><div id="cmp"></div>';
- const ta=c.querySelector('#ta');ta.oninput=()=>{X.tx=ta.value;save()};
+ /* 11.73: nach „Vergleichen“ ist die eigene Übersetzung gesperrt – Verbesserungen kommen in ein eigenes Feld */
+ c.innerHTML='<textarea id="ta" placeholder="Deine Übersetzung …"'+(X.cmp?' readonly class="lock"':'')+'>'+esc(X.tx)+'</textarea>'+(X.cmp?'<div class="lockt">🔒 Nach dem Vergleichen nicht mehr änderbar – deine Verbesserung schreibst du unten.</div>':'')
+  +'<div class="row"'+(X.cmp?' style="display:none"':'')+'><button class="sec" data-h="1">Hilfe 1</button><button class="sec" data-h="2">Hilfe 2</button><button class="sec" data-h="3">Hilfe 3: Bausteine</button><div class="sp"></div><button class="pri" data-cmp>Vergleichen</button></div><div id="hl"></div><div id="cmp"></div>';
+ const ta=c.querySelector('#ta');ta.oninput=()=>{if(X.cmp){ta.value=X.tx;return}X.tx=ta.value;save()};
  const used=X.hu||(X.hu=[]);
  const showH=()=>{const hl=c.querySelector('#hl');hl.innerHTML=used.filter(n=>n<3).map(n=>'<div class="hbox"><b>Hilfe '+n+':</b> '+esc(H[n-1])+'</div>').join('');if(used.includes(3))hl.insertAdjacentHTML('beforeend','<div class="hbox"><b>Hilfe 3:</b> Tippe die Bausteine in der richtigen Reihenfolge an.<div class="chips" id="bk"></div><div class="build" id="bd"></div></div>');if(used.includes(3))buildPuzzle(c,si);c.querySelectorAll('[data-h]').forEach(x=>x.disabled=used.includes(+x.dataset.h))};
  c.querySelectorAll('[data-h]').forEach(x=>x.onclick=()=>{const n=+x.dataset.h;if(!used.includes(n)){used.push(n);X.h++;save()}showH()});showH();
- const showCmp=()=>{const box=c.querySelector('#cmp');box.innerHTML='<div class="model"><b>Musterübersetzung</b>'+esc(S.de)+'</div><div class="muted" style="margin-top:10px">Wie gut passt deine Übersetzung?</div><div class="rate"><button data-r="2">✓ Passt</button><button data-r="1">≈ Teilweise</button><button data-r="0">✗ Noch nicht</button></div>';
+ const showCmp=()=>{const box=c.querySelector('#cmp');box.innerHTML='<div class="model"><b>Musterübersetzung</b>'+esc(S.de)+'</div><div class="vbx"><b>Meine Verbesserung</b> <span class="muted">(freiwillig)</span><textarea id="vb" placeholder="Hier kannst du deine Übersetzung verbessern …">'+esc(X.vb||'')+'</textarea></div><div class="muted" style="margin-top:10px">Wie gut passt deine Übersetzung?</div><div class="rate"><button data-r="2">✓ Passt</button><button data-r="1">≈ Teilweise</button><button data-r="0">✗ Noch nicht</button></div>';
+  {const vb=box.querySelector('#vb');vb.oninput=()=>{X.vb=vb.value;save()}}
   box.querySelectorAll('[data-r]').forEach(r=>{if(X.r!=null&&+r.dataset.r===X.r)r.style.borderColor='#2f5f9b';r.onclick=()=>{X.r=+r.dataset.r;save();refreshTabs();if(cur<T.s.length-1){cur++;renderTR($('#body'));scrollTo({top:0,behavior:'smooth'})}else{tab='res';render()}}})};
- c.querySelector('[data-cmp]').onclick=()=>{if(!X.tx.trim()&&!confirm('Du hast noch nichts geschrieben. Trotzdem die Musterübersetzung zeigen?'))return;X.cmp=true;save();showCmp()};if(X.cmp)showCmp()}
+ c.querySelector('[data-cmp]').onclick=()=>{const nw=X.tx.trim().split(/\s+/).filter(Boolean).length;if(nw<3&&!confirm((nw?'Du hast erst sehr wenig geschrieben.':'Du hast noch nichts geschrieben.')+' Nach dem Vergleichen kannst du deine Übersetzung nicht mehr ändern. Trotzdem die Musterübersetzung zeigen?'))return;X.cmp=true;X.og=nw<3;save();renderTranslate(c,si)};if(X.cmp)showCmp()}
 function buildPuzzle(c,si){const S=T.s[si],X=sstate(si),parts=S.h[2];X.bld??={order:shuffle(parts.map((_,i)=>i)),pick:[]};const P=X.bld;
  const bk=c.querySelector('#bk'),bd=c.querySelector('#bd');
  const draw=()=>{bk.innerHTML=P.order.map(i=>'<button class="chip'+(P.pick.includes(i)?' used':'')+'" data-k="'+i+'" '+(P.pick.includes(i)?'disabled':'')+'>'+esc(parts[i])+'</button>').join('');
@@ -189,7 +193,7 @@ function renderRes(b){const sents=T.s.map((_,i)=>ST.sent[i]||{});const rated=sen
   +'<div class="row"><button class="lnk" data-reset>Alles zurücksetzen</button></div>';
  b.querySelectorAll('[data-go]').forEach(x=>x.onclick=()=>{cur=+x.dataset.go;tab='tr';render()});
  const pn=b.querySelector('#pn');pn.value=ls.get('cm-texttrainer-name')||'';b.querySelector('[data-pdf]').onclick=()=>{ls.set('cm-texttrainer-name',pn.value.trim());printNotes(pn.value.trim(),b.querySelector('[data-pdf]'))};
- b.querySelector('[data-reset]').onclick=()=>{if(!confirm('Alle Eingaben zu diesem Text löschen und neu beginnen?'))return;ST={pp:[],ppMiss:0,ppTaps:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};save();tab='pp';cur=0;render()}}
+ b.querySelector('[data-reset]').onclick=()=>{if(!confirm('Alle Eingaben zu diesem Text löschen und neu beginnen?'+(AB?' Deine Lehrkraft sieht in der Abgabe, dass du zurückgesetzt hast.':'')))return;try{const k2=key()+'-rs';localStorage.setItem(k2,String((+localStorage.getItem(k2)||0)+1))}catch{}ST={pp:[],ppMiss:0,ppTaps:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};save();tab='pp';cur=0;render()}}
 /* ---------- 11.10: Für meine Unterlagen sichern (Druckansicht → PDF, GoodNotes, Dateien) ---------- */
 /* 11.35: als PDF-Datei (Teilen → GoodNotes) statt Druckdialog – der klappte in der Web-App am iPad oft nicht */
 async function printNotes(name,btn){const pp=new Set(T.pp.flatMap(([si,ws])=>ws.map(i=>si+':'+i)));
@@ -198,7 +202,7 @@ async function printNotes(name,btn){const pp=new Set(T.pp.flatMap(([si,ws])=>ws.
  const blocks=[{t:'h1',s:T.title},{t:'sub',s:(T.sub?T.sub+' · ':'')+(name?name+' · ':'')+new Date().toLocaleDateString('de-DE')},
   {t:'h2',s:'Text'},{t:'p',s:text,sz:11.5},{t:'p',s:'Fett: '+HU().legend,sz:8.5,col:'#5c6b80'},
   {t:'h2',s:'Was geschah nacheinander?'},{t:'list',num:true,items:T.ev.slice()},
-  {t:'h2',s:'Übersetzung'},...T.s.map((x,si)=>{const m=ST.sent[si]||{};return {t:'table',w:[.24,.76],rows:[['**Satz '+(si+1)+'**',x.t],['Meine Übersetzung',m.tx?.trim()||'—'],['Musterübersetzung',x.de||'']]}}),
+  {t:'h2',s:'Übersetzung'},...T.s.map((x,si)=>{const m=ST.sent[si]||{};return {t:'table',w:[.24,.76],rows:[['**Satz '+(si+1)+'**',x.t],['Meine Übersetzung',m.tx?.trim()||'—'],...(m.vb?.trim()?[['Meine Verbesserung',m.vb.trim()]]:[]),['Musterübersetzung',x.de||'']]}}),
   vocab.length?{t:'h2',s:'Meine Wörter zum Lernen'}:null,vocab.length?{t:'table',w:[.35,.65],firstBold:true,rows:vocab.map(v=>[v[0],v[1]])}:null].filter(Boolean);
  const t=btn?btn.textContent:'';if(btn)btn.textContent='PDF wird erstellt …';
  try{const blob=cmPdf.build(blocks,{title:T.title,foot:T.title+(name?' · '+name:'')});const how=await cmPdf.save(blob,String(T.title).replace(/[\\/:*?"<>|]/g,'')+(name?' - '+name.replace(/[\\/:*?"<>|]/g,''):'')+'.pdf');if(btn)btn.textContent=how==='download'?'✓ PDF geladen':how==='share'?'✓ Geteilt':t}

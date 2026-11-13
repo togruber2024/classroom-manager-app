@@ -2705,7 +2705,7 @@ document.addEventListener('keydown',event=>{
   const rotate=grid.querySelector('#classroomRotateButton');if(rotate){rotate.setAttribute('aria-pressed',String(rotated));rotate.textContent='Perspektive';rotate.title=rotated?'Schülerperspektive aktiv – zur Lehrerperspektive wechseln':'Lehrerperspektive aktiv – zur Schülerperspektive wechseln'}
   const occupied=[...board.querySelectorAll('.cell')].filter(cell=>!!gridData[Number(cell.dataset.row)]?.[Number(cell.dataset.col)]);
   if(occupied.length){
-   const cols=occupied.map(cell=>parseInt(cell.style.gridColumn,10)),rows=occupied.map(cell=>parseInt(cell.style.gridRow,10)),left=Math.min(...cols),top=Math.min(...rows),width=(Math.max(...cols)-left)*80+75,height=(Math.max(...rows)-top)*50+45,printScale=Math.min((184*96/25.4)/width,(215*96/25.4)/height);
+   const cols=occupied.map(cell=>parseInt(cell.style.gridColumn,10)),rows=occupied.map(cell=>parseInt(cell.style.gridRow,10)),left=Math.min(...cols),top=Math.min(...rows),width=(Math.max(...cols)-left)*80+75,height=(Math.max(...rows)-top)*50+45,printScale=Math.min((178*96/25.4)/width,(215*96/25.4)/height);
    board.style.setProperty('--print-seat-left',-(hw()+5+(left-2)*80)+'px');board.style.setProperty('--print-seat-top',-(hh()+5+(top-2)*50)+'px');board.style.setProperty('--print-seat-scale',printScale);viewport.style.setProperty('--print-seat-height',height*printScale+'px');
   }
   const d={width:hw()+colCount*80,height:hh()+rowCount*50};board.style.width=d.width+'px';board.style.height=d.height+'px';board.style.gridTemplateColumns=`${hw()}px repeat(${colCount},75px)`;board.style.gridTemplateRows=`${hh()}px repeat(${rowCount},45px)`;
