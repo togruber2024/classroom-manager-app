@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 13.11.2026 · Version 11.83
+Stand: 13.11.2026 · Version 11.84
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1462,3 +1462,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.81: Aufräumen – ungenutzte Funktionen entfernt (14), gemeinsames QR-Packen (classroomQrPack in qr-code.js) für Abgabe/Lerneinheiten/Übersetzungs-Trainer, gemeinsame Vokabelprüfung (cmVocabOk in abgabe.js) für Üben und Übersetzungs-Trainer.
 11.82: PDF-Dateiname beim Sitzplan-Druck „Sitzplan - 8d (Raum 106)“; Vokabelprüfung ignoriert Klammern (mit und ohne Klammerinhalt richtig); vorheriger Satz im Übersetzungs-Trainer folgt beim Wischen dem Finger.
 11.83: Paket-Dateien können die Vokabel-/Wiederholungsliste einer Lektion ersetzen (lessons[k].replace).
+11.84: Seitenleiste nur „Inhalte organisieren …“ + Lade-Symbol; im Fenster „Datei laden …“ und ⋯-Menü je Reihe (umbenennen, exportieren, Jahrgang, entfernen); Linien-Symbole statt Schriftzeichen.
