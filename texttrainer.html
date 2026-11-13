@@ -31,6 +31,7 @@ h1{font-size:1.5rem;margin:4px 0 0}.muted{color:var(--mut)}
 .ev .tx{flex:1}.ev button{flex:none;width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--blue)}
 .ev.drag{box-shadow:0 10px 26px #1c2b4633;border-color:var(--blue);position:relative;z-index:5}.ev.ok{border-color:#7cc69a;background:var(--okbg)}.ev.no{border-color:#f0a982;background:var(--badbg)}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.chip{min-height:48px;padding:0 16px;border:1px solid #cfd8e6;border-radius:24px;background:#fff;font-weight:600}
+.w.smk{background:#fff4e0;box-shadow:inset 0 -3px 0 #e8a23a;border-radius:6px}.smw{display:grid;gap:8px;margin-top:12px}.smo{text-align:left;min-height:52px;padding:10px 14px;border:1px solid #cfd8e6;border-radius:12px;background:#fff;font:inherit;line-height:1.4;color:inherit}.smo b{margin-right:8px;color:var(--mut)}.smo.ok{background:var(--okbg);border-color:#7cc69a;color:var(--ok)}.smo.no{background:var(--badbg);border-color:#f0a982;color:var(--bad)}
 .chip.ok{background:var(--okbg);border-color:#7cc69a;color:var(--ok)}.chip.no{background:var(--badbg);border-color:#f0a982;color:var(--bad)}.chip.used{opacity:.35}
 .nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.nav button{width:38px;height:38px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:.9rem;font-weight:600;color:var(--mut)}
 .nav button.on{border-color:var(--blue);color:var(--blue);box-shadow:0 0 0 2px #2f5f9b33}.nav button.r2{background:var(--okbg);color:var(--ok);border-color:#7cc69a}.nav button.r1{background:#fff8e6;color:#8a5a00;border-color:#f3cf8a}.nav button.r0{background:var(--badbg);color:var(--bad);border-color:#f0a982}
@@ -81,7 +82,7 @@ function ttScore(){const N=T.s.length,X=ST.sent||{};let fe=0,oh=0,og=0,vb=0;cons
  let rs=0;try{rs=+localStorage.getItem(key()+'-rs')||0}catch{}
  const fd=d=>{try{return new Date(d).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}catch{return ''}};
  const ldh=(ST.ld||[]).map(x=>'⚠ Zwischenstand geladen am '+fd(x.at)+(x.saved?' (gesichert '+fd(x.saved)+')':'')+(x.nm?' · Datei von '+x.nm:'')+(x.same?'':' · von einem anderen Gerät'));
- const hin=[...ldh,og?og+(og>1?' Sätze':' Satz')+' ohne eigene Übersetzung verglichen':'',vb?vb+'× verbessert':'',rs?rs+'× alles zurückgesetzt':''].filter(Boolean);const vs=VOC().length&&ST.vo&&ST.vo.first!=null?{vo:[ST.vo.first,VOC().length]}:{};const H=hin.length?{'Hinweise':hin.join('\n')}:{};return {s:{...vs,fe:[fe,N],oh:[oh,N]},x:{},w:{...H,...w},wc:H,wt:N}}
+ const hin=[...ldh,og?og+(og>1?' Sätze':' Satz')+' ohne eigene Übersetzung verglichen':'',vb?vb+'× verbessert':'',rs?rs+'× alles zurückgesetzt':''].filter(Boolean);const vs=VOC().length&&ST.vo&&ST.vo.first!=null?{vo:[ST.vo.first,VOC().length]}:{};const smN=(T.sm||[]).length,sms=smN&&smDone()?{sm:[T.sm.reduce((a,_,k)=>a+(ST.sm?.[k]?.n1?1:0)+(ST.sm?.[k]?.w1?1:0),0),2*smN]}:{};const H=hin.length?{'Hinweise':hin.join('\n')}:{};return {s:{...vs,fe:[fe,N],oh:[oh,N],...sms},x:{},w:{...H,...w},wc:H,wt:N}}
 function start(t){T=t;try{window.cmLoNote?.({key:t.title,title:t.title,subject:'latein'})}catch{}ST=ls.get(key())||{pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};
  /* 11.77: wer schon vor dem Vokabel-Schritt angefangen hat, wird nicht ausgesperrt */if(!ST.vo&&!ST.voFree&&(ST.pp.length||ST.ppTaps||Object.keys(ST.sent).length||Object.keys(ST.pr).length||ST.evFirst!=null))ST.voFree=true;
  tab=voLocked()?'vo':(T.pp||[]).length?'pp':'vo';ls.set('cm-texttrainer-last',t);if(t.cm&&t.cm.u&&window.cmAbgabe&&!AB)AB=cmAbgabe({u:t.cm.u,title:t.title,cls:t.cm.c,names:t.cm.n,score:ttScore,restore:()=>[[key(),ST]]});render()}
@@ -114,15 +115,15 @@ function textHtml(cls){return T.s.map((s,si)=>words(si).map((w,i)=>'<span class=
 /* 11.20: Formen-Jäger je Lektion (T.hunt), Tabs ohne Daten entfallen */
 const HU=()=>Object.assign({name:'Passiv-Jäger',task:'Tippe alle Formen im <b>Perfekt</b> und <b>Plusquamperfekt Passiv</b> an (PPP + Form von esse).',hint:'Nicht jede Form auf -erat oder -ērunt ist Passiv; ein Infinitiv wie „positam esse“ zählt hier nicht.',short:'Passivformen',legend:'Perfekt und Plusquamperfekt Passiv'},T&&T.hunt||{});
 /* 11.77: neue Reihenfolge – erst Vokabeln und Grammatik, dann übersetzen, danach Inhalt */
-const TABS0=[['vo','Vokabular bekannt?'],['pp',''],['tr','Übersetzen'],['ev','Zeitstrahl'],['pr','Wer ist gemeint?'],['res','Auswertung']];
+const TABS0=[['vo','Vokabular bekannt?'],['pp',''],['tr','Übersetzen'],['ev','Zeitstrahl'],['pr','Wer ist gemeint?'],['sm','Stilmittel'],['res','Auswertung']];
 const VOC=()=>(T&&Array.isArray(T.voc)?T.voc:[]);
 const voLocked=()=>VOC().length>0&&!(ST.vo&&ST.vo.done)&&!ST.voFree&&!PREV;
-const tabsOf=()=>TABS0.filter(([k])=>k==='vo'?VOC().length:k==='pp'?(T.pp||[]).length:k==='ev'?(T.ev||[]).length:k==='pr'?(T.pron||[]).length:true).map(([k,l])=>[k,k==='pp'?HU().name:l]);
-function badge(k){if(k==='vo')return ST.vo?.done?'✓':'';if(k==='pp')return (ST.pp.length)+'/'+T.pp.length;if(k==='ev')return ST.evOk?'✓':'';if(k==='pr')return Object.keys(ST.pr).length+'/'+T.pron.length;if(k==='tr')return Object.values(ST.sent).filter(x=>x.r!=null).length+'/'+T.s.length;return ''}
-function badgeOk(k){if(k==='vo')return !!ST.vo?.done;if(k==='pp')return ST.pp.length===T.pp.length;if(k==='ev')return !!ST.evOk;if(k==='pr')return Object.keys(ST.pr).length===T.pron.length;if(k==='tr')return Object.values(ST.sent).filter(x=>x.r!=null).length===T.s.length;return false}
+const tabsOf=()=>TABS0.filter(([k])=>k==='vo'?VOC().length:k==='pp'?(T.pp||[]).length:k==='ev'?(T.ev||[]).length:k==='pr'?(T.pron||[]).length:k==='sm'?(T.sm||[]).length:true).map(([k,l])=>[k,k==='pp'?HU().name:l]);
+function badge(k){if(k==='vo')return ST.vo?.done?'✓':'';if(k==='pp')return (ST.pp.length)+'/'+T.pp.length;if(k==='ev')return ST.evOk?'✓':'';if(k==='pr')return Object.keys(ST.pr).length+'/'+T.pron.length;if(k==='tr')return Object.values(ST.sent).filter(x=>x.r!=null).length+'/'+T.s.length;if(k==='sm')return smDone()+'/'+T.sm.length;return ''}
+function badgeOk(k){if(k==='vo')return !!ST.vo?.done;if(k==='pp')return ST.pp.length===T.pp.length;if(k==='ev')return !!ST.evOk;if(k==='pr')return Object.keys(ST.pr).length===T.pron.length;if(k==='tr')return Object.values(ST.sent).filter(x=>x.r!=null).length===T.s.length;if(k==='sm')return smDone()===T.sm.length;return false}
 function render(){closePop();clearInterval(voT);{const av=tabsOf().map(x=>x[0]);if(!av.includes(tab)){const ord=TABS0.map(x=>x[0]);tab=ord.slice(ord.indexOf(tab)).find(k=>av.includes(k))||av[0]}}app.innerHTML='<h1>'+esc(T.title)+'</h1><div class="muted">'+esc(T.sub||'')+'</div>'+(PREV?'':'<div class="stand"><button class="lnk" data-sv title="Speichert Text und Arbeitsstand als Datei – z. B. in „Dateien“. Später über „laden“ weitermachen, auch auf einem anderen iPad.">💾 Zwischenstand sichern</button><span>·</span><button class="lnk" data-ld>laden …</button></div>')+'<div class="tabs">'+tabsOf().map(([k,l])=>'<button data-tab="'+k+'" class="'+(k===tab?'on':'')+(k!=='vo'&&voLocked()?' lk':'')+'"'+(k!=='vo'&&voLocked()?' title="Erst die Vokabeln"':'')+'>'+(k!=='vo'&&voLocked()?'🔒 ':'')+l+(badge(k)?'<i class="'+(badgeOk(k)?'ok':'')+'">'+badge(k)+'</i>':'')+'</button>').join('')+'</div><div id="body"></div>';
  app.querySelector('[data-sv]')?.addEventListener('click',e=>saveStand(e.currentTarget));app.querySelector('[data-ld]')?.addEventListener('click',()=>$('#file').click());
- app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(b.dataset.tab!=='vo'&&voLocked())return;tab=b.dataset.tab;render();scrollTo(0,0)});({vo:renderVO,pp:renderPP,ev:renderEV,pr:renderPR,tr:renderTR,res:renderRes})[tab]($('#body'))}
+ app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(b.dataset.tab!=='vo'&&voLocked())return;tab=b.dataset.tab;render();scrollTo(0,0)});({vo:renderVO,pp:renderPP,ev:renderEV,pr:renderPR,sm:renderSM,tr:renderTR,res:renderRes})[tab]($('#body'))}
 const nextTab=k=>{const a=tabsOf().map(x=>x[0]);return a[a.indexOf(k)+1]||'res'};
 const refreshTabs=()=>app.querySelectorAll('[data-tab]').forEach(b=>{const k=b.dataset.tab,v=badge(k);let i=b.querySelector('i');if(v){if(!i){i=document.createElement('i');b.append(i)}i.textContent=v;i.className=badgeOk(k)?'ok':''}});
 /* ---------- 0 Vokabular bekannt? (11.77) ----------
@@ -135,13 +136,17 @@ function renderVO(b){const V=voState(),W=VOC(),N=W.length;clearInterval(voT);
  const head='<p class="task"><b>Vokabular bekannt?</b> Wiederholungsvokabeln dieser Lektion – so lange, bis alle sitzen. Erst dann geht es weiter.</p>';
  if(V.done){b.innerHTML='<div class="card">'+head+'<div class="fb ok">✓ Alle '+N+' Vokabeln sitzen'+(V.r>1?' – nach '+V.r+' Runden':' – gleich in der ersten Runde')+'.'+(V.first!=null&&V.r>1?' In Runde 1 waren '+V.first+' von '+N+' richtig.':'')+'</div><div class="row"><div class="sp"></div><button class="pri" data-go>Weiter ›</button></div></div>';
   b.querySelector('[data-go]').onclick=()=>{tab=nextTab('vo');render();scrollTo(0,0)};return}
- if(V.ph==='ask'){const n=V.q.length,w=W[V.q[V.i]];
-  b.innerHTML='<div class="card">'+head+'<div class="muted">Runde '+V.r+(V.r>1?' · nur die Wörter, die noch nicht saßen':'')+' · Wort '+(V.i+1)+' von '+n+'</div><div class="vo-bar"><i style="width:'+(100*V.i/n)+'%"></i></div>'
-   +'<div style="margin-top:18px"><div class="vo-l">'+esc(w[0])+'</div>'+(w[1]?'<div class="vo-i">'+esc(w[1])+'</div>':'')+'</div>'
+ if(V.ph==='ask'){const n=V.q.length;
+  /* 11.92: Eingabefeld bleibt nach Enter aktiv – nur Wort, Zähler und Balken wechseln (sonst geht auf dem iPad die Tastatur zu) */
+  b.innerHTML='<div class="card">'+head+'<div class="muted" id="vcnt"></div><div class="vo-bar"><i id="vbar"></i></div>'
+   +'<div style="margin-top:18px"><div class="vo-l" id="vl"></div><div class="vo-i" id="vi"></div></div>'
    +'<input class="vo-in" id="va" placeholder="Deutsche Bedeutung …" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next">'
-   +'<div class="row"><span class="muted">Die Lösungen siehst du am Ende der Runde.</span><div class="sp"></div><button class="pri" data-vn>'+(V.i<n-1?'Weiter ›':'Runde beenden')+'</button></div></div>';
-  const inp=b.querySelector('#va'),go=()=>{const k=V.q[V.i],v=inp.value.trim();V.a[k]=v;(vOk(v,W[k][2])?V.ok:V.no).push(k);V.i++;if(V.i>=n){V.ph='sum';if(V.first==null)V.first=V.ok.length;if(!V.no.length)V.done=true}save();refreshTabs();renderVO(b);if(V.done)render()};
-  b.querySelector('[data-vn]').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go()}};setTimeout(()=>inp.focus({preventScroll:true}),30);return}
+   +'<div class="row"><span class="muted">Die Lösungen siehst du am Ende der Runde.</span><div class="sp"></div><button class="pri" data-vn></button></div></div>';
+  const inp=b.querySelector('#va'),bn=b.querySelector('[data-vn]');
+  const fill=()=>{const w=W[V.q[V.i]];b.querySelector('#vcnt').textContent='Runde '+V.r+(V.r>1?' · nur die Wörter, die noch nicht saßen':'')+' · Wort '+(V.i+1)+' von '+n;b.querySelector('#vbar').style.width=(100*V.i/n)+'%';b.querySelector('#vl').textContent=w[0];const vi=b.querySelector('#vi');vi.textContent=w[1]||'';vi.hidden=!w[1];bn.textContent=V.i<n-1?'Weiter ›':'Runde beenden';inp.value=''};
+  const go=()=>{const k=V.q[V.i],v=inp.value.trim();V.a[k]=v;(vOk(v,W[k][2])?V.ok:V.no).push(k);V.i++;if(V.i>=n){V.ph='sum';if(V.first==null)V.first=V.ok.length;if(!V.no.length)V.done=true}save();refreshTabs();
+   if(V.ph==='ask'){fill();inp.focus({preventScroll:true});return}renderVO(b);if(V.done)render()};
+  fill();bn.onclick=go;inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go()}};setTimeout(()=>inp.focus({preventScroll:true}),30);return}
  if(V.ph==='sum'){const n=V.ok.length+V.no.length;
   b.innerHTML='<div class="card">'+head+'<div class="fb info">Runde '+V.r+': <b>'+V.ok.length+' von '+n+'</b> richtig.</div><p style="margin:12px 0 0">Jetzt siehst du die <b>'+V.no.length+'</b> '+(V.no.length>1?'Vokabeln':'Vokabel')+', die noch nicht saß'+(V.no.length>1?'en':'')+', mit Lösung – jede '+VO_SEC+' Sekunden lang. Präge sie dir ein. Danach '+(V.no.length>1?'kommen sie':'kommt sie')+' noch einmal dran.</p><div class="row"><div class="sp"></div><button class="pri" data-vl>Lösungen ansehen</button></div></div>';
   b.querySelector('[data-vl]').onclick=()=>{V.ph='learn';V.li=0;save();renderVO(b)};return}
@@ -188,6 +193,36 @@ function showPR(b,k){const [si,wi,ans]=T.pron[k];const done=ST.pr[k]!=null;
  const mark=()=>{const got=ST.pr[k];if(got==null)return;b.querySelectorAll('[data-p]').forEach(c=>{if(c.dataset.p===ans)c.classList.add('ok');else if(c.dataset.p===got)c.classList.add('no')});$('#fb').innerHTML=got===ans?'<div class="fb ok">✓ Richtig: '+esc(ans)+'</div>':'<div class="fb no">Gemeint ist: '+esc(ans)+'</div>'};
  b.querySelectorAll('[data-p]').forEach(c=>c.onclick=()=>{if(ST.pr[k]!=null)return;ST.pr[k]=c.dataset.p;save();beep(c.dataset.p===ans);mark();refreshTabs()});mark();
  b.querySelector('[data-prev]').onclick=()=>showPR(b,k-1);b.querySelector('[data-next]').onclick=()=>{if(k<T.pron.length-1)showPR(b,k+1);else{tab=nextTab('pr');render()}}}
+/* ---------- 11.92: Stilmittel – erkennen, markieren, Wirkung (vor der Auswertung) ---------- */
+const SMDEF={'Anapher':'Wiederholung desselben Wortes am Anfang aufeinanderfolgender Sätze oder Satzteile','Antithese':'Gegenüberstellung gegensätzlicher Begriffe oder Gedanken','Klimax':'Steigerung – vom Schwächeren zum Stärkeren','Alliteration':'gleicher Anlaut aufeinanderfolgender Wörter','Apostrophe':'feierliche Anrede, oft an Götter oder Abwesende','Rhetorische Frage':'Frage, auf die keine Antwort erwartet wird – sie will überzeugen','Hyperbaton':'Sperrung: zusammengehörige Wörter stehen getrennt','Trikolon':'Dreiergruppe gleich gebauter Wörter oder Satzteile','Metapher':'bildhafter Ausdruck: ein Wort in übertragener Bedeutung','Chiasmus':'Überkreuzstellung (ABBA) einander entsprechender Satzteile','Asyndeton':'Aufzählung ohne verbindende Konjunktionen'};
+const smS=k=>(ST.sm??={})[k]??={ph:'n',miss:0,mk:[]};
+const smDone=()=>(T.sm||[]).filter((_,k)=>ST.sm?.[k]?.ph==='d').length;
+function renderSM(b){const open=T.sm.findIndex((_,k)=>ST.sm?.[k]?.ph!=='d');showSM(b,open<0?T.sm.length-1:open)}
+function showSM(b,k){const it=T.sm[k],X=smS(k),m=it.m,keyOf=(s,i)=>s+'.'+i,need=new Set(m.map(([s,i])=>keyOf(s,i)));
+ const s1=Math.min(...m.map(x=>x[0])),s2=Math.max(...m.map(x=>x[0]));
+ if(!X.o){const o=[0,1,2];for(let i=o.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[o[i],o[j]]=[o[j],o[i]]}X.o=o;save()}
+ const nav=T.sm.length>1?'<div class="nav">'+T.sm.map((_,j)=>'<button class="'+(j===k?'on ':'')+(ST.sm?.[j]?.ph==='d'?'r2':'')+'" data-k="'+j+'">'+(j+1)+'</button>').join('')+'</div>':'';
+ const P=X.ph,st=[['n','Erkennen'],['m','Markieren'],['w','Wirkung']],pi={n:0,m:1,w:2,d:3}[P];
+ const txt=[];for(let s=s1;s<=s2;s++)txt.push(T.s[s-1].t.split(' ').map((w,i)=>'<span class="w'+(X.mk.some(x=>x[0]===s&&x[1]===i)||P==='d'&&need.has(keyOf(s,i))?' smk':'')+'" data-s="'+s+'" data-i="'+i+'">'+esc(w)+'</span>').join(' '));
+ const def=n=>SMDEF[n]?' – '+SMDEF[n]:'';
+ const opts=[it.w[0],it.w[1],it.w[2]];
+ b.innerHTML=nav+'<div class="card"><div class="steps">'+st.map(([p,l],i)=>'<span class="'+(i===pi?'on':i<pi?'done':'')+'">'+(i+1)+' '+l+'</span>').join('')+'</div>'
+  +'<p class="task">'+(P==='n'?'Welches <b>Stilmittel</b> steckt in dieser Stelle?':P==='m'?'Tippe die Wörter an, die die <b>'+esc(it.t)+'</b> bilden.':P==='w'?'Was bewirkt die <b>'+esc(it.t)+'</b> hier?':'<b>'+esc(it.t)+'</b>'+esc(def(it.t))+'.')+' <span class="muted">('+(k+1)+' von '+T.sm.length+')</span></p>'
+  +'<div class="text" id="smt">'+txt.join(' ')+'</div>'
+  +(P==='n'?'<div class="chips">'+(T.smk||Object.keys(SMDEF)).map(n=>'<button class="chip'+((X.no||[]).includes(n)?' no':'')+'" data-n="'+esc(n)+'">'+esc(n)+'</button>').join('')+'</div>':'')
+  +(P==='m'?'<div class="row"><span class="muted" id="smleft"></span><div class="sp"></div><button class="lnk" data-smsolve>Lösung zeigen</button></div>':'')
+  +(P==='w'||P==='d'?'<div class="smw">'+X.o.map((j,n)=>'<button class="smo'+(P==='d'&&j===0?' ok':'')+(X.wa===j&&j!==0?' no':'')+'" data-w="'+j+'"><b>'+'ABC'[n]+'</b> '+esc(opts[j])+'</button>').join('')+'</div>':'')
+  +'<div id="fb"></div>'+(P==='d'?'<div class="row"><div class="sp"></div><button class="pri" data-smnext>'+(k<T.sm.length-1?'Weiter ›':'Zur Auswertung ›')+'</button></div>':'')+'</div>';
+ const fb=(ok,t)=>{$('#fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'">'+t+'</div>'};
+ const left=()=>{const l=$('#smleft');if(!l)return;const n=m.filter(([s,i])=>!X.mk.some(x=>x[0]===s&&x[1]===i)).length;l.textContent=n?'Noch '+n+' Wort'+(n>1?'e':''):''};left();
+ b.querySelectorAll('.nav [data-k]').forEach(x=>x.onclick=()=>showSM(b,+x.dataset.k));
+ b.querySelectorAll('[data-n]').forEach(c=>c.onclick=()=>{if(X.ph!=='n')return;const n=c.dataset.n;if(n===it.t){if(X.n1==null)X.n1=!(X.no||[]).length;X.ph='m';save();beep(true);showSM(b,k);fb(true,'✓ Richtig: '+esc(it.t)+esc(def(it.t))+'.');refreshTabs()}else{(X.no??=[]).includes(n)||X.no.push(n);X.miss++;save();beep(false);c.classList.add('no');fb(false,'Nein – '+esc(n)+esc(def(n))+'. Schau noch einmal genau hin.')}});
+ b.querySelector('#smt').onclick=e=>{if(X.ph!=='m')return;const w=e.target.closest('.w');if(!w)return;const s=+w.dataset.s,i=+w.dataset.i;
+  if(need.has(keyOf(s,i))){if(!X.mk.some(x=>x[0]===s&&x[1]===i)){X.mk.push([s,i]);w.classList.add('smk');beep(true);save();left();if(m.every(([a,c])=>X.mk.some(x=>x[0]===a&&x[1]===c))){X.ph='w';save();setTimeout(()=>{showSM(b,k);fb(true,'✓ Alle Stellen markiert.')},450)}}}
+  else{X.miss++;save();beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700);fb(false,'Dieses Wort gehört nicht dazu.'+(SMDEF[it.t]?' Zur Erinnerung: '+esc(SMDEF[it.t])+'.':''))}};
+ b.querySelector('[data-smsolve]')?.addEventListener('click',()=>{X.mk=m.map(x=>[...x]);X.h=(X.h||0)+1;X.ph='w';save();showSM(b,k)});
+ b.querySelectorAll('[data-w]').forEach(c=>c.onclick=()=>{if(X.ph!=='w')return;const j=+c.dataset.w;X.wa=j;X.w1=j===0;X.ph='d';save();beep(j===0);showSM(b,k);refreshTabs();if(j===0)fb(true,'✓ Genau.');else fb(false,'Nicht ganz – die richtige Antwort ist grün markiert.')});
+ b.querySelector('[data-smnext]')?.addEventListener('click',()=>{if(k<T.sm.length-1)showSM(b,k+1);else{tab=nextTab('sm');render();scrollTo(0,0)}})}
 /* ---------- 4 Übersetzen ---------- */
 let swAt=0;const pvLab=()=>PV?'▴ vorherigen Satz ausblenden':'▾ nach unten wischen: vorheriger Satz';
 function pvSet(on){PV=!!on;$('#pv')?.classList.toggle('hid',!PV);const h=$('#pvh');if(h)h.textContent=pvLab()}
@@ -320,6 +355,7 @@ function renderRes(b){const sents=T.s.map((_,i)=>ST.sent[i]||{});const rated=sen
   +'<tr><td>'+HU().name+'</td><td>'+ST.pp.length+' von '+T.pp.length+' gefunden · '+(ST.ppTaps||0)+' Versuche'+(ST.ppMiss?' · '+ST.ppMiss+' Fehlgriffe':'')+'</td></tr>'
   +'<tr><td>Zeitstrahl</td><td>'+(ST.evFirst==null?'noch offen':'im ersten Versuch '+ST.evFirst+' von '+T.ev.length+' richtig'+(ST.evOk?' · gelöst':''))+'</td></tr>'
   +'<tr><td>Wer ist gemeint?</td><td>'+prOk+' von '+T.pron.length+' richtig</td></tr>'
+  +((T.sm||[]).length?'<tr><td>Stilmittel</td><td>'+smDone()+' von '+T.sm.length+' bearbeitet · '+T.sm.filter((_,k)=>ST.sm?.[k]?.n1).length+' sofort erkannt · '+T.sm.filter((_,k)=>ST.sm?.[k]?.w1).length+' Wirkungen richtig</td></tr>':'')
   +'<tr><td>Übersetzen</td><td>'+rated.length+' von '+T.s.length+' Sätzen · '+rated.filter(x=>x.r===2).length+' passen · '+sents.reduce((a,x)=>a+(x.h||0),0)+' Hilfen · '+sents.reduce((a,x)=>a+(x.look||0),0)+' Wörter nachgeschlagen</td></tr></table></div>'
   +(talk.length?'<div class="card"><p class="task"><b>Diese Sätze solltest du dir noch einmal ansehen</b></p>'+talk.map(({x,i})=>'<div style="margin:6px 0"><button class="sec" data-go="'+i+'">Satz '+(i+1)+'</button> <span class="muted">'+(x.r!=null?lab[x.r]:'')+((x.h||0)>=3?' · viele Hilfen':'')+'</span></div>').join('')+'</div>':'')
   +'<div class="card"><p class="task"><b>Für meine Unterlagen</b></p><div class="hint" style="margin-bottom:10px">Erstellt eine Seite mit dem Text, den '+HU().short+', dem Zeitstrahl, deinen Übersetzungen neben der Musterübersetzung und deinen nachgeschlagenen Wörtern. Es entsteht eine PDF-Datei. Am iPad öffnet sich das Teilen-Menü: GoodNotes wählen.</div><div class="row" style="margin-top:0"><input id="pn" placeholder="Dein Name (optional)" style="min-height:48px;padding:0 12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;flex:1;min-width:200px"><button class="pri" data-pdf>Für meine Unterlagen sichern</button></div></div>'
