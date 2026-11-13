@@ -4372,7 +4372,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
 #einExp,#einQr{border:0;border-radius:14px;padding:0;max-width:640px;width:calc(100% - 32px);box-shadow:0 20px 60px #0004}
 #einExp form,#einQr form{padding:20px 22px}#einExp h2,#einQr h2{margin:0 0 2px}#einExp .muted,#einQr .muted{color:#66758a;margin:0 0 10px}
 #einExp label{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #eef2f7;cursor:pointer}
-#einExp label.l2{padding-left:30px}#einExp label small{margin-left:auto;color:#8a97aa}
+#einExp label.l2{padding-left:30px}#einExp .rg{font-size:11px;font-weight:800;letter-spacing:.06em;color:#8a97aa;text-transform:uppercase;padding:10px 4px 2px 30px}#einExp .chg{font-style:normal;font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;background:#fff4e0;color:#c2410c;margin-left:6px}#einExp .rnote{margin:8px 0 12px}#einExp{max-height:calc(100dvh - 32px);overflow:auto}#einExp label small{margin-left:auto;color:#8a97aa}
 #einExp input[type=checkbox]{width:20px;height:20px;accent-color:#2f5f9b;margin:0}
 #einExp .parts{display:flex;flex-wrap:wrap;gap:4px 14px;margin:12px 0}#einExp .parts label{border:0;padding:4px 0}
 #einExp .note,#einQr .note{background:#eef3fa;border-radius:10px;padding:10px 12px;color:#3c4d66;font-size:.9rem}
@@ -4654,8 +4654,14 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   M.querySelectorAll('[data-grip]').forEach(g=>g.onpointerdown=ev=>{ev.preventDefault();const row=g.closest('.rh-er'),list=row.parentNode;try{g.setPointerCapture(ev.pointerId)}catch{}row.classList.add('drag');
    g.onpointermove=m=>{let before=null;for(const o of rows()){if(o===row)continue;const bx=o.getBoundingClientRect();if(m.clientY<bx.top+bx.height/2){before=o;break}}const ref=before||list.querySelector('[data-add]');if(ref&&ref!==row&&row.nextSibling!==ref)list.insertBefore(row,ref)};
    g.onpointerup=g.onpointercancel=()=>{g.onpointermove=g.onpointerup=g.onpointercancel=null;row.classList.remove('drag');const x=e();x.order=rows().map(o=>o.dataset.k);save(x);draw()}})}
+ /* 11.63: eine Reihe mit allen Änderungen als Datei (auch für „Inhalte exportieren …“) */async function reiheFile(r){const b=B();const E=eff(r).map(x=>({k:x.k,t:x.t,...(x.u?{u:x.u}:{}),...(x.les!=null?{les:x.les}:{}),...(x.own?{own:1}:{}),...(x.hid?{hid:1}:{})}));const LE={};for(const x of E)if(x.les!=null){const v=edOf('les:'+x.les);if(Object.keys(v).length)LE[x.les]=v}return b.reiheExport(r.id,E,LE)}
+ /* 11.63: Zip ohne Komprimierung (Bilder sind schon komprimiert) – „Datei laden …“ liest sie wieder ein */
+ function zipStore(files){const CT=zipStore.t||(zipStore.t=Array.from({length:256},(_,n)=>{let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;return c>>>0})),crc=u=>{let c=~0;for(let i=0;i<u.length;i++)c=CT[(c^u[i])&255]^(c>>>8);return ~c>>>0},te=new TextEncoder(),parts=[],cen=[];let off=0;
+  for(const f of files){const nm=te.encode(f.name),d=f.data,c=crc(d),h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint32(14,c,true);h.setUint32(18,d.length,true);h.setUint32(22,d.length,true);h.setUint16(26,nm.length,true);parts.push(h,nm,d);
+   const z=new DataView(new ArrayBuffer(46));z.setUint32(0,0x02014b50,true);z.setUint16(4,20,true);z.setUint16(6,20,true);z.setUint16(8,0x0800,true);z.setUint32(16,c,true);z.setUint32(20,d.length,true);z.setUint32(24,d.length,true);z.setUint16(28,nm.length,true);z.setUint32(42,off,true);cen.push(z,nm);off+=30+nm.length+d.length}
+  const cs=cen.reduce((a,x)=>a+x.byteLength,0),e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);return new Blob([...parts,...cen,e],{type:'application/zip'})}
  async function reiheExp(r,el){const b=B();if(!b?.reiheExport)return;const t0=el?.textContent;try{if(el){el.disabled=true}
-   const E=eff(r).map(x=>({k:x.k,t:x.t,...(x.u?{u:x.u}:{}),...(x.les!=null?{les:x.les}:{}),...(x.own?{own:1}:{}),...(x.hid?{hid:1}:{})}));const LE={};for(const x of E)if(x.les!=null){const v=edOf('les:'+x.les);if(Object.keys(v).length)LE[x.les]=v}const f=await b.reiheExport(r.id,E,LE);
+   const f=await reiheFile(r);
    if(touchDev()){const N=navigator;try{if(N.canShare&&N.canShare({files:[f]})){await N.share({files:[f],title:f.name});return}}catch(e){if(e&&e.name==='AbortError')return}}
    saveFile(f);alert('„'+f.name+'“ ('+Math.round(f.size/1024)+' KB) liegt jetzt in „Downloads“.')}catch(e){alert('Export nicht möglich: '+(e&&e.message||e))}finally{if(el){el.disabled=false}}}
  /* Reihe laden: Datei wählen → Dialog (neu / neuere Fassung) → speichern */
@@ -4690,33 +4696,41 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   const rs=[],fs=[];for(const f of all){let isR=/\.cmreihe$/i.test(f.name);if(!isR&&!/\.zip$/i.test(f.name)&&f.size<60e6){try{const head=await f.slice(0,400).text();isR=/"type"\s*:\s*"classroom-reihe"/.test(head)}catch{}}(isR?rs:fs).push(f)}
   if(rs.length){await reiheLoad(rs);if(!fs.length)return}
   try{r=await b.importFiles(fs)}catch(e){alert('Laden nicht möglich: '+(e.name==='QuotaExceededError'?'Speicher voll.':e.message));return}
-  const parts=[r.toc&&'Inhaltsverzeichnis: '+r.toc+' Lektionen',r.voc&&'Vokabular +'+r.voc+' Wörter',r.wh&&'Wiederholung +'+r.wh+' Wörter',r.gr&&'Grammatik +'+r.gr+' Themen',r.tt&&r.tt+' Übersetzungs-Trainer-Text'+(r.tt>1?'e':''),r.le&&r.le+' Lerneinheit'+(r.le>1?'en':'')+' (Schulbuchmaterial)'].filter(Boolean);
+  const parts=[r.reihe&&r.reihe+' Unterrichtsreihe'+(r.reihe>1?'n':''),r.toc&&'Inhaltsverzeichnis: '+r.toc+' Lektionen',r.voc&&'Vokabular +'+r.voc+' Wörter',r.wh&&'Wiederholung +'+r.wh+' Wörter',r.gr&&'Grammatik +'+r.gr+' Themen',r.tt&&r.tt+' Übersetzungs-Trainer-Text'+(r.tt>1?'e':''),r.le&&r.le+' Lerneinheit'+(r.le>1?'en':'')+' (Schulbuchmaterial)'].filter(Boolean);
   alert(parts.length?'Geladen und zusammengeführt:\n'+parts.join('\n')+(r.bad||r.unknown?'\n\n'+(r.bad+r.unknown)+' Datei(en) nicht erkannt.':''):'Nichts Neues gefunden'+(r.bad||r.unknown?' – '+(r.bad+r.unknown)+' Datei(en) nicht erkannt.':' – alles war schon vorhanden.'));render()}
  /* Exportieren */
  async function exportPkg(){const b=B();if(!b)return;if(!data)data=await load();cx=ctx();
   let dlg=document.getElementById('einExp');if(!dlg){dlg=document.createElement('dialog');dlg.id='einExp';document.body.append(dlg)}
   const groups=[6,7,8,9].map(jg=>{const ls=data.lessons.filter(l=>l.jg===jg);const n=ls.filter(l=>blocks(l)).length;return {jg,ls,n,lab:'Jahrgang '+jg+' · '+(ls[0]?.tag||'')+' – '+(ls.at(-1)?.tag||'')}}).filter(g=>g.ls.length);
   const pre=cx.subject==='latein'?cx.jg:0,preU=cx.subject==='erdkunde'?cx.jg:0;
-  dlg.innerHTML='<form method="dialog"><h2>Paket exportieren</h2><p class="muted">Was soll in die Datei?</p>'
+  const RH=(data.reihen||[]).slice().sort((a,b)=>(a.subject==='latein')-(b.subject==='latein')||String(a.subject).localeCompare(String(b.subject))||(+a.jg||0)-(+b.jg||0)||(+a.n||0)-(+b.n||0)||String(a.title).localeCompare(String(b.title),'de'));let lastG='';
+  const rgrp=r=>r.subject==='latein'?'Latein · Pontes':(SUBJ[r.subject]||r.subject||'')+' · Jahrgang '+r.jg,changed=r=>Object.values(edOf(r.id)||{}).some(v=>v&&(Array.isArray(v)?v.length:typeof v==='object'?Object.keys(v).length:1));
+  const rows=RH.map((r,i)=>{const g=rgrp(r),h=g!==lastG?'<div class="rg">'+esc(g)+'</div>':'';lastG=g;const E=eff(r),n=r.subject==='latein'?E.filter(x=>x.les!=null).length+' Lektionen':E.length+' Einträge';return h+'<label class="l2"><input type="checkbox" data-r="'+i+'" checked><span>'+esc((r.lab?r.lab+' ':'')+r.title)+(changed(r)?' <i class="chg">geändert</i>':'')+'</span><small>'+n+'</small></label>'}).join('');
+  dlg.innerHTML='<form method="dialog"><h2>Inhalte exportieren</h2><p class="muted">Was soll in die Datei?</p>'
+   +(RH.length?'<label><input type="checkbox" data-all="rh"><b>Unterrichtsreihen</b><small>alle '+RH.length+' Reihe'+(RH.length>1?'n':'')+'</small></label>'+rows+'<div class="note rnote">Jede Reihe kommt <b>mit deinen Änderungen</b> (Reihenfolge, Namen, ausgeblendete und eigene Einträge) als eigene .cmreihe-Datei in eine Zip. Am anderen Gerät: „Datei laden …“ → Zip wählen → alle Reihen auf einmal.</div>':'')
    +'<label><input type="checkbox" data-all="lat"><b>Latein · Pontes</b><small>'+groups.reduce((a,g)=>a+g.n,0)+' Lektionen mit Inhalt</small></label>'
-   +groups.map(g=>'<label class="l2"><input type="checkbox" data-g="'+g.jg+'"'+(g.jg===pre?' checked':'')+(g.n?'':' disabled')+'>'+esc(g.lab)+'<small>'+(g.n||'leer')+'</small></label>').join('')
+   +groups.map(g=>'<label class="l2"><input type="checkbox" data-g="'+g.jg+'"'+(g.n?'':' disabled')+'>'+esc(g.lab)+'<small>'+(g.n||'leer')+'</small></label>').join('')
    +'<label><input type="checkbox" data-all="ek"><b>Erdkunde</b><small>'+data.units.length+' Lerneinheiten</small></label>'
-   +data.units.map(u=>'<label class="l2"><input type="checkbox" data-u="'+u.u+'"'+(u.jg===preU&&u.book?' checked':'')+(u.book?'':' disabled')+'>Jahrgang '+u.jg+' · '+esc(u.title)+'<small>'+(u.book?'mit Schulbuchbildern':'kein Material geladen')+'</small></label>').join('')
+   +data.units.map(u=>'<label class="l2"><input type="checkbox" data-u="'+u.u+'"'+(u.book?'':' disabled')+'>'+(+u.jg?'Jahrgang '+u.jg+' · ':'')+esc(u.title)+'<small>'+(u.book?'mit Schulbuchbildern':'kein Material geladen')+'</small></label>').join('')
    +'<div class="parts">Bausteine: '+[['toc','Inhaltsverzeichnis'],['voc','Vokabular'],['wh','Wiederholung'],['gr','Grammatik'],['tt','Übersetzungs-Trainer'],['le','Lerneinheiten']].map(([k,t])=>'<label><input type="checkbox" data-p="'+k+'" checked>'+t+'</label>').join('')+'</div>'
    +'<div class="note">Dateiname: <b data-fn></b> · Enthält Schulbuchmaterial – nur für den eigenen Unterricht, nicht veröffentlichen. Keine Schülerdaten, keine Noten.</div>'
    +'<div class="acts"><button type="button" data-x>Abbrechen</button><button type="button" data-everything>Alles exportieren</button><button type="submit" class="pri">Auswahl exportieren</button></div></form>';
   const q=s=>[...dlg.querySelectorAll(s)];
-  const sync=()=>{for(const [a,s] of [['lat','[data-g]:not(:disabled)'],['ek','[data-u]:not(:disabled)']]){const xs=q(s),c=xs.filter(x=>x.checked).length,m=dlg.querySelector('[data-all="'+a+'"]');m.checked=xs.length>0&&c===xs.length;m.indeterminate=c>0&&c<xs.length;m.disabled=!xs.length}dlg.querySelector('[data-fn]').textContent=fname()};
-  const selection=()=>{const gs=q('[data-g]:checked').map(x=>+x.dataset.g),us=q('[data-u]:checked').map(x=>x.dataset.u);return {gs,lessons:data.lessons.filter(l=>gs.includes(l.jg)).map(l=>l.k),units:us,parts:Object.fromEntries(q('[data-p]').map(x=>[x.dataset.p,x.checked]))}};
-  const fname=()=>{const s=selection(),p=[];if(s.gs.length){const ls=data.lessons.filter(l=>s.gs.includes(l.jg));p.push('Latein_Jg'+s.gs.join('-')+'_Pontes_'+ls[0].tag+'-'+ls.at(-1).tag)}if(s.units.length)p.push('Erdkunde_'+s.units.map(u=>data.units.find(x=>x.u===u).title).join('_'));
+  const ALL={lat:'[data-g]:not(:disabled)',ek:'[data-u]:not(:disabled)',rh:'[data-r]'};const sync=()=>{for(const [a,s] of Object.entries(ALL)){const xs=q(s),c=xs.filter(x=>x.checked).length,m=dlg.querySelector('[data-all="'+a+'"]');if(!m)continue;m.checked=xs.length>0&&c===xs.length;m.indeterminate=c>0&&c<xs.length;m.disabled=!xs.length}dlg.querySelector('[data-fn]').textContent=fname()};
+  const selection=()=>{const gs=q('[data-g]:checked').map(x=>+x.dataset.g),us=q('[data-u]:checked').map(x=>x.dataset.u);return {rs:q('[data-r]:checked').map(x=>RH[+x.dataset.r]),gs,lessons:data.lessons.filter(l=>gs.includes(l.jg)).map(l=>l.k),units:us,parts:Object.fromEntries(q('[data-p]').map(x=>[x.dataset.p,x.checked]))}};
+  const pkname=()=>{const s=selection(),p=[];if(s.gs.length){const ls=data.lessons.filter(l=>s.gs.includes(l.jg));p.push('Latein_Jg'+s.gs.join('-')+'_Pontes_'+ls[0].tag+'-'+ls.at(-1).tag)}if(s.units.length)p.push('Erdkunde_'+s.units.map(u=>data.units.find(x=>x.u===u).title).join('_'));
    /* nur einfache Zeichen im Dateinamen (AirDrop, Windows, USB-Stick) */return (p.join('_')||'Einheiten').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/Ä/g,'Ae').replace(/Ö/g,'Oe').replace(/Ü/g,'Ue').replace(/ß/g,'ss').replace(/\s+/g,'-').replace(/[^A-Za-z0-9_+.-]/g,'')+'.cmpaket'};
-  q('[data-all]').forEach(m=>m.onchange=()=>{q(m.dataset.all==='lat'?'[data-g]:not(:disabled)':'[data-u]:not(:disabled)').forEach(x=>x.checked=m.checked);sync()});
+  const hasPk=s=>s.gs.length||s.units.length,fname=()=>{const s=selection();return s.rs.length&&(hasPk(s)||s.rs.length>1)?'Unterrichtsreihen_'+new Date().toISOString().slice(0,10)+'.zip':s.rs.length?'(Name der Reihe).cmreihe':pkname()};
+  q('[data-all]').forEach(m=>m.onchange=()=>{q(ALL[m.dataset.all]).forEach(x=>x.checked=m.checked);sync()});
   q('input').forEach(x=>{if(!x.dataset.all)x.addEventListener('change',sync)});sync();
-  const go=async all=>{if(all){q('[data-g]:not(:disabled),[data-u]:not(:disabled),[data-p]').forEach(x=>x.checked=true);sync()}
-   const s=selection(),name=fname();const pk=await b.exportPkg(s,name.replace(/\.cmpaket$/,''));if(!pk){alert('In der Auswahl ist nichts zum Exportieren.');return}
-   const file=new File([JSON.stringify(pk)],name,{type:'application/json'});
-   try{if(navigator.canShare?.({files:[file]})&&matchMedia('(pointer:coarse)').matches){await navigator.share({files:[file],title:name});dlg.close();return}}catch(err){if(err?.name==='AbortError')return}
-   const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);dlg.close()};
+  const go=async all=>{if(all){q('[data-g]:not(:disabled),[data-u]:not(:disabled),[data-p],[data-r]').forEach(x=>x.checked=true);sync()}
+   const s=selection(),name=fname();let file;const btns=q('.acts button');btns.forEach(x=>x.disabled=true);const pri=dlg.querySelector('.acts .pri'),t0=pri.textContent;pri.textContent='Wird exportiert …';
+   try{const pk=hasPk(s)?await b.exportPkg(s,pkname().replace(/\.cmpaket$/,'')):null;
+    if(!s.rs.length){if(!pk){alert('In der Auswahl ist nichts zum Exportieren.');return}file=new File([JSON.stringify(pk)],name,{type:'application/json'})}
+    else{const fs=[];for(const r of s.rs)fs.push(await reiheFile(r));if(fs.length===1&&!pk)file=fs[0];else{const used=new Set(),te=new TextEncoder(),zf=[];for(const f of fs){let nm=f.name,i=2;while(used.has(nm))nm=f.name.replace(/\.cmreihe$/,' ('+(i++)+').cmreihe');used.add(nm);zf.push({name:nm,data:new Uint8Array(await f.arrayBuffer())})}if(pk)zf.push({name:pkname(),data:te.encode(JSON.stringify(pk))});file=new File([zipStore(zf)],name,{type:'application/zip'})}}}
+   catch(e){alert('Export nicht möglich: '+(e&&e.message||e));return}finally{btns.forEach(x=>x.disabled=false);pri.textContent=t0}
+   try{if(navigator.canShare?.({files:[file]})&&matchMedia('(pointer:coarse)').matches){await navigator.share({files:[file],title:file.name});dlg.close();return}}catch(err){if(err?.name==='AbortError')return}
+   const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);dlg.close()};
   dlg.querySelector('[data-x]').onclick=()=>dlg.close();dlg.querySelector('[data-everything]').onclick=()=>go(true);dlg.querySelector('form').onsubmit=e=>{e.preventDefault();go(false)};
   dlg.showModal()}
  /* Lerngruppe gewechselt → neu zeichnen, mit ihrer aktuellen Lektion */
