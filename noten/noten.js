@@ -4904,7 +4904,7 @@ window.LP=LP;window.lpLabels=labels;
  function bibLessons(){const V=window.classroomVocabPdf,set=new Set(Array.from({length:32},(_,i)=>String(i)));for(const k of homeLessons())set.add(k);for(const x of Object.values(ttStore())){const k=ttLesson(x.t);if(k)set.add(k)}for(const k of Object.keys(tocStore()?.lessons||{}))set.add(k);
   return [...set].sort((a,b)=>V.lessonOrder(a)-V.lessonOrder(b)).map(bibLesson)}
  async function bibUnits(){await regReady;const a=leAll();let have={};try{for(const u of Object.keys(UNITS)){if(UNITS[u].prac)continue;const x=await leIDB('readonly',st=>st.get(UNITS[u].bookId||u));have[u]=!!x}}catch{}
-  return Object.entries(UNITS).filter(([,U])=>!U.prac).map(([u,U])=>({u,title:U.title,sub:U.sub,file:U.file,subject:UNIT_META[u]?.subject||'erdkunde',jg:UNIT_META[u]?.jg||0,lesson:UNIT_META[u]?.lesson||null,short:U.short||'',dat:!!U.dat,book:!!have[u],gl:U.gl||null,vt:U.vt||0,part:U.lp?.part||null,subs:Object.keys(a[leId(u)]?.subs||{}).length}))}
+  return Object.entries(UNITS).filter(([,U])=>!U.prac).map(([u,U])=>({u,title:U.title,sub:U.sub,file:U.file,subject:UNIT_META[u]?.subject||'erdkunde',jg:UNIT_META[u]?.jg||0,lesson:UNIT_META[u]?.lesson||null,short:U.short||'',dat:!!U.dat,book:!!have[u],gl:U.gl||null,vt:U.vt||0,unk:!!U.unk,part:U.lp?.part||null,subs:Object.keys(a[leId(u)]?.subs||{}).length}))}
  const bibList=(id,k)=>{const l=libOf(id),L=l?.lessons?.[k];if(!L)return [];return L.sections.filter(x=>id==='wh'||!/^(Wiederholung|Übungen)$/.test(x.name)).map(s=>({name:s.name,rows:(s.entries||[]).map(e=>[e.lemma||'',e.info||'',e.meaning||''])}))};
  async function bibTtHash(k,i=0){const t=Object.values(ttStore()).filter(x=>ttLesson(x.t)===String(k))[i]?.t;if(!t)return '';const u=await ttUrl(t);return u.slice(u.indexOf('#'))}
  /* 11.45: Abgaben auch aus Üben (Vokabeln pv-, Wiederholung pw-, Grammatik pg-), den Übungen (px) und dem Übersetzungs-Trainer (pt-) */
@@ -4922,7 +4922,7 @@ window.LP=LP;window.lpLabels=labels;
   if(P.voc){const x=cut(libOf('main'));if(x)d.vocab=x}if(P.wh){const x=cut(libOf('wh'));if(x)d.wh=x}if(P.gr){const x=cut(glib());if(x)d.grammar=x}
   if(P.toc){const T=tocStore();if(T?.lessons){const lessons=Object.fromEntries(Object.entries(T.lessons).filter(([k])=>ks.has(k)));if(Object.keys(lessons).length)d.toc={...T,lessons}}}
   if(P.tt){const t=Object.values(ttStore()).map(x=>x.t).filter(t=>ks.has(ttLesson(t)));if(t.length)d.texts=t}
-  if(P.le&&sel.units?.length){const us=[];for(const u of sel.units){try{const x=await leIDB('readonly',st=>st.get(u));if(x)us.push(x)}catch{}}if(us.length)d.units=us}
+  if(P.le&&sel.units?.length){const us=[];for(const u of sel.units){try{let x=await leIDB('readonly',st=>st.get(u));const ov=ASG()[u];if(x&&ov&&x.def){x={...x,def:{...x.def,meta:{...(x.def.meta||{}),subject:ov.subject,jg:ov.jg}}}}if(x)us.push(x)}catch{}}if(us.length)d.units=us}
   const n=(d.vocab?1:0)+(d.wh?1:0)+(d.grammar?1:0)+(d.toc?1:0)+(d.texts?.length||0)+(d.units?.length||0);return n?d:null}
  async function bibImport(files){const out={voc:0,wh:0,gr:0,tt:0,le:0,bad:0,unknown:0},texts=[];
   const one=async(name,text)=>{let d;try{d=JSON.parse(text)}catch{out.bad++;return}
@@ -4956,8 +4956,9 @@ window.LP=LP;window.lpLabels=labels;
  /* ---------- 11.57: Register der Lerneinheiten und Reihen (Daten aus privaten Dateien) ---------- */
  const UCACHE='classroom-einheiten-cache-v1',RKEY=id=>'reihe:'+id;
  const asciiName=t=>String(t||'').replace(/[äÄöÖüÜß]/g,c=>({'ä':'ae','Ä':'Ae','ö':'oe','Ö':'Oe','ü':'ue','Ü':'Ue','ß':'ss'}[c])).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w .-]+/g,'').replace(/\s+/g,'-').replace(/^-+|-+$/g,'');
- function regMeta(id,m){if(!id||!m)return;UNITS[id]={title:m.title||id,sub:m.sub||'',file:'einheit.html?u='+id,notx:true,gl:m.gl||null,book:[],qs:[],cols:m.cols||[],items:m.items||{},short:m.short||'',dat:true,vt:+m.vt||0};UNIT_META[id]={subject:m.subject||'erdkunde',jg:+m.jg||0};BOOKNAMES[id]=asciiName(m.short||m.title||id)}
- function unitMeta(u){const d=u.def,M=d.meta||{},st=d.steps||[];return {title:M.unitTitle||M.title||u.title||u.id,sub:M.unitSub||M.kicker||'',short:M.short||'',subject:M.subject||'erdkunde',jg:+M.jg||0,cols:d.cols||st.map(x=>[x.k,x.t]),items:d.items||{},gl:{n:st.length,min:Math.round(st.reduce((a,x)=>a+(+x.min||0),0))},vt:Array.isArray(d.vt)?d.vt.length:0}}
+ /* 11.68: eigene Zuordnung (Fach, Jahrgang) für Einheiten ohne Angabe – die App fragt beim Laden */const ASGK='classroom-unit-assign-v1',ASG=()=>{try{return JSON.parse(localStorage.getItem(ASGK)||'{}')||{}}catch{return {}}};
+ function regMeta(id,m){if(!id||!m)return;const ov=ASG()[id];UNITS[id]={title:m.title||id,sub:m.sub||'',file:'einheit.html?u='+id,notx:true,gl:m.gl||null,book:[],qs:[],cols:m.cols||[],items:m.items||{},short:m.short||'',dat:true,vt:+m.vt||0,unk:!ov&&(!!m.unk||!+m.jg)};UNIT_META[id]={subject:(ov&&ov.subject)||m.subject||'erdkunde',jg:+((ov&&ov.jg)||m.jg)||0};BOOKNAMES[id]=asciiName(m.short||m.title||id)}
+ function unitMeta(u){const d=u.def,M=d.meta||{},st=d.steps||[];return {title:M.unitTitle||M.title||u.title||u.id,sub:M.unitSub||M.kicker||'',short:M.short||'',subject:M.subject||'erdkunde',jg:+M.jg||0,unk:!M.subject||!+M.jg,cols:d.cols||st.map(x=>[x.k,x.t]),items:d.items||{},gl:{n:st.length,min:Math.round(st.reduce((a,x)=>a+(+x.min||0),0))},vt:Array.isArray(d.vt)?d.vt.length:0}}
  const ucache=()=>{try{return JSON.parse(localStorage.getItem(UCACHE)||'{}')||{}}catch{return {}}};
  const ucacheSave=c=>{try{localStorage.setItem(UCACHE,JSON.stringify(c))}catch{}};
  for(const [id,m] of Object.entries(ucache()))regMeta(id,m);
@@ -5006,7 +5007,7 @@ window.LP=LP;window.lpLabels=labels;
    else if(k==='info'&&typeof v==='string')add('Info 1',{t:'Info 1',text:[v]});
    else if(/^m\d+$/.test(k)&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length&&Object.entries(v).every(([a,b])=>/^[A-Z]$/.test(a)&&typeof b==='string'))add('M'+k.slice(1),{t:'M'+k.slice(1),text:Object.entries(v).map(([a,b])=>'**'+a+'** '+b)})}
   return M}
- window.classroomBibliothek={unitVt,/* 11.53: Alternative Lateinarbeit je Lektion (private Datei) */ala:k=>leIDB('readonly',st=>st.get('ala-'+k)).catch(()=>null),alaNotes:async k=>{const x=await leIDB('readonly',st=>st.get('ala-'+k));if(!x)throw new Error('Die Lateinarbeit ist auf diesem Gerät nicht gespeichert.');return window.classroomAlaToNotes(x)},lessons:bibLessons,bookFile:bibBookFile,/* 11.57: Reihen */ready:()=>regReady,reihen:async()=>{await regReady;return Object.values(REIHEN_)},reiheParse,reiheSave,reiheRemove,reiheExport,practice:bibPractice,qr:(u,o)=>classroomQrSvg(u,o),lesson:bibLesson,units:bibUnits,list:bibList,ttHash:bibTtHash,act:bibAct,exportPkg:bibExport,importFiles:bibImport,
+ window.classroomBibliothek={unitVt,assignUnit:(id,subject,jg)=>{const a=ASG();a[id]={subject,jg:+jg||0};try{localStorage.setItem(ASGK,JSON.stringify(a))}catch{}const U=UNITS[id];if(U)U.unk=false;UNIT_META[id]={...(UNIT_META[id]||{}),subject,jg:+jg||0}},/* 11.53: Alternative Lateinarbeit je Lektion (private Datei) */ala:k=>leIDB('readonly',st=>st.get('ala-'+k)).catch(()=>null),alaNotes:async k=>{const x=await leIDB('readonly',st=>st.get('ala-'+k));if(!x)throw new Error('Die Lateinarbeit ist auf diesem Gerät nicht gespeichert.');return window.classroomAlaToNotes(x)},lessons:bibLessons,bookFile:bibBookFile,/* 11.57: Reihen */ready:()=>regReady,reihen:async()=>{await regReady;return Object.values(REIHEN_)},reiheParse,reiheSave,reiheRemove,reiheExport,practice:bibPractice,qr:(u,o)=>classroomQrSvg(u,o),lesson:bibLesson,units:bibUnits,list:bibList,ttHash:bibTtHash,act:bibAct,exportPkg:bibExport,importFiles:bibImport,
   context:()=>({subject:currentSubject,classId:currentClassId,label:leCls()})};
  window.classroomLerneinheiten={open:openUnits,overview:leOverview,ingest:leIngest};
  window.classroomVocabTest={textTrainer:showTextTrainer,open:openManager,openBook,print:printTest,load:loadFile,fromPdf,normalizeTest,studentUrl};
@@ -5432,6 +5433,18 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
  // Für das Hauptfenster (gleiche Herkunft): Fachnamen und aktuelle Auswahl.
  window.classroomSubjectLabel=id=>{try{return subjects[id]?.label||id}catch{return id}};
  window.classroomCurrentSelection=()=>({subject:currentSubject,classId:currentClassId});
+ /* 11.68: Notenspalten des aktuellen Halbjahres für „Zufallsgruppen · leistungsbezogen“ (Noten 1–6, Notenpunkte umgerechnet) */
+ window.classroomGradeColumns=(subject,classId)=>{try{saveCurrentSubject()}catch{}const key=subject+'::'+classId,item=(classesBySubject[subject]||[]).find(c=>c.id===classId);if(!item)return {half:'',cols:[]};
+  const pts=classGradingSystem(item)==='gradePoints',conv=v=>pts?Math.max(1,Math.min(6,(17-v)/3)):v,ok=v=>typeof v==='number'&&Number.isFinite(v)&&(pts?v>=0&&v<=15:v>=1&&v<=6),hs=[];let cur=null,hdr=[];
+  for(const sheet of collect([key])){if(sheet.classKey!==key)continue;for(const row of sheet.rows){
+   if(row.kind==='title'){const parts=String(row.cells[0]?.v||'').split(' · '),h=parts[2]||'',part=parts[3]||'';let H=hs.find(x=>x.half===h);if(!H){H={half:h,cols:[]};hs.push(H)}cur={H,part:/Halbjahres/.test(part)?'':part};hdr=[]}
+   else if(row.kind==='header'&&cur){hdr=row.cells.slice(1).map(c=>({label:String(c.v??''),summary:!!c.summary}))}
+   else if(row.kind==='data'&&cur){const name=String(row.cells[0]?.v||'').trim();if(!name)continue;row.cells.slice(1).forEach((c,i)=>{const h=hdr[i];if(!h||!ok(c.grade))return;
+     if(/Selbsteinsch|Fehlend|Anzahl/i.test(h.label))return;if(cur.part&&!h.summary&&!/^Quartalsnote/.test(h.label))return;
+     let label=h.label.replace(/\s*·\s*Mittelwert$/,'').replace(/^Quartalsnote\s*·\s*/,'Quartalsnote ');if(!/^Quartalsnote|^Halbjahresnote|^Klassenarbeit|^Klausur/.test(label))label+=' ('+(cur.part||'Halbjahr')+')';
+     let col=cur.H.cols.find(x=>x.label===label);if(!col){col={id:cur.H.half+'|'+label,label,values:{}};cur.H.cols.push(col)}if(!h.summary||col.values[name]==null)col.values[name]=conv(c.grade)})}}}
+  try{for(const e of window.classroomExamValues?.(subject,classId)||[]){const H=hs.find(x=>x.half===e.halfYear);if(!H)continue;const vals={};for(const [n,v] of Object.entries(e.values||{}))if(ok(v))vals[n]=conv(v);if(!Object.keys(vals).length)continue;const d=e.date?new Date(e.date+'T12:00').toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}):'';H.cols.push({id:H.half+'|exam:'+e.id,label:(e.label||'Klassenarbeit')+(e.topic?' · '+e.topic:d?' · '+d:''),values:vals})}}catch{}
+  const live=hs.filter(H=>H.cols.some(c=>Object.keys(c.values).length)),H=live.at(-1);return H?{half:H.half,cols:H.cols.filter(c=>Object.keys(c.values).length)}:{half:'',cols:[]}};
  window.addEventListener('message',event=>{
   const msg=event.data;if(event.source!==parent||!msg?.id)return;
   try{

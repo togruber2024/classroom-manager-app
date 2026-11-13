@@ -3507,7 +3507,7 @@ document.addEventListener('keydown',event=>{
    „Neu mischen“, „Groß zeigen“ (für Beamer/AirPlay), „Drucken“. Der Button steht neben „Zufallsauswahl“ (Anordnung: plan-actions.js). */
 (()=>{
  const key='classroom-random-groups-v1',colors=['#3b82c4','#e08a1e','#3f9b6b','#9b59b6','#d9534f','#2aa1a8','#c2569b','#6d7f2f','#5b6bd6','#a8642a'];
- let opt={mode:'count',count:4,size:4,absent:true,tabu:true,mix:false};try{Object.assign(opt,JSON.parse(localStorage.getItem(key)||'{}'))}catch{}
+ let opt={mode:'count',count:4,size:4,absent:true,tabu:true,mix:false,perf:'off',col:''};try{Object.assign(opt,JSON.parse(localStorage.getItem(key)||'{}'))}catch{}
  const save=()=>{try{localStorage.setItem(key,JSON.stringify(opt))}catch{}};
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
  const display=n=>{const m=/^\s*([^,]+),\s*(.+)$/.exec(n||'');return m?m[2].trim()+' '+m[1].trim():String(n||'').trim()};
@@ -3518,7 +3518,8 @@ document.addEventListener('keydown',event=>{
  dlg.innerHTML='<div class="rg-head"><div><h2></h2><p class="rg-sub"></p></div><button type="button" class="rg-x" data-rg-close aria-label="Schließen">×</button></div>'
   +'<div class="rg-opts"><span>Einteilen nach</span><span class="rg-seg" role="group"><button type="button" data-mode="count">Anzahl Gruppen</button><button type="button" data-mode="size">Gruppengröße</button></span>'
   +'<span class="rg-num"><button type="button" data-step="-1" aria-label="weniger">−</button><output></output><button type="button" data-step="1" aria-label="mehr">+</button></span>'
-  +'<label><input type="checkbox" data-opt="absent"> Abwesende auslassen</label><label><input type="checkbox" data-opt="tabu"> Tabu-Paare trennen</label><label><input type="checkbox" data-opt="mix"> gemischt m/w</label></div>'
+  +'<label><input type="checkbox" data-opt="absent"> Abwesende auslassen</label><label><input type="checkbox" data-opt="tabu"> Tabu-Paare trennen</label><label><input type="checkbox" data-opt="mix"> gemischt m/w</label>'
+  +'<span class="rg-perf"><span>Leistung</span><span class="rg-seg" role="group"><button type="button" data-perf="off">zufällig</button><button type="button" data-perf="mix">leistungsgemischt</button><button type="button" data-perf="same">leistungsgleich</button></span><select data-col aria-label="Notenspalte"></select></span></div>'
   +'<p class="rg-note" role="status"></p><div class="rg-grid"></div>'
   +'<div class="rg-actions"><button type="button" data-rg-print>Drucken</button><button type="button" data-rg-big>Groß zeigen</button><button type="button" data-rg-shuffle>Neu mischen</button><button type="button" class="rg-primary" data-rg-close>Schließen</button></div>';
  document.body.append(dlg);
@@ -3528,16 +3529,34 @@ document.addEventListener('keydown',event=>{
   const list=(typeof schuelerEinzel!=='undefined'?schuelerEinzel:[]).filter(s=>String(s.name||'').trim());
   return list.map(s=>({name:s.name.trim(),gender:String(s.geschlecht||'').toLowerCase(),absent:!!s.abwesend}));
  }
+ /* 11.68: leistungsbezogen – Noten aus dem Noten-Manager (aktuelles Halbjahr, gewählte Spalte) */
+ let GC={half:'',cols:[]};
+ const norm=n=>String(n||'').trim().toLocaleLowerCase('de-DE').replace(/\s+/g,' ');
+ function gradeCols(){GC={half:'',cols:[]};try{const nw=parent.document.getElementById('view-noten')?.contentWindow;if(!nw?.classroomGradeColumns)return;
+  const g=typeof classroomCurrentGroup==='function'&&classroomCurrentGroup(),src=(typeof classroomLinkedModel!=='undefined'&&classroomLinkedModel?.sourceClasses)||{},refs=g?Object.keys(src).filter(k=>src[k]===g.id):[];
+  const sel=nw.classroomCurrentSelection?.()||{},cur=sel.subject+'::'+sel.classId,key=refs.includes(cur)?cur:refs[0]||cur,[su,ci]=key.split('::');if(su&&ci)GC=nw.classroomGradeColumns(su,ci)||GC}catch(e){console.warn(e)}
+  const sel=dlg.querySelector('[data-col]');if(!GC.cols.some(c=>c.id===opt.col)){const q=[...GC.cols].reverse().find(c=>/^Quartalsnote|^Klassenarbeit|^Halbjahresnote/.test(c.label))||GC.cols.at(-1);opt.col=q?q.id:''}
+  sel.innerHTML=GC.cols.length?GC.cols.map(c=>'<option value="'+esc(c.id)+'"'+(c.id===opt.col?' selected':'')+'>'+esc(c.label)+'</option>').join(''):'<option value="">keine Noten gefunden</option>';sel.disabled=!GC.cols.length}
+ function gradeOf(name){const c=GC.cols.find(x=>x.id===opt.col);if(!c)return null;const V=c.vals||(c.vals=Object.fromEntries(Object.entries(c.values).flatMap(([n,v])=>[[norm(n),v],[norm(display(n)),v]])));const v=V[norm(name)]??V[norm(display(name))];return typeof v==='number'?v:null}
+ const fmt=v=>v==null?'':(Math.round(v*10)/10).toLocaleString('de-DE');
  function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
  function build(){
-  const all=people(),present=opt.absent?all.filter(p=>!p.absent):all,n=present.length;
+  const all=people(),present=opt.absent?all.filter(p=>!p.absent):all,n=present.length,perf=opt.perf!=='off'&&GC.cols.length?opt.perf:'';
+  for(const p of all)p.g=perf?gradeOf(p.name):null;
   let count=opt.mode==='count'?opt.count:Math.ceil(n/Math.max(1,opt.size));count=Math.max(1,Math.min(count,Math.max(1,n)));
   const tabu=(typeof tabuPaare!=='undefined'?tabuPaare:[]).map(t=>[String(t.s1||'').trim(),String(t.s2||'').trim()]).filter(t=>t[0]&&t[1]);
   const conflicts=g=>opt.tabu?g.reduce((c,members)=>c+tabu.filter(([a,b])=>members.some(m=>m.name===a)&&members.some(m=>m.name===b)).length,0):0;
   let best=null,bestScore=Infinity;
   for(let attempt=0;attempt<400&&bestScore>0;attempt++){
    let order;
-   if(opt.mix){const m=shuffle(present.filter(p=>p.gender==='m')),w=shuffle(present.filter(p=>p.gender==='w')),o=shuffle(present.filter(p=>p.gender!=='m'&&p.gender!=='w'));order=[];while(m.length||w.length){if(w.length)order.push(w.shift());if(m.length)order.push(m.shift())}order.push(...o)}
+   if(perf){/* graded: sort by grade (small random noise for ties); ungraded students are spread randomly */
+    const gr=shuffle(present.filter(p=>p.g!=null)).map(p=>[p.g+Math.random()*0.3,p]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]),un=shuffle(present.filter(p=>p.g==null));
+    if(perf==='mix')order=gr;else{const g=Array.from({length:count},()=>[]),m=gr.length;let k=0;for(let i=0;i<count;i++){const c=Math.floor(m/count)+(i<m%count?1:0);g[i].push(...gr.slice(k,k+c));k+=c}
+     for(const p of un){const min=Math.min(...g.map(x=>x.length)),c=g.filter(x=>x.length===min);c[Math.floor(Math.random()*c.length)].push(p)}
+     const score=conflicts(g);if(score<bestScore){best=g;bestScore=score}continue}
+    if(un.length){const ins=[...order];for(const p of un)ins.splice(Math.floor(Math.random()*(ins.length+1)),0,p);order=ins}
+   }
+   else if(opt.mix){const m=shuffle(present.filter(p=>p.gender==='m')),w=shuffle(present.filter(p=>p.gender==='w')),o=shuffle(present.filter(p=>p.gender!=='m'&&p.gender!=='w'));order=[];while(m.length||w.length){if(w.length)order.push(w.shift());if(m.length)order.push(m.shift())}order.push(...o)}
    else order=shuffle([...present]);
    const g=Array.from({length:count},()=>[]);order.forEach((p,i)=>{const round=Math.floor(i/count),pos=i%count;g[round%2?count-1-pos:pos].push(p)});
    const score=conflicts(g);if(score<bestScore){best=g;bestScore=score}
@@ -3552,25 +3571,28 @@ document.addEventListener('keydown',event=>{
   out.textContent=String(opt.mode==='count'?opt.count:opt.size);
   for(const b of dlg.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',String(b.dataset.mode===opt.mode));
   for(const c of dlg.querySelectorAll('[data-opt]'))c.checked=!!opt[c.dataset.opt];
-  grid.innerHTML=groups.length?groups.map((g,i)=>`<div class="rg-card"><h4 style="background:${colors[i%colors.length]}">Gruppe ${i+1}</h4><ul>${g.map(p=>`<li>${esc(display(p.name))}</li>`).join('')}</ul></div>`).join(''):'<p class="rg-empty">Keine Schüler:innen in dieser Klasse.</p>';
+  for(const b of dlg.querySelectorAll('[data-perf]'))b.setAttribute('aria-pressed',String(b.dataset.perf===opt.perf));dlg.querySelector('[data-col]').hidden=opt.perf==='off';
+  const pf=opt.perf!=='off'&&GC.cols.length,avg=g=>{const v=g.map(p=>p.g).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
+  grid.innerHTML=groups.length?groups.map((g,i)=>`<div class="rg-card"><h4 style="background:${colors[i%colors.length]}">Gruppe ${i+1}${pf&&avg(g)!=null?`<span class="rg-v rg-avg">Ø ${fmt(avg(g))}</span>`:''}</h4><ul>${g.map(p=>`<li>${esc(display(p.name))}${pf?`<span class="rg-v rg-g">${p.g==null?'–':fmt(p.g)}</span>`:''}</li>`).join('')}</ul></div>`).join(''):'<p class="rg-empty">Keine Schüler:innen in dieser Klasse.</p>';
  }
  function open(){
   let label='';try{const g=typeof classroomCurrentGroup==='function'?classroomCurrentGroup():null;label=g?.name||aktuelleKlasse||''}catch{}
   dlg.querySelector('h2').textContent='Zufallsgruppen'+(label?' · '+label.replace(/^NM:.*/,''):'');
   dlg.classList.remove('rg-big');dlg.querySelector('[data-rg-big]').textContent='Groß zeigen';
-  build();if(!dlg.open)dlg.showModal();
+  gradeCols();build();if(!dlg.open)dlg.showModal();
  }
  button.onclick=open;
  dlg.addEventListener('click',e=>{
   const t=e.target.closest('button');if(!t)return;
-  if(t.dataset.mode){opt.mode=t.dataset.mode;save();build()}
+  if(t.dataset.perf){opt.perf=t.dataset.perf;save();if(opt.perf!=='off'&&!GC.cols.length)note.textContent='';build();if(opt.perf!=='off'&&!GC.cols.length)note.textContent='Für diese Lerngruppe sind im aktuellen Halbjahr noch keine Noten eingetragen – die Gruppen werden zufällig gebildet.'}
+  else if(t.dataset.mode){opt.mode=t.dataset.mode;save();build()}
   else if(t.dataset.step){const k=opt.mode==='count'?'count':'size';opt[k]=Math.max(opt.mode==='count'?1:2,Math.min(15,opt[k]+Number(t.dataset.step)));save();build()}
   else if(t.hasAttribute('data-rg-shuffle'))build();
   else if(t.hasAttribute('data-rg-close'))dlg.close();
   else if(t.hasAttribute('data-rg-big')){const big=dlg.classList.toggle('rg-big');t.textContent=big?'Normale Ansicht':'Groß zeigen'}
-  else if(t.hasAttribute('data-rg-print')){const w=window.open('','_blank');if(!w){alert('Bitte Pop-ups für den Druck erlauben.');return}w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${esc(dlg.querySelector('h2').textContent)}</title><style>body{font:14px/1.4 -apple-system,system-ui,sans-serif;margin:14mm;color:#24334b}h1{font-size:18px;margin:0 0 12px}.rg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.rg-card{border:1px solid #cfd8e6;border-radius:10px;overflow:hidden;break-inside:avoid}.rg-card h4{margin:0;padding:6px 10px;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.rg-card ul{margin:0;padding:6px 10px 8px;list-style:none}</style></head><body><h1>${esc(dlg.querySelector('h2').textContent)} · ${new Date().toLocaleDateString('de-DE')}</h1><div class="rg-grid">${grid.innerHTML}</div></body></html>`);w.document.close();setTimeout(()=>{w.focus();w.print()},250)}
+  else if(t.hasAttribute('data-rg-print')){const w=window.open('','_blank');if(!w){alert('Bitte Pop-ups für den Druck erlauben.');return}w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${esc(dlg.querySelector('h2').textContent)}</title><style>body{font:14px/1.4 -apple-system,system-ui,sans-serif;margin:14mm;color:#24334b}h1{font-size:18px;margin:0 0 12px}.rg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.rg-card{border:1px solid #cfd8e6;border-radius:10px;overflow:hidden;break-inside:avoid}.rg-card h4{margin:0;padding:6px 10px;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.rg-card ul{margin:0;padding:6px 10px 8px;list-style:none}</style></head><body><h1>${esc(dlg.querySelector('h2').textContent)} · ${new Date().toLocaleDateString('de-DE')}</h1><div class="rg-grid">${grid.innerHTML.replace(/<span class="rg-v[^"]*">[^<]*<\/span>/g,'')}</div></body></html>`);w.document.close();setTimeout(()=>{w.focus();w.print()},250)}
  });
- dlg.addEventListener('change',e=>{const c=e.target.closest('[data-opt]');if(c){opt[c.dataset.opt]=c.checked;save();build()}});
+ dlg.addEventListener('change',e=>{if(e.target.matches('[data-col]')){opt.col=e.target.value;save();build();return}const c=e.target.closest('[data-opt]');if(c){opt[c.dataset.opt]=c.checked;save();build()}});
  const style=document.createElement('style');style.textContent=
   '.rg-dialog{width:min(900px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;padding:20px 22px;border:1px solid #dce3ef;border-radius:18px;background:#fff;color:#24334b;box-shadow:0 18px 60px #1c2b4630;font:15px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}'
   +'.rg-dialog::backdrop{background:#1c2b4638}.rg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.rg-head h2{margin:0;font-size:1.2rem}.rg-sub{margin:2px 0 12px;color:#66758a;font-size:.88rem}'
@@ -3581,7 +3603,9 @@ document.addEventListener('keydown',event=>{
   +'.rg-note{margin:8px 0 0;color:#a56522;font-size:.86rem}.rg-note:empty{display:none}'
   +'.rg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:14px}.rg-card{border:1px solid #dce3ef;border-radius:12px;overflow:hidden}.rg-card h4{margin:0;padding:7px 12px;color:#fff;font-size:.92rem}.rg-card ul{margin:0;padding:8px 12px 10px;list-style:none}.rg-card li{padding:2px 0}.rg-empty{color:#66758a}'
   +'.rg-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:16px}.rg-actions button{min-height:38px;padding:7px 16px;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:var(--primary,#2f5f9b);font:inherit;font-weight:600;cursor:pointer}.rg-actions .rg-primary{background:var(--primary,#2f5f9b);border-color:var(--primary,#2f5f9b);color:#fff}'
-  +'.rg-dialog.rg-big{width:calc(100vw - 16px);max-width:none;height:calc(100dvh - 16px);max-height:none}.rg-big .rg-opts,.rg-big .rg-note,.rg-big .rg-sub,.rg-big [data-rg-print],.rg-big [data-rg-shuffle]{display:none}.rg-big .rg-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}.rg-big .rg-card h4{font-size:1.4rem;padding:10px 16px}.rg-big .rg-card li{font-size:1.45rem;padding:4px 0}.rg-big .rg-card ul{padding:10px 16px 14px}.rg-big h2{font-size:1.6rem}';
+  +'.rg-dialog.rg-big{width:calc(100vw - 16px);max-width:none;height:calc(100dvh - 16px);max-height:none}.rg-big .rg-opts,.rg-big .rg-note,.rg-big .rg-sub,.rg-big [data-rg-print],.rg-big [data-rg-shuffle]{display:none}.rg-big .rg-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}.rg-big .rg-card h4{font-size:1.4rem;padding:10px 16px}.rg-big .rg-card li{font-size:1.45rem;padding:4px 0}.rg-big .rg-card ul{padding:10px 16px 14px}.rg-big h2{font-size:1.6rem}'
+  +'.rg-perf{display:inline-flex;flex-wrap:wrap;align-items:center;gap:8px;flex-basis:100%}.rg-perf select{height:32px;border:1px solid #cbd6e5;border-radius:8px;background:#fff;font:inherit;padding:0 6px;max-width:260px}.rg-perf select[hidden]{display:none}'
+  +'.rg-card h4{display:flex;justify-content:space-between;gap:8px}.rg-avg{font-weight:600;background:#ffffff33;border-radius:6px;padding:0 6px}.rg-card li{display:flex;justify-content:space-between;gap:8px}.rg-g{font-size:.8rem;color:#475569;background:#eef2f7;border-radius:6px;padding:0 6px;font-variant-numeric:tabular-nums}.rg-big .rg-v{display:none}';
  document.head.append(style);
 })();
 ;
@@ -4373,7 +4397,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
 #einExp,#einQr{border:0;border-radius:14px;padding:0;max-width:640px;width:calc(100% - 32px);box-shadow:0 20px 60px #0004}
 #einExp form,#einQr form{padding:20px 22px}#einExp h2,#einQr h2{margin:0 0 2px}#einExp .muted,#einQr .muted{color:#66758a;margin:0 0 10px}
 #einExp label{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #eef2f7;cursor:pointer}
-#einExp label.l2{padding-left:30px}#einExp .rg{font-size:11px;font-weight:800;letter-spacing:.06em;color:#8a97aa;text-transform:uppercase;padding:10px 4px 2px 30px}#einExp .chg{font-style:normal;font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;background:#fff4e0;color:#c2410c;margin-left:6px}#einExp .rnote{margin:8px 0 12px}#einExp{max-height:calc(100dvh - 32px);overflow:auto}#einExp label small{margin-left:auto;color:#8a97aa}
+#einExp label.l2{padding-left:30px}#einAsk{border:0;border-radius:14px;padding:0;max-width:640px;width:calc(100% - 32px);box-shadow:0 20px 60px #0004}#einAsk form{padding:20px 22px}#einAsk h2{margin:0 0 4px}#einAsk .muted{color:#66758a;margin:0 0 10px}#einAsk .ask-r{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #eef2f7;flex-wrap:wrap}#einAsk .ask-r b{flex:1;min-width:180px}#einAsk select{height:40px;border:1px solid #cfd8e6;border-radius:10px;padding:0 8px;font:inherit;background:#f7f9fc}#einAsk .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}#einAsk .acts button{height:40px;border-radius:10px;border:1px solid #c9d5e6;background:#fff;color:#2f5f9b;font:inherit;font-weight:650;padding:0 14px;cursor:pointer}#einAsk .acts .pri{background:#2f5f9b;border-color:#2f5f9b;color:#fff}#einExp .rg.rg-un{color:#c2410c}#einExp .ask-b{margin-left:auto;height:36px;border-radius:10px;border:1px solid #c9d5e6;background:#fff;color:#2f5f9b;font:inherit;font-weight:600;padding:0 12px;cursor:pointer}#einExp .rg{font-size:11px;font-weight:800;letter-spacing:.06em;color:#8a97aa;text-transform:uppercase;padding:10px 4px 2px 30px}#einExp .chg{font-style:normal;font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;background:#fff4e0;color:#c2410c;margin-left:6px}#einExp .rnote{margin:8px 0 12px}#einExp{max-height:calc(100dvh - 32px);overflow:auto}#einExp label small{margin-left:auto;color:#8a97aa}
 #einExp input[type=checkbox]{width:20px;height:20px;accent-color:#2f5f9b;margin:0}
 #einExp .parts{display:flex;flex-wrap:wrap;gap:4px 14px;margin:12px 0}#einExp .parts label{border:0;padding:4px 0}
 #einExp .note,#einQr .note{background:#eef3fa;border-radius:10px;padding:10px 12px;color:#3c4d66;font-size:.9rem}
@@ -4730,6 +4754,17 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   const RS=reihenOf(cx.subject,cx.jg);if(!r&&RS.length===1)r=RS[0];if(!r){alert(RS.length?'Tippe zuerst links auf die Reihe, die du entfernen möchtest.':'Für diese Lerngruppe ist keine Reihe geladen.');return}
   if(!confirm('Reihe „'+(r.lab?r.lab+' ':'')+r.title+'“ von diesem Gerät entfernen?\n\nDie Ergebnisse und Noten der Schüler bleiben erhalten. Lädst du die Reihe wieder, sind sie sofort wieder zugeordnet.'+(r.subject==='latein'?'\n\nVokabeln, Grammatik und Übersetzungstexte bleiben in der App; entfernt werden die Gliederung, die Lernpakete und die Lateinarbeit dieser Sequenz.':'')))return;
   try{await b.reiheRemove(r.id)}catch(e){alert('Entfernen nicht möglich: '+e.message);return}sel=null;await render()}
+
+ /* 11.68: Einheiten ohne Fach/Jahrgang – die App fragt nach (beim Laden und über „Zuordnen …“ im Export-Fenster) */
+ function askAssign(us){return new Promise(res=>{const b=B();if(!b?.assignUnit||!us.length)return res(false);let dlg=document.getElementById('einAsk');if(!dlg){dlg=document.createElement('dialog');dlg.id='einAsk';document.body.append(dlg)}
+  const subj=cx.subject&&cx.subject!=='latein'?cx.subject:'erdkunde',jg=+cx.jg||0,opt=(v,list)=>list.map(([k,t])=>'<option value="'+k+'"'+(String(k)===String(v)?' selected':'')+'>'+t+'</option>').join('');
+  dlg.innerHTML='<form method="dialog"><h2>Wohin gehören diese Inhalte?</h2><p class="muted">Bei '+(us.length===1?'einer Lerneinheit':us.length+' Lerneinheiten')+' steht nicht, zu welchem Fach und Jahrgang sie gehören. Bitte gib es an – du kannst es später im Export-Fenster ändern.</p>'
+   +us.map((u,i)=>'<div class="ask-r"><b>'+esc(u.title)+'</b><select data-s="'+i+'">'+opt(u.subject&&u.subject!=='latein'?u.subject:subj,Object.entries(SUBJ).filter(([k])=>k!=='latein'))+'</select><select data-j="'+i+'">'+opt(+u.jg||jg,[[0,'Jahrgang …'],...[5,6,7,8,9,10,11,12,13].map(n=>[n,'Jahrgang '+n])])+'</select></div>').join('')
+   +'<p class="muted" style="font-size:.85rem">Vorbelegt mit Fach und Jahrgang der gerade geöffneten Klasse.</p><div class="acts"><button type="button" data-later>Später</button><button type="submit" class="pri">Übernehmen</button></div></form>';
+  dlg.querySelector('[data-later]').onclick=()=>{dlg.close();res(false)};
+  dlg.querySelector('form').onsubmit=e=>{e.preventDefault();const miss=us.some((u,i)=>!+dlg.querySelector('[data-j="'+i+'"]').value);if(miss){alert('Bitte bei jeder Einheit einen Jahrgang wählen – oder „Später“.');return}
+   us.forEach((u,i)=>b.assignUnit(u.u,dlg.querySelector('[data-s="'+i+'"]').value,+dlg.querySelector('[data-j="'+i+'"]').value));dlg.close();res(true)};
+  dlg.showModal()})}
  /* Paket laden */
  function pickFiles(){return new Promise(res=>{const i=document.createElement('input');i.type='file';i.multiple=true;i.hidden=true;document.body.append(i);i.onchange=()=>{res([...i.files]);i.remove()};i.addEventListener('cancel',()=>{res([]);i.remove()});i.click()})}
  async function loadPkg(){const b=B();if(!b)return;const all=await pickFiles();if(!all.length)return;let r;
@@ -4738,7 +4773,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   if(rs.length){await reiheLoad(rs);if(!fs.length)return}
   try{r=await b.importFiles(fs)}catch(e){alert('Laden nicht möglich: '+(e.name==='QuotaExceededError'?'Speicher voll.':e.message));return}
   const parts=[r.reihe&&r.reihe+' Unterrichtsreihe'+(r.reihe>1?'n':''),r.toc&&'Inhaltsverzeichnis: '+r.toc+' Lektionen',r.voc&&'Vokabular +'+r.voc+' Wörter',r.wh&&'Wiederholung +'+r.wh+' Wörter',r.gr&&'Grammatik +'+r.gr+' Themen',r.tt&&r.tt+' Übersetzungs-Trainer-Text'+(r.tt>1?'e':''),r.le&&r.le+' Lerneinheit'+(r.le>1?'en':'')+' (Schulbuchmaterial)'].filter(Boolean);
-  alert(parts.length?'Geladen und zusammengeführt:\n'+parts.join('\n')+(r.bad||r.unknown?'\n\n'+(r.bad+r.unknown)+' Datei(en) nicht erkannt.':''):'Nichts Neues gefunden'+(r.bad||r.unknown?' – '+(r.bad+r.unknown)+' Datei(en) nicht erkannt.':' – alles war schon vorhanden.'));render()}
+  await (window.classroomAlert||alert)(parts.length?'Geladen und zusammengeführt:\n'+parts.join('\n')+(r.bad||r.unknown?'\n\n'+(r.bad+r.unknown)+' Datei(en) nicht erkannt.':''):'Nichts Neues gefunden'+(r.bad||r.unknown?' – '+(r.bad+r.unknown)+' Datei(en) nicht erkannt.':' – alles war schon vorhanden.'));render();try{const uk=(await B().units()).filter(u=>u.unk&&u.subject!=='latein');if(uk.length&&await askAssign(uk)){data=null;render()}}catch{}}
  /* Exportieren */
  async function exportPkg(){const b=B();if(!b)return;if(!data)data=await load();cx=ctx();
   let dlg=document.getElementById('einExp');if(!dlg){dlg=document.createElement('dialog');dlg.id='einExp';document.body.append(dlg)}
@@ -4751,8 +4786,8 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    +(RH.length?'<label><input type="checkbox" data-all="rh"><b>Unterrichtsreihen</b><small>alle '+RH.length+' Reihe'+(RH.length>1?'n':'')+'</small></label>'+rows+'<div class="note rnote">Jede Reihe kommt <b>mit deinen Änderungen</b> (Reihenfolge, Namen, ausgeblendete und eigene Einträge) als eigene .cmreihe-Datei in eine Zip. Am anderen Gerät: „Datei laden …“ → Zip wählen → alle Reihen auf einmal.</div>':'')
    +'<label><input type="checkbox" data-all="lat"><b>Latein · Pontes</b><small>'+groups.reduce((a,g)=>a+g.n,0)+' Lektionen mit Inhalt</small></label>'
    +groups.map(g=>'<label class="l2"><input type="checkbox" data-g="'+g.jg+'"'+(g.n?'':' disabled')+'>'+esc(g.lab)+'<small>'+(g.n||'leer')+'</small></label>').join('')
-   +'<label><input type="checkbox" data-all="ek"><b>Erdkunde</b><small>'+data.units.length+' Lerneinheiten</small></label>'
-   +data.units.map(u=>'<label class="l2"><input type="checkbox" data-u="'+u.u+'"'+(u.book?'':' disabled')+'>'+(+u.jg?'Jahrgang '+u.jg+' · ':'')+esc(u.title)+'<small>'+(u.book?'mit Schulbuchbildern':'kein Material geladen')+'</small></label>').join('')
+   +(()=>{/* 11.68: nur Lerneinheiten mit Fach (Latein-Lernpakete gehören zu den Lektionen oben); nach Fach, Jahrgang und Titel sortiert, ohne Zuordnung eigens */const US=data.units.filter(u=>u.subject!=='latein').sort((a,b)=>(!!a.unk||!+a.jg)-(!!b.unk||!+b.jg)||String(a.subject).localeCompare(String(b.subject))||(+a.jg||99)-(+b.jg||99)||String(a.title).localeCompare(String(b.title),'de'));let lg='';return '<label><input type="checkbox" data-all="ek"><b>Lerneinheiten</b><small>'+US.length+' Lerneinheiten</small></label>'+US.map(u=>{const g=!u.unk&&+u.jg?(SUBJ[u.subject]||u.subject||'')+' · Jahrgang '+u.jg:'ohne Zuordnung',h=g!==lg?'<div class="rg'+(g==='ohne Zuordnung'?' rg-un':'')+'">'+esc(g)+'</div>':'';lg=g;return h+'<label class="l2"><input type="checkbox" data-u="'+u.u+'"'+(u.book?'':' disabled')+'>'+esc(u.title)+(g==='ohne Zuordnung'?'<button type="button" class="ask-b" data-ask="'+u.u+'">Zuordnen …</button>':'<small>'+(u.book?'mit Schulbuchbildern':'kein Material geladen')+'</small>')+'</label>'}).join('')})()
+   +[].map(u=>'<label class="l2"><input type="checkbox" data-u="'+u.u+'"'+(u.book?'':' disabled')+'>'+(+u.jg?'Jahrgang '+u.jg+' · ':'')+esc(u.title)+'<small>'+(u.book?'mit Schulbuchbildern':'kein Material geladen')+'</small></label>').join('')
    +'<div class="parts">Bausteine: '+[['toc','Inhaltsverzeichnis'],['voc','Vokabular'],['wh','Wiederholung'],['gr','Grammatik'],['tt','Übersetzungs-Trainer'],['le','Lerneinheiten']].map(([k,t])=>'<label><input type="checkbox" data-p="'+k+'" checked>'+t+'</label>').join('')+'</div>'
    +'<div class="note">Dateiname: <b data-fn></b> · Enthält Schulbuchmaterial – nur für den eigenen Unterricht, nicht veröffentlichen. Keine Schülerdaten, keine Noten.</div>'
    +'<div class="acts"><button type="button" data-x>Abbrechen</button><button type="button" data-everything>Alles exportieren</button><button type="submit" class="pri">Auswahl exportieren</button></div></form>';
@@ -4772,7 +4807,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    catch(e){alert('Export nicht möglich: '+(e&&e.message||e));return}finally{btns.forEach(x=>x.disabled=false);pri.textContent=t0}
    try{if(navigator.canShare?.({files:[file]})&&matchMedia('(pointer:coarse)').matches){await navigator.share({files:[file],title:file.name});dlg.close();return}}catch(err){if(err?.name==='AbortError')return}
    const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);dlg.close()};
-  dlg.querySelector('[data-x]').onclick=()=>dlg.close();dlg.querySelector('[data-everything]').onclick=()=>go(true);dlg.querySelector('form').onsubmit=e=>{e.preventDefault();go(false)};
+  dlg.querySelectorAll('[data-ask]').forEach(x=>x.onclick=async e=>{e.preventDefault();e.stopPropagation();const u=data.units.find(y=>y.u===x.dataset.ask);if(u&&await askAssign([u])){dlg.close();data=await load();exportPkg()}});dlg.querySelector('[data-x]').onclick=()=>dlg.close();dlg.querySelector('[data-everything]').onclick=()=>go(true);dlg.querySelector('form').onsubmit=e=>{e.preventDefault();go(false)};
   dlg.showModal()}
  /* Lerngruppe gewechselt → neu zeichnen, mit ihrer aktuellen Lektion */
  const title=document.getElementById('titelKlasse');if(title)new MutationObserver(()=>{if(on){sel=null;q='';render()}}).observe(title,{childList:true,characterData:true,subtree:true});
