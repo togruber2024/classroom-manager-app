@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 13.11.2026 · Version 11.79
+Stand: 13.11.2026 · Version 11.80
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1458,3 +1458,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.77: Übersetzungs-Trainer: Schritt „Vokabular bekannt?“ (Wiederholungsvokabeln bis alle sitzen, falsche je 10 s mit Lösung), neue Reihenfolge, vorheriger Satz per Wischen nach unten.
 11.78: Übersetzungs-Trainer: Zwischenstand sichern/laden; Bewertung ++ bis ––– (6 Stufen); Zufallsgruppen „Groß zeigen“ Variante A; iPhone-Stundenplan ab 1. Stunde mit freien Feldern; Stift springt zu den Lernpaketen.
 11.79: Test erstellen über das + in der Testübersicht: Reiter „Digital“ (Navigium-Import, Pontes, Lerneinheiten) sichtbar.
+11.80: Lerneinheiten mit freier Antwort (schreiben, vergleichen, selbst einschätzen; Antworten per QR, auch mehrere Codes); „Teste dich“-Einheiten der Pontes-Sequenzen (private Reihen-Dateien); Knöpfe auf Karten ohne Orange; Bearbeiten-Leiste mit „Fertig“; Smartboard statt Beamer.
