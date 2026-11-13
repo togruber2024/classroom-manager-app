@@ -4545,8 +4545,8 @@ window.LP=LP;window.lpLabels=labels;
    if(cur==='gr')openGrammar('Gespeichert: '+name);else openBook('Gespeichert: '+name)};
   if(!dlg.open)dlg.showModal()}
  /* Zusammenführen: fehlende Lektionen, Abschnitte und Wörter kommen dazu; eigene Einträge bleiben unverändert */
- function mergeLib(own,inc){if(!inc?.lessons)return {lib:own,add:0};if(!own?.lessons)return {lib:{...inc,updated:Date.now()},add:words(inc)};const out=JSON.parse(JSON.stringify(own));let add=0;
-  for(const [k,L] of Object.entries(inc.lessons)){const O=out.lessons[k];if(!O){out.lessons[k]=L;add+=(L.sections||[]).reduce((a,x)=>a+(x.entries||[]).length,0);continue}
+ function mergeLib(own,inc){if(!inc?.lessons)return {lib:own,add:0};if(!own?.lessons){const c=JSON.parse(JSON.stringify(inc));for(const L of Object.values(c.lessons))delete L.replace;return {lib:{...c,updated:Date.now()},add:words(c)}}const out=JSON.parse(JSON.stringify(own));let add=0;
+  for(const [k,L] of Object.entries(inc.lessons)){const O=out.lessons[k];/* 11.83: eine Datei darf die Liste einer Lektion ganz ersetzen (L.replace) – z. B. eine überarbeitete Wiederholungsliste */if(L.replace){const {replace,...L2}=L;out.lessons[k]=L2;add+=(L2.sections||[]).reduce((a,x)=>a+(x.entries||[]).length,0);continue}if(!O){out.lessons[k]=L;add+=(L.sections||[]).reduce((a,x)=>a+(x.entries||[]).length,0);continue}
    for(const sec of L.sections||[]){let os=O.sections.find(x=>x.name===sec.name);if(!os){O.sections.push(sec);add+=(sec.entries||[]).length;continue}const have=new Set(os.entries.map(e=>(e.lemma||'')+'|'+(e.info||'')));for(const e of sec.entries||[]){const key=(e.lemma||'')+'|'+(e.info||'');if(!have.has(key)){os.entries.push(e);have.add(key);add++}}}}
   out.updated=Date.now();return {lib:out,add}}
  function mergeGram(own,inc){if(!inc?.lessons)return {g:own,add:0};if(!own?.lessons)return {g:inc,add:topics(inc)};const out=JSON.parse(JSON.stringify(own));let add=0;
