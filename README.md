@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 13.11.2026 · Version 11.86
+Stand: 13.11.2026 · Version 11.87
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1465,3 +1465,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.84: Seitenleiste nur „Inhalte organisieren …“ + Lade-Symbol; im Fenster „Datei laden …“ und ⋯-Menü je Reihe (umbenennen, exportieren, Jahrgang, entfernen); Linien-Symbole statt Schriftzeichen.
 11.85: Urteilswerkstatt – neue Lerneinheit-Bausteine choose (Fallwahl), gut (Bauchurteil/Vorher-nachher), scale (Werte-Waage), plan (Urteils-Bauplan mit Live-Check); freie Texte gehen mit der Abgabe
 11.86: Lerneinheiten – Antworten bei Antipp-Fragen (auch im Abschluss-Check) je Schüler gemischt; o.keepOrder schaltet das ab
+11.87: Blocksatz mit Silbentrennung für Fließtexte in Lerneinheiten (Info, Material, Lösungen) und Hilfe; unter 400 px linksbündig
