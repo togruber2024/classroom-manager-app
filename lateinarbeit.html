@@ -28,6 +28,17 @@ table.lt.de{font-size:.95rem}
 .foot{margin-top:18px;font-size:.78rem;color:var(--mut)}
 .empty{max-width:640px;margin:60px auto;background:#fff;border-radius:14px;padding:28px;text-align:center}
 .empty button{margin-top:12px;height:44px;padding:0 18px;border-radius:10px;border:1px solid #a8bdd8;background:#fff;color:var(--blue);font:inherit;font-weight:600}
+.v2 .vh{display:grid;grid-template-columns:1fr auto;gap:4px 24px;border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:14px;font-size:.95rem}.v2 .vh b{font-size:1.25rem}.v2 .vh .r{text-align:right}.v2 .vh .ln{display:inline-block;min-width:150px;border-bottom:1px solid var(--line)}
+.v2 .bul{font-weight:700;margin:20px 0 6px}.v2 .bul::before{content:'● '}
+.v2 .tt{font-size:1.15rem;font-weight:700;text-align:center;margin:4px 0 2px}.v2 .intro{text-align:center}
+.v2 table.par{width:100%;border-collapse:collapse;font-size:.98rem;margin-top:6px}.v2 table.par th{text-align:left;font-weight:600;color:var(--mut);font-size:.85rem;padding:0 0 4px}.v2 table.par td{vertical-align:top;padding:1px 10px 1px 0}.v2 table.par td.n{width:28px;color:var(--mut);font-size:.8rem;padding-top:4px}.v2 table.par td.de{font-size:.92rem;color:#2b3a50;width:46%}
+.v2 .vh2{font-size:.85rem;margin:8px 0 0}.v2 .vh2 b{font-weight:650}
+.v2 .task{grid-template-columns:30px 1fr 150px}.v2 .task .pt{font-weight:500;font-size:.85rem;white-space:normal}
+.v2 ol.ab{list-style:none;margin:4px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:2px 18px}.v2 ol.ab.one{grid-template-columns:1fr}.v2 ol.ab li span{font-weight:700;color:var(--blue);margin-right:6px}.v2 ol.ab li small{display:inline;color:var(--mut);margin-left:6px}
+.v2 .nt{font-size:.82rem;color:var(--mut);font-style:italic;margin-top:4px}
+.v2 table.gt{grid-column:2/4;width:100%;border-collapse:collapse;font-size:.9rem;margin-top:4px}.v2 table.gt td,.v2 table.gt th{border:1px solid var(--line);padding:6px 8px;height:30px}.v2 table.gt th{background:#f4f6fa;font-weight:600}.v2 table.gt td.f{color:var(--ok)}
+.v2 .ras{grid-column:2/4;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.82rem;color:var(--mut);border-left:3px solid var(--line);padding-left:8px}
+.v2 table.np{border-collapse:collapse;font-size:.88rem;margin-top:6px}.v2 table.np td{border:1px solid var(--line);padding:2px 12px;text-align:center}.v2 table.np td.w{font-weight:650;text-align:left}
 body.sol-on .lines{display:none}
 @media (max-width:700px){.sheet{padding:20px 16px}.notes{columns:1}}
 @media print{@page{size:A4;margin:14mm 16mm}html,body{background:#fff}.bar{display:none}.sheet{box-shadow:none;margin:0;max-width:none;padding:0}.task{break-inside:avoid}h2,h3{break-after:avoid}}
@@ -42,7 +53,25 @@ const ID=(new URLSearchParams(location.search).get('id')||'').replace(/[^a-z0-9-
 let D=null,SOL=false;
 const IDB=(mode,fn)=>new Promise((res,rej)=>{try{const r=indexedDB.open('cm-lerneinheiten',1);r.onupgradeneeded=()=>r.result.createObjectStore('u');r.onerror=()=>rej(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('u',mode),q=fn(tx.objectStore('u'));tx.oncomplete=()=>{res(q&&q.result);db.close()};tx.onerror=()=>rej(tx.error)}}catch(e){rej(e)}});
 const ok=u=>!!(u&&u.type==='classroom-lerneinheit'&&u.kind==='lateinarbeit'&&(!ID||u.id===ID));
-function render(){if(!D){app.innerHTML='<div class="empty"><h2>Alternative Lateinarbeit</h2><p>Auf diesem Gerät ist noch keine Arbeit gespeichert. Lade die private Datei (.cmeinheit) – sie bleibt nur auf diesem Gerät.</p><button type="button" id="ld">Datei laden …</button></div>';$('#ld').onclick=pick;return}
+/* 11.66: Aufbau wie die Vorlage „Decimus erzählt Midas“ (layout „vorlage“): Kopf, lateinischer Text mit Übersetzung nebeneinander,
+   Aufgaben zu Wortschatz · Übersetzung und Grammatik · Inhalt mit Punktangaben, Tabelle, Bewertungsraster, Notenschlüssel 15–0 */
+function renderV2(){const X=D.text||{},tasks=D.tasks||[],F=D.fields||{},U=D.unit||'Punkte',tot=D.total||tasks.reduce((a,t)=>a+t.pts,0),L='abcdefgh';let n=0;
+ const md=t=>esc(t);
+ const head=()=>'<div class="vh"><div><b>Lateinarbeit</b>'+(SOL?' · Erwartungshorizont':'')+'<br>Nr. <span class="ln" style="min-width:60px"></span></div><div class="r">Klasse: <span class="ln" style="min-width:90px"></span><br>Datum: <span class="ln" style="min-width:110px"></span></div><div>Name: <span class="ln" style="min-width:260px"></span></div><div class="r"><b style="font-size:.95rem">'+esc(D.tag||D.sub||'')+'</b></div></div>';
+ const la=X.la||[],de=X.de||[];
+ app.innerHTML='<div class="sheet v2">'+head()
+  +'<div class="bul">Übersetzungstext</div><div class="tt">'+esc(X.t||'')+'</div>'+(X.intro?'<p class="intro">'+esc(X.intro)+'</p>':'')
+  +'<table class="par"><tr><th></th><th>lateinischer Text</th><th>deutsche Übersetzung</th></tr>'+la.map((l,i)=>'<tr><td class="n">'+(i+1)+'</td><td>'+esc(l)+'</td><td class="de">'+esc(de[i]||'')+'</td></tr>').join('')+'</table>'
+  +(X.notes?.length?'<div class="vh2"><b>Vokabelhilfen:</b> '+X.notes.map(([a,b])=>esc(a)+' – '+esc(b)).join(' · ')+'</div>':'')
+  +Object.keys(F).map(f=>{const ts=tasks.filter(t=>t.f===f);if(!ts.length)return '';return '<div class="bul">'+esc(F[f])+'</div>'+ts.map(t=>{n++;const sub=(t.sub||[]).map((x,i)=>'<li><span>'+L[i]+')</span>'+md(x)+(t.subpp&&t.subpp[i]?'<small>'+esc(t.subpp[i])+'</small>':'')+'</li>').join('');
+    const tb=t.table?'<table class="gt"><tr>'+t.table.head.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>'+(t.table.pts?'<tr>'+t.table.pts.map(h=>'<td style="font-size:.78rem;color:var(--mut)">'+esc(h)+'</td>').join('')+'</tr>':'')+t.table.rows.map(r=>'<tr>'+r.map((c,j)=>j?'<td class="f">'+(SOL?esc(c):'')+'</td>':'<td>'+esc(c)+'</td>').join('')+'</tr>').join('')+'</table>':'';
+    return '<div class="task"><div class="nr">'+n+')</div><div class="tx">'+md(t.t)+(sub?'<ol class="ab'+((t.sub||[]).some(x=>x.length>34)?' one':'')+'">'+sub+'</ol>':'')+(t.after?'<div>'+md(t.after)+'</div>':'')+(t.note?'<div class="nt">('+esc(t.note)+')</div>':'')+'</div><div class="pt">'+esc(t.pp||(t.pts+' '+(t.pts===1?'Punkt':U)))+'</div>'
+     +tb+(t.raster?'<div class="ras"><b>'+t.pts+' '+U+':</b>'+t.raster.map(([p,l])=>'<span>'+p+' '+esc(l)+'</span>').join('')+'</div>':'')
+     +(SOL?'<div class="sol"><ul>'+(t.s||[]).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':(t.table?'':'<div class="lines"></div>'))+'</div>'}).join('')}).join('')
+  +'<div class="sum"><b>Notenschlüssel</b> ('+tot+' '+U+')'+(D.npScale?'<table class="np">'+D.npScale.map(([np,r,w])=>'<tr><td>'+esc(r)+'</td><td><b>'+np+'</b></td><td class="w">'+esc(w)+'</td></tr>').join('')+'</table>':'')+'</div>'
+  +'<div class="foot">'+esc(D.src||'')+'</div></div>';
+ document.body.classList.toggle('sol-on',SOL)}
+function render(){if(D&&D.layout==='vorlage')return renderV2();if(!D){app.innerHTML='<div class="empty"><h2>Alternative Lateinarbeit</h2><p>Auf diesem Gerät ist noch keine Arbeit gespeichert. Lade die private Datei (.cmeinheit) – sie bleibt nur auf diesem Gerät.</p><button type="button" id="ld">Datei laden …</button></div>';$('#ld').onclick=pick;return}
  const X=D.text||{},tasks=D.tasks||[],F=D.fields||{},sumF=f=>tasks.filter(t=>t.f===f).reduce((a,t)=>a+t.pts,0),tot=D.total||tasks.reduce((a,t)=>a+t.pts,0);let n=0;
  const tbl=(arr,cls)=>'<table class="lt '+(cls||'')+'">'+arr.map((l,i)=>'<tr><td class="n">'+(i+1)+'</td><td>'+esc(l)+'</td></tr>').join('')+'</table>';
  app.innerHTML='<div class="sheet"><div class="hd"><div><h1>'+esc(D.title)+(SOL?' · Erwartungshorizont':'')+'</h1><div class="sub">'+esc(D.sub||'')+'</div></div><div class="sub" style="text-align:right">Gesamt: '+tot+' BE</div>'
