@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#f6f8fc">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lernordner">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="lernordner.webmanifest">
+<link rel="apple-touch-icon" href="lernordner-180.png">
+<link rel="icon" href="lernordner-192.png">
+<title>Lernordner</title>
+<!-- 11.91: Lernordner – Schüler-Startseite als Web-App (Home-Bildschirm). Alles bleibt auf dem Gerät.
+     Aufgaben kommen in die Liste, sobald eine Schülerseite (Lerneinheit, Übersetzungs-Trainer, Übungen …) einmal geöffnet wurde.
+     „QR scannen“ öffnet die Codes der Lehrkraft direkt hier, damit alles im selben Speicher bleibt. -->
+<style>
+:root{--ink:#243247;--mut:#66758a;--line:#dce3ef;--bg:#f6f8fc;--blue:#2f5f9b;--or:#e8790c;--ok:#1f8a4c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,Inter,"Segoe UI",sans-serif;-webkit-text-size-adjust:100%}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:max(14px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) 14px max(18px,env(safe-area-inset-left));background:#fff;border-bottom:1px solid var(--line)}
+.ic{width:42px;height:42px;border-radius:11px;flex:none}
+.top b{display:block;font-size:1.15rem}.top small{color:var(--mut);font-size:.85rem}
+.scan{margin-left:auto;display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 18px;border:0;border-radius:12px;background:var(--or);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.wrap{max-width:860px;margin:0 auto;padding:16px max(18px,env(safe-area-inset-left)) 90px}
+h3{margin:18px 0 8px;font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.it{display:flex;align-items:center;gap:12px;width:100%;margin-bottom:10px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;color:inherit;text-decoration:none;font:inherit;text-align:left}
+.k{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-weight:800;flex:none}
+.t{flex:1;min-width:0}.t b{display:block;font-size:1rem;overflow:hidden;text-overflow:ellipsis}.t small{color:var(--mut);font-size:.82rem}
+.bar{display:block;height:6px;border-radius:3px;background:#e6ebf2;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--blue)}
+.go{color:var(--blue);font-weight:600;white-space:nowrap;font-size:.92rem}
+.del{flex:none;width:42px;height:40px;border:1px solid #f0c4b4;border-radius:10px;background:#fff;color:#c2410c;display:grid;place-items:center}
+.empty{margin:30px 0;padding:22px;border:1px dashed #b9c6da;border-radius:16px;background:#fff;text-align:center;color:var(--mut)}
+.hint{margin:14px 0;padding:12px 14px;border-radius:12px;background:#fff4e8;border:1px solid #f0c27a;color:#7a4300;font-size:.92rem}
+.foot{display:flex;gap:10px;align-items:center;margin-top:18px;color:var(--mut);font-size:.82rem}
+.foot button{margin-left:auto;min-height:38px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--blue);font:inherit}
+.ov{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;padding:20px}
+.ov video{width:min(92vw,560px);height:min(92vw,560px);object-fit:cover;border-radius:18px;background:#222}
+.cam{position:relative}.fr{position:absolute;inset:18%;border:4px solid #fff;border-radius:22px;pointer-events:none}
+.msg{max-width:520px;text-align:center}.toast{background:#fff;color:var(--ink);border-radius:14px;padding:12px 16px;max-width:520px}
+.ov button{min-height:46px;padding:0 20px;border-radius:12px;border:1px solid #ffffff66;background:none;color:#fff;font:inherit}
+</style></head><body>
+<header class="top"><img class="ic" src="lernordner-192.png" alt=""><div><b>Meine Aufgaben</b><small id="who"></small></div>
+<button type="button" class="scan" id="scan"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"/></svg>QR scannen</button></header>
+<main class="wrap" id="app"></main>
+<script>
+(()=>{
+const K='cm-lernordner-v1',$=q=>document.querySelector(q),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rd=()=>{try{return JSON.parse(localStorage.getItem(K)||'{}')||{}}catch{return {}}},wr=a=>{try{localStorage.setItem(K,JSON.stringify(a))}catch{}};
+const sa=(()=>{try{return navigator.standalone===true||matchMedia('(display-mode: standalone)').matches}catch{return false}})();
+const PAGES=['einheit.html','texttrainer.html','ueben.html','uebungen.html','vokabeltest.html','lernpaket.html','lernordner.html'];
+const subjOf=e=>e.subject||(['Übersetzungs-Trainer','Vokabeln üben','Übungen','Vokabeltest','Lernpaket'].includes(e.kind)?'latein':'');
+const SN={latein:'Latein',erdkunde:'Erdkunde'};
+const KS={'Lerneinheit':['L','#fff4e8','#b45309'],'Übersetzungs-Trainer':['Ü','#fdeee6','#c2410c'],'Vokabeln üben':['V','#e5f5ea','#1f8a4c'],'Vokabeltest':['V','#e5f5ea','#1f8a4c'],'Übungen':['Ü','#eef3fa','#2f5f9b'],'Lernpaket':['P','#f3edff','#6d28d9']};
+let edit=false;
+const when=t=>{if(!t)return '';const d=new Date(t),n=new Date();const same=d.toDateString()===n.toDateString();return same?'heute '+d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})};
+function draw(){const a=rd(),L=Object.values(a).sort((x,y)=>(y.at||0)-(x.at||0));
+ const me=L.find(e=>e.me);$('#who').textContent=me?me.me+(me.cls?' · '+me.cls:''):'Alles bleibt auf diesem iPad';
+ const G={};for(const e of L){const s=SN[subjOf(e)]||'Weitere';(G[s]??=[]).push(e)}
+ const order=Object.keys(G).sort((x,y)=>(x==='Weitere')-(y==='Weitere')||x.localeCompare(y,'de'));
+ const item=e=>{const k=KS[e.kind]||['•','#eef1f6','#66758a'];const m=/^(\d+)\/(\d+)$/.exec(e.p||'');const pc=m&&+m[2]?Math.min(100,Math.round(+m[1]/+m[2]*100)):null;
+  return '<div style="display:flex;gap:8px;align-items:center">'+(edit?'':'<a class="it" href="'+esc(local(e.url)||e.url)+'">')+(edit?'<div class="it">':'')+'<span class="k" style="background:'+k[1]+';color:'+k[2]+'">'+k[0]+'</span><span class="t"><b>'+esc(e.title||e.kind)+'</b><small>'+esc(e.kind)+(e.at?' · zuletzt '+when(e.at):'')+(m?' · '+m[1]+' von '+m[2]:'')+'</small>'+(pc!=null?'<span class="bar"><i style="width:'+pc+'%;'+(pc>=100?'background:var(--ok)':'')+'"></i></span>':'')+'</span>'+(edit?'</div><button type="button" class="del" data-del="'+esc(e.id)+'" aria-label="Aus der Liste entfernen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>':'<span class="go">Öffnen ›</span></a>')+'</div>'};
+ $('#app').innerHTML=(sa?'':'<div class="hint"><b>Tipp:</b> Tippe in Safari auf <b>Teilen</b> und dann auf <b>„Zum Home-Bildschirm“</b>. Dann hast du den Lernordner als App – und deine Aufgaben sind sicher, auch wenn jemand den Safari-Verlauf löscht.</div>')
+  +(L.length?order.map(s=>'<h3>'+esc(s)+'</h3>'+G[s].map(item).join('')).join(''):'<div class="empty"><b>Noch keine Aufgaben.</b><br>Tippe oben auf <b>„QR scannen“</b> und scanne den Code an der Tafel.</div>')
+  +(L.length?'<div class="foot"><span>Alles bleibt auf diesem iPad. Lösche das App-Symbol nicht – sonst sind deine Stände weg.</span><button type="button" id="ed">'+(edit?'Fertig':'Liste bearbeiten')+'</button></div>':'');
+ const ed=$('#ed');if(ed)ed.onclick=()=>{edit=!edit;draw()};
+ document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const x=rd();const e=x[b.dataset.del];if(!e||!confirm('„'+(e.title||e.kind)+'“ aus der Liste entfernen? Dein Arbeitsstand bleibt erhalten.'))return;delete x[b.dataset.del];wr(x);draw()})}
+/* Links der Lehrkraft zeigen auf die App im Internet – hier öffnen wir dieselbe Seite im eigenen Ordner (gleicher Speicher) */
+function local(u){try{const x=new URL(u,location.href),pg=x.pathname.split('/').pop();if(!PAGES.includes(pg))return null;return pg+x.search+x.hash}catch{return null}}
+let stream=null,timer=0,lib=null;
+const loadQr=()=>lib?Promise.resolve(lib):new Promise((res,rej)=>{if(window.jsQR)return res(lib=window.jsQR);const s=document.createElement('script');s.src='vendor/jsqr.js';s.onload=()=>window.jsQR?res(lib=window.jsQR):rej(new Error('QR-Leser fehlt.'));s.onerror=()=>rej(new Error('Der QR-Leser konnte nicht geladen werden. Bitte einmal mit Internet öffnen.'));document.head.append(s)});
+function stop(){clearTimeout(timer);try{stream?.getTracks().forEach(t=>t.stop())}catch{}stream=null;$('.ov')?.remove()}
+async function scan(){const o=document.createElement('div');o.className='ov';o.innerHTML='<div class="msg" style="font-weight:700;font-size:1.1rem">Halte das iPad auf den QR-Code an der Tafel</div><div class="cam"><video playsinline muted autoplay></video><div class="fr"></div></div><div class="msg" data-m></div><button type="button" data-x>Abbrechen</button>';document.body.append(o);
+ o.querySelector('[data-x]').onclick=stop;const v=o.querySelector('video'),m=o.querySelector('[data-m]');const cv=document.createElement('canvas'),cx=cv.getContext('2d',{willReadFrequently:true});
+ try{const q=await loadQr();stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});v.srcObject=stream;await v.play().catch(()=>{})
+  const tick=()=>{if(!stream)return;try{if(v.readyState>=2&&v.videoWidth){const sc=Math.min(1,900/Math.max(v.videoWidth,v.videoHeight));cv.width=Math.round(v.videoWidth*sc);cv.height=Math.round(v.videoHeight*sc);cx.drawImage(v,0,0,cv.width,cv.height);const c=q(cx.getImageData(0,0,cv.width,cv.height).data,cv.width,cv.height,{inversionAttempts:'dontInvert'});if(c&&c.data){found(c.data,m);return}}}catch{}timer=setTimeout(tick,150)};tick()}
+ catch(e){m.innerHTML='<div class="toast">'+esc(e&&e.name==='NotAllowedError'?'Die Kamera ist nicht erlaubt. Erlaube sie in den Einstellungen.':(e.message||'Die Kamera konnte nicht gestartet werden.'))+'</div>'}}
+function found(txt,m){const to=local(txt);
+ if(!to){m.innerHTML='<div class="toast">Das ist kein Code für den Lernordner'+(/^CMLE/.test(txt)?' – das ist ein Abgabe-Code für deine Lehrkraft.':'.')+'</div>';timer=setTimeout(()=>{m.innerHTML='';scan2()},2500);return}
+ m.innerHTML='<div class="toast"><b style="color:var(--ok)">✓ Erkannt</b> – wird geöffnet …</div>';setTimeout(()=>{stop();location.href=to},500)}
+function scan2(){const v=$('.ov video');if(!v||!stream)return;stop();scan()}
+$('#scan').onclick=scan;addEventListener('storage',draw);addEventListener('pageshow',draw);draw();
+window.cmLernordner={local,draw};
+})();
+</script>
+</body></html>

@@ -90,5 +90,24 @@
    if(exists)box(head+'<div style="color:#b45309;font-size:.95rem">Auf diesem iPad gibt es schon einen Arbeitsstand zu dieser Aufgabe. Er würde ersetzt.</div>',[['Vorhandenen behalten',()=>{try{localStorage.removeItem(PK)}catch{}}],['Trotzdem übernehmen',apply,1]]);
    else box(head,[['Abbrechen',()=>{try{localStorage.removeItem(PK)}catch{}}],['Übernehmen',apply,1]])})()}
  restoreReceive();if(typeof addEventListener==='function')addEventListener('hashchange',restoreReceive);
- root.classroomQr=encode;root.classroomQrSvg=svg;root.classroomQrPack=pack;root.classroomRestoreCodes=restoreCodes;
+ /* 11.91: Lernordner – Schülerseiten tragen sich in die Liste „Meine Aufgaben“ ein (nur auf diesem Gerät);
+    in der Lernordner-App (Home-Bildschirm) gibt es unten links „‹ Lernordner“ zurück zur Liste. */
+ (function(){if(typeof location==='undefined'||typeof document==='undefined')return;const page=location.pathname.split('/').pop()||'';
+  const KIND={'einheit.html':'Lerneinheit','texttrainer.html':'Übersetzungs-Trainer','ueben.html':'Vokabeln üben','uebungen.html':'Übungen','vokabeltest.html':'Vokabeltest','lernpaket.html':'Lernpaket'}[page];if(!KIND)return;
+  if(/[?&]vorschau=1/.test(location.search))return;
+  const K='cm-lernordner-v1',H0=location.href,rs=/^#rs\./.test(location.hash);const rd=()=>{try{return JSON.parse(localStorage.getItem(K)||'{}')||{}}catch{return {}}};
+  let ID=page==='vokabeltest.html'?page+(location.hash||'').slice(0,80):page==='texttrainer.html'?null:page+location.search;
+  function note(patch){if(!ID||rs)return;const a=rd(),e=a[ID]??={id:ID,kind:KIND,url:H0,added:Date.now()};if(/#./.test(H0))e.url=H0;Object.assign(e,patch||{},{at:Date.now()});try{localStorage.setItem(K,JSON.stringify(a))}catch{}}
+  window.cmLoNote=p=>{p={...(p||{})};if(p.key){ID=page+'#'+p.key;delete p.key}note(p)};
+  const later=()=>setTimeout(()=>{if(ID&&page!=='einheit.html')note({title:rd()[ID]?.title||document.title})},1500);
+  const sa=(()=>{try{return navigator.standalone===true||matchMedia('(display-mode: standalone)').matches}catch{return false}})();
+  const back=()=>{if(!sa||document.getElementById('cmLoBack'))return;const a=document.createElement('a');a.id='cmLoBack';a.href='lernordner.html';a.textContent='‹ Lernordner';a.style.cssText='position:fixed;left:max(10px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));z-index:90;padding:9px 14px;border-radius:14px;background:#fff;border:1px solid #dce3ef;color:#2f5f9b;font:600 14px/1 -apple-system,BlinkMacSystemFont,Inter,"Segoe UI",sans-serif;text-decoration:none;box-shadow:0 4px 12px #233d6022';document.body.append(a)};
+  const go=()=>{later();back()};document.readyState==='loading'?addEventListener('DOMContentLoaded',go):go()})();
+ /* 11.91: Übersetzungs-Trainer – die Antworten (Satz 01 …) werden aus dem mitgeschickten Arbeitsstand aufgebaut, statt den Text doppelt zu übertragen */
+ function ttAnswers(X,N){const w={},RT=['✗ noch nicht','≈ teilweise','✓ passt'];X=X||{};for(let i=0;i<N;i++){const x=X[i];if(!x)continue;
+  if((x.tx||'').trim()||(x.vb||'').trim()||x.cmp)w['Satz '+String(i+1).padStart(2,'0')]=((x.tx||'').trim()||'(nichts geschrieben)')+(x.vb&&x.vb.trim()?'\n↳ Verbesserung: '+x.vb.trim():'')+(x.og&&x.cmp?'\n⚠ Musterübersetzung ohne eigene Übersetzung angesehen':'')+(x.r!=null?'\nSelbst: '+RT[x.r]:'')+(x.h?' · '+x.h+' Hilfe'+(x.h>1?'n':''):'')}
+  return w}
+ /* Empfang: kompakte Abgabe (wt = Anzahl Sätze) → Antworten aus r wiederherstellen */
+ function ttExpand(j){try{if(!j||!j.wt||!Array.isArray(j.r))return j;const it=j.r.find(x=>Array.isArray(x)&&/^cm-texttrainer-/.test(String(x[0]))&&!/-rs$/.test(String(x[0])));if(!it)return j;return {...j,w:{...(j.w||{}),...ttAnswers(it[1]&&it[1].sent,j.wt)}}}catch{return j}}
+ root.classroomTtAnswers=ttAnswers;root.classroomTtExpand=ttExpand;root.classroomQr=encode;root.classroomQrSvg=svg;root.classroomQrPack=pack;root.classroomRestoreCodes=restoreCodes;
 })(typeof window!=='undefined'?window:globalThis);

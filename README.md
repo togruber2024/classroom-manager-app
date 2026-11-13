@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 13.11.2026 · Version 11.90
+Stand: 13.11.2026 · Version 11.91
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1469,3 +1469,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.88: Backup-Fenster – „Rückgängig machen“ als Zeile in der Liste (unter „Daten prüfen“) statt langem Knopf
 11.89: Vokabeltest – Reiter „Lernvokabular“/„Wiederholungsvokabular“; Wiederholungsvokabular mit Gruppen (eigene Abschnitte, Kollegiumsliste vorausgewählt)
 11.90: Arbeitsstand wiederherstellen (Abgabe mit vollständigem Stand, Wiederherstellen-QR, Empfang per #rs-Link); Übersetzungs-Trainer Prädikat rot/Subjekt blau/Objekt grün; Bearbeiten-Ansicht ohne Stift, Zeilen bündig
+11.91: Übersetzungs-Trainer: Schritte Objekt, AcI, satzwertige Konstruktionen (AcI/PC/Abl. abs. eingerahmt), Subjekte mit Attributen, Eingabefeld über der iPad-Tastatur; Lernordner (Schüler-Web-App); kürzere Abgabe-QR; Lerneinheiten-Liste neu; Datei-laden-Symbol; Spaltenköpfe umbrechen

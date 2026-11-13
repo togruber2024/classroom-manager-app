@@ -148,7 +148,8 @@ const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(
 /* 11.33: neue Fassung (nur AFB I) – eigener Speicher; Name, Klasse und Gerät werden übernommen */
 const KEY='cm-'+CM_U+'-v1';let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)||'null')||null}catch{}
 if(!ST)ST={};
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ST))}catch{}try{updWho()}catch{}};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ST))}catch{}try{updWho()}catch{}try{loNote()}catch{}};
+/* 11.91: Eintrag im Lernordner (Titel, Fach, Fortschritt) */function loNote(){if(!window.cmLoNote)return;const M=BOOK.def.meta||{},st=(BOOK.def.steps||[]).filter(x=>x.k);window.cmLoNote({title:M.title||document.title,sub:M.kicker||'',subject:M.subject||'',p:st.filter(x=>ST[x.key||x.k]).length+'/'+st.length,me:ST.me||'',cls:ST.cls||''})}
 let CURK=null;function goStep(k){const x=STEPS.find(y=>y[0]===k);if(!x)return home();CURK=k;if(SOLV&&!ST[k])try{solveK(k)}catch(e){console.warn(e)}x[4]();scrollTo(0,0)}
 function frame(title,inner){if(CURK){const x=STEPS.find(y=>y[0]===CURK);if(x)title=x[1]}const i=CURK?STEPS.findIndex(x=>x[0]===CURK):-1,nx=i>=0?STEPS[i+1]:null,pv=i>0?STEPS[i-1]:null,done=CURK&&ST[CURK];
  app.innerHTML='<div class="top"><button class="back" data-home>‹ Übersicht</button><div class="sp"></div><b>'+(i>=0?(i+1)+' · ':'')+esc(title)+'</b></div>'+inner+(i>=0?'<div class="row nextrow">'+(pv?'<button class="sec" data-prevst>‹ Zurück: '+esc(pv[1])+'</button>':'<button class="sec" data-home2>‹ Übersicht</button>')+'<div class="sp"></div>'+(nx?'<button class="'+(done?'pri':'sec')+'" data-nextst>Weiter: '+esc(nx[1])+' ›</button>':'')+'</div>':'');
@@ -339,6 +340,7 @@ const HEROSVG=()=>SAFE(D.hero||'');
 const PDFX=im=>(D.pdf||[]).map(b=>b&&b.__img?im(b.__img,b.w,b.h):b&&b.t==='img'&&b.img&&b.img.__img?(IM[b.img.__img]?Object.assign({},b,{img:IM[b.img.__img]}):null):b);
 const WIDGET={choose:(k,o)=>choose(k,o),gut:(k,o)=>gut(k,o),scale:(k,o)=>scale(k,o),plan:(k,o)=>plan(k,o),write:(k,o)=>write(k,o),sorter:(k,o)=>sorter(k,o),swiper:(k,o)=>swiper(k,o),quiz:(k,o)=>quiz(k,o),seqTask:(k,o)=>seqTask(k,o),pol:()=>runPol(),beg:()=>runBeg(),txt:()=>runTxt(),end:()=>runEnd(),txtmap:(k,o)=>wTxtMap(k,o),find:(k,o)=>wFind(k,o),feat:(k,o)=>wFeat(k,o)};
 const STEPS=(D.steps||[]).filter(s=>WIDGET[s.w]).map(s=>{const o=s.o?UV(s.o):null;return [s.k,s.t,s.d,s.min,()=>caseRun(s,o)]});
+try{loNote()}catch{}
 /* 11.85: Stationen mit o.cases brauchen erst einen gewählten Fall (Baustein „choose“) */
 function caseRun(s,o){const k=s.key||s.k;if(!o||!o.cases)return WIDGET[s.w](k,o);const ch=(D.steps||[]).find(x=>x.w==='choose');
  if(!ST.case&&ch&&SOLV)SOLVW.choose(ch.key||ch.k,UV(ch.o));

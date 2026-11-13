@@ -28,7 +28,7 @@ window.cmVocabOk=(()=>{const plain=s=>String(s||'').normalize('NFD').replace(/[\
   const btn=document.createElement('button');btn.type='button';btn.id='cmab';btn.setAttribute('aria-label','Abgabe-QR zeigen');document.body.append(btn);
   const sc=()=>{try{return o.score()||{s:{}}}catch{return {s:{}}}};
   const prog=()=>{const s=sc().s||{};let p=0,t=0;for(const v of Object.values(s))if(Array.isArray(v)){p+=v[0];t+=v[1]}return t?p+'/'+t:'–'};
-  function update(){btn.innerHTML=S.me?'<span><b>'+esc(S.me)+'</b><small>Abgabe-QR · '+prog()+'</small></span><svg viewBox="0 0 24 24" fill="#243247" aria-hidden="true"><path d="M3 3h8v8H3zM5 5v4h4V5zM13 3h8v8h-8zm2 2v4h4V5zM3 13h8v8H3zm2 2v4h4v-4zM13 13h3v3h-3zM18 13h3v3h-3zM13 18h3v3h-3zM18 18h3v3h-3zM16 16h2v2h-2z"/></svg>':'<span><b>Abgabe-QR</b><small>Name wählen</small></span>'}
+  function update(){try{window.cmLoNote?.({title:o.title||document.title,p:prog(),me:S.me||'',cls:S.cls||''})}catch{}btn.innerHTML=S.me?'<span><b>'+esc(S.me)+'</b><small>Abgabe-QR · '+prog()+'</small></span><svg viewBox="0 0 24 24" fill="#243247" aria-hidden="true"><path d="M3 3h8v8H3zM5 5v4h4V5zM13 3h8v8h-8zm2 2v4h4V5zM3 13h8v8H3zm2 2v4h4v-4zM13 13h3v3h-3zM18 13h3v3h-3zM13 18h3v3h-3zM18 18h3v3h-3zM16 16h2v2h-2z"/></svg>':'<span><b>Abgabe-QR</b><small>Name wählen</small></span>'}
   function payload(){const r=sc();return 'CMLE1:'+JSON.stringify({u:o.u,v:2,c:S.cls||'',n:S.me,dv:S.dv,ts:Date.now(),b:0,s:r.s||{},x:r.x||{}})}
   function who(){const ov=document.createElement('div');ov.className='cmab-o';let pick=S.me;
    const draw=()=>{ov.innerHTML='<div style="font-size:1.4rem;font-weight:800">'+esc(o.title||'Abgabe')+(S.cls?' · '+esc(S.cls):'')+'</div>'
@@ -41,7 +41,7 @@ window.cmVocabOk=(()=>{const plain=s=>String(s||'').normalize('NFD').replace(/[\
   /* 11.73: lange Abgaben (z. B. Übersetzungen) gehen komprimiert auf mehrere QR-Codes (CMLE2/id/k/n/…), die Lehrkraft scannt sie nacheinander */
   /* 11.90: mit o.restore (z. B. Übersetzungs-Trainer) geht der vollständige Arbeitsstand mit – die Lehrkraft kann ihn später als Wiederherstellen-QR zurückgeben */
   const rest=()=>{if(!o.restore)return {};try{const it=o.restore()||[];return {r:[...it,['cm-abgabe-'+o.u,S]],rp:location.pathname.split('/').pop()+location.search}}catch{return {}}};
-  async function codes(){const r=sc();return classroomQrPack({u:o.u,v:2,c:S.cls||'',n:S.me,dv:S.dv,ts:Date.now(),b:0,s:r.s||{},x:r.x||{},...(r.w&&Object.keys(r.w).length?{w:r.w}:{}),...rest()})}
+  async function codes(){const r=sc(),R=rest(),C=!!(R.r&&r.wt&&window.classroomTtExpand),w=C?r.wc:r.w;/* 11.91: kompakt – Übersetzungen stecken schon im Arbeitsstand */return classroomQrPack({u:o.u,v:2,c:S.cls||'',n:S.me,dv:S.dv,ts:Date.now(),b:0,s:r.s||{},x:r.x||{},...(w&&Object.keys(w).length?{w}:{}),...(C?{wt:r.wt}:{}),...R})}
   async function showQr(){if(!S.me){who();return}const ov=document.createElement('div');ov.className='cmab-o';document.body.append(ov);ov.innerHTML='<div style="color:#66758a">QR-Code wird erstellt …</div>';
    let C=[];try{C=await codes()}catch(e){C=[payload()]}let k=0;
    const draw=()=>{let q='';try{q=classroomQrSvg(C[k],{ecc:'L',boost:false,dark:'#243247',border:3}).replace('<svg','<svg class="q"')}catch(e){q='<p>QR-Code nicht möglich: '+esc(e.message)+'</p>'}
