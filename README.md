@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 13.11.2026 · Version 11.73
+Stand: 13.11.2026 · Version 11.74
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1452,3 +1452,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.71: Latein-Reihen: „Jahrgang ändern“ (z. B. Transitio in Jahrgang 10); doppelte Übersetzungstexte werden bereinigt, Lektionstext-Karte mit Texttitel.
 11.72: „Alles auswählen“ und „Alle in Jahrgang …“ in Inhalte organisieren; Backup-Fenster: „Unterrichtsmaterial sichern …“ (nur Material, ohne Schülerdaten); Latein-Jahrgang reist mit den Reihen-Dateien.
 11.73: Übersetzungs-Trainer: Übersetzung nach dem Vergleichen gesperrt, eigenes Verbesserungsfeld, Übersetzungen im Abgabe-QR (mehrere Codes), Hinweise ohne eigene Übersetzung/zurückgesetzt; Sitzplan-Druck ohne Knopfleiste und ohne abgeschnittene Spalte.
+11.74: iPad: .cmeinheit-Dateien (Lerneinheit, Lateinarbeit, eigene Pakete) in der Dateiauswahl nicht mehr ausgegraut.

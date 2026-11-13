@@ -84,7 +84,7 @@ function render(){if(D&&D.layout==='vorlage')return renderV2();if(!D){app.innerH
   +'<div class="sum"><b>Notenschlüssel</b> ('+tot+' BE; ausreichend ab 50 %)<table class="scale"><tr>'+(D.scale||[]).map(([g])=>'<td><b>'+g+'</b></td>').join('')+'</tr><tr>'+(D.scale||[]).map(([g,m],i,a)=>'<td>'+(i?m+'–'+(a[i-1][1]-1):m+'–'+tot)+'</td>').join('')+'</tr></table></div>'
   +'<div class="foot">'+esc(D.src||'')+(D.note?' · '+esc(D.note):'')+'</div></div>';
  document.body.classList.toggle('sol-on',SOL)}
-function pick(){const i=document.createElement('input');i.type='file';i.accept='.cmeinheit,.json';i.style.display='none';document.body.append(i);
+function pick(){const i=document.createElement('input');i.type='file';i.style.display='none';document.body.append(i);
  i.onchange=async()=>{const f=i.files[0];i.remove();if(!f)return;try{const u=JSON.parse(await f.text());if(!ok(u))throw 0;D=u;try{await IDB('readwrite',st=>st.put(u,u.id))}catch{}render()}catch{alert('Diese Datei ist keine passende Lateinarbeit.')}};i.click()}
 $('#bPrint').onclick=()=>window.print();
 window.cmPreviewSolutions=on=>{SOL=!!on;render()};

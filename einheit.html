@@ -125,7 +125,7 @@ details summary{cursor:pointer;color:var(--blue);font-weight:600;min-height:40px
  const ok=u=>!!(u&&u.type==='classroom-lerneinheit'&&u.def&&Array.isArray(u.def.steps)&&(!U||u.id===U));
  const start=u=>{window.CM_UNIT=u;window.CM_U=u.id;const s=document.createElement('script');s.textContent=document.getElementById('cm-main').textContent;document.body.append(s)};
  const ask=msg=>{const app=document.getElementById('app');app.innerHTML='<div class="card hero" style="display:block"><div class="muted">Lerneinheit</div><h1>Datei laden</h1><p>'+esc(msg)+'</p><div class="row"><button class="pri" id="cmLd">Datei laden …</button></div></div>';
-  document.getElementById('cmLd').onclick=()=>{const i=document.createElement('input');i.type='file';i.accept='.cmeinheit,.cmreihe,.json';i.style.display='none';document.body.append(i);
+  document.getElementById('cmLd').onclick=()=>{const i=document.createElement('input');i.type='file';i.style.display='none';document.body.append(i);
    i.onchange=async()=>{const f=i.files[0];i.remove();if(!f)return;let u=null;try{const d=JSON.parse(await f.text());u=d&&d.type==='classroom-reihe'?(U?d.units&&d.units[U]:null):d}catch{}
     if(!ok(u)){alert('Diese Datei passt nicht zu dieser Lerneinheit.');return}try{await IDB('readwrite',st=>st.put(u,u.id))}catch{}start(u)};i.click()}};
  window.addEventListener('DOMContentLoaded',async()=>{let u=window.CM_EMBED_BOOK;if(!ok(u)){u=null;if(U)try{u=await IDB('readonly',st=>st.get(U))}catch{}}
