@@ -189,10 +189,18 @@ function showPR(b,k){const [si,wi,ans]=T.pron[k];const done=ST.pr[k]!=null;
 /* ---------- 4 Übersetzen ---------- */
 let swAt=0;const pvLab=()=>PV?'▴ vorherigen Satz ausblenden':'▾ nach unten wischen: vorheriger Satz';
 function pvSet(on){PV=!!on;$('#pv')?.classList.toggle('hid',!PV);const h=$('#pvh');if(h)h.textContent=pvLab()}
-function pvBind(c){let y0=null,x0=0;c.querySelector('#pvh').onclick=()=>pvSet(!PV);
- c.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||e.target.closest('textarea,input'))return;y0=e.clientY;x0=e.clientX});
- c.addEventListener('pointerup',e=>{if(y0==null)return;const dy=e.clientY-y0,dx=e.clientX-x0;y0=null;if(Math.abs(dy)>45&&Math.abs(dy)>Math.abs(dx)*1.5){swAt=Date.now();pvSet(dy>0)}});
- c.addEventListener('pointercancel',()=>{y0=null})}
+function pvBind(c){c.querySelector('#pvh').onclick=()=>pvSet(!PV);
+ /* 11.82: der vorherige Satz folgt dem Finger – beim Ziehen wächst bzw. schrumpft er direkt mit, beim Loslassen rastet er ein */
+ const pv=c.querySelector('#pv');let y0=null,x0=0,drag=false,h=0,st=false,cur=0;
+ const apply=v=>{cur=Math.max(0,Math.min(h,v));pv.style.maxHeight=cur+'px';pv.style.opacity=String(h?cur/h:0);pv.style.transform='none'};
+ const clear=()=>{pv.style.transition='';pv.style.maxHeight='';pv.style.opacity='';pv.style.transform=''};
+ c.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||e.target.closest('textarea,input,button'))return;y0=e.clientY;x0=e.clientX;drag=false});
+ c.addEventListener('pointermove',e=>{if(y0==null)return;const dy=e.clientY-y0,dx=e.clientX-x0;
+  if(!drag){if(Math.abs(dy)<6||Math.abs(dy)<Math.abs(dx))return;drag=true;st=PV;h=pv.scrollHeight;pv.style.transition='none';try{c.setPointerCapture(e.pointerId)}catch{}}
+  apply((st?h:0)+dy)});
+ const end=e=>{if(y0==null)return;const was=drag;y0=null;drag=false;if(!was)return;swAt=Date.now();
+  const open=st?cur>h*0.65:cur>h*0.35;pv.style.transition='max-height .22s ease,opacity .22s ease';apply(open?h:0);PV=open;pv.classList.toggle('hid',!open);const hh=$('#pvh');if(hh)hh.textContent=pvLab();setTimeout(clear,240)};
+ c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end)}
 const STEPS=['Prädikat','Subjekt','Gliedsätze','Übersetzen'];
 function sstate(si){return ST.sent[si]??={step:0,p:[],s:[],g:[],miss:0,h:0,look:0,tx:'',r:null,bld:null}}
 function renderTR(b){cur=Math.min(cur,T.s.length-1);

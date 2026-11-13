@@ -7,7 +7,9 @@ window.cmVocabOk=(()=>{const plain=s=>String(s||'').normalize('NFD').replace(/[\
  const parts=m=>String(m||'').replace(/\([^)]*\)/g,' ').split(/[,;\/]| bzw\. | oder /).map(x=>plain(x).replace(/\b(der|die|das|ein|eine|einen|sich|etw\.?|jdn\.?|jdm\.?|jmd\.?)\b/g,' ').replace(/[^a-zäöüß\s-]/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
  const lev=(a,b)=>{if(Math.abs(a.length-b.length)>1)return 9;const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]};
  const near=(x,y)=>x===y||(y.length>=6&&lev(x,y)<=1);
- return (inp,m)=>{const v=parts(inp)[0]||'';if(!v)return false;return parts(m).some(p=>near(v,p)||p.split(' ').some(w=>w.length>=4&&near(v,w)))}})();
+ /* 11.82: Klammern zählen nicht – „Angst haben (vor)“: richtig sind „Angst haben“ und „Angst haben vor“ */
+ const all=m=>{const a=parts(m),b=parts(String(m||'').replace(/[()]/g,' '));return [...new Set([...a,...b])]};
+ return (inp,m)=>{const v=parts(String(inp||'').replace(/[()]/g,' '))[0]||'';if(!v)return false;return all(m).some(p=>near(v,p)||p.split(' ').some(w=>w.length>=4&&near(v,w)))}})();
 
 (()=>{
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));

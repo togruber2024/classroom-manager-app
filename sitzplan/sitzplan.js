@@ -2151,7 +2151,13 @@ window.addEventListener('message',event=>{if(event.source===parent&&event.data?.
   const date=classroomDate.value||new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
   document.title='Sitzplan_'+name+'_'+date;
   const label=String(classroomCurrentGroup()?.name||aktuelleKlasse||'Klasse').trim().replace(/^Klasse\s*/i,'');const header=document.querySelector('.room-header');const roomName=document.getElementById('classroomRoomSelect')?.selectedOptions[0]?.textContent?.trim();const roomLabel=roomName?(/^Raum\b/i.test(roomName)?roomName:'Raum '+roomName):'';if(header)header.dataset.printTitle='Sitzplan – '+label+(roomLabel?' ('+roomLabel+')':'');
+  /* 11.82: Dateiname der PDF wie gewünscht „Sitzplan - 8d (Raum 106)“ – Safari nimmt den Titel des Hauptfensters, deshalb auch dort kurz setzen */
+  const T=('Sitzplan - '+label+(roomLabel?' ('+roomLabel+')':'')).replace(/[\\/:*?"<>|]/g,'-');document.title=T;
+  try{const pd=parent.document;if(pd&&pd!==document){if(window.__cmTopTitle==null)window.__cmTopTitle=pd.title;pd.title=T}}catch{}
+  clearTimeout(window.__cmTitleT);window.__cmTitleT=setTimeout(restoreTitle,60000);
  }
+ const OWN=document.title;function restoreTitle(){clearTimeout(window.__cmTitleT);document.title=OWN;try{if(window.__cmTopTitle!=null){parent.document.title=window.__cmTopTitle;window.__cmTopTitle=null}}catch{}}
+ window.addEventListener('afterprint',()=>setTimeout(restoreTitle,500));
  const originalPrint=window.print.bind(window);window.print=function(){printTitle();return originalPrint()};
  window.addEventListener('beforeprint',printTitle);
 })();
