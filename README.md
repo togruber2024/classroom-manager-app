@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 13.11.2026 · Version 11.63
+Stand: 13.11.2026 · Version 11.64
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1442,3 +1442,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.61: Vorschau einer Lerneinheit: Pfeiltasten ← / → blättern durch die Stationen; „Als Schüler starten“ heißt „Von vorn beginnen“; iPhone: „Was ist neu?“ öffnet die Hilfe-Seite „Neu“ wieder (Stundenplan-Seite verdeckte sie).
 11.62: iPhone: Sichtschutz für „Noten“ – milchige Abdeckung beim Aufrufen des Bereichs, ein Tipp gibt frei; einstellbar zusätzlich beim Start der App und nach 2 Minuten im Hintergrund.
 11.63: „Inhalte exportieren …“ mit Abschnitt „Unterrichtsreihen“: alle (oder ausgewählte) Reihen mit Änderungen als Zip; „Datei laden …“ meldet geladene Reihen aus einer Zip.
+11.64: Aufgabensammlung je Lerneinheit (AFB II gelb, AFB III rötlich) nur für die Lehrkraft: Aufgaben aus dem Schulbuch oder eigene, Material-Pillen, Lösungen (Lehrerband/Vorschlag), Auswahl speichern, am Beamer zeigen.
