@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 13.11.2026 · Version 11.88
+Stand: 13.11.2026 · Version 11.89
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1467,3 +1467,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.86: Lerneinheiten – Antworten bei Antipp-Fragen (auch im Abschluss-Check) je Schüler gemischt; o.keepOrder schaltet das ab
 11.87: Blocksatz mit Silbentrennung für Fließtexte in Lerneinheiten (Info, Material, Lösungen) und Hilfe; unter 400 px linksbündig
 11.88: Backup-Fenster – „Rückgängig machen“ als Zeile in der Liste (unter „Daten prüfen“) statt langem Knopf
+11.89: Vokabeltest – Reiter „Lernvokabeln“/„Wiederholungsvokabeln“; Wiederholungsvokabeln mit Gruppen (eigene Abschnitte, Kollegiumsliste vorausgewählt)
