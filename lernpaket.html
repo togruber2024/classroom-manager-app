@@ -131,12 +131,26 @@ details summary{cursor:pointer;color:var(--blue);font-weight:600;min-height:40px
 </style></head><body><button type="button" id="who" hidden aria-label="Abgabe-QR zeigen"></button><div class="wrap" id="app"></div><div id="printBox"></div>
 <script src="qr-code.js"></script><script src="unit-pdf.js"></script><script src="lp-data.js"></script>
 <script>
+/* 11.58: Lernpaket laden – aus der Datei der Lehrkraft (Buchdatei mit „lps“, auch in einer Reihen-Datei) oder eingebaut */
+(()=>{const UQ=(new URLSearchParams(location.search).get('u')||window.CM_EMBED_U||'l16a').replace(/[^a-z0-9_-]/gi,'');window.CM_UQ=UQ;
+ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const db=fn=>new Promise((res,rej)=>{try{const r=indexedDB.open('cm-lerneinheiten',1);r.onupgradeneeded=()=>r.result.createObjectStore('u');r.onerror=()=>rej(r.error);r.onsuccess=()=>{const d=r.result;fn(d,res,rej)}}catch(e){rej(e)}});
+ const find=()=>db((d,res)=>{let hit=null;const tx=d.transaction('u','readonly'),c=tx.objectStore('u').openCursor();c.onsuccess=()=>{const x=c.result;if(!x)return;const v=x.value;if(v&&v.lps&&v.lps[UQ])hit=v;x.continue()};tx.oncomplete=()=>{d.close();res(hit)};tx.onerror=()=>{d.close();res(null)}});
+ const put=v=>db((d,res)=>{const tx=d.transaction('u','readwrite');tx.objectStore('u').put(v,v.id);tx.oncomplete=()=>{d.close();res()};tx.onerror=()=>{d.close();res()}});
+ const start=v=>{if(v&&v.lps&&v.lps[UQ])window.CM_LP={...v.lps[UQ],bookId:v.id};const s=document.createElement('script');s.textContent=document.getElementById('cm-main').textContent;document.body.append(s)};
+ const ask=()=>{const app=document.getElementById('app');app.innerHTML='<div class="card"><h2>Datei laden</h2><p>Dieses Lernpaket ist noch nicht auf deinem Gerät. Lade die Datei, die du von deiner Lehrkraft bekommen hast (z. B. per AirDrop). Danach bleibt es auf dem Gerät.</p><div class="row"><button class="pri" id="cmLd">Datei laden …</button></div></div>';
+  document.getElementById('cmLd').onclick=()=>{const i=document.createElement('input');i.type='file';i.style.display='none';document.body.append(i);i.onchange=async()=>{const f=i.files[0];i.remove();if(!f)return;let v=null;
+   try{const d=JSON.parse(await f.text());const cand=d&&d.type==='classroom-reihe'?((d.paket&&d.paket.units)||[]):[d];v=cand.find(x=>x&&x.lps&&x.lps[UQ])||null;if(v&&d.type==='classroom-reihe')for(const x of (d.paket.units||[]))if(x&&x.id)await put(x)}catch{}
+   if(!v){alert('Diese Datei passt nicht zu diesem Lernpaket.');return}await put(v);start(v)};i.click()}};
+ window.addEventListener('DOMContentLoaded',async()=>{const E=window.CM_EMBED_BOOK;if(E&&E.lps&&E.lps[UQ])return start(E);let v=null;try{v=await find()}catch{}if(v)return start(v);if((window.LP||{})[UQ])return start(null);ask()})})();
+</script>
+<script type="text/plain" id="cm-main">
 'use strict';
 const $=s=>document.querySelector(s),app=$('#app');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const md=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
 const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
-const UQ=new URLSearchParams(location.search).get('u')||window.CM_EMBED_U||'l16a',P=(window.LP||{})[UQ];
+const UQ=window.CM_UQ,P=window.CM_LP||(window.LP||{})[UQ];
 const KEY='cm-lp-'+UQ;let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch{}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ST))}catch{}try{updWho()}catch{}};
 let CURK=null;function goStep(k){const x=STEPS.find(y=>y[0]===k);if(!x)return home();CURK=k;x[4]();scrollTo(0,0)}

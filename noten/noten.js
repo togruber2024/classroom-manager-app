@@ -4931,7 +4931,7 @@ window.LP=LP;window.lpLabels=labels;
     if(d.toc?.lessons){const own=tocStore()||{};const m={...own,...d.toc,lessons:{...(own.lessons||{}),...d.toc.lessons}};localStorage.setItem(TOCKEY,JSON.stringify(m));out.toc=(out.toc||0)+Object.keys(d.toc.lessons).length}
     for(const t of d.texts||[])texts.push(JSON.stringify(t));for(const u of d.units||[])await unit(u);if(d.type===DBT&&d.tests?.length)out.tests=(out.tests||0)+d.tests.length}
    else if(d?.type==='classroom-text-trainer')texts.push(text);else if(d?.type==='classroom-lerneinheit')await unit(d);else if(d?.type==='classroom-reihe'&&d.id&&Array.isArray(d.entries)){try{await reiheSave(d);out.reihe=(out.reihe||0)+1;out.le+=Object.keys(d.units||{}).length}catch(e){if(e?.name==='QuotaExceededError')throw e;out.bad++}}else out.unknown++};
-  const unit=async u=>{if(!u?.id||!(u.def||UNITS[u.id]||Object.values(UNITS).some(x=>x.bookId===u.id)||(u.kind==='lateinarbeit'&&/^ala-\d+$/.test(u.id)))){out.unknown++;return}for(const x of Object.values(UNITS))if(x.bookId===u.id)delete x._book;
+  const unit=async u=>{if(!u?.id||!(u.def||u.lps||UNITS[u.id]||Object.values(UNITS).some(x=>x.bookId===u.id)||(u.kind==='lateinarbeit'&&/^ala-\d+$/.test(u.id)))){out.unknown++;return}for(const x of Object.values(UNITS))if(x.bookId===u.id)delete x._book;
    /* 11.57: alte Schulbuch-Datei ohne Stationen – die gespeicherten Stationen bleiben erhalten */if(!u.def){let o=null;try{o=await leIDB('readonly',st=>st.get(u.id))}catch{}if(o&&o.def)u={...u,def:o.def}}
    try{await leIDB('readwrite',st=>st.put(u,u.id));out.le++}catch{out.bad++}};
   for(const f of files){try{if(/\.zip$/i.test(f.name)||f.type==='application/zip'){for(const x of await ttUnzip(await f.arrayBuffer()))await one(x.name,x.text)}else await one(f.name,await f.text())}catch(e){if(e?.name==='QuotaExceededError')throw e;out.bad++}}
@@ -4964,9 +4964,12 @@ window.LP=LP;window.lpLabels=labels;
  /* alle Einträge des Gerätespeichers (Schlüssel + Wert) */
  const leEntries=()=>new Promise((res,rej)=>{try{const r=indexedDB.open('cm-lerneinheiten',1);r.onupgradeneeded=()=>r.result.createObjectStore('u');r.onerror=()=>rej(r.error);r.onsuccess=()=>{const db=r.result,out=[],tx=db.transaction('u','readonly'),c=tx.objectStore('u').openCursor();c.onsuccess=()=>{const x=c.result;if(x){out.push([x.key,x.value]);x.continue()}};tx.oncomplete=()=>{db.close();res(out)};tx.onerror=()=>rej(tx.error)}}catch(e){rej(e)}});
  let REIHEN_={};
+ function regLP(u,P){UNITS[u]={title:P.title,sub:P.sub,file:'lernpaket.html?u='+u,cols:P.steps.filter(st=>st.type!=='pant').map(st=>[st.k,st.c||st.k]),book:[],qs:[],notx:true,gl:{n:P.steps.length,min:Math.round(P.steps.reduce((a,x)=>a+x.min,0))},lp:P,bookId:P.bookId,short:P.short};UNIT_META[u]={subject:'latein',jg:0,lesson:P.lesson}}
  async function regLoad(){let all=[];try{all=await leEntries()}catch{}const c={},R={};
   for(const id of Object.keys(UNITS))if(UNITS[id].dat){delete UNITS[id];delete UNIT_META[id]}
-  for(const [k,v] of all){if(typeof k==='string'&&k.startsWith('reihe:')&&v&&v.type==='classroom-reihe-meta')R[v.id]=v;else if(v&&v.type==='classroom-lerneinheit'&&v.def&&Array.isArray(v.def.steps)){const m=unitMeta(v);c[v.id]=m;regMeta(v.id,m)}}
+  for(const [u,P] of Object.entries(window.LP||{}))if(!UNITS[u])regLP(u,P);
+  for(const [k,v] of all){if(typeof k==='string'&&k.startsWith('reihe:')&&v&&v.type==='classroom-reihe-meta')R[v.id]=v;else if(v&&v.type==='classroom-lerneinheit'&&v.def&&Array.isArray(v.def.steps)){const m=unitMeta(v);c[v.id]=m;regMeta(v.id,m)}
+   /* 11.58: Lernpakete (Latein) aus der Buchdatei – neue Lernpakete ohne App-Update */else if(v&&v.type==='classroom-lerneinheit'&&v.lps&&typeof v.lps==='object')for(const [u,P] of Object.entries(v.lps)){if(!P||!Array.isArray(P.steps))continue;regLP(u,{...P,bookId:v.id});UNITS[u].dat=true}}
   REIHEN_=R;ucacheSave(c);return R}
  const regReady=regLoad();
  /* Reihen-Datei prüfen: was ist neu, was wurde geändert? */
@@ -4974,17 +4977,21 @@ window.LP=LP;window.lpLabels=labels;
   await regReady;const old=REIHEN_[d.id]||null,us=d.units||{};const neu=old?d.entries.filter(e=>!old.entries.some(o=>o.k===e.k)):[],upd=[];
   for(const [id,u] of Object.entries(us)){if(!u||u.type!=='classroom-lerneinheit'||!u.def)continue;let x=null;try{x=await leIDB('readonly',st=>st.get(id))}catch{}if(old&&x&&x.def&&JSON.stringify(x.def.steps)!==JSON.stringify(u.def.steps))upd.push(id)}
   return {d,old,neu,upd,size:text.length,nUnits:Object.keys(us).length}}
- async function reiheSave(d,o){o=o||{};const us=d.units||{},meta={type:'classroom-reihe-meta',v:d.v||1,n:+d.n||0,id:String(d.id),subject:o.subject||d.subject||'erdkunde',jg:+(o.jg||d.jg)||0,ch:d.ch||'',title:d.title||d.id,src:d.src||'',created:d.created||'',loaded:new Date().toISOString(),entries:d.entries.map(e=>({k:String(e.k),t:String(e.t||''),...(e.u?{u:String(e.u)}:{}),...(e.own?{own:1}:{}),...(e.hid?{hid:1}:{})}))};
+ async function reiheSave(d,o){o=o||{};const us=d.units||{},meta={type:'classroom-reihe-meta',v:d.v||1,n:+d.n||0,id:String(d.id),subject:o.subject||d.subject||'erdkunde',jg:+(o.jg||d.jg)||0,ch:d.ch||'',title:d.title||d.id,src:d.src||'',created:d.created||'',loaded:new Date().toISOString(),lab:d.lab||'',docs:(d.paket&&Array.isArray(d.paket.units)?d.paket.units.map(x=>x&&x.id).filter(Boolean):[]),entries:d.entries.map(e=>({k:String(e.k),t:String(e.t||''),...(e.u?{u:String(e.u)}:{}),...(e.les!=null?{les:String(e.les)}:{}),...(e.own?{own:1}:{}),...(e.hid?{hid:1}:{})}))};
+  /* 11.58: Latein-Sequenz – Inhaltsverzeichnis, Grammatik, Texte, Lernpakete und Lateinarbeit werden zusammengeführt (nichts wird gelöscht) */
+  if(d.paket&&typeof d.paket==='object'){const r=await bibImport([new File([JSON.stringify({...d.paket,type:PKT})],'reihe.cmpaket')]);if(r.bad)throw new Error('Teile der Reihe konnten nicht gelesen werden.')}
   for(const [id,u] of Object.entries(us)){if(!u||u.type!=='classroom-lerneinheit'||!u.def||u.id!==id)continue;const x={...u,def:{...u.def,meta:{...(u.def.meta||{}),subject:meta.subject,jg:meta.jg}}};await leIDB('readwrite',st=>st.put(x,id))}
   await leIDB('readwrite',st=>st.put(meta,RKEY(meta.id)));await regLoad();return meta}
  async function reiheRemove(id){await regReady;const m=REIHEN_[id];if(!m)return false;const used=new Set(Object.values(REIHEN_).filter(r=>r.id!==id).flatMap(r=>r.entries.map(e=>e.u).filter(Boolean)));
   for(const e of m.entries)if(e.u&&!used.has(e.u))try{await leIDB('readwrite',st=>st.delete(e.u))}catch{}
+  const usedD=new Set(Object.values(REIHEN_).filter(r=>r.id!==id).flatMap(r=>r.docs||[]));for(const x of m.docs||[])if(!usedD.has(x))try{await leIDB('readwrite',st=>st.delete(x))}catch{}
   await leIDB('readwrite',st=>st.delete(RKEY(id)));await regLoad();return true}
  /* Export mit den eigenen Änderungen (Reihenfolge, Namen, ausgeblendet, eigene Einträge) */
  async function reiheExport(id,entries){await regReady;const m=REIHEN_[id];if(!m)throw new Error('Diese Reihe ist nicht geladen.');const E=entries||m.entries,units={};
   for(const e of E)if(e.u&&!units[e.u]){const x=await leIDB('readonly',st=>st.get(e.u));if(x)units[e.u]=x}
-  const d={type:'classroom-reihe',v:m.v||1,n:m.n||0,id:m.id,subject:m.subject,jg:m.jg,ch:m.ch,title:m.title,src:m.src,created:new Date().toISOString().slice(0,10),entries:E,units};
-  return new File([JSON.stringify(d)],'Reihe '+asciiName((m.subject==='erdkunde'?'Ek':m.subject==='geschichte'?'Ge':'')+m.jg+' '+m.title).replace(/-/g,' ')+'.cmreihe',{type:'application/octet-stream'})}
+  const d={type:'classroom-reihe',v:m.v||1,n:m.n||0,id:m.id,subject:m.subject,jg:m.jg,ch:m.ch,title:m.title,lab:m.lab||'',src:m.src,created:new Date().toISOString().slice(0,10),entries:E,units};
+  /* Latein: Inhalte der Lektionen mitnehmen */const les=E.filter(e=>e.les!=null).map(e=>String(e.les));if(les.length){const pk=await bibExport({lessons:les,units:m.docs||[],parts:{toc:1,voc:1,wh:1,gr:1,tt:1,le:1}},m.title);if(pk){if(tocStore()?.seq&&pk.toc)pk.toc.seq=tocStore().seq;d.paket=pk}}
+  return new File([JSON.stringify(d)],(m.subject==='latein'?'Pontes '+asciiName((m.lab||'').replace(/–/g,'-'))+' '+asciiName(m.title).replace(/-/g,' '):'Reihe '+asciiName((m.subject==='erdkunde'?'Ek':m.subject==='geschichte'?'Ge':'')+m.jg+' '+m.title).replace(/-/g,' '))+'.cmreihe',{type:'application/octet-stream'})}
  async function bibBookFile(u){const U=UNITS[u];if(!U)return null;const id=U.bookId||u;const x=await leIDB('readonly',st=>st.get(id));if(!x)return null;return {name:(BOOKNAMES[id]||String(id).replace(/[^\w-]+/g,'-'))+'.cmeinheit',text:JSON.stringify(x)}}
  window.classroomBibliothek={/* 11.53: Alternative Lateinarbeit je Lektion (private Datei) */ala:k=>leIDB('readonly',st=>st.get('ala-'+k)).catch(()=>null),alaNotes:async k=>{const x=await leIDB('readonly',st=>st.get('ala-'+k));if(!x)throw new Error('Die Lateinarbeit ist auf diesem Gerät nicht gespeichert.');return window.classroomAlaToNotes(x)},lessons:bibLessons,bookFile:bibBookFile,/* 11.57: Reihen */ready:()=>regReady,reihen:async()=>{await regReady;return Object.values(REIHEN_)},reiheParse,reiheSave,reiheRemove,reiheExport,practice:bibPractice,qr:(u,o)=>classroomQrSvg(u,o),lesson:bibLesson,units:bibUnits,list:bibList,ttHash:bibTtHash,act:bibAct,exportPkg:bibExport,importFiles:bibImport,
   context:()=>({subject:currentSubject,classId:currentClassId,label:leCls()})};
