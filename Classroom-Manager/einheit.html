@@ -91,6 +91,10 @@ details summary{cursor:pointer;color:var(--blue);font-weight:600;min-height:40px
 /* 11.33: nur AFB I – wischen, ziehen, antippen; höchstens ca. 20 Minuten */
 .step>span:nth-child(2){flex:1;min-width:0}.step b{overflow-wrap:anywhere;hyphens:manual;-webkit-hyphens:manual}.step .st{white-space:nowrap}.step .min{display:inline-block;margin-left:6px;font-size:.75rem;color:var(--mut);font-weight:600}
 [data-dg]{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.ch-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}.ch-o{text-align:left;border:1px solid #cfd8e6;background:#fff;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:6px;font:inherit;color:inherit;cursor:pointer}.ch-o.on{border-color:#e8790c;background:#fff4e8;box-shadow:0 0 0 2px #e8790c33}.ch-o span{color:#4d5d73;font-size:.92rem}.ch-o:disabled{opacity:.45;cursor:default}
+.gu{margin:20px 2px 4px}.gu-tr{position:relative}.gu-tr::before{content:'';position:absolute;left:0;right:0;top:50%;height:10px;margin-top:-5px;border-radius:5px;background:linear-gradient(90deg,#c2410c,#e5e7eb 50%,#1f8a4c)}.gu input{-webkit-appearance:none;appearance:none;position:relative;width:100%;height:36px;margin:0;background:transparent}.gu input::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;background:#fff;border:3px solid #e8790c;box-shadow:0 2px 6px #0003}.gu input::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid #e8790c}.gu input.unset::-webkit-slider-thumb{border-color:#9aa6b8}.gu input:disabled{opacity:1}.gu-pv{position:absolute;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;border:3px solid #9aa6b8;background:#fff;opacity:.85}.gu-e{display:flex;justify-content:space-between;gap:10px;font-size:.85rem;color:var(--mut)}.gu-lg{display:flex;gap:16px;font-size:.85rem;color:var(--mut);margin-top:6px}.gu-d{display:inline-block;width:12px;height:12px;border-radius:50%;border:3px solid #e8790c;margin-right:5px;vertical-align:-2px}.gu-d.pv{border-color:#9aa6b8}
+.sc-s{display:block;width:100%;max-width:520px;margin:10px auto 0}.sc-p{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}.sc-pan{min-height:110px;border:2px dashed #cfd8e6;border-radius:14px;padding:10px;background:#fff;transition:transform .35s}.sc-pan.tgt,.sc-pan.hov{border-color:#e8790c;background:#fff4e8}.sc-pan h3{margin:0 0 6px;font-size:.95rem}.sc-c{display:inline-flex;align-items:center;margin:3px;border:1px solid #9db4d6;border-radius:18px;background:#eef3fa;overflow:hidden}.sc-c button{border:0;background:none;font:inherit;font-size:.9rem;color:#2f5f9b;padding:6px 4px 6px 11px;min-height:36px}.sc-c b{color:#e8790c;letter-spacing:1px;font-size:.8rem}.sc-o{color:#cfd8e6}.sc-c .sc-x{padding:6px 10px 6px 4px;color:#66758a}
+.pl-bar{display:flex;height:28px;border-radius:8px;overflow:hidden;font-size:.8rem;font-weight:600;color:#fff;background:#eef1f6}.pl-bar i{display:flex;align-items:center;justify-content:center;font-style:normal;transition:width .3s;white-space:nowrap;overflow:hidden}.pl-bk{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 8px}.pl-bk button{background:#eef3fa;border:1px dashed #9db4d6;border-radius:8px;padding:6px 10px;color:#2f5f9b;font:inherit;font-size:.9rem;min-height:36px}.pl-ta{min-height:220px}.pl-ck{list-style:none;padding:0;margin:8px 0 0;font-size:.92rem;color:#4d5d73}.pl-ck li{padding:2px 0}.pl-ck li.ok{color:var(--ok)}.pl-an{margin-top:10px}.pl-s{border-left:4px solid #2f5f9b;padding:3px 8px;margin:4px 0;font-size:.92rem}.pl-s.w{border-color:#e8790c;background:#fff4e8}
 .wr-ta{width:100%;min-height:90px;padding:12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;font-size:1.02rem;resize:vertical;box-sizing:border-box}.wr-ta.lock{background:#f1f3f7;border-style:dashed}.wr-sol{margin-top:12px;padding:12px 14px;border-radius:12px;background:#eef6f0;border:1px solid #cfe7d7}.wr-sol b{display:block;color:var(--ok);font-size:.85rem;margin-bottom:2px}button.sec.on{border-color:var(--blue);box-shadow:0 0 0 2px #2f5f9b33}
 .ghost{position:fixed;z-index:90;pointer-events:none;margin:0;box-shadow:0 10px 24px #1d2d4a40;transform:rotate(-3deg);border-color:var(--blue)!important}
 .col.hov,.gapb.hov{border-color:var(--blue);background:#e4eefb}
@@ -186,7 +190,7 @@ function solveW(type,k,o){const T=n=>{ST[k]={p:n,t:n}};
 const solvePairs=()=>{ST.begP={ok:PAIRS.map((_,i)=>i),err:[],sol:[],n:{}};ST.beg={p:PAIRS.length,t:PAIRS.length}};
 const solveTxt6=()=>{const {K}=txSrc(),M={},NM=K.c.length+K.r.length;K.c.forEach(k=>M[k]='c');K.r.forEach(k=>M[k]='r');ST.txtM=M;ST.txtL=[...K.c,...K.r];ST.txtR=2;ST.txtF=NM;ST.txtW=[];ST.txtA=BEL.map(q=>q[1]);ST.txtB=BEL.map((q,i)=>K.b[i][0]);ST.txt={p:NM+BEL.length*2,t:NM+BEL.length*2}};
 const solveCloze=()=>{ST.polG={0:0,1:1,2:2,3:3,4:4,5:5};ST.polR=2;ST.polX=[];ST.pol={p:6,t:6}};
-function solveK(k){const _s=(BOOK.def.steps||[]).find(x=>x.k===k),_w=_s&&_s.w;if(_w&&SOLVW[_w]){SOLVW[_w](k,UV(_s.o));return}if(_w==='txt'){solveTxt6();return}if(k==='beg')solvePairs();else if(k==='pol')solveCloze();else if(k==='txt')solveTxt6();else if(SEQK[k])solveSeq(k)}
+function solveK(k){const _s=(BOOK.def.steps||[]).find(x=>x.k===k),_w=_s&&_s.w;if(_w&&SOLVW[_w]){SOLVW[_w](k,CASEO(UV(_s.o)));return}if(_w==='txt'){solveTxt6();return}if(k==='beg')solvePairs();else if(k==='pol')solveCloze();else if(k==='txt')solveTxt6();else if(SEQK[k])solveSeq(k)}
 /* ---------- Bausteine ---------- */
 /* Zuordnen: Karten in Gruppen ziehen (oder Karte und dann Gruppe antippen).
    11.34: Nicht raten – nach „Prüfen“ sind richtige Karten fest; für falsche gibt es genau einen zweiten Versuch (ohne Punkte), danach steht die Lösung da. */
@@ -248,6 +252,79 @@ function write(k,o){const N=o.items.length,A=ST[k+'W']??=o.items.map(()=>({t:'',
   app.querySelector('[data-wc]')?.addEventListener('click',()=>{const n=a.t.trim().split(/\s+/).filter(Boolean).length;if(!n&&!confirm('Du hast noch nichts geschrieben. Trotzdem die Lösung zeigen? Deine Antwort kannst du danach nicht mehr eintragen.'))return;a.c=1;save();draw()});
   app.querySelectorAll('[data-wr]').forEach(b=>b.onclick=()=>{a.r=+b.dataset.wr;if(A.every(x=>x.r!=null))fin(k,A.reduce((s,x)=>s+x.r,0),2*N,A.map((x,i)=>x.r<2?i:-1).filter(i=>i>=0));else save();if(qi<N-1)qi++;draw()});
   app.querySelector('[data-wn]')?.addEventListener('click',()=>{qi++;draw()});app.querySelector('[data-wp]')?.addEventListener('click',()=>{qi--;draw()})});draw()}
+/* 11.85: Urteilswerkstatt – Fall wählen (choose), Bauchurteil und Vorher-nachher (gut), Werte-Waage (scale), Urteils-Bauplan (plan).
+   Meinungsaufgaben: Punkte gibt es fürs vollständige Bearbeiten, nie für eine bestimmte Meinung. Stationen mit o.cases zeigen den Inhalt des gewählten Falls. */
+const JS=k=>ST[k+'J']??={};
+const words=t=>String(t||'').trim().split(/\s+/).filter(Boolean).length;
+const bfore=o=>typeof o.before==='function'?o.before():o.before||'';
+const caseSteps=()=>(D.steps||[]).filter(s=>s.o&&s.o.cases);
+const caseUsed=()=>caseSteps().some(s=>{const k=s.key||s.k;return Object.keys(ST).some(x=>x===k||(x.startsWith(k)&&/^[A-Z]$/.test(x.slice(k.length))))});
+const CASEO=o=>o&&o.cases?Object.assign({},o,o.cases[ST.case]||o.cases[Object.keys(o.cases)[0]]):o;
+function choose(k,o){if(SOLV&&!ST[k])SOLVW.choose(k,o);
+ const draw=()=>keep(k,()=>{const c=ST.case,lk=c&&caseUsed(),sel=o.opts.find(x=>x[0]===c);
+  frame(o.title,bfore(o)+'<div class="card"><h2>'+esc(o.h)+'</h2><p style="margin:0 0 12px">'+esc(o.task)+'</p><div class="ch-g">'+o.opts.map(([id,t,d])=>'<button class="ch-o'+(c===id?' on':'')+'" data-ch="'+id+'" '+(lk&&c!==id?'disabled':'')+'><b>'+esc(t)+'</b><span>'+md(d)+'</span></button>').join('')+'</div>'
+   +(sel?fb(1,'✓ Dein Fall: <b>'+esc(sel[1])+'</b>. '+(lk?'Du arbeitest schon damit – der Fall bleibt jetzt fest.':'Wechseln geht noch, bis du in der nächsten Station anfängst.')):'')+'</div>');
+  app.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{if(caseUsed()&&ST.case)return;ST.case=b.dataset.ch;if(ST.ord)caseSteps().forEach(s=>delete ST.ord[s.key||s.k]);delete ST[k];fin(k,1,1);draw()})});draw()}
+const shiftTxt=(a,b,o)=>{const d=b-a;return Math.abs(d)<8?'Dein Urteil ist fast gleich geblieben.':'Dein Urteil hat sich deutlich in Richtung „'+esc(d>0?o.r:o.l)+'“ verschoben.'};
+const knobAt=v=>'calc(15px + (100% - 30px) * '+(v/100)+')';
+function gut(k,o){const J=JS(k);if(SOLV&&!ST[k])SOLVW.gut(k,o);let msg='';
+ const draw=()=>keep(k,()=>{const pv=o.from?ST[o.from+'J']:null,hasPv=pv&&pv.v!=null,set=J.v!=null,dn=!!ST[k];
+  frame(o.title,bfore(o)+'<div class="card"><h2>'+esc(o.h)+'</h2>'+(o.q?'<p style="font-size:1.08rem;margin:0 0 4px"><b>'+esc(o.q)+'</b></p>':'')+(o.task?'<p class="muted" style="margin:0">'+esc(o.task)+'</p>':'')
+   +'<div class="gu"><div class="gu-tr">'+(hasPv?'<i class="gu-pv" style="left:'+knobAt(pv.v)+'" title="vorher"></i>':'')+'<input type="range" min="0" max="100" value="'+(set?J.v:50)+'" data-gv class="'+(set?'':'unset')+'" '+(dn?'disabled':'')+' aria-label="Urteil"></div><div class="gu-e"><span>'+esc(o.l)+'</span><span>'+esc(o.r)+'</span></div>'
+   +(hasPv?'<div class="gu-lg"><span><i class="gu-d pv"></i>vorher: Bauchurteil</span><span><i class="gu-d"></i>jetzt</span></div>':'')+'</div>'
+   +(o.ask?'<p style="margin:14px 0 6px"><b>'+esc(o.ask)+'</b></p><textarea class="wr-ta'+(dn?' lock':'')+'" data-gt '+(dn?'readonly':'')+' placeholder="'+esc(o.ph||'Deine Antwort …')+'">'+esc(J.t||'')+'</textarea>':'')
+   +(dn?fb(1,'✓ Festgehalten.'+(hasPv?' '+shiftTxt(pv.v,J.v,o):'')+(o.done?' '+esc(o.done):'')):(msg?fb(0,msg):'')+'<div class="row"><div class="sp"></div><button class="pri" data-gok '+(set?'':'disabled')+'>'+esc(o.btn||'Festhalten')+'</button></div>')+'</div>'+(o.after||''));
+  const r=app.querySelector('[data-gv]');r.oninput=()=>{if(ST[k])return;J.v=+r.value;r.classList.remove('unset');const b=app.querySelector('[data-gok]');if(b)b.disabled=false;save()};
+  const ta=app.querySelector('[data-gt]');if(ta)ta.oninput=()=>{if(ST[k]){ta.value=J.t||'';return}J.t=ta.value;save()};
+  app.querySelector('[data-gok]')?.addEventListener('click',()=>{if(o.ask&&words(J.t)<(o.min||5)){msg='Schreibe noch etwas mehr – mindestens '+(o.min||5)+' Wörter.';draw();return}msg='';fin(k,1,1);draw()})});draw()}
+/* Werte-Waage: Wertmaßstäbe auf zwei Schalen legen, antippen = Gewicht 1–3, die Waage kippt */
+function scale(k,o){const J=JS(k);J.L??={};J.R??={};if(SOLV&&!ST[k])SOLVW.scale(k,o);let pick=null,msg='';const V=o.vals.map(v=>Array.isArray(v)?v[0]:v),need=o.need||3;
+ const sum=s=>Object.values(J[s]).reduce((a,b)=>a+b,0);
+ const draw=()=>keep(k,()=>{const dn=!!ST[k],d=sum('L')-sum('R'),off=Math.max(-20,Math.min(20,-d*5)),placed=Object.keys(J.L).length+Object.keys(J.R).length,heavy=d>0?o.sides[0]:d<0?o.sides[1]:null;
+  const chip=(s,i)=>'<span class="sc-c"><button data-sw="'+s+i+'" '+(dn?'disabled':'')+'>'+esc(V[i])+' <b>'+'●'.repeat(J[s][i])+'<span class="sc-o">'+'●'.repeat(3-J[s][i])+'</span></b></button>'+(dn?'':'<button class="sc-x" data-sx="'+s+i+'" aria-label="entfernen">×</button>')+'</span>';
+  const pan=(s,e)=>'<div class="sc-pan'+(pick!=null?' tgt':'')+'" data-pan="'+s+'" data-drop="'+s+'" style="transform:translateY('+Math.round((s==='L'?-off:off)*.5)+'px)"><h3>'+esc(o.sides[e])+'</h3>'+Object.keys(J[s]).map(i=>chip(s,+i)).join('')+(Object.keys(J[s]).length?'':'<span class="muted" style="font-size:.85rem">hierher ziehen oder antippen</span>')+'</div>';
+  frame(o.title,bfore(o)+'<div class="card"><h2>'+esc(o.h)+'</h2>'+(o.task?'<p style="margin:0">'+esc(o.task)+'</p>':'')
+   +(o.who?'<p style="margin:12px 0 4px"><b>Aus wessen Sicht wiegst du ab?</b></p><div class="pool">'+o.who.map((w,i)=>'<button class="chip'+(J.who===i?' on':'')+'" data-who="'+i+'" '+(dn?'disabled':'')+'>'+esc(w)+'</button>').join('')+'</div>':'')
+   +(()=>{const yl=34-off*.7,yr=34+off*.7,hang=(x,y)=>'<path d="M'+x+' '+y+'l-16 30M'+x+' '+y+'l16 30M'+(x-26)+' '+(y+30)+'h52" stroke-width="4"/>';return '<svg class="sc-s" viewBox="0 0 400 96" aria-hidden="true"><g stroke="#243247" stroke-width="3" stroke-linecap="round" fill="none"><path d="M200 34V92M168 92h64"/><path d="M60 '+yl+'L340 '+yr+'"/>'+hang(60,yl)+hang(340,yr)+'</g><circle cx="200" cy="34" r="6" fill="#e8790c"/></svg>'})()
+   +'<div class="sc-p">'+pan('L',0)+pan('R',1)+'</div>'
+   +(dn?'':'<p class="muted" style="margin:12px 0 4px;font-size:.9rem">Wertmaßstäbe: ziehen oder antippen und dann eine Schale antippen. In der Schale antippen = Gewicht ● ●● ●●●.</p><div class="pool">'+V.map((v,i)=>J.L[i]||J.R[i]?'':'<button class="chip'+(pick===i?' on':'')+'" data-sv="'+i+'" data-dg="'+i+'">'+esc(v)+'</button>').join('')+'</div>')
+   +'<p style="margin:14px 0 6px"><b>'+esc(o.ask||'Begründe deine Waage: Warum wiegt die eine Seite schwerer?')+'</b>'+(heavy?' <span class="muted">(gerade schwerer: '+esc(heavy)+')</span>':'')+'</p><textarea class="wr-ta'+(dn?' lock':'')+'" data-st '+(dn?'readonly':'')+' placeholder="'+esc(o.ph||'Für mich wiegt … schwerer als …, weil …')+'">'+esc(J.t||'')+'</textarea>'
+   +(dn?fb(1,'✓ Deine Waage ist festgehalten.'+(o.done?' '+esc(o.done):'')):(msg?fb(0,msg):'')+'<div class="row"><span class="muted" style="font-size:.88rem">'+placed+' von mindestens '+need+' Wertmaßstäben gelegt</span><div class="sp"></div><button class="pri" data-sok>Waage festhalten</button></div>')+'</div>'+(o.after||''));
+  const put=(i,s)=>{if(ST[k])return;delete J.L[i];delete J.R[i];J[s][i]=1;pick=null;save();draw()};
+  app.querySelectorAll('[data-sv]').forEach(b=>b.onclick=()=>{if(b.dataset.moved)return;pick=pick===+b.dataset.sv?null:+b.dataset.sv;draw()});
+  app.querySelectorAll('[data-pan]').forEach(p=>p.onclick=e=>{if(e.target.closest('button')||pick==null)return;put(pick,p.dataset.pan)});
+  app.querySelectorAll('[data-sw]').forEach(b=>b.onclick=()=>{if(ST[k])return;const s=b.dataset.sw[0],i=b.dataset.sw.slice(1);J[s][i]=J[s][i]%3+1;save();draw()});
+  app.querySelectorAll('[data-sx]').forEach(b=>b.onclick=()=>{const s=b.dataset.sx[0],i=b.dataset.sx.slice(1);delete J[s][i];save();draw()});
+  app.querySelectorAll('[data-who]').forEach(b=>b.onclick=()=>{J.who=+b.dataset.who;save();draw()});
+  dragify((i,s)=>put(+i,s));
+  const ta=app.querySelector('[data-st]');ta.oninput=()=>{if(ST[k]){ta.value=J.t||'';return}J.t=ta.value;save()};
+  app.querySelector('[data-sok]')?.addEventListener('click',()=>{const nL=Object.keys(J.L).length,nR=Object.keys(J.R).length;
+   msg=o.who&&J.who==null?'Wähle zuerst, aus wessen Sicht du abwägst.':nL+nR<need?'Lege mindestens '+need+' Wertmaßstäbe auf die Waage.':!nL||!nR?'Lege auf beide Seiten mindestens einen Wertmaßstab – auch die Gegenseite hat Werte.':words(J.t)<(o.min||8)?'Begründe deine Waage in mindestens '+(o.min||8)+' Wörtern.':'';
+   if(!msg)fin(k,1,1);draw()})});draw()}
+/* Urteils-Bauplan: Stellungnahme schreiben – Live-Balken Sach-/Werturteil, Satzbausteine, Check, danach Beispiel zum Vergleich */
+const WERT_RX=/(meiner meinung|meines erachtens|ich finde|ich meine|ich denke|ich glaube|ich bin der (meinung|ansicht|überzeugung)|ich bin dafür|ich bin dagegen|aus meiner sicht|für mich|ich halte|halte ich|finde ich|ich fordere|wir sollten|man sollte|sollte|sollten|dürfte nicht|darf nicht|dürfen nicht|wiegt|schwerer als|wichtiger als|überwieg|abwäg|ungerecht|nicht fair|unfair|inakzeptabel|nicht akzeptabel|deshalb fordere|!)/i;
+const HALT_RX=/(meiner meinung|meines erachtens|ich finde|aus meiner sicht|ich bin der (meinung|ansicht|überzeugung)|ich halte|halte ich|finde ich|für mich|ich bin dafür|ich bin dagegen|ich denke|ich meine)/i;
+const PC_RX=/(einerseits|andererseits|dafür spricht|dagegen spricht|jedoch|allerdings|zwar|trotzdem|vorteil|nachteil|auf der einen seite|auf der anderen seite|im gegensatz)/gi;
+const WEIGH_RX=/(schwerer|wichtiger als|überwieg|abwäg|wiegt|höher als|mehr gewicht|zwar[^.!?]*aber|auch wenn)/i;
+function planStats(t,o){const S=String(t||'').split(/(?<=[.!?])\s+|\n+/).map(s=>s.trim()).filter(Boolean);let ws=0,ww=0;const cls=S.map(s=>{const n=words(s),w=WERT_RX.test(s);if(w)ww+=n;else ws+=n;return w});const all=ws+ww,pW=all?Math.round(ww/all*100):0;
+ const vals=(o.vals||[]).filter(v=>new RegExp(Array.isArray(v)?v[1]:v,'i').test(t)).map(v=>Array.isArray(v)?v[0]:v);const pc=new Set((String(t).match(PC_RX)||[]).map(x=>x.toLowerCase())).size;const [lo,hi]=o.ratio||[20,50];
+ const C=[[all>=(o.minW||80),'Umfang: mindestens '+(o.minW||80)+' Wörter ('+all+')'],[pc>=2,'Sachurteil mit Pro und Contra (einerseits/andererseits, jedoch …)'],[vals.length>=(o.minV||2),'mindestens '+(o.minV||2)+' Wertmaßstäbe benannt'+(vals.length?' ('+vals.join(', ')+')':'')],[HALT_RX.test(t),'eigene Haltung erkennbar („meiner Meinung nach …“)']];
+ if(o.weigh)C.push([WEIGH_RX.test(t),'Wertmaßstäbe gegeneinander abgewogen („wiegt schwerer als …“)']);C.push([all>0&&pW>=lo&&pW<=hi,'Aufbau: etwa 2/3 Sachurteil, 1/3 Werturteil']);return {S,cls,all,pW,C}}
+function plan(k,o){const J=JS(k);if(SOLV&&!ST[k])SOLVW.plan(k,o);let ta=null;
+ const meter=()=>{const st=planStats(J.t,o),pS=st.all?100-st.pW:0;return '<div class="pl-bar">'+(st.all?'<i style="width:'+pS+'%;background:#2f5f9b">'+(pS>=18?'Sachurteil '+pS+' %':'')+'</i><i style="width:'+st.pW+'%;background:#e8790c">'+(st.pW>=18?'Werturteil '+st.pW+' %':'')+'</i>':'<i style="width:100%;color:#66758a">Noch leer – fang einfach an</i>')+'</div><div class="gu-e" style="margin-top:4px"><span>Ziel: etwa 2/3 Sachurteil · 1/3 Werturteil</span><span>Erkennung ungefähr</span></div>'
+  +'<ul class="pl-ck">'+st.C.map(([ok,l])=>'<li class="'+(ok?'ok':'')+'">'+(ok?'✓':'○')+' '+esc(l)+'</li>').join('')+'</ul>'};
+ const draw=()=>keep(k,()=>{const dn=!!J.d,st=planStats(J.t,o);
+  frame(o.title,bfore(o)+'<div class="card"><h2>'+esc(o.h)+'</h2>'+(o.task?'<p style="margin:0 0 10px">'+md(o.task)+'</p>':'')
+   +'<div data-pm>'+meter()+'</div>'
+   +(dn?'':'<div class="pl-bk">'+o.bricks.map((b,i)=>'<button data-pb="'+i+'">'+esc(b)+'</button>').join('')+'</div>')
+   +'<textarea class="wr-ta pl-ta'+(dn?' lock':'')+'" data-pt '+(dn?'readonly':'')+' placeholder="'+esc(o.ph||'Deine Stellungnahme …')+'">'+esc(J.t||'')+'</textarea>'
+   +'<details class="pl-an"><summary>Satz-Analyse zeigen</summary><div data-pa>'+st.S.map((s,i)=>'<div class="pl-s'+(st.cls[i]?' w':'')+'">'+esc(s)+'</div>').join('')+'</div><p class="muted" style="font-size:.85rem;margin:6px 0 0">Blau = Sachurteil (Fakten, Argumente) · Orange = Werturteil (Wertung, eigene Haltung, Appell)</p></details>'
+   +(dn?'<div class="wr-sol"><b>Beispiel zum Vergleichen</b>'+md(o.sol).replace(/\n/g,'<br>')+'</div>'+fb(1,'✓ Abgeschlossen: '+ST[k].p+' von '+ST[k].t+' Check-Punkten erfüllt. Vergleiche mit dem Beispiel: Was hast du anders gewichtet?'):'<div class="row"><span class="muted" style="font-size:.88rem">Nach „Fertig“ ist der Text gesperrt und du siehst ein Beispiel.</span><div class="sp"></div><button class="pri" data-pok '+(st.all>=(o.minW||80)?'':'disabled')+'>Fertig</button></div>')+'</div>'+(o.after||''));
+  ta=app.querySelector('[data-pt]');
+  const upd=()=>{const s=planStats(J.t,o);app.querySelector('[data-pm]').innerHTML=meter();const pa=app.querySelector('[data-pa]');if(pa)pa.innerHTML=s.S.map((x,i)=>'<div class="pl-s'+(s.cls[i]?' w':'')+'">'+esc(x)+'</div>').join('');const b=app.querySelector('[data-pok]');if(b)b.disabled=s.all<(o.minW||80)};
+  ta.oninput=()=>{if(J.d){ta.value=J.t||'';return}J.t=ta.value;save();upd()};
+  app.querySelectorAll('[data-pb]').forEach(b=>b.onclick=()=>{if(J.d)return;const x=o.bricks[+b.dataset.pb].replace(/\s*…\s*$/,' '),a=ta.selectionStart??ta.value.length,e=ta.selectionEnd??a,pre=ta.value.slice(0,a),sp=pre&&!/\s$/.test(pre)?' ':'';ta.setRangeText(sp+x,a,e,'end');J.t=ta.value;save();upd();ta.focus()});
+  app.querySelector('[data-pok]')?.addEventListener('click',()=>{if(!confirm('Fertig? Danach kannst du den Text nicht mehr ändern.'))return;const s=planStats(J.t,o);J.d=1;fin(k,s.C.filter(c=>c[0]).length,s.C.length,s.C.map((c,i)=>c[0]?-1:i).filter(i=>i>=0));draw()})});draw()}
 /* ---------- 11.57: Einheit aus Daten (keine Funktionen aus der Datei) ---------- */
 const D=BOOK.def;
 const H=s=>String(s??'').replace(/src="cm-img:([\w-]+)"/g,(m,k)=>'src="'+((BOOK.img&&BOOK.img[k]&&BOOK.img[k].src)||'')+'"').replace(/<cm-img k="([\w-]+)"><\/cm-img>/g,(m,k)=>(BOOK.img&&BOOK.img[k]&&BOOK.img[k].html)||'');
@@ -259,8 +336,13 @@ const txSrc=()=>D.txt?{T:D.txt.T,K:D.txt.K}:{T:{t:'',p:[]},K:{c:[],r:[],b:[]}};
 const TXTCAP=()=>SAFE(H(D.txt&&D.txt.cap));
 const HEROSVG=()=>SAFE(D.hero||'');
 const PDFX=im=>(D.pdf||[]).map(b=>b&&b.__img?im(b.__img,b.w,b.h):b&&b.t==='img'&&b.img&&b.img.__img?(IM[b.img.__img]?Object.assign({},b,{img:IM[b.img.__img]}):null):b);
-const WIDGET={write:(k,o)=>write(k,o),sorter:(k,o)=>sorter(k,o),swiper:(k,o)=>swiper(k,o),quiz:(k,o)=>quiz(k,o),seqTask:(k,o)=>seqTask(k,o),pol:()=>runPol(),beg:()=>runBeg(),txt:()=>runTxt(),end:()=>runEnd(),txtmap:(k,o)=>wTxtMap(k,o),find:(k,o)=>wFind(k,o),feat:(k,o)=>wFeat(k,o)};
-const STEPS=(D.steps||[]).filter(s=>WIDGET[s.w]).map(s=>{const o=s.o?UV(s.o):null;return [s.k,s.t,s.d,s.min,()=>WIDGET[s.w](s.key||s.k,o)]});
+const WIDGET={choose:(k,o)=>choose(k,o),gut:(k,o)=>gut(k,o),scale:(k,o)=>scale(k,o),plan:(k,o)=>plan(k,o),write:(k,o)=>write(k,o),sorter:(k,o)=>sorter(k,o),swiper:(k,o)=>swiper(k,o),quiz:(k,o)=>quiz(k,o),seqTask:(k,o)=>seqTask(k,o),pol:()=>runPol(),beg:()=>runBeg(),txt:()=>runTxt(),end:()=>runEnd(),txtmap:(k,o)=>wTxtMap(k,o),find:(k,o)=>wFind(k,o),feat:(k,o)=>wFeat(k,o)};
+const STEPS=(D.steps||[]).filter(s=>WIDGET[s.w]).map(s=>{const o=s.o?UV(s.o):null;return [s.k,s.t,s.d,s.min,()=>caseRun(s,o)]});
+/* 11.85: Stationen mit o.cases brauchen erst einen gewählten Fall (Baustein „choose“) */
+function caseRun(s,o){const k=s.key||s.k;if(!o||!o.cases)return WIDGET[s.w](k,o);const ch=(D.steps||[]).find(x=>x.w==='choose');
+ if(!ST.case&&ch&&SOLV)SOLVW.choose(ch.key||ch.k,UV(ch.o));
+ if(!ST.case&&ch){frame('','<div class="card"><h2>Wähle zuerst deinen Fall</h2><p style="margin:0">Diese Station gehört zu dem Fall, den du bearbeitest.</p><div class="row"><div class="sp"></div><button class="pri" data-gch>Zur Fallauswahl ›</button></div></div>');app.querySelector('[data-gch]').onclick=()=>goStep(ch.k);return}
+ return WIDGET[s.w](k,CASEO(o))}
 /* 11.67: Karten-Überblender – <div class="cm-fade" data-a="k1" data-b="k2" data-la="…" data-lb="…"></div>: zwei Bilder übereinander, ein Schieberegler blendet das zweite ein und aus */
 {const fi=()=>document.querySelectorAll('.cm-fade:not([data-on])').forEach(el=>{el.dataset.on='1';const I=(BOOK&&BOOK.img)||{},a=I[el.dataset.a],b=I[el.dataset.b];if(!a||!b||!a.src||!b.src)return;
  el.innerHTML='<div class="cf-row"><button type="button" class="cf-l on">'+esc(el.dataset.la||'')+'</button><input type="range" min="0" max="100" value="0" aria-label="Überblenden"><button type="button" class="cf-r">'+esc(el.dataset.lb||'')+'</button></div><div class="cf-st"><img alt="" src="'+a.src+'"><img alt="" class="cf-b" src="'+b.src+'" style="opacity:0"></div>';
@@ -270,7 +352,10 @@ const STEPS=(D.steps||[]).filter(s=>WIDGET[s.w]).map(s=>{const o=s.o?UV(s.o):nul
  new MutationObserver(fi).observe(document.body,{childList:true,subtree:true});fi()}
 /* 11.61: Vorschau – Pfeiltasten blättern durch die Stationen (nicht beim Tippen, nicht im Schülermodus) */if(/[?&]vorschau=1/.test(location.search)){window.cmPreviewStep=d=>{const ks=STEPS.map(s=>s[0]),i=CURK?ks.indexOf(CURK):-1,j=i+d;if(j<0){if(CURK)home();return}if(j<ks.length)goStep(ks[j])};addEventListener('keydown',e=>{if((e.key!=='ArrowLeft'&&e.key!=='ArrowRight')||e.altKey||e.metaKey||e.ctrlKey||e.shiftKey)return;const t=e.target;if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))return;e.preventDefault();cmPreviewStep(e.key==='ArrowRight'?1:-1)})}
 
-const SOLVW={write:(k,o)=>{ST[k+'W']=o.items.map(()=>({t:'',c:1,r:2}));ST[k]={p:2*o.items.length,t:2*o.items.length}},txtmap:(k,o)=>{ST.txtA={...o.ph};ST.txtR=2;ST.txtXA=[];ST.txtB=o.tq.map((q,i)=>({w:[],r:o.ans[i],e:1}));ST.txt={p:4+o.tq.length,t:4+o.tq.length}},
+const SOLVW={choose:(k,o)=>{ST.case=ST.case||o.opts[0][0];ST[k]={p:1,t:1}},gut:(k,o)=>{const J=JS(k);if(J.v==null)J.v=o.from?25:40;if(o.ask&&!J.t)J.t='(Lösungsansicht)';ST[k]={p:1,t:1}},
+ scale:(k,o)=>{const J=JS(k);J.L={0:3,1:2};J.R={2:2};if(o.who)J.who=0;J.t=J.t||'(Lösungsansicht)';ST[k]={p:1,t:1}},
+ plan:(k,o)=>{const J=JS(k);J.t=String(o.sol||'').replace(/\*\*/g,'');J.d=1;const s=planStats(J.t,o);ST[k]={p:s.C.filter(c=>c[0]).length,t:s.C.length}},
+ write:(k,o)=>{ST[k+'W']=o.items.map(()=>({t:'',c:1,r:2}));ST[k]={p:2*o.items.length,t:2*o.items.length}},txtmap:(k,o)=>{ST.txtA={...o.ph};ST.txtR=2;ST.txtXA=[];ST.txtB=o.tq.map((q,i)=>({w:[],r:o.ans[i],e:1}));ST.txt={p:4+o.tq.length,t:4+o.tq.length}},
  find:(k,o)=>{ST.bfA=o.qs.map(()=>({n:1,ok:1,e:1}));ST.bf={p:o.qs.length,t:o.qs.length}},
  feat:(k,o)=>{const F=o.feat;ST.feS={},ST.feR={},ST.feP={},ST.feX={};F.forEach((f,e)=>{ST.feS[e]=f.map((x,i)=>x[1]?i:-1).filter(i=>i>=0);ST.feR[e]=2;ST.feP[e]=ST.feS[e].length;ST.feX[e]=[]});const t=F.reduce((a,f)=>a+f.filter(x=>x[1]).length,0);ST.bfe={p:t,t}}};
 
@@ -467,6 +552,13 @@ const doneCount=()=>STEPS.filter(x=>ST[x[0]]).length;
 /* 11.33: nur Punkte je Station und die Nummern der Fehler – passt immer in einen QR-Code */
 function payObj(){const sv={},x={},w={};for(const [k] of STEPS){const v=ST[k];if(v){sv[k]=v.p!=null?[v.p,v.t]:1;if(v.x&&v.x.length)x[k]=v.x.join('.')}}
  /* 11.80: freie Antworten (Baustein „write“) gehen mit – die Lehrkraft sieht und bewertet sie in der Übersicht */
+ /* 11.85: Urteilswerkstatt – Fall, Regler, Waage und Stellungnahme gehen mit */
+ for(const s of (D.steps||[])){const k=s.key||s.k,J=ST[k+'J'],o=CASEO(s.o?UV(s.o):{})||{},lab=s.t||k;
+  if(s.w==='choose'&&ST.case){const c=(o.opts||[]).find(x=>x[0]===ST.case);if(c)w['Fall']=c[1]}
+  if(!J)continue;
+  if(s.w==='gut'&&J.v!=null)w[lab]='Regler: '+J.v+' von 100 ('+(o.l||'')+' ↔ '+(o.r||'')+')'+(J.t?'\n'+J.t.trim():'');
+  else if(s.w==='scale'){const V=(o.vals||[]).map(v=>Array.isArray(v)?v[0]:v),side=x=>Object.entries(J[x]||{}).map(([i,g])=>V[i]+' '+'●'.repeat(g)).join(', ')||'–';w[lab]=(o.who&&J.who!=null?'Sicht: '+o.who[J.who]+'\n':'')+(o.sides?o.sides[0]:'links')+': '+side('L')+'\n'+(o.sides?o.sides[1]:'rechts')+': '+side('R')+(J.t?'\n'+J.t.trim():'')}
+  else if(s.w==='plan'&&(J.t||'').trim()){const st=planStats(J.t,o);w[lab]=J.t.trim()+'\nCheck: '+st.C.filter(c=>c[0]).length+' von '+st.C.length+' · Werturteil ca. '+st.pW+' %'}}
  for(const s of (D.steps||[]))if(s.w==='write'){const A=ST[(s.key||s.k)+'W'];if(!A)continue;const o=s.o||{};A.forEach((a,i)=>{const t=(a.t||'').trim();if(!t&&a.r==null)return;const lab=(o.items?.[i]?.[2])||((s.t||s.k)+' · '+(i+1));w[lab]=(t||'(nichts geschrieben)')+(a.r!=null?'\nSelbst: '+['✗ noch nicht','≈ teilweise','✓ passt'][a.r]:'')})}
  return {u:UID,v:2,c:ST.cls||'',n:ST.me,dv:ST.dv,ts:Date.now(),b:BOOK?1:0,s:sv,x,...(Object.keys(w).length?{w}:{})}}
 const qrSvg=(t,o)=>{try{return classroomQrSvg(t,Object.assign({ecc:'L',boost:false,dark:'#243247',border:2},o||{}))}catch{return ''}};
