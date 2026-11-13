@@ -5785,6 +5785,11 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
  document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const t=e.target;if(!t.matches?.('.exam-combined-page input.task-grade-input'))return;e.preventDefault();e.stopImmediatePropagation();t.blur()},true);
  /* Notenspiegel: Überschrift mit Art und Thema der Arbeit, darunter Fach · Klasse. */
  classroomHooks.add('showNotenspiegel','exam-overview: Notenspiegel-Titel',{after(r,[subject,pageKey]){nsTitle(subject,pageKey)}});
+ /* 11.75: Notenspiegel einer Klassenarbeit/Klausur – Datenschutzmodus automatisch an, beim Schließen wieder aus (nur wenn er vorher aus war) */
+ classroomHooks.add('showNotenspiegel','exam-overview: Datenschutz beim Notenspiegel',{after(r,[subject,pageKey]){try{
+  const P=window.parent!==window?window.parent.classroomPrivacy:window.classroomPrivacy;if(!P)return;
+  const exam=!(typeof isTestsPage==='function'&&isTestsPage(subject,pageKey))&&!window.classroomNsTask&&taskGradeSystem(subject,pageKey)!=='participation'&&subjectExamGroups(subject).some(g=>!['tests','performance','homework','halfYear','schoolYear','semester','quarterSummary'].includes(g.type)&&g.pages?.includes(pageKey));
+  if(!exam||P.active())return;P.toggle(true);const d=document.getElementById('notenspiegelDialog');d?.addEventListener('close',()=>{try{if(P.active())P.toggle(false)}catch{}},{once:true})}catch(e){console.warn(e)}}});
  function nsTitle(subject,pageKey){const t=document.getElementById('notenspiegelTitle');if(!t)return;let label=null;const f=window.classroomNsTask;
   if(f&&f.pageKey===pageKey){const task=(taskPageData(subject,pageKey).tasks||[]).find(x=>x.id===f.taskId);label='Test – '+(task?.name||'Test')}
   else if(typeof isTestsPage==='function'&&isTestsPage(subject,pageKey)){const rest=t.textContent.split(' – ').slice(1).join(' – ');label='Tests'+(rest?' – '+rest:'')}
@@ -7792,15 +7797,15 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   if(table.matches('.test-detail-results'))return {kind:'grade',key:r=>parseSign(cellText(r.cells[r.cells.length-1])),entry:r=>hasEntry(r,r.cells[r.cells.length-1])};
   if(table.matches('.task-table')){const th=hcells.filter(c=>c.matches('.task-result-heading')&&!c.matches('.mh-pq,.pq-mean-col,.previous-quarter-history-cell,.task-add-column,.task-space-column')).at(-1);if(!th)return null;
    const pos=colPos(hcells,th),part=table.matches('.participation-task-table');
-   return {kind:'grade',key:r=>{const c=cellAt(r,pos);const t=cellText(c);return part?parseSign(t):parse(t)},entry:r=>hasEntry(r,cellAt(r,pos))}}
+   return {kind:'grade',key:r=>{const c=cellAt(r,pos);const t=cellText(c);return part?parseSign(t):parse(t)},entry:r=>hasEntry(r,cellAt(r,pos)),/* 11.75: bei gleicher Note entscheiden die Rohpunkte */raw:part?null:r=>{let s=0,n=0;for(const i of r.querySelectorAll('td:not(:first-child) input:not([type=checkbox]):not([type=radio])')){const v=Number(String(i.value).trim().replace(',','.'));if(String(i.value).trim()&&Number.isFinite(v)){s+=v;n++}}return n?s:null}}}
   return null}
- function sortRows(table,mode,keyFn,kind){
+ function sortRows(table,mode,keyFn,kind,rawFn){
   const body=table.tBodies[0];if(!body||table.contains(document.activeElement))return;
   const rows=trs(body).filter(r=>r.cells.length>=2);if(rows.length<2)return;ensureIdx(body);
-  const items=rows.map(r=>({r,i:idxOf(r),n:(r.cells[0]?.querySelector('input')?.value||r.cells[0]?.textContent||'').trim(),v:mode==='grade'?keyFn(r):null}));
+  const items=rows.map(r=>({r,i:idxOf(r),n:(r.cells[0]?.querySelector('input')?.value||r.cells[0]?.textContent||'').trim(),v:mode==='grade'?keyFn(r):null,w:mode==='grade'&&rawFn?rawFn(r):null}));
   let f;if(mode!=='grade')f=rev()?(a,b)=>b.i-a.i:(a,b)=>a.i-b.i;
   else if(kind==='count')f=rev()?(a,b)=>a.v-b.v||a.i-b.i:(a,b)=>b.v-a.v||a.i-b.i;
-  else{const P=pts(),r=!rev();f=(a,b)=>{if(a.v===null&&b.v===null)return a.i-b.i;if(a.v===null)return r?1:-1;if(b.v===null)return r?-1:1;const d=P?a.v-b.v:b.v-a.v;return (r?-d:d)||a.i-b.i}}
+  else{const P=pts(),r=!rev();f=(a,b)=>{if(a.v===null&&b.v===null)return a.i-b.i;if(a.v===null)return r?1:-1;if(b.v===null)return r?-1:1;const d=P?a.v-b.v:b.v-a.v,w=(a.w!=null&&b.w!=null)?a.w-b.w:0;return (r?-d:d)||(r?-w:w)||a.i-b.i}}
   const sorted=[...items].sort(f);const cur=trs(body);
   const same=sorted.every((x,k)=>x.r===cur.filter(r=>r.cells.length>=2)[k]);
   if(!same){const anchor=rows.at(-1).nextSibling;for(const x of sorted)body.insertBefore(x.r,anchor)}
@@ -7832,7 +7837,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    let max=0;if(sp.kind==='count')for(const r of trs(t.tBodies[0]).filter(r=>r.cells.length>=2))max=Math.max(max,sp.key(r)||0);
    const eff=mode;open=0;
    const seg=ensureSeg(panel,t,mode,sp.kind);if(seg){seg.dataset.open=String(open);seg.dataset.max=String(max);paint(seg,eff)}
-   sortRows(t,eff,sp.key,sp.kind)}
+   sortRows(t,eff,sp.key,sp.kind,sp.raw)}
  }
  // ---------- Karten (iPhone)
  function placePhone(){
