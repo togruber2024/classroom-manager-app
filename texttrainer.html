@@ -45,6 +45,7 @@ textarea{width:100%;min-height:96px;padding:12px;border:1px solid #cfd8e6;border
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem;color:var(--mut);margin-top:8px}.legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
 table{border-collapse:collapse;width:100%}td,th{padding:7px 8px;border-bottom:1px solid #eef1f6;text-align:left;font-size:.95rem}th{color:var(--mut);font-weight:650;font-size:.85rem}
 .empty{text-align:center;padding:40px 20px}
+.stand{display:flex;align-items:center;gap:6px;color:#9aa6b6;margin-top:2px}.stand .lnk{min-height:32px;padding:0;font-size:.88rem}
 .tabs button.lk{opacity:.45;cursor:not-allowed}
 .vo-l{font-family:"Iowan Old Style","Palatino",Georgia,serif;font-size:1.9rem;line-height:1.3;margin:6px 0 2px}.vo-i{color:var(--mut);font-size:.95rem}.vo-d{font-size:1.4rem;font-weight:700;color:var(--ok);margin-top:10px}
 .vo-in{width:100%;min-height:52px;margin-top:14px;padding:0 14px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;font-size:1.15rem}
@@ -75,14 +76,35 @@ let AB=null;
 /* 11.45: Abgabe-QR – gezählt: fertige Sätze (mit Selbsteinschätzung) und davon ohne Hilfe; Klassenliste kommt mit dem Link (t.cm) */
 function ttScore(){const N=T.s.length,X=ST.sent||{};let fe=0,oh=0,og=0,vb=0;const w={},RT=['✗ noch nicht','≈ teilweise','✓ passt'];for(let i=0;i<N;i++){const x=X[i];if(!x)continue;if(x.r!=null){fe++;if(!x.h&&!x.og)oh++}if(x.og&&x.cmp)og++;if(x.vb&&x.vb.trim())vb++;
   /* 11.73: Übersetzungen gehen mit der Abgabe – eigene Fassung, Verbesserung, Selbsteinschätzung */if((x.tx||'').trim()||(x.vb||'').trim()||x.cmp)w['Satz '+String(i+1).padStart(2,'0')]=((x.tx||'').trim()||'(nichts geschrieben)')+(x.vb&&x.vb.trim()?'\n↳ Verbesserung: '+x.vb.trim():'')+(x.og&&x.cmp?'\n⚠ Musterübersetzung ohne eigene Übersetzung angesehen':'')+(x.r!=null?'\nSelbst: '+RT[x.r]:'')+(x.h?' · '+x.h+' Hilfe'+(x.h>1?'n':''):'')}
- let rs=0;try{rs=+localStorage.getItem(key()+'-rs')||0}catch{}const hin=[og?og+(og>1?' Sätze':' Satz')+' ohne eigene Übersetzung verglichen':'',vb?vb+'× verbessert':'',rs?rs+'× alles zurückgesetzt':''].filter(Boolean);const vs=VOC().length&&ST.vo&&ST.vo.first!=null?{vo:[ST.vo.first,VOC().length]}:{};return {s:{...vs,fe:[fe,N],oh:[oh,N]},x:{},w:hin.length?{'Hinweise':hin.join(' · '),...w}:w}}
+ let rs=0;try{rs=+localStorage.getItem(key()+'-rs')||0}catch{}
+ const fd=d=>{try{return new Date(d).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}catch{return ''}};
+ const ldh=(ST.ld||[]).map(x=>'⚠ Zwischenstand geladen am '+fd(x.at)+(x.saved?' (gesichert '+fd(x.saved)+')':'')+(x.nm?' · Datei von '+x.nm:'')+(x.same?'':' · von einem anderen Gerät'));
+ const hin=[...ldh,og?og+(og>1?' Sätze':' Satz')+' ohne eigene Übersetzung verglichen':'',vb?vb+'× verbessert':'',rs?rs+'× alles zurückgesetzt':''].filter(Boolean);const vs=VOC().length&&ST.vo&&ST.vo.first!=null?{vo:[ST.vo.first,VOC().length]}:{};return {s:{...vs,fe:[fe,N],oh:[oh,N]},x:{},w:hin.length?{'Hinweise':hin.join('\n'),...w}:w}}
 function start(t){T=t;ST=ls.get(key())||{pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};
  /* 11.77: wer schon vor dem Vokabel-Schritt angefangen hat, wird nicht ausgesperrt */if(!ST.vo&&!ST.voFree&&(ST.pp.length||ST.ppTaps||Object.keys(ST.sent).length||Object.keys(ST.pr).length||ST.evFirst!=null))ST.voFree=true;
  tab=voLocked()?'vo':(T.pp||[]).length?'pp':'vo';ls.set('cm-texttrainer-last',t);if(t.cm&&t.cm.u&&window.cmAbgabe&&!AB)AB=cmAbgabe({u:t.cm.u,title:t.title,cls:t.cm.c,names:t.cm.n,score:ttScore});render()}
 async function init(){let t=null;try{t=await fromHash(location.hash||window.CM_EMBED_HASH||'')}catch(e){console.warn(e)}
  if(!valid(t))t=ls.get('cm-texttrainer-last');if(valid(t))return start(t);
  app.innerHTML='<div class="card empty"><h1>Übersetzungs-Trainer</h1><p class="muted">Hier ist noch kein Text geladen. Öffne den Link deiner Lehrkraft oder lade die Datei, die sie dir geschickt hat.</p><button class="pri" data-load>Datei laden …</button></div>';$('[data-load]').onclick=()=>$('#file').click()}
-$('#file').onchange=async()=>{const f=$('#file').files?.[0];if(!f)return;try{const t=JSON.parse(await f.text());if(!valid(t))throw 0;start(t)}catch{alert('Diese Datei ist kein Text für den Übersetzungs-Trainer.')}};
+$('#file').onchange=async()=>{const f=$('#file').files?.[0];$('#file').value='';if(!f)return;let d=null;try{d=JSON.parse(await f.text())}catch{}
+ /* 11.78: Zwischenstand-Datei – Text und Arbeitsstand zusammen, auch auf einem anderen iPad */
+ if(d&&d.type==='classroom-text-trainer-stand'&&valid(d.t)&&d.st){const k='cm-texttrainer-'+(d.t.title||''),old=ls.get(k),has=old&&(old.pp?.length||Object.keys(old.sent||{}).length||old.vo);
+  if(has&&!confirm('Zwischenstand vom '+new Date(d.saved||Date.now()).toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'})+' laden? Dein Stand auf diesem Gerät wird dadurch ersetzt.'))return;
+  const ak=abKey(d.t),cur=ak?ls.get(ak)||{}:{},st=d.st;
+  (st.ld=Array.isArray(st.ld)?st.ld:[]).push({at:Date.now(),saved:d.saved||'',nm:d.ab?.me||'',same:!!(d.ab?.dv&&cur.dv&&d.ab.dv===cur.dv)});
+  if(ak&&d.ab?.me){cur.me=d.ab.me;if(d.ab.cls)cur.cls=d.ab.cls;ls.set(ak,cur)}
+  ls.set(k,st);ls.set('cm-texttrainer-last',d.t);
+  /* neu laden, damit die Abgabe den Namen aus der Datei übernimmt */if(AB||location.hash){if(!location.hash||T?.title===d.t.title){location.reload();return}}
+  T=null;start(d.t);return}
+ if(valid(d))return start(d);alert('Diese Datei ist kein Text und kein Zwischenstand für den Übersetzungs-Trainer.')};
+const abKey=t=>t?.cm?.u?'cm-abgabe-'+t.cm.u:null;
+async function saveStand(btn){/* der Name aus der Abgabe reist mit – wer die Datei eines anderen lädt, gibt unter dessen Namen ab, und die Lehrkraft sieht es */
+ const ak=abKey(T),ab=ak?ls.get(ak):null;const d={type:'classroom-text-trainer-stand',v:1,saved:new Date().toISOString(),t:T,st:ST,ab:ab?{me:ab.me||'',dv:ab.dv||'',cls:ab.cls||''}:null};
+ const nm=('Zwischenstand '+T.title).replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/Ä/g,'Ae').replace(/Ö/g,'Oe').replace(/Ü/g,'Ue').replace(/ß/g,'ss').replace(/·/g,'-').normalize('NFD').replace(/[^\x20-\x7e]/g,'').replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,' ').trim()+'.json',file=new File([JSON.stringify(d)],nm,{type:'application/json'}),old=btn.textContent;
+ try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:nm});btn.textContent='✓ gesichert'}
+  else{const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=nm;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);btn.textContent='✓ geladen'}}
+ catch(e){if(e&&e.name==='AbortError')return;alert('Der Zwischenstand konnte nicht gesichert werden: '+(e&&e.message||e))}
+ setTimeout(()=>{if(btn.isConnected)btn.textContent=old},2500)}
 /* ---------- Hilfen für Wörter ---------- */
 const words=si=>T.s[si].t.split(' ');
 function textHtml(cls){return T.s.map((s,si)=>words(si).map((w,i)=>'<span class="w '+(cls?cls(si,i)||'':'')+'" data-s="'+si+'" data-i="'+i+'">'+esc(w)+'</span>').join(' ')).join(' ')}
@@ -96,7 +118,8 @@ const voLocked=()=>VOC().length>0&&!(ST.vo&&ST.vo.done)&&!ST.voFree&&!PREV;
 const tabsOf=()=>TABS0.filter(([k])=>k==='vo'?VOC().length:k==='pp'?(T.pp||[]).length:k==='ev'?(T.ev||[]).length:k==='pr'?(T.pron||[]).length:true).map(([k,l])=>[k,k==='pp'?HU().name:l]);
 function badge(k){if(k==='vo')return ST.vo?.done?'✓':'';if(k==='pp')return (ST.pp.length)+'/'+T.pp.length;if(k==='ev')return ST.evOk?'✓':'';if(k==='pr')return Object.keys(ST.pr).length+'/'+T.pron.length;if(k==='tr')return Object.values(ST.sent).filter(x=>x.r!=null).length+'/'+T.s.length;return ''}
 function badgeOk(k){if(k==='vo')return !!ST.vo?.done;if(k==='pp')return ST.pp.length===T.pp.length;if(k==='ev')return !!ST.evOk;if(k==='pr')return Object.keys(ST.pr).length===T.pron.length;if(k==='tr')return Object.values(ST.sent).filter(x=>x.r!=null).length===T.s.length;return false}
-function render(){closePop();clearInterval(voT);{const av=tabsOf().map(x=>x[0]);if(!av.includes(tab)){const ord=TABS0.map(x=>x[0]);tab=ord.slice(ord.indexOf(tab)).find(k=>av.includes(k))||av[0]}}app.innerHTML='<h1>'+esc(T.title)+'</h1><div class="muted">'+esc(T.sub||'')+'</div><div class="tabs">'+tabsOf().map(([k,l])=>'<button data-tab="'+k+'" class="'+(k===tab?'on':'')+(k!=='vo'&&voLocked()?' lk':'')+'"'+(k!=='vo'&&voLocked()?' title="Erst die Vokabeln"':'')+'>'+(k!=='vo'&&voLocked()?'🔒 ':'')+l+(badge(k)?'<i class="'+(badgeOk(k)?'ok':'')+'">'+badge(k)+'</i>':'')+'</button>').join('')+'</div><div id="body"></div>';
+function render(){closePop();clearInterval(voT);{const av=tabsOf().map(x=>x[0]);if(!av.includes(tab)){const ord=TABS0.map(x=>x[0]);tab=ord.slice(ord.indexOf(tab)).find(k=>av.includes(k))||av[0]}}app.innerHTML='<h1>'+esc(T.title)+'</h1><div class="muted">'+esc(T.sub||'')+'</div>'+(PREV?'':'<div class="stand"><button class="lnk" data-sv title="Speichert Text und Arbeitsstand als Datei – z. B. in „Dateien“. Später über „laden“ weitermachen, auch auf einem anderen iPad.">💾 Zwischenstand sichern</button><span>·</span><button class="lnk" data-ld>laden …</button></div>')+'<div class="tabs">'+tabsOf().map(([k,l])=>'<button data-tab="'+k+'" class="'+(k===tab?'on':'')+(k!=='vo'&&voLocked()?' lk':'')+'"'+(k!=='vo'&&voLocked()?' title="Erst die Vokabeln"':'')+'>'+(k!=='vo'&&voLocked()?'🔒 ':'')+l+(badge(k)?'<i class="'+(badgeOk(k)?'ok':'')+'">'+badge(k)+'</i>':'')+'</button>').join('')+'</div><div id="body"></div>';
+ app.querySelector('[data-sv]')?.addEventListener('click',e=>saveStand(e.currentTarget));app.querySelector('[data-ld]')?.addEventListener('click',()=>$('#file').click());
  app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(b.dataset.tab!=='vo'&&voLocked())return;tab=b.dataset.tab;render();scrollTo(0,0)});({vo:renderVO,pp:renderPP,ev:renderEV,pr:renderPR,tr:renderTR,res:renderRes})[tab]($('#body'))}
 const nextTab=k=>{const a=tabsOf().map(x=>x[0]);return a[a.indexOf(k)+1]||'res'};
 const refreshTabs=()=>app.querySelectorAll('[data-tab]').forEach(b=>{const k=b.dataset.tab,v=badge(k);let i=b.querySelector('i');if(v){if(!i){i=document.createElement('i');b.append(i)}i.textContent=v;i.className=badgeOk(k)?'ok':''}});
