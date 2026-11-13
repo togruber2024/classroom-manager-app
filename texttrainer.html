@@ -45,6 +45,14 @@ textarea{width:100%;min-height:96px;padding:12px;border:1px solid #cfd8e6;border
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.85rem;color:var(--mut);margin-top:8px}.legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
 table{border-collapse:collapse;width:100%}td,th{padding:7px 8px;border-bottom:1px solid #eef1f6;text-align:left;font-size:.95rem}th{color:var(--mut);font-weight:650;font-size:.85rem}
 .empty{text-align:center;padding:40px 20px}
+.tabs button.lk{opacity:.45;cursor:not-allowed}
+.vo-l{font-family:"Iowan Old Style","Palatino",Georgia,serif;font-size:1.9rem;line-height:1.3;margin:6px 0 2px}.vo-i{color:var(--mut);font-size:.95rem}.vo-d{font-size:1.4rem;font-weight:700;color:var(--ok);margin-top:10px}
+.vo-in{width:100%;min-height:52px;margin-top:14px;padding:0 14px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;font-size:1.15rem}
+.vo-bar{height:8px;border-radius:4px;background:#eef2f8;overflow:hidden;margin-top:14px}.vo-bar i{display:block;height:100%;background:var(--blue);border-radius:4px}
+.vo-cd{height:8px;border-radius:4px;background:#eef2f8;overflow:hidden;margin-top:16px}.vo-cd i{display:block;height:100%;width:100%;background:#d97f06;transform-origin:left}
+.pvh{font-size:.82rem;color:#9aa6b6;text-align:center;margin:-6px 0 6px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.pvs{padding-left:3px;overflow:hidden;max-height:14em;transition:max-height .32s ease,opacity .32s ease,transform .32s ease}.pvs.hid{max-height:0;opacity:0;transform:translateY(-1.2em)}
+.swp{touch-action:pan-x pinch-zoom}
 @media (max-width:700px){.text{font-size:1.15rem}}
 </style></head><body><div class="wrap" id="app"></div><input type="file" id="file" hidden>
 <script src="unit-pdf.js"></script><script src="qr-code.js"></script><script src="abgabe.js"></script><script>
@@ -55,7 +63,8 @@ const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(
 const clean=w=>w.replace(/[.,:;!?„“"]/g,'');
 const beep=()=>{};/* keine Töne: im Klassenraum mit 30 iPads störend */
 const ls={get:k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
-let T=null,ST=null,tab='pp',cur=0;
+let T=null,ST=null,tab='vo',cur=0,PV=false,voT=null;
+const PREV=document.documentElement.classList.contains('cm-vorschau');
 const key=()=>'cm-texttrainer-'+(T?.title||'');
 const save=()=>{ls.set(key(),ST);try{AB?.update()}catch{}};
 /* ---------- Laden: Link (#z1.… / #j1.…) oder Datei ---------- */
@@ -66,8 +75,10 @@ let AB=null;
 /* 11.45: Abgabe-QR – gezählt: fertige Sätze (mit Selbsteinschätzung) und davon ohne Hilfe; Klassenliste kommt mit dem Link (t.cm) */
 function ttScore(){const N=T.s.length,X=ST.sent||{};let fe=0,oh=0,og=0,vb=0;const w={},RT=['✗ noch nicht','≈ teilweise','✓ passt'];for(let i=0;i<N;i++){const x=X[i];if(!x)continue;if(x.r!=null){fe++;if(!x.h&&!x.og)oh++}if(x.og&&x.cmp)og++;if(x.vb&&x.vb.trim())vb++;
   /* 11.73: Übersetzungen gehen mit der Abgabe – eigene Fassung, Verbesserung, Selbsteinschätzung */if((x.tx||'').trim()||(x.vb||'').trim()||x.cmp)w['Satz '+String(i+1).padStart(2,'0')]=((x.tx||'').trim()||'(nichts geschrieben)')+(x.vb&&x.vb.trim()?'\n↳ Verbesserung: '+x.vb.trim():'')+(x.og&&x.cmp?'\n⚠ Musterübersetzung ohne eigene Übersetzung angesehen':'')+(x.r!=null?'\nSelbst: '+RT[x.r]:'')+(x.h?' · '+x.h+' Hilfe'+(x.h>1?'n':''):'')}
- let rs=0;try{rs=+localStorage.getItem(key()+'-rs')||0}catch{}const hin=[og?og+(og>1?' Sätze':' Satz')+' ohne eigene Übersetzung verglichen':'',vb?vb+'× verbessert':'',rs?rs+'× alles zurückgesetzt':''].filter(Boolean);return {s:{fe:[fe,N],oh:[oh,N]},x:{},w:hin.length?{'Hinweise':hin.join(' · '),...w}:w}}
-function start(t){T=t;ST=ls.get(key())||{pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};ls.set('cm-texttrainer-last',t);if(t.cm&&t.cm.u&&window.cmAbgabe&&!AB)AB=cmAbgabe({u:t.cm.u,title:t.title,cls:t.cm.c,names:t.cm.n,score:ttScore});render()}
+ let rs=0;try{rs=+localStorage.getItem(key()+'-rs')||0}catch{}const hin=[og?og+(og>1?' Sätze':' Satz')+' ohne eigene Übersetzung verglichen':'',vb?vb+'× verbessert':'',rs?rs+'× alles zurückgesetzt':''].filter(Boolean);const vs=VOC().length&&ST.vo&&ST.vo.first!=null?{vo:[ST.vo.first,VOC().length]}:{};return {s:{...vs,fe:[fe,N],oh:[oh,N]},x:{},w:hin.length?{'Hinweise':hin.join(' · '),...w}:w}}
+function start(t){T=t;ST=ls.get(key())||{pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};
+ /* 11.77: wer schon vor dem Vokabel-Schritt angefangen hat, wird nicht ausgesperrt */if(!ST.vo&&!ST.voFree&&(ST.pp.length||ST.ppTaps||Object.keys(ST.sent).length||Object.keys(ST.pr).length||ST.evFirst!=null))ST.voFree=true;
+ tab=voLocked()?'vo':(T.pp||[]).length?'pp':'vo';ls.set('cm-texttrainer-last',t);if(t.cm&&t.cm.u&&window.cmAbgabe&&!AB)AB=cmAbgabe({u:t.cm.u,title:t.title,cls:t.cm.c,names:t.cm.n,score:ttScore});render()}
 async function init(){let t=null;try{t=await fromHash(location.hash||window.CM_EMBED_HASH||'')}catch(e){console.warn(e)}
  if(!valid(t))t=ls.get('cm-texttrainer-last');if(valid(t))return start(t);
  app.innerHTML='<div class="card empty"><h1>Übersetzungs-Trainer</h1><p class="muted">Hier ist noch kein Text geladen. Öffne den Link deiner Lehrkraft oder lade die Datei, die sie dir geschickt hat.</p><button class="pri" data-load>Datei laden …</button></div>';$('[data-load]').onclick=()=>$('#file').click()}
@@ -78,13 +89,47 @@ function textHtml(cls){return T.s.map((s,si)=>words(si).map((w,i)=>'<span class=
 /* ---------- Kopf und Reiter ---------- */
 /* 11.20: Formen-Jäger je Lektion (T.hunt), Tabs ohne Daten entfallen */
 const HU=()=>Object.assign({name:'Passiv-Jäger',task:'Tippe alle Formen im <b>Perfekt</b> und <b>Plusquamperfekt Passiv</b> an (PPP + Form von esse).',hint:'Nicht jede Form auf -erat oder -ērunt ist Passiv; ein Infinitiv wie „positam esse“ zählt hier nicht.',short:'Passivformen',legend:'Perfekt und Plusquamperfekt Passiv'},T&&T.hunt||{});
-const TABS0=[['pp',''],['ev','Zeitstrahl'],['pr','Wer ist gemeint?'],['tr','Übersetzen'],['res','Auswertung']];
-const tabsOf=()=>TABS0.filter(([k])=>k==='pp'?(T.pp||[]).length:k==='ev'?(T.ev||[]).length:k==='pr'?(T.pron||[]).length:true).map(([k,l])=>[k,k==='pp'?HU().name:l]);
-function badge(k){if(k==='pp')return (ST.pp.length)+'/'+T.pp.length;if(k==='ev')return ST.evOk?'✓':'';if(k==='pr')return Object.keys(ST.pr).length+'/'+T.pron.length;if(k==='tr')return Object.values(ST.sent).filter(x=>x.r!=null).length+'/'+T.s.length;return ''}
-function badgeOk(k){if(k==='pp')return ST.pp.length===T.pp.length;if(k==='ev')return !!ST.evOk;if(k==='pr')return Object.keys(ST.pr).length===T.pron.length;if(k==='tr')return Object.values(ST.sent).filter(x=>x.r!=null).length===T.s.length;return false}
-function render(){closePop();{const av=tabsOf().map(x=>x[0]);if(!av.includes(tab)){const ord=TABS0.map(x=>x[0]);tab=ord.slice(ord.indexOf(tab)).find(k=>av.includes(k))||av[0]}}app.innerHTML='<h1>'+esc(T.title)+'</h1><div class="muted">'+esc(T.sub||'')+'</div><div class="tabs">'+tabsOf().map(([k,l])=>'<button data-tab="'+k+'" class="'+(k===tab?'on':'')+'">'+l+(badge(k)?'<i class="'+(badgeOk(k)?'ok':'')+'">'+badge(k)+'</i>':'')+'</button>').join('')+'</div><div id="body"></div>';
- app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render();scrollTo(0,0)});({pp:renderPP,ev:renderEV,pr:renderPR,tr:renderTR,res:renderRes})[tab]($('#body'))}
+/* 11.77: neue Reihenfolge – erst Vokabeln und Grammatik, dann übersetzen, danach Inhalt */
+const TABS0=[['vo','Vokabular bekannt?'],['pp',''],['tr','Übersetzen'],['ev','Zeitstrahl'],['pr','Wer ist gemeint?'],['res','Auswertung']];
+const VOC=()=>(T&&Array.isArray(T.voc)?T.voc:[]);
+const voLocked=()=>VOC().length>0&&!(ST.vo&&ST.vo.done)&&!ST.voFree&&!PREV;
+const tabsOf=()=>TABS0.filter(([k])=>k==='vo'?VOC().length:k==='pp'?(T.pp||[]).length:k==='ev'?(T.ev||[]).length:k==='pr'?(T.pron||[]).length:true).map(([k,l])=>[k,k==='pp'?HU().name:l]);
+function badge(k){if(k==='vo')return ST.vo?.done?'✓':'';if(k==='pp')return (ST.pp.length)+'/'+T.pp.length;if(k==='ev')return ST.evOk?'✓':'';if(k==='pr')return Object.keys(ST.pr).length+'/'+T.pron.length;if(k==='tr')return Object.values(ST.sent).filter(x=>x.r!=null).length+'/'+T.s.length;return ''}
+function badgeOk(k){if(k==='vo')return !!ST.vo?.done;if(k==='pp')return ST.pp.length===T.pp.length;if(k==='ev')return !!ST.evOk;if(k==='pr')return Object.keys(ST.pr).length===T.pron.length;if(k==='tr')return Object.values(ST.sent).filter(x=>x.r!=null).length===T.s.length;return false}
+function render(){closePop();clearInterval(voT);{const av=tabsOf().map(x=>x[0]);if(!av.includes(tab)){const ord=TABS0.map(x=>x[0]);tab=ord.slice(ord.indexOf(tab)).find(k=>av.includes(k))||av[0]}}app.innerHTML='<h1>'+esc(T.title)+'</h1><div class="muted">'+esc(T.sub||'')+'</div><div class="tabs">'+tabsOf().map(([k,l])=>'<button data-tab="'+k+'" class="'+(k===tab?'on':'')+(k!=='vo'&&voLocked()?' lk':'')+'"'+(k!=='vo'&&voLocked()?' title="Erst die Vokabeln"':'')+'>'+(k!=='vo'&&voLocked()?'🔒 ':'')+l+(badge(k)?'<i class="'+(badgeOk(k)?'ok':'')+'">'+badge(k)+'</i>':'')+'</button>').join('')+'</div><div id="body"></div>';
+ app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(b.dataset.tab!=='vo'&&voLocked())return;tab=b.dataset.tab;render();scrollTo(0,0)});({vo:renderVO,pp:renderPP,ev:renderEV,pr:renderPR,tr:renderTR,res:renderRes})[tab]($('#body'))}
+const nextTab=k=>{const a=tabsOf().map(x=>x[0]);return a[a.indexOf(k)+1]||'res'};
 const refreshTabs=()=>app.querySelectorAll('[data-tab]').forEach(b=>{const k=b.dataset.tab,v=badge(k);let i=b.querySelector('i');if(v){if(!i){i=document.createElement('i');b.append(i)}i.textContent=v;i.className=badgeOk(k)?'ok':''}});
+/* ---------- 0 Vokabular bekannt? (11.77) ----------
+   Alle Wiederholungsvokabeln der Lektion; nach jeder Runde werden die falschen je 10 Sekunden mit Lösung gezeigt,
+   dann kommen nur diese noch einmal dran – so lange, bis alle sitzen. Erst danach sind die anderen Übungen frei. */
+const vPlain=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/j/g,'i');
+const vParts=m=>String(m||'').replace(/\([^)]*\)/g,' ').split(/[,;\/]| bzw\. | oder /).map(x=>vPlain(x).replace(/\b(der|die|das|ein|eine|einen|sich|etw\.?|jdn\.?|jdm\.?|jmd\.?)\b/g,' ').replace(/[^a-zß\s-]/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
+const vLev=(a,b)=>{if(Math.abs(a.length-b.length)>1)return 9;const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]};
+const vNear=(x,y)=>x===y||(y.length>=6&&vLev(x,y)<=1);
+const vOk=(inp,m)=>{const v=vParts(inp)[0]||'';if(!v)return false;return vParts(m).some(p=>vNear(v,p)||p.split(' ').some(w=>w.length>=4&&vNear(v,w)))};
+const VO_SEC=10;
+function voState(){const N=VOC().length;if(!ST.vo||!Array.isArray(ST.vo.q))ST.vo={r:1,q:shuffle(VOC().map((_,i)=>i)),i:0,ok:[],no:[],a:{},ph:'ask',li:0,first:null,done:false};return ST.vo}
+function renderVO(b){const V=voState(),W=VOC(),N=W.length;clearInterval(voT);
+ const head='<p class="task"><b>Vokabular bekannt?</b> Wiederholungsvokabeln dieser Lektion – so lange, bis alle sitzen. Erst dann geht es weiter.</p>';
+ if(V.done){b.innerHTML='<div class="card">'+head+'<div class="fb ok">✓ Alle '+N+' Vokabeln sitzen'+(V.r>1?' – nach '+V.r+' Runden':' – gleich in der ersten Runde')+'.'+(V.first!=null&&V.r>1?' In Runde 1 waren '+V.first+' von '+N+' richtig.':'')+'</div><div class="row"><div class="sp"></div><button class="pri" data-go>Weiter ›</button></div></div>';
+  b.querySelector('[data-go]').onclick=()=>{tab=nextTab('vo');render();scrollTo(0,0)};return}
+ if(V.ph==='ask'){const n=V.q.length,w=W[V.q[V.i]];
+  b.innerHTML='<div class="card">'+head+'<div class="muted">Runde '+V.r+(V.r>1?' · nur die Wörter, die noch nicht saßen':'')+' · Wort '+(V.i+1)+' von '+n+'</div><div class="vo-bar"><i style="width:'+(100*V.i/n)+'%"></i></div>'
+   +'<div style="margin-top:18px"><div class="vo-l">'+esc(w[0])+'</div>'+(w[1]?'<div class="vo-i">'+esc(w[1])+'</div>':'')+'</div>'
+   +'<input class="vo-in" id="va" placeholder="Deutsche Bedeutung …" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next">'
+   +'<div class="row"><span class="muted">Die Lösungen siehst du am Ende der Runde.</span><div class="sp"></div><button class="pri" data-vn>'+(V.i<n-1?'Weiter ›':'Runde beenden')+'</button></div></div>';
+  const inp=b.querySelector('#va'),go=()=>{const k=V.q[V.i],v=inp.value.trim();V.a[k]=v;(vOk(v,W[k][2])?V.ok:V.no).push(k);V.i++;if(V.i>=n){V.ph='sum';if(V.first==null)V.first=V.ok.length;if(!V.no.length)V.done=true}save();refreshTabs();renderVO(b);if(V.done)render()};
+  b.querySelector('[data-vn]').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go()}};setTimeout(()=>inp.focus({preventScroll:true}),30);return}
+ if(V.ph==='sum'){const n=V.ok.length+V.no.length;
+  b.innerHTML='<div class="card">'+head+'<div class="fb info">Runde '+V.r+': <b>'+V.ok.length+' von '+n+'</b> richtig.</div><p style="margin:12px 0 0">Jetzt siehst du die <b>'+V.no.length+'</b> '+(V.no.length>1?'Vokabeln':'Vokabel')+', die noch nicht saß'+(V.no.length>1?'en':'')+', mit Lösung – jede '+VO_SEC+' Sekunden lang. Präge sie dir ein. Danach '+(V.no.length>1?'kommen sie':'kommt sie')+' noch einmal dran.</p><div class="row"><div class="sp"></div><button class="pri" data-vl>Lösungen ansehen</button></div></div>';
+  b.querySelector('[data-vl]').onclick=()=>{V.ph='learn';V.li=0;save();renderVO(b)};return}
+ if(V.ph==='learn'){const k=V.no[V.li],w=W[k],mine=V.a[k]||'';
+  b.innerHTML='<div class="card">'+head+'<div class="muted">Einprägen · '+(V.li+1)+' von '+V.no.length+' · noch <b id="vs">'+VO_SEC+'</b> s</div><div class="vo-cd"><i id="vc"></i></div>'
+   +'<div style="margin-top:18px"><div class="vo-l">'+esc(w[0])+'</div>'+(w[1]?'<div class="vo-i">'+esc(w[1])+'</div>':'')+'<div class="vo-d">'+esc(w[2])+'</div>'+(mine?'<div class="muted" style="margin-top:8px">Deine Antwort: <s>'+esc(mine)+'</s></div>':'<div class="muted" style="margin-top:8px">Du hattest nichts geschrieben.</div>')+'</div></div>';
+  const t0=Date.now(),vc=b.querySelector('#vc'),vs=b.querySelector('#vs');
+  voT=setInterval(()=>{if(!vc.isConnected){clearInterval(voT);return}const el=(Date.now()-t0)/1000;vc.style.transform='scaleX('+Math.max(0,1-el/VO_SEC)+')';vs.textContent=Math.max(0,Math.ceil(VO_SEC-el));
+   if(el>=VO_SEC){clearInterval(voT);V.li++;if(V.li>=V.no.length){V.r++;V.q=shuffle(V.no);V.no=[];V.ok=[];V.a={};V.i=0;V.ph='ask'}save();renderVO(b)}},100);return}}
 /* ---------- 1 Passiv-Jäger ---------- */
 function ppIdx(si,i){return T.pp.findIndex(([s,ws])=>s===si&&ws.includes(i))}
 function renderPP(b){const found=new Set(ST.pp),max=T.pp.length*2;if(ST.ppTaps==null){ST.ppDone=false;ST.ppTaps=found.size+ST.ppMiss}/* alter Stand mit „Fehlende zeigen“ wieder freigeben */
@@ -121,8 +166,14 @@ function showPR(b,k){const [si,wi,ans]=T.pron[k];const done=ST.pr[k]!=null;
   +'<div class="card"><div class="muted" style="font-size:.85rem;margin-bottom:4px">Zusammenhang</div><div class="text" style="font-size:1.05rem;line-height:1.8">'+[si-1,si,si+1].filter(x=>x>=0&&x<T.s.length).map(x=>x===si?'<b>'+esc(T.s[x].t)+'</b>':esc(T.s[x].t)).join(' ')+'</div></div>';
  const mark=()=>{const got=ST.pr[k];if(got==null)return;b.querySelectorAll('[data-p]').forEach(c=>{if(c.dataset.p===ans)c.classList.add('ok');else if(c.dataset.p===got)c.classList.add('no')});$('#fb').innerHTML=got===ans?'<div class="fb ok">✓ Richtig: '+esc(ans)+'</div>':'<div class="fb no">Gemeint ist: '+esc(ans)+'</div>'};
  b.querySelectorAll('[data-p]').forEach(c=>c.onclick=()=>{if(ST.pr[k]!=null)return;ST.pr[k]=c.dataset.p;save();beep(c.dataset.p===ans);mark();refreshTabs()});mark();
- b.querySelector('[data-prev]').onclick=()=>showPR(b,k-1);b.querySelector('[data-next]').onclick=()=>{if(k<T.pron.length-1)showPR(b,k+1);else{tab='tr';render()}}}
+ b.querySelector('[data-prev]').onclick=()=>showPR(b,k-1);b.querySelector('[data-next]').onclick=()=>{if(k<T.pron.length-1)showPR(b,k+1);else{tab=nextTab('pr');render()}}}
 /* ---------- 4 Übersetzen ---------- */
+let swAt=0;const pvLab=()=>PV?'▴ vorherigen Satz ausblenden':'▾ nach unten wischen: vorheriger Satz';
+function pvSet(on){PV=!!on;$('#pv')?.classList.toggle('hid',!PV);const h=$('#pvh');if(h)h.textContent=pvLab()}
+function pvBind(c){let y0=null,x0=0;c.querySelector('#pvh').onclick=()=>pvSet(!PV);
+ c.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||e.target.closest('textarea,input'))return;y0=e.clientY;x0=e.clientX});
+ c.addEventListener('pointerup',e=>{if(y0==null)return;const dy=e.clientY-y0,dx=e.clientX-x0;y0=null;if(Math.abs(dy)>45&&Math.abs(dy)>Math.abs(dx)*1.5){swAt=Date.now();pvSet(dy>0)}});
+ c.addEventListener('pointercancel',()=>{y0=null})}
 const STEPS=['Prädikat','Subjekt','Gliedsätze','Übersetzen'];
 function sstate(si){return ST.sent[si]??={step:0,p:[],s:[],g:[],miss:0,h:0,look:0,tx:'',r:null,bld:null}}
 function renderTR(b){cur=Math.min(cur,T.s.length-1);
@@ -139,7 +190,8 @@ function showSent(b,si){const S=T.s[si],X=sstate(si),ws=words(si);if(X.step===2&
  const steps='<div class="steps">'+STEPS.map((l,i)=>(i===2&&!S.g.length)?'':'<span class="'+(i===X.step?'on':i<X.step?'done':'')+'">'+(i+1)+' '+l+'</span>').join('')+'</div>';
  /* 11.76: Satz mit Gliedsatz – ausdrücklich nach Prädikat und Subjekt des Hauptsatzes fragen */const HS=S.g.length?' des <b>Hauptsatzes</b>':'';
  const task=['Tippe das <b>Prädikat</b>'+HS+' an – alle Wörter, die dazugehören (auch die Form von esse).'+(HS?' Gliedsätze (z. B. mit quī, cum, ut, quod) haben ein eigenes Prädikat – das ist hier nicht gemeint.':''),'Tippe das <b>Subjekt</b>'+HS+' an. Steckt es nur im Prädikat? Dann tippe auf den Knopf darunter.','Tippe in jeden <b>Gliedsatz</b> – er wird eingerückt. So siehst du, was zum Hauptsatz gehört.','<b>Übersetze</b> den Satz. Gepunktet unterstrichene Wörter kannst du nachschlagen – überlege aber zuerst selbst.'][X.step];
- b.innerHTML='<div class="card">'+steps+'<p class="task">'+task+'</p><div class="text" id="st">'+txt+'</div>'
+ /* 11.77: nach unten wischen zeigt den vorherigen Satz über dem aktuellen, nach oben wischen blendet ihn aus */
+ b.innerHTML='<div class="card'+(si?' swp':'')+'" id="sc">'+(si?'<div class="pvh" id="pvh">'+pvLab()+'</div>':'')+steps+'<p class="task">'+task+'</p>'+(si?'<div class="text pvs'+(PV?'':' hid')+'" id="pv">'+esc(T.s[si-1].t)+'</div>':'')+'<div class="text" id="st">'+txt+'</div>'
   +(X.step===1?'<div class="row"><button class="sec" data-nosub>Subjekt steckt im Prädikat</button></div>':'')
   +(X.step<3?'<div class="row"><span class="muted" id="left"></span><div class="sp"></div><button class="lnk" data-solve>Lösung zeigen</button></div>':'')
   +'<div class="legend"><span style="--c:#2f5f9b">Prädikat</span><span style="--c:#1f8a4c">Subjekt</span></div><div id="fb"></div></div>'
@@ -147,7 +199,8 @@ function showSent(b,si){const S=T.s[si],X=sstate(si),ws=words(si);if(X.step===2&
  const left=()=>{const l=$('#left');if(!l||!need)return;const got=X.step===0?X.p:X.s;const n=need.filter(i=>!(got||[]).includes(i)).length;l.textContent=n?'Noch '+n+' Wort'+(n>1?'e':''):''};left();
  const fb=(ok,t)=>{$('#fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'">'+t+'</div>'};
  const advance=()=>{X.step++;save();setTimeout(()=>showSent(b,si),X.step===3?250:450)};
- b.querySelector('#st').onclick=e=>{const w=e.target.closest('.w');if(!w)return;const i=+w.dataset.i;
+ if(si)pvBind(b.querySelector('#sc'));
+ b.querySelector('#st').onclick=e=>{if(Date.now()-swAt<450)return;const w=e.target.closest('.w');if(!w)return;const i=+w.dataset.i;
   if(X.step===0){if(S.p.includes(i)){if(!X.p.includes(i)){X.p.push(i);w.classList.add('p');beep(true);save();left();if(S.p.every(x=>X.p.includes(x))){fb(true,'✓ Prädikat gefunden.');advance()}}}else if(inSub(i)>=0&&!S.p.some(x=>inSub(x)===inSub(i))){beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700);fb(false,'Dieses Wort gehört zum '+esc(/^Gliedsatz/.test(S.g[inSub(i)][2]||'')?S.g[inSub(i)][2]:'Gliedsatz')+'. Gesucht ist das Prädikat des Hauptsatzes.')}else{X.miss++;save();beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700);fb(false,'Das ist nicht das Prädikat'+(S.g.length?' des Hauptsatzes':'')+'. Suche die finite Verbform'+(S.p.length>1?' (es sind '+S.p.length+' Wörter)':'')+'.')}}
   else if(X.step===1){if(!S.su.length){X.miss++;save();beep(false);fb(false,'Hier gibt es kein eigenes Subjekt-Wort – es steckt im Prädikat.');return}
    if(S.su.includes(i)){X.s=Array.isArray(X.s)?X.s:[];if(!X.s.includes(i)){X.s.push(i);w.classList.add('s');beep(true);save();left();if(S.su.every(x=>X.s.includes(x))){fb(true,'✓ Subjekt gefunden.');advance()}}}else if(inSub(i)>=0&&!S.su.some(x=>inSub(x)===inSub(i))){beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700);fb(false,'Dieses Wort gehört zu einem Gliedsatz. Gesucht ist das Subjekt des Hauptsatzes.')}else{X.miss++;save();beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700);fb(false,'Das ist nicht das Subjekt. Frage: Wer oder was '+(S.p.length?'„'+esc(clean(ws[S.p[0]]))+'“':'tut etwas')+'? Achte auf den Nominativ.')}}
@@ -166,7 +219,7 @@ function renderTranslate(c,si){const S=T.s[si],X=sstate(si);const H=S.h;
  c.querySelectorAll('[data-h]').forEach(x=>x.onclick=()=>{const n=+x.dataset.h;if(!used.includes(n)){used.push(n);X.h++;save()}showH()});showH();
  const showCmp=()=>{const box=c.querySelector('#cmp');box.innerHTML='<div class="model"><b>Musterübersetzung</b>'+esc(S.de)+'</div><div class="vbx"><b>Meine Verbesserung</b> <span class="muted">(freiwillig)</span><textarea id="vb" placeholder="Hier kannst du deine Übersetzung verbessern …">'+esc(X.vb||'')+'</textarea></div><div class="muted" style="margin-top:10px">Wie gut passt deine Übersetzung?</div><div class="rate"><button data-r="2">✓ Passt</button><button data-r="1">≈ Teilweise</button><button data-r="0">✗ Noch nicht</button></div>';
   {const vb=box.querySelector('#vb');vb.oninput=()=>{X.vb=vb.value;save()}}
-  box.querySelectorAll('[data-r]').forEach(r=>{if(X.r!=null&&+r.dataset.r===X.r)r.style.borderColor='#2f5f9b';r.onclick=()=>{X.r=+r.dataset.r;save();refreshTabs();if(cur<T.s.length-1){cur++;renderTR($('#body'));scrollTo({top:0,behavior:'smooth'})}else{tab='res';render()}}})};
+  box.querySelectorAll('[data-r]').forEach(r=>{if(X.r!=null&&+r.dataset.r===X.r)r.style.borderColor='#2f5f9b';r.onclick=()=>{X.r=+r.dataset.r;save();refreshTabs();if(cur<T.s.length-1){cur++;renderTR($('#body'));scrollTo({top:0,behavior:'smooth'})}else{tab=nextTab('tr');render();scrollTo(0,0)}}})};
  c.querySelector('[data-cmp]').onclick=()=>{const nw=X.tx.trim().split(/\s+/).filter(Boolean).length;if(nw<3&&!confirm((nw?'Du hast erst sehr wenig geschrieben.':'Du hast noch nichts geschrieben.')+' Nach dem Vergleichen kannst du deine Übersetzung nicht mehr ändern. Trotzdem die Musterübersetzung zeigen?'))return;X.cmp=true;X.og=nw<3;save();renderTranslate(c,si)};if(X.cmp)showCmp()}
 function buildPuzzle(c,si){const S=T.s[si],X=sstate(si),parts=S.h[2];X.bld??={order:shuffle(parts.map((_,i)=>i)),pick:[]};const P=X.bld;
  const bk=c.querySelector('#bk'),bd=c.querySelector('#bd');
@@ -185,6 +238,7 @@ addEventListener('pointerdown',e=>{if(popEl&&!popEl.contains(e.target)&&!e.targe
 function renderRes(b){const sents=T.s.map((_,i)=>ST.sent[i]||{});const rated=sents.filter(x=>x.r!=null);const prOk=T.pron.filter((p,k)=>ST.pr[k]===p[2]).length;
  const lab={2:'✓ passt',1:'≈ teilweise',0:'✗ noch nicht'};const talk=sents.map((x,i)=>({x,i})).filter(({x})=>x.r===0||x.r===1||(x.h||0)>=3);
  b.innerHTML='<div class="card"><p class="task"><b>Deine Auswertung</b></p><table><tr><th>Übung</th><th>Ergebnis</th></tr>'
+  +(VOC().length?'<tr><td>Vokabular bekannt?</td><td>'+(ST.vo?.done?'alle '+VOC().length+' sicher · '+(ST.vo.r>1?ST.vo.r+' Runden':'1 Runde')+' · Runde 1: '+ST.vo.first+' von '+VOC().length:ST.voFree&&!ST.vo?'—':'noch nicht fertig')+'</td></tr>':'')
   +'<tr><td>'+HU().name+'</td><td>'+ST.pp.length+' von '+T.pp.length+' gefunden · '+(ST.ppTaps||0)+' Versuche'+(ST.ppMiss?' · '+ST.ppMiss+' Fehlgriffe':'')+'</td></tr>'
   +'<tr><td>Zeitstrahl</td><td>'+(ST.evFirst==null?'noch offen':'im ersten Versuch '+ST.evFirst+' von '+T.ev.length+' richtig'+(ST.evOk?' · gelöst':''))+'</td></tr>'
   +'<tr><td>Wer ist gemeint?</td><td>'+prOk+' von '+T.pron.length+' richtig</td></tr>'
@@ -194,7 +248,7 @@ function renderRes(b){const sents=T.s.map((_,i)=>ST.sent[i]||{});const rated=sen
   +'<div class="row"><button class="lnk" data-reset>Alles zurücksetzen</button></div>';
  b.querySelectorAll('[data-go]').forEach(x=>x.onclick=()=>{cur=+x.dataset.go;tab='tr';render()});
  const pn=b.querySelector('#pn');pn.value=ls.get('cm-texttrainer-name')||'';b.querySelector('[data-pdf]').onclick=()=>{ls.set('cm-texttrainer-name',pn.value.trim());printNotes(pn.value.trim(),b.querySelector('[data-pdf]'))};
- b.querySelector('[data-reset]').onclick=()=>{if(!confirm('Alle Eingaben zu diesem Text löschen und neu beginnen?'+(AB?' Deine Lehrkraft sieht in der Abgabe, dass du zurückgesetzt hast.':'')))return;try{const k2=key()+'-rs';localStorage.setItem(k2,String((+localStorage.getItem(k2)||0)+1))}catch{}ST={pp:[],ppMiss:0,ppTaps:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};save();tab='pp';cur=0;render()}}
+ b.querySelector('[data-reset]').onclick=()=>{if(!confirm('Alle Eingaben zu diesem Text löschen und neu beginnen?'+(AB?' Deine Lehrkraft sieht in der Abgabe, dass du zurückgesetzt hast.':'')))return;try{const k2=key()+'-rs';localStorage.setItem(k2,String((+localStorage.getItem(k2)||0)+1))}catch{}ST={pp:[],ppMiss:0,ppTaps:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};save();tab='vo';cur=0;render()}}
 /* ---------- 11.10: Für meine Unterlagen sichern (Druckansicht → PDF, GoodNotes, Dateien) ---------- */
 /* 11.35: als PDF-Datei (Teilen → GoodNotes) statt Druckdialog – der klappte in der Web-App am iPad oft nicht */
 async function printNotes(name,btn){const pp=new Set(T.pp.flatMap(([si,ws])=>ws.map(i=>si+':'+i)));
