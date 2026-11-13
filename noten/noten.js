@@ -4969,7 +4969,7 @@ window.LP=LP;window.lpLabels=labels;
  async function regLoad(){let all=[];try{all=await leEntries()}catch{}const c={},R={};
   for(const id of Object.keys(UNITS))if(UNITS[id].dat){delete UNITS[id];delete UNIT_META[id]}
   for(const [u,P] of Object.entries(window.LP||{}))if(!UNITS[u])regLP(u,P);
-  for(const [k,v] of all){if(typeof k==='string'&&k.startsWith('reihe:')&&v&&v.type==='classroom-reihe-meta')R[v.id]=v;else if(v&&v.type==='classroom-lerneinheit'&&v.def&&Array.isArray(v.def.steps)){const m=unitMeta(v);c[v.id]=m;regMeta(v.id,m)}
+  for(const [k,v] of all){if(typeof k==='string'&&k.startsWith('reihe:')&&v&&v.type==='classroom-reihe-meta')R[v.id]=v.subject==='latein'&&v.lab?{...v,lab:String(v.lab).replace(/(^|[–-])\s*(\d)/g,'$1L$2')}:v;else if(v&&v.type==='classroom-lerneinheit'&&v.def&&Array.isArray(v.def.steps)){const m=unitMeta(v);c[v.id]=m;regMeta(v.id,m)}
    /* 11.58: Lernpakete (Latein) aus der Buchdatei – neue Lernpakete ohne App-Update */else if(v&&v.type==='classroom-lerneinheit'&&v.lps&&typeof v.lps==='object')for(const [u,P] of Object.entries(v.lps)){if(!P||!Array.isArray(P.steps))continue;regLP(u,{...P,bookId:v.id});UNITS[u].dat=true}}
   REIHEN_=R;ucacheSave(c);return R}
  const regReady=regLoad();
