@@ -226,11 +226,11 @@ function swiper(k,o){if(SOLV&&!ST[k])solveW('swiper',k,o);const A=ST[k+'A']??=[]
    sc.onpointermove=e=>{if(x0==null)return;dx=e.clientX-x0;sc.style.transform='translateX('+dx+'px) rotate('+dx/18+'deg)';tl.style.opacity=Math.max(0,-dx/90);tr.style.opacity=Math.max(0,dx/90)};
    sc.onpointerup=sc.onpointercancel=()=>{if(x0==null)return;x0=null;sc.style.transition='transform .25s';if(Math.abs(dx)>90){sc.style.transform='translateX('+(dx>0?600:-600)+'px) rotate('+(dx>0?25:-25)+'deg)';setTimeout(()=>ans(dx>0),180)}else{sc.style.transform='';tl.style.opacity=0;tr.style.opacity=0}}}
   o.wire?.(draw)});draw()}
-/* Antippen: Fragen mit drei Antworten */
+/* Antippen: Fragen mit drei Antworten · 11.86: Antworten erscheinen je Schüler in gemischter Reihenfolge (fest gespeichert); o.keepOrder schaltet das ab */
 function quiz(k,o){if(SOLV&&!ST[k])solveW('quiz',k,o);const A=ST[k+'A']??=[];let qi=SOLV?0:Math.min(A.length,o.qs.length-1);
  const draw=()=>keep(k,()=>{const q=o.qs[qi],a=A[qi],N=o.qs.length;
   frame(o.title,(typeof o.before==='function'?o.before():o.before||'')+'<div class="card"><div class="prog"><span>Frage '+(qi+1)+' von '+N+'</span><div class="bar"><i style="width:'+(A.length/N*100)+'%"></i></div></div><p style="font-size:1.1rem;margin:0 0 10px"><b>'+esc(q[0])+'</b></p>'
-   +q[1].map((x,j)=>'<button class="opt'+(a!=null?(j===q[2]?' ok':j===a?' no':''):'')+'" data-o="'+j+'">'+esc(x)+'</button>').join('')
+   +(o.keepOrder?q[1].map((_,j)=>j):shuffleOnce(k+'~'+qi,q[1].map((_,j)=>j))).map(j=>{const x=q[1][j];return '<button class="opt'+(a!=null?(j===q[2]?' ok':j===a?' no':''):'')+'" data-o="'+j+'">'+esc(x)+'</button>'}).join('')
    +(a!=null?fb(a===q[2],(a===q[2]?'✓ ':'')+esc(q[3]||''))+'<div class="row"><button class="sec" data-pq '+(qi?'':'disabled')+'>‹</button><div class="sp"></div>'+(qi<N-1?'<button class="pri" data-nq>Nächste Frage ›</button>':'')+'</div>':'')+'</div>'+(A.length===N&&o.end?o.end():'')+(o.after||''));
   app.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{if(A[qi]!=null)return;A[qi]=+b.dataset.o;if(A.length===N&&!A.includes(undefined))fin(k,o.qs.filter((q,i)=>A[i]===q[2]).length,N,o.qs.map((q,i)=>A[i]===q[2]?-1:i).filter(i=>i>=0));else save();draw()});
   const nq=app.querySelector('[data-nq]');if(nq)nq.onclick=()=>{qi++;draw()};const pq=app.querySelector('[data-pq]');if(pq)pq.onclick=()=>{qi--;draw()};o.wire?.()});draw()}
