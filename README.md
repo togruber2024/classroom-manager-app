@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 13.11.2026 · Version 11.68
+Stand: 13.11.2026 · Version 11.69
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1447,3 +1447,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.66: Alternative Lateinarbeit im Aufbau einer Schul-Lateinarbeit (Text mit Übersetzung nebeneinander, Aufgaben zu Wortschatz · Übersetzung/Grammatik · Inhalt, Tabelle, Bewertungsraster, Notenschlüssel 15–0).
 11.67: Lerneinheiten: Karten-Überblender – zwei Karten übereinander, ein Schieberegler blendet die zweite ein und aus.
 11.68: Zufallsgruppen leistungsbezogen (leistungsgemischt/leistungsgleich nach Notenspalte); App fragt nach Fach/Jahrgang bei Einheiten ohne Zuordnung; Export-Fenster: Latein nicht mehr unter Erdkunde, sortiert.
+11.69: Neues Fenster „Inhalte ordnen“: Fach/Jahrgang zuordnen, Einheiten zwischen Reihen ziehen oder per Menü verschieben, eigene Reihen anlegen, Einheiten entfernen.
