@@ -126,11 +126,7 @@ const refreshTabs=()=>app.querySelectorAll('[data-tab]').forEach(b=>{const k=b.d
 /* ---------- 0 Vokabular bekannt? (11.77) ----------
    Alle Wiederholungsvokabeln der Lektion; nach jeder Runde werden die falschen je 10 Sekunden mit Lösung gezeigt,
    dann kommen nur diese noch einmal dran – so lange, bis alle sitzen. Erst danach sind die anderen Übungen frei. */
-const vPlain=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/j/g,'i');
-const vParts=m=>String(m||'').replace(/\([^)]*\)/g,' ').split(/[,;\/]| bzw\. | oder /).map(x=>vPlain(x).replace(/\b(der|die|das|ein|eine|einen|sich|etw\.?|jdn\.?|jdm\.?|jmd\.?)\b/g,' ').replace(/[^a-zß\s-]/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
-const vLev=(a,b)=>{if(Math.abs(a.length-b.length)>1)return 9;const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]};
-const vNear=(x,y)=>x===y||(y.length>=6&&vLev(x,y)<=1);
-const vOk=(inp,m)=>{const v=vParts(inp)[0]||'';if(!v)return false;return vParts(m).some(p=>vNear(v,p)||p.split(' ').some(w=>w.length>=4&&vNear(v,w)))};
+const vOk=window.cmVocabOk;/* 11.81: gemeinsame Prüfung (abgabe.js) */
 const VO_SEC=10;
 function voState(){const N=VOC().length;if(!ST.vo||!Array.isArray(ST.vo.q))ST.vo={r:1,q:shuffle(VOC().map((_,i)=>i)),i:0,ok:[],no:[],a:{},ph:'ask',li:0,first:null,done:false};return ST.vo}
 function renderVO(b){const V=voState(),W=VOC(),N=W.length;clearInterval(voT);

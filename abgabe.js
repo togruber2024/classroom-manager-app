@@ -2,6 +2,13 @@
    Name aus der Klassenliste wählen (kommt mit dem Link der Lehrkraft), oben rechts „Abgabe-QR“ zeigen, die Lehrkraft scannt.
    Im QR stehen Punkte je Teil (CMLE1); seit 11.73 beim Übersetzungs-Trainer auch die Übersetzungen (dann ggf. mehrere Codes, CMLE2). In der Lehrkraft-Vorschau (?vorschau=1) gibt es keinen Abgabe-QR.
    window.cmAbgabe({u,title,cls,names,score:()=>({s:{…},x:{}})}) → {update()} */
+/* 11.81: gemeinsame Prüfung deutscher Vokabel-Bedeutungen (Üben, Übersetzungs-Trainer): Klammern, Artikel und „etw./jdn.“ zählen nicht, ein Tippfehler bei längeren Wörtern ist erlaubt */
+window.cmVocabOk=(()=>{const plain=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/j/g,'i');
+ const parts=m=>String(m||'').replace(/\([^)]*\)/g,' ').split(/[,;\/]| bzw\. | oder /).map(x=>plain(x).replace(/\b(der|die|das|ein|eine|einen|sich|etw\.?|jdn\.?|jdm\.?|jmd\.?)\b/g,' ').replace(/[^a-zäöüß\s-]/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
+ const lev=(a,b)=>{if(Math.abs(a.length-b.length)>1)return 9;const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]};
+ const near=(x,y)=>x===y||(y.length>=6&&lev(x,y)<=1);
+ return (inp,m)=>{const v=parts(inp)[0]||'';if(!v)return false;return parts(m).some(p=>near(v,p)||p.split(' ').some(w=>w.length>=4&&near(v,w)))}})();
+
 (()=>{
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
  const css='#cmab{position:fixed;top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));z-index:80;display:flex;align-items:center;gap:8px;min-height:46px;padding:5px 10px 5px 12px;border:1px solid #dce3ef;border-radius:14px;background:#fff;color:#243247;font:600 13px/1.2 -apple-system,BlinkMacSystemFont,Inter,"Segoe UI",sans-serif;box-shadow:0 4px 12px #233d6018;cursor:pointer;text-align:left}#cmab b{display:block;font-size:14px}#cmab small{color:#2f5f9b;font-weight:600}#cmab svg{width:22px;height:22px}'
@@ -30,9 +37,7 @@
     ov.querySelector('[data-x]').onclick=()=>ov.remove();ov.querySelector('[data-ok]').onclick=()=>{if(!pick||pick.length<2)return;S.me=pick;save();ov.remove();update();showQr()}};
    draw();document.body.append(ov)}
   /* 11.73: lange Abgaben (z. B. Übersetzungen) gehen komprimiert auf mehrere QR-Codes (CMLE2/id/k/n/…), die Lehrkraft scannt sie nacheinander */
-  async function codes(){const r=sc(),full=JSON.stringify({u:o.u,v:2,c:S.cls||'',n:S.me,dv:S.dv,ts:Date.now(),b:0,s:r.s||{},x:r.x||{},...(r.w&&Object.keys(r.w).length?{w:r.w}:{})});if(full.length<=900)return ['CMLE1:'+full];
-   let b64;try{const z=new Uint8Array(await new Response(new Blob([new TextEncoder().encode(full)]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());let bin='';for(const c of z)bin+=String.fromCharCode(c);b64='z'+btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}catch{const u8=new TextEncoder().encode(full);let bin='';for(const c of u8)bin+=String.fromCharCode(c);b64='j'+btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
-   const id=Math.random().toString(36).slice(2,8),CH=650,n=Math.ceil(b64.length/CH);return Array.from({length:n},(_,i)=>'CMLE2/'+id+'/'+(i+1)+'/'+n+'/'+b64.slice(i*CH,(i+1)*CH))}
+  async function codes(){const r=sc();return classroomQrPack({u:o.u,v:2,c:S.cls||'',n:S.me,dv:S.dv,ts:Date.now(),b:0,s:r.s||{},x:r.x||{},...(r.w&&Object.keys(r.w).length?{w:r.w}:{})})}
   async function showQr(){if(!S.me){who();return}const ov=document.createElement('div');ov.className='cmab-o';document.body.append(ov);ov.innerHTML='<div style="color:#66758a">QR-Code wird erstellt …</div>';
    let C=[];try{C=await codes()}catch(e){C=[payload()]}let k=0;
    const draw=()=>{let q='';try{q=classroomQrSvg(C[k],{ecc:'L',boost:false,dark:'#243247',border:3}).replace('<svg','<svg class="q"')}catch(e){q='<p>QR-Code nicht möglich: '+esc(e.message)+'</p>'}

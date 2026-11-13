@@ -1232,7 +1232,7 @@ if(window.parent!==window)parent.postMessage({type:'classroom:rosters',snapshot:
     const pointsMode=[...first.values(),...second.values()].some(result=>result.points),toScale=result=>pointsMode&&!result.points?Math.max(0,Math.min(15,15-(result.value-1)*3)):result.value;
     const names=new Map([...first,...second].map(([key,result])=>[key,result.name])),tendencyInput=section.querySelector('[data-schoolyear-tendencies]');if(tendencyInput){tendencyInput.checked=!!settings.tendencies;tendencyInput.closest('.schoolyear-tendency-toggle').classList.toggle('hide',pointsMode)}
     /* 10.51: Darstellung wie überall: 2 | 2− | 2,3 (Schalter im Kopf der Spalte „Schuljahr“) */const syMode=settings.yearDisplay||(settings.tendencies?'tendency':'decimal');{const th=section.querySelector('.schoolyear-table thead th:nth-child(4)');if(th){th.innerHTML='Schuljahr'+(pointsMode?'':'<div class="mean-seg sy-seg" role="radiogroup" aria-label="Ergebnis darstellen">'+[['rounded','2','Gerundet'],['tendency','2−','Tendenz'],['decimal','2,3','Dezimal']].map(([v,l,t])=>'<button type="button" role="radio" aria-checked="'+(syMode===v)+'" data-sy-display="'+v+'" title="'+t+'" aria-label="'+t+'">'+l+'</button>').join('')+'</div>')}}
-    const tendencyLabel=value=>taskGradeOptions(true).reduce((best,option)=>Math.abs(option.value-value)<Math.abs(best.value-value)?option:best,taskGradeOptions(true)[0]).label,fmt=value=>value===null?'<span class="semester-missing">—</span>':`<span class="${taskGradeClass(pointsMode?1+(15-value)/3:value,'grades')}">${pointsMode?`${formatTaskResult(value)} Punkte`:syMode==='decimal'?formatTaskResult(value):formatTaskMean(value,'grades',{meanDisplay:syMode})}</span>`;
+    const fmt=value=>value===null?'<span class="semester-missing">—</span>':`<span class="${taskGradeClass(pointsMode?1+(15-value)/3:value,'grades')}">${pointsMode?`${formatTaskResult(value)} Punkte`:syMode==='decimal'?formatTaskResult(value):formatTaskMean(value,'grades',{meanDisplay:syMode})}</span>`;
     /* 9.31: Epochalfach – nur ein Halbjahr unterrichtet: dessen Halbjahresnote ist die Schuljahresnote */const epoch=(classesBySubject[subject]||[]).find(c=>c.id===currentClassId)?.epoch||'year',epochCell='<span class="semester-missing" title="Epochalfach – in diesem Halbjahr kein Unterricht">— Epoche</span>';
     const rows=[...names.entries()].sort((a,b)=>a[1].localeCompare(b[1],'de')).map(([key,name])=>{
       const firstValue=first.get(key),secondValue=second.get(key),a=firstValue?toScale(firstValue):null,b=secondValue?toScale(secondValue):null,result=epoch==='h1'?a:epoch==='h2'?b:weightsValid&&a!==null&&b!==null?(a*firstWeight+b*secondWeight)/100:null;
@@ -3229,7 +3229,7 @@ html.fs-view .fs-hide{display:none!important}
  const GLYPH={adieresis:'ä',odieresis:'ö',udieresis:'ü',Adieresis:'Ä',Odieresis:'Ö',Udieresis:'Ü',germandbls:'ß',space:' ',hyphen:'-',period:'.',comma:',',colon:':',slash:'/',parenleft:'(',parenright:')',bar:'|',percent:'%',endash:'–',emdash:'—',eacute:'é',egrave:'è',agrave:'à',ccedilla:'ç',zero:'0',one:'1',two:'2',three:'3',four:'4',five:'5',six:'6',seven:'7',eight:'8',nine:'9'};
  const simple=(enc,b)=>b<128?String.fromCharCode(b):enc==='mac'?MAC[b-128]:b<160?WIN128[b-128]:String.fromCharCode(b);
  const latin1=bytes=>{let s='';for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));return s};
- const toBytes=str=>{const u=new Uint8Array(str.length);for(let i=0;i<str.length;i++)u[i]=str.charCodeAt(i)&255;return u};
+ 
  async function inflate(bytes){
   if(typeof DecompressionStream!=='function')throw new Error('Dieser Browser kann die PDF nicht entpacken (bitte Safari/Chrome aktualisieren).');
   for(const kind of ['deflate','deflate-raw']){try{const src=kind==='deflate'?bytes:bytes.subarray(2);const out=await new Response(new Blob([src]).stream().pipeThrough(new DecompressionStream(kind))).arrayBuffer();return new Uint8Array(out)}catch{}}
@@ -3479,7 +3479,11 @@ html.fs-view .fs-hide{display:none!important}
  const ECC_FMT=[1,0,3,2];/* Formatbits nach Ordnungsindex L,M,Q,H */
  function svg(text,opts={}){const q=encode(text,opts),b=opts.border??2,n=q.size+2*b;let d='';for(let y=0;y<q.size;y++)for(let x=0;x<q.size;x++)if(q.get(x,y))d+='M'+(x+b)+','+(y+b)+'h1v1h-1z';
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+n+' '+n+'" shape-rendering="crispEdges"'+(opts.size?' width="'+opts.size+'" height="'+opts.size+'"':'')+'><rect width="100%" height="100%" fill="'+(opts.light||'#fff')+'"/><path d="'+d+'" fill="'+(opts.dark||'#000')+'"/></svg>'}
- root.classroomQr=encode;root.classroomQrSvg=svg;
+ /* 11.81: eine Abgabe (Objekt) als QR-Text(e): kurz → CMLE1:{…}; lang → komprimiert auf mehrere Codes CMLE2/id/k/n/… (gemeinsam für Abgabe, Lerneinheiten, Übersetzungs-Trainer) */
+ async function pack(obj){const full=JSON.stringify(obj);if(full.length<=900)return ['CMLE1:'+full];const u8=new TextEncoder().encode(full),b64=u=>{let bin='';for(const c of u)bin+=String.fromCharCode(c);return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+  let s;try{s='z'+b64(new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()))}catch{s='j'+b64(u8)}
+  const id=Math.random().toString(36).slice(2,8),CH=650,n=Math.ceil(s.length/CH);return Array.from({length:n},(_,i)=>'CMLE2/'+id+'/'+(i+1)+'/'+n+'/'+s.slice(i*CH,(i+1)*CH))}
+ root.classroomQr=encode;root.classroomQrSvg=svg;root.classroomQrPack=pack;
 })(typeof window!=='undefined'?window:globalThis);
 ;
 
@@ -3934,7 +3938,7 @@ html.fs-view .fs-hide{display:none!important}
  /* ---------- Nominalformen ---------- */
  const caseRows=(L,onlySg)=>[...(onlySg||!L.plural?['Sg.']:NUMS)].flatMap(n=>CASES().filter(c=>L.cases.has(c)).map(c=>c+' '+n));
  const CASES=()=>V().CASES;
- function formDet(paradigm,keys,dimsOn){/* keys: „Nom. Sg. m“ bzw. „Nom. Sg.“ */const byForm={};for(const k of keys){const f=paradigm.forms[k];if(!f)continue;(byForm[norm(f)]??={f,keys:[]}).keys.push(k)}return byForm}
+ 
  function nomDims(L,genus){const d=[['Kasus',CASES().filter(c=>L.cases.has(c))],['Numerus',L.plural?NUMS:['Sg.']]];if(genus)d.push(['Genus',GEN]);return d}
  const splitKey=k=>{const p=k.replace(/^(PPP|PPA)\s+/,'').split(' ');return [p[0],p[1],p[2]].filter(Boolean)};
  function detFromForms(forms,n,r,L,genus,prefix){/* forms: {key: form} */const groups={};for(const [k,f] of Object.entries(forms)){if(prefix&&!k.startsWith(prefix))continue;const [c,num]=splitKey(k);if(!L.cases.has(c)||(!L.plural&&num==='Pl.'))continue;(groups[norm(f)]??={f,keys:[]}).keys.push(k)}
@@ -4147,7 +4151,7 @@ window.LP=LP;window.lpLabels=labels;
   t=t.replace(/^(der|die|das|den|dem|des|ein|eine|einen|einem|einer|eines)\s+/,'');return t.trim()}
  const compact=s=>s.replace(/[\s-]+/g,'');
  function lev(a,b){if(a===b)return 0;const m=a.length,n=b.length;if(Math.abs(m-n)>2)return 9;let p=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
- const typo=(a,b)=>{const l=Math.max(a.length,b.length);return l>=4&&lev(a,b)<=(l>=7?2:1)};
+ 
  /* 10.22: 1 Punkt je verlangtem Wort, je Genus und für die Bedeutung; Latein: jeder Fehler = falsch; 10.62: Deutsch 1 Buchstabe falsch = ½ */
  const lemmaMax=item=>item.kind==='x'?0:item.kind==='n'?2:item.kind==='v'?Math.max(1,(item.need||[]).length):1;
  const maxOf=item=>item&&item.k?window.classroomGrammar.pts(item):lemmaMax(item)+1;
@@ -7859,9 +7863,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   for(const box of document.querySelectorAll('.qs-cards')){const cards=[...box.children].filter(c=>c.matches('.qs-card:not(.qd-card)'));if(cards.length<2)continue;const sorted=order(cards);if(sorted.some((c,i)=>c!==cards[i])){const anchor=cards.at(-1).nextSibling;for(const c of sorted)box.insertBefore(c,anchor)}}}
  /* 9.72: auch am iPhone erst nach Note, wenn jede begonnene Karte eine Note hat; ganz leere Karten unten */
  const cardVal=c=>parse(c.querySelector('.qs-big')?.textContent);
- const cardEntry=c=>[...c.querySelectorAll('.qs-sq')].some(q=>{const t=q.textContent.trim();return t&&t!=='—'&&t!=='–'&&!/^[a-zäöü]+$/i.test(t.replace(/^o$/i,'0'))});
- const phoneOpen=cards=>cards.filter(c=>cardVal(c)===null&&cardEntry(c)).length;
- const phoneCards=()=>[...document.querySelectorAll('.qs-cards')].flatMap(b=>[...b.children].filter(c=>c.matches('.qs-card:not(.qd-card)')&&c.offsetParent!==null));
+ 
+ 
+ 
  function order(cards){let mode=get();cards.forEach((c,i)=>{if(!c.dataset.idx)c.dataset.idx=String(i)});const items=cards.map(c=>({c,n:(c.querySelector('.qs-name')?.textContent||'').trim(),i:Number(c.dataset.idx),v:mode==='grade'?cardVal(c):null}));return items.sort(sorter(mode,(a,b)=>a.i-b.i)).map(x=>x.c)}
  /* kein Tooltip am iPhone: Antippen des blassen Knopfs zeigt kurz den Hinweis */
  function hint(btn,text){document.querySelector('.ps-hint')?.remove();const h=document.createElement('div');h.className='ps-hint';h.textContent=text;document.body.append(h);const r=btn.getBoundingClientRect();h.style.top=Math.min(window.innerHeight-h.offsetHeight-8,r.bottom+6)+'px';h.style.left=Math.max(8,Math.min(window.innerWidth-h.offsetWidth-8,r.right-h.offsetWidth))+'px';setTimeout(()=>h.remove(),2600)}
@@ -8007,7 +8011,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
 
  /* ---------- Auswahl ---------- */
  let state=null;
- function refItem(){const ctx=window.notenspiegelContextForCompare?.()||null;return ctx}
+ 
  function openPicker(){
   const ctx=(typeof notenspiegelContext!=='undefined'&&notenspiegelContext)||null;if(!ctx)return;const task=window.classroomNsTask&&window.classroomNsTask.pageKey===ctx.pageKey?window.classroomNsTask.taskId:null;
   const kind=task||isTestsPage(ctx.subject,ctx.pageKey)?'test':'exam';

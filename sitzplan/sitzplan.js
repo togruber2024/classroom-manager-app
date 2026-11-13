@@ -2140,11 +2140,7 @@ function classroomMigrateSeatNames(model){
 }
 
 
-function classroomShortSeatName(name){
- const group=classroomCurrentGroup();
- const names=[...(group?.students.filter(s=>!s.deleted).map(s=>s.name)||[]),...schuelerEinzel.map(s=>s.name),...schuelerPaare.flatMap(p=>[p.s1,p.s2]),...gridData.flat()];
- return ClassroomCore.seatNameLabels(names).get(ClassroomCore.normalize(name))||name;
-}
+
 
 window.addEventListener('message',event=>{if(event.source===parent&&event.data?.type==='classroom:print'){window.focus();window.print()}});
 

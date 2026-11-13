@@ -71,10 +71,7 @@ table.gt td small{display:block;color:var(--ok);font-weight:600}
   const refill=()=>{queue=shuffle(W.map((_,i)=>i).filter(i=>!S.known[i]))};
   const nextCard=()=>{if(!queue.length)refill();cur=queue.shift()??-1;shown=SOL;checked=null};
   const known=()=>S.known.filter(Boolean).length;
-  const parts=m=>String(m||'').replace(/\([^)]*\)/g,' ').split(/[,;\/]| bzw\. | oder /).map(x=>plain(x).replace(/\b(der|die|das|ein|eine|einen|sich|etw\.?|jdn\.?|jdm\.?|jmd\.?)\b/g,' ').replace(/[^a-zäöüß\s-]/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
-  const lev=(a,b)=>{if(Math.abs(a.length-b.length)>1)return 9;const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]};
-  const near=(x,y)=>x===y||(y.length>=6&&lev(x,y)<=1);
-  const okDe=(inp,m)=>{const v=parts(inp)[0]||'';if(!v)return false;return parts(m).some(p=>near(v,p)||p.split(' ').some(w=>w.length>=4&&near(v,w)))};
+  const okDe=window.cmVocabOk;/* 11.81: gemeinsam mit dem Übersetzungs-Trainer (abgabe.js) */
   const okLat=(inp,l)=>{const v=plain(inp).replace(/[^a-z\s]/g,' ').trim().split(/\s+/)[0]||'';const t=plain(l).replace(/[^a-z\s,]/g,' ').split(/[,\s]+/).filter(Boolean)[0]||'';return !!v&&v===t};
   function render(){if(cur<0||(S.known[cur]&&checked==null))nextCard();const n=known(),all=W.length,w=W[cur]||[];
    let h=head('Vokabeln · '+all+' Wörter')+'<div class="tabs"><button data-t="karten" class="'+(S.tab==='karten'?'on':'')+'">Karteikarten</button><button data-t="abfrage" class="'+(S.tab==='abfrage'?'on':'')+'">Abfrage</button><button data-t="liste" class="'+(S.tab==='liste'?'on':'')+'">Liste</button></div>'

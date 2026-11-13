@@ -163,8 +163,8 @@ async function bookInit(){try{const u=window.CM_EMBED_BOOK||await IDB('readonly'
 function bookPick(){const i=document.createElement('input');i.type='file';i.style.display='none';document.body.append(i);
  i.onchange=async()=>{const f=i.files[0];i.remove();if(!f)return;try{const u=JSON.parse(await f.text());if(!bookOk(u))throw 0;BOOK=u;bookPrep();try{await IDB('readwrite',st=>st.put(u,UID))}catch{}home()}catch{alert('Diese Datei passt nicht zu dieser Lerneinheit.')}};i.click()}
 async function bookDrop(){if(!confirm('Diese Lerneinheit vom Gerät entfernen? (Deine Ergebnisse bleiben.)'))return;try{await IDB('readwrite',st=>st.delete(UID))}catch{}location.reload()}
-/* 11.56: Text-Materialien als echter Text (Tabelle/Liste) statt Bild */const bimg=k=>BOOK&&BOOK.img&&BOOK.img[k]?(BOOK.img[k].html?'<div class="btxt">'+BOOK.img[k].html+'</div>':'<img class="photo" src="'+BOOK.img[k].src+'" alt="">')+'<div class="cap"><b>'+esc(BOOK.img[k].m)+'</b> '+esc(BOOK.img[k].t)+'</div>':'';
-const zoomBox=(k,id)=>'<div class="bm" id="'+id+'"><div class="bmin"><img src="'+BOOK.img[k].src+'" alt="'+esc(BOOK.img[k].t)+'" draggable="false" style="display:block;width:100%"></div></div><div class="bmbar"><button class="sec" data-zoom="'+id+'">🔍 Vergrößern</button></div><div class="cap"><b>'+esc(BOOK.img[k].m)+'</b> '+esc(BOOK.img[k].t)+'</div>';
+/* 11.56: Text-Materialien als echter Text (Tabelle/Liste) statt Bild */
+
 function wireZoom(){app.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=()=>{const m=$('#'+b.dataset.zoom),z=m.classList.toggle('zoom');b.textContent=z?'↙︎ Verkleinern':'🔍 Vergrößern'})}
 const termBox=ks=>'<details style="margin-top:12px"><summary>Fachbegriffe nachschlagen</summary>'+ks.map(k=>'<div class="def"><b>'+esc(k)+':</b> '+esc(GLOSS[k])+'</div>').join('')+'</details>';
 function shuffleOnce(k,a){ST.ord??={};if(!ST.ord[k]||ST.ord[k].length!==a.length){ST.ord[k]=shuffle(a);save()}return ST.ord[k]}
@@ -351,7 +351,7 @@ function runTxt(){const {T,K}=txSrc();const M=ST.txtM??={},A=ST.txtA??=[],B=ST.t
  draw()}
 
 
-function doPrint(){}
+
 function pdfBlocks(){const nm=ST.name||ST.me||'',tot=STEPS.reduce((a,s)=>a+(ST[s[0]]?.p||0),0),max=STEPS.reduce((a,s)=>a+(ST[s[0]]?.t||0),0),src=' – '+((BOOK&&BOOK.source)||'Schulbuch');
  const im=(k,wf,mh)=>BOOK&&IM[k]?{t:'img',img:IM[k],wf,maxH:mh,cap:BOOK.img[k].m+' '+BOOK.img[k].t+src}:null;
  const {T,K}=txSrc();let i=0;const txt=!(D.txt&&PENS.c&&PENS.r)?[]:[{t:'h2',s:'Text: '+T.t},{t:'p',s:'Markiert: **['+PENS.c[0]+']** = '+PENS.c[1].replace(/^grün: /,'')+', **['+PENS.r[0]+']** = '+PENS.r[1].replace(/^orange: /,'')+'.',sz:9,col:'#5c6b80'},...T.p.map(p=>p.q?{t:'h3',s:p.q}:{t:'p',s:sents(p.a).map(x=>{const k=i++;return K.c.includes(k)?x+' **['+PENS.c[0]+']**':K.r.includes(k)?x+' **['+PENS.r[0]+']**':x}).join(' ')})];
@@ -362,7 +362,7 @@ function pdfBlocks(){const nm=ST.name||ST.me||'',tot=STEPS.reduce((a,s)=>a+(ST[s
   ...PDFX(im),...(D.pdfNoClz||!CLZ.length?[]:[{t:'h2',s:'Lückentext'},{t:'p',s:CLZ.map(x=>typeof x==='string'?x:'**'+CLW[x]+'**').join('')}]),
   ...txt].filter(Boolean)}
 /* Zuordnen als Lösungstabelle für die Unterlagen */
-const sortTab=(o)=>({t:'table',w:o.cats.map(()=>1/o.cats.length),head:o.cats,rows:[o.cats.map((c,ci)=>o.items.filter(x=>[].concat(x[1])[0]===ci).map(x=>x[0]).join(' · '))]});
+
 let pdfBusy=false;
 async function savePdf(btn){if(pdfBusy)return;pdfBusy=true;const t=btn.textContent;btn.textContent='PDF wird erstellt …';
  try{await Promise.race([bookPrep(),new Promise(r=>setTimeout(r,4000))]);const blob=cmPdf.build(pdfBlocks(),{title:META.short,foot:META.title+' · '+(ST.name||ST.me||'')});const nm=META.short+((ST.name||ST.me)?' - '+String(ST.name||ST.me).replace(/[\\/:*?"<>|]/g,''):'')+'.pdf';
@@ -469,15 +469,11 @@ function payObj(){const sv={},x={},w={};for(const [k] of STEPS){const v=ST[k];if
  /* 11.80: freie Antworten (Baustein „write“) gehen mit – die Lehrkraft sieht und bewertet sie in der Übersicht */
  for(const s of (D.steps||[]))if(s.w==='write'){const A=ST[(s.key||s.k)+'W'];if(!A)continue;const o=s.o||{};A.forEach((a,i)=>{const t=(a.t||'').trim();if(!t&&a.r==null)return;const lab=(o.items?.[i]?.[2])||((s.t||s.k)+' · '+(i+1));w[lab]=(t||'(nichts geschrieben)')+(a.r!=null?'\nSelbst: '+['✗ noch nicht','≈ teilweise','✓ passt'][a.r]:'')})}
  return {u:UID,v:2,c:ST.cls||'',n:ST.me,dv:ST.dv,ts:Date.now(),b:BOOK?1:0,s:sv,x,...(Object.keys(w).length?{w}:{})}}
-function payload(){return 'CMLE1:'+JSON.stringify(payObj())}
 const qrSvg=(t,o)=>{try{return classroomQrSvg(t,Object.assign({ecc:'L',boost:false,dark:'#243247',border:2},o||{}))}catch{return ''}};
 let whoT=0;function updWho(){clearTimeout(whoT);whoT=setTimeout(()=>{const w=$('#who');if(!w)return;document.body.classList.add('has-who');w.hidden=false;
  if(!ST.me){w.className='noname';w.innerHTML='<span><b>Abgabe-QR</b><small>Name wählen</small></span>';return}
  w.className='';w.innerHTML='<span><b>'+esc(ST.me)+'</b><small>'+doneCount()+' von '+STEPS.length+' ✓</small></span><svg viewBox="0 0 24 24" fill="#243247" aria-hidden="true"><path d="M3 3h8v8H3zM5 5v4h4V5zM13 3h8v8h-8zm2 2v4h4V5zM3 13h8v8H3zm2 2v4h4v-4zM13 13h3v3h-3zM18 13h3v3h-3zM13 18h3v3h-3zM18 18h3v3h-3zM16 16h2v2h-2z"/></svg>'},30)}
-async function packQr(){const full=JSON.stringify(payObj());if(full.length<=900)return ['CMLE1:'+full];
- /* lange Abgaben (freie Antworten) komprimiert auf mehrere Codes – wie im Übersetzungs-Trainer (CMLE2/id/k/n/…) */
- let b64;try{const z=new Uint8Array(await new Response(new Blob([new TextEncoder().encode(full)]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());let bin='';for(const c of z)bin+=String.fromCharCode(c);b64='z'+btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}catch{const u8=new TextEncoder().encode(full);let bin='';for(const c of u8)bin+=String.fromCharCode(c);b64='j'+btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
- const id=Math.random().toString(36).slice(2,8),CH=650,n=Math.ceil(b64.length/CH);return Array.from({length:n},(_,i)=>'CMLE2/'+id+'/'+(i+1)+'/'+n+'/'+b64.slice(i*CH,(i+1)*CH))}
+async function packQr(){return classroomQrPack(payObj())}
 async function showQr(){if(!ST.me){runWho();return}const codes=await packQr();let k=0;const o=document.createElement('div');o.className='qrfull';
  const draw=()=>{o.innerHTML='<div class="muted">Abgabe · '+esc(META.short||'')+(ST.cls?' · '+esc(ST.cls):'')+'</div><div class="nm">'+esc(ST.me)+'</div>'+(codes.length>1?'<div class="qn">Code '+(k+1)+' von '+codes.length+'</div>':'')+qrSvg(codes[k],{border:3})
   +(codes.length>1?'<div class="qprog">'+codes.map((_,i)=>'<i class="'+(i<=k?'on':'')+'"></i>').join('')+'</div>':'')+'<div class="muted" style="font-size:.9rem">Stand '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' · '+doneCount()+' von '+STEPS.length+' Stationen'+(codes.length>1?' · nach dem Scannen „Nächster Code“':'')+'</div>'

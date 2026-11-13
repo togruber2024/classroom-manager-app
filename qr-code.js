@@ -62,5 +62,9 @@
  const ECC_FMT=[1,0,3,2];/* Formatbits nach Ordnungsindex L,M,Q,H */
  function svg(text,opts={}){const q=encode(text,opts),b=opts.border??2,n=q.size+2*b;let d='';for(let y=0;y<q.size;y++)for(let x=0;x<q.size;x++)if(q.get(x,y))d+='M'+(x+b)+','+(y+b)+'h1v1h-1z';
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+n+' '+n+'" shape-rendering="crispEdges"'+(opts.size?' width="'+opts.size+'" height="'+opts.size+'"':'')+'><rect width="100%" height="100%" fill="'+(opts.light||'#fff')+'"/><path d="'+d+'" fill="'+(opts.dark||'#000')+'"/></svg>'}
- root.classroomQr=encode;root.classroomQrSvg=svg;
+ /* 11.81: eine Abgabe (Objekt) als QR-Text(e): kurz → CMLE1:{…}; lang → komprimiert auf mehrere Codes CMLE2/id/k/n/… (gemeinsam für Abgabe, Lerneinheiten, Übersetzungs-Trainer) */
+ async function pack(obj){const full=JSON.stringify(obj);if(full.length<=900)return ['CMLE1:'+full];const u8=new TextEncoder().encode(full),b64=u=>{let bin='';for(const c of u)bin+=String.fromCharCode(c);return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+  let s;try{s='z'+b64(new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()))}catch{s='j'+b64(u8)}
+  const id=Math.random().toString(36).slice(2,8),CH=650,n=Math.ceil(s.length/CH);return Array.from({length:n},(_,i)=>'CMLE2/'+id+'/'+(i+1)+'/'+n+'/'+s.slice(i*CH,(i+1)*CH))}
+ root.classroomQr=encode;root.classroomQrSvg=svg;root.classroomQrPack=pack;
 })(typeof window!=='undefined'?window:globalThis);
