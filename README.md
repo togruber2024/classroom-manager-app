@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 13.11.2026 · Version 11.59
+Stand: 13.11.2026 · Version 11.60
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1438,3 +1438,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.57: Unterrichtsreihen als Datei (.cmreihe): laden, bearbeiten (verschieben, umbenennen, ausblenden, löschen, eigene Einträge), exportieren, entfernen. Alle Lerneinheiten laufen in einem allgemeinen Player (einheit.html); Inhalte und Schulbuchmaterial nur noch in privaten Dateien.
 11.58: Latein: Pontes-Sequenzen als Reihen (.cmreihe) mit Inhaltsverzeichnis, Grammatik, Texten, Lernpaketen und Lateinarbeit; Lernpakete je Abschnitt bearbeiten; Lernpakete auch aus Dateien (ohne App-Update).
 11.59: Reihe exportieren nimmt die Änderungen an den Lernpaketen der Lektionen mit; ausgeblendete Einträge aus einer exportierten Reihe lassen sich wieder einblenden.
+11.60: „Datei laden …“ statt „Reihe laden“ und „Paket laden …“; Backup-Fenster zeigt Reihen, die nicht mitgesichert werden; Einheiten-Seite ohne „Grundlagen“, L und V.
