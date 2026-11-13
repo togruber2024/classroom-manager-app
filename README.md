@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 13.11.2026 · Version 11.55
+Stand: 13.11.2026 · Version 11.56
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1434,3 +1434,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.53: Abschnitt 7 „Alternative Lateinarbeit“ ab Lektion 15 (private Datei, Vorschau mit Erwartungshorizont, Druck), Knopf „Alle Lektionen von Pontes einblenden“.
 11.54: Alternative Lateinarbeit in die Noten (A · B · C, eigener Notenschlüssel), Vorschau-Fehler behoben, Lerneinheiten Global Player, Globale Verflechtungen, Smartphone, Fast Fashion, „Material ansehen“ in allen Einheiten, Info-2-Anzeige in Tropen korrigiert.
 11.55: Neue Lerneinheit „Was heißt Globalisierung?“ (Erdkunde 9, AFB I, 10 Stationen).
+11.56: Neue Lerneinheit „Tageszeitenklima in den Tropen“ (Erdkunde 7, AFB I, 10 Stationen); Tabellen und Textkästen der Schulbuch-Dateien als Text statt Bild.
