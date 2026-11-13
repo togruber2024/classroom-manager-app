@@ -4,7 +4,7 @@
 <!-- 11.06: Übersetzungs-Trainer des Classroom-Managers. Diese Seite enthält KEINEN Text: Text und Aufgaben kommen aus dem Link (#…)
      oder aus einer Datei der Lehrkraft. Läuft nach dem Laden ohne Internet; nichts wird an einen Server geschickt. -->
 <style>
-:root{--blue:#2f5f9b;--ink:#243247;--mut:#66758a;--line:#dce3ef;--bg:#f6f8fc;--ok:#1f8a4c;--okbg:#e5f5ea;--bad:#c2410c;--badbg:#fdeee6;--pred:#2f5f9b;--subj:#1f8a4c;--obj:#b45309}
+:root{--blue:#2f5f9b;--ink:#243247;--mut:#66758a;--line:#dce3ef;--bg:#f6f8fc;--ok:#1f8a4c;--okbg:#e5f5ea;--bad:#c2410c;--badbg:#fdeee6;--pred:#c62828;--subj:#2f5f9b;--obj:#1f8a4c}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Segoe UI",sans-serif}
 body{padding:max(14px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left))}
@@ -18,7 +18,7 @@ h1{font-size:1.5rem;margin:4px 0 0}.muted{color:var(--mut)}
 .w{display:inline;padding:2px 3px;border-radius:7px;cursor:pointer;transition:background .15s}
 .w.sol{box-shadow:inset 0 -3px 0 #2f9e44;background:#ebfbee}.w.f{background:var(--okbg);color:var(--ok);font-weight:700}.w.x{background:var(--badbg);color:var(--bad)}.w.miss{box-shadow:inset 0 -3px 0 #f59e0b;background:#fff8e6}
 .w.hl{background:#fde7c2;color:#8a4b00;font-weight:700}.w.dim{color:#9aa6b6}
-.w.p{background:#e8f0fb;color:var(--pred);font-weight:700;box-shadow:inset 0 -3px 0 var(--pred)}.w.s{background:var(--okbg);color:var(--subj);font-weight:700;box-shadow:inset 0 -3px 0 var(--subj)}
+.w.p{background:#fdecea;color:var(--pred);font-weight:700;box-shadow:inset 0 -3px 0 var(--pred)}.w.s{background:#e8f0fb;color:var(--subj);font-weight:700;box-shadow:inset 0 -3px 0 var(--subj)}
 .w.g{text-decoration:underline dotted #9aa6b6;text-underline-offset:5px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}.row .sp{flex:1}
 .pri{min-height:48px;padding:0 20px;border:0;border-radius:12px;background:var(--blue);color:#fff;font-weight:650}.pri:disabled{opacity:.4}
@@ -82,7 +82,7 @@ function ttScore(){const N=T.s.length,X=ST.sent||{};let fe=0,oh=0,og=0,vb=0;cons
  const hin=[...ldh,og?og+(og>1?' Sätze':' Satz')+' ohne eigene Übersetzung verglichen':'',vb?vb+'× verbessert':'',rs?rs+'× alles zurückgesetzt':''].filter(Boolean);const vs=VOC().length&&ST.vo&&ST.vo.first!=null?{vo:[ST.vo.first,VOC().length]}:{};return {s:{...vs,fe:[fe,N],oh:[oh,N]},x:{},w:hin.length?{'Hinweise':hin.join('\n'),...w}:w}}
 function start(t){T=t;ST=ls.get(key())||{pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};
  /* 11.77: wer schon vor dem Vokabel-Schritt angefangen hat, wird nicht ausgesperrt */if(!ST.vo&&!ST.voFree&&(ST.pp.length||ST.ppTaps||Object.keys(ST.sent).length||Object.keys(ST.pr).length||ST.evFirst!=null))ST.voFree=true;
- tab=voLocked()?'vo':(T.pp||[]).length?'pp':'vo';ls.set('cm-texttrainer-last',t);if(t.cm&&t.cm.u&&window.cmAbgabe&&!AB)AB=cmAbgabe({u:t.cm.u,title:t.title,cls:t.cm.c,names:t.cm.n,score:ttScore});render()}
+ tab=voLocked()?'vo':(T.pp||[]).length?'pp':'vo';ls.set('cm-texttrainer-last',t);if(t.cm&&t.cm.u&&window.cmAbgabe&&!AB)AB=cmAbgabe({u:t.cm.u,title:t.title,cls:t.cm.c,names:t.cm.n,score:ttScore,restore:()=>[[key(),ST]]});render()}
 async function init(){let t=null;try{t=await fromHash(location.hash||window.CM_EMBED_HASH||'')}catch(e){console.warn(e)}
  if(!valid(t))t=ls.get('cm-texttrainer-last');if(valid(t))return start(t);
  app.innerHTML='<div class="card empty"><h1>Übersetzungs-Trainer</h1><p class="muted">Hier ist noch kein Text geladen. Öffne den Link deiner Lehrkraft oder lade die Datei, die sie dir geschickt hat.</p><button class="pri" data-load>Datei laden …</button></div>';$('[data-load]').onclick=()=>$('#file').click()}

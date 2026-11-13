@@ -39,7 +39,9 @@ window.cmVocabOk=(()=>{const plain=s=>String(s||'').normalize('NFD').replace(/[\
     ov.querySelector('[data-x]').onclick=()=>ov.remove();ov.querySelector('[data-ok]').onclick=()=>{if(!pick||pick.length<2)return;S.me=pick;save();ov.remove();update();showQr()}};
    draw();document.body.append(ov)}
   /* 11.73: lange Abgaben (z. B. Übersetzungen) gehen komprimiert auf mehrere QR-Codes (CMLE2/id/k/n/…), die Lehrkraft scannt sie nacheinander */
-  async function codes(){const r=sc();return classroomQrPack({u:o.u,v:2,c:S.cls||'',n:S.me,dv:S.dv,ts:Date.now(),b:0,s:r.s||{},x:r.x||{},...(r.w&&Object.keys(r.w).length?{w:r.w}:{})})}
+  /* 11.90: mit o.restore (z. B. Übersetzungs-Trainer) geht der vollständige Arbeitsstand mit – die Lehrkraft kann ihn später als Wiederherstellen-QR zurückgeben */
+  const rest=()=>{if(!o.restore)return {};try{const it=o.restore()||[];return {r:[...it,['cm-abgabe-'+o.u,S]],rp:location.pathname.split('/').pop()+location.search}}catch{return {}}};
+  async function codes(){const r=sc();return classroomQrPack({u:o.u,v:2,c:S.cls||'',n:S.me,dv:S.dv,ts:Date.now(),b:0,s:r.s||{},x:r.x||{},...(r.w&&Object.keys(r.w).length?{w:r.w}:{}),...rest()})}
   async function showQr(){if(!S.me){who();return}const ov=document.createElement('div');ov.className='cmab-o';document.body.append(ov);ov.innerHTML='<div style="color:#66758a">QR-Code wird erstellt …</div>';
    let C=[];try{C=await codes()}catch(e){C=[payload()]}let k=0;
    const draw=()=>{let q='';try{q=classroomQrSvg(C[k],{ecc:'L',boost:false,dark:'#243247',border:3}).replace('<svg','<svg class="q"')}catch(e){q='<p>QR-Code nicht möglich: '+esc(e.message)+'</p>'}

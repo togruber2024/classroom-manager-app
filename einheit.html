@@ -561,7 +561,8 @@ function payObj(){const sv={},x={},w={};for(const [k] of STEPS){const v=ST[k];if
   else if(s.w==='scale'){const V=(o.vals||[]).map(v=>Array.isArray(v)?v[0]:v),side=x=>Object.entries(J[x]||{}).map(([i,g])=>V[i]+' '+'●'.repeat(g)).join(', ')||'–';w[lab]=(o.who&&J.who!=null?'Sicht: '+o.who[J.who]+'\n':'')+(o.sides?o.sides[0]:'links')+': '+side('L')+'\n'+(o.sides?o.sides[1]:'rechts')+': '+side('R')+(J.t?'\n'+J.t.trim():'')}
   else if(s.w==='plan'&&(J.t||'').trim()){const st=planStats(J.t,o);w[lab]=J.t.trim()+'\nCheck: '+st.C.filter(c=>c[0]).length+' von '+st.C.length+' · Werturteil ca. '+st.pW+' %'}}
  for(const s of (D.steps||[]))if(s.w==='write'){const A=ST[(s.key||s.k)+'W'];if(!A)continue;const o=s.o||{};A.forEach((a,i)=>{const t=(a.t||'').trim();if(!t&&a.r==null)return;const lab=(o.items?.[i]?.[2])||((s.t||s.k)+' · '+(i+1));w[lab]=(t||'(nichts geschrieben)')+(a.r!=null?'\nSelbst: '+['✗ noch nicht','≈ teilweise','✓ passt'][a.r]:'')})}
- return {u:UID,v:2,c:ST.cls||'',n:ST.me,dv:ST.dv,ts:Date.now(),b:BOOK?1:0,s:sv,x,...(Object.keys(w).length?{w}:{})}}
+ /* 11.90: vollständiger Arbeitsstand für „Wiederherstellen“ bei der Lehrkraft */
+ return {u:UID,v:2,c:ST.cls||'',n:ST.me,dv:ST.dv,ts:Date.now(),b:BOOK?1:0,s:sv,x,...(Object.keys(w).length?{w}:{}),r:[[KEY,ST]],rp:location.pathname.split('/').pop()+location.search}}
 const qrSvg=(t,o)=>{try{return classroomQrSvg(t,Object.assign({ecc:'L',boost:false,dark:'#243247',border:2},o||{}))}catch{return ''}};
 let whoT=0;function updWho(){clearTimeout(whoT);whoT=setTimeout(()=>{const w=$('#who');if(!w)return;document.body.classList.add('has-who');w.hidden=false;
  if(!ST.me){w.className='noname';w.innerHTML='<span><b>Abgabe-QR</b><small>Name wählen</small></span>';return}

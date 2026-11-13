@@ -66,5 +66,29 @@
  async function pack(obj){const full=JSON.stringify(obj);if(full.length<=900)return ['CMLE1:'+full];const u8=new TextEncoder().encode(full),b64=u=>{let bin='';for(const c of u)bin+=String.fromCharCode(c);return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
   let s;try{s='z'+b64(new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()))}catch{s='j'+b64(u8)}
   const id=Math.random().toString(36).slice(2,8),CH=650,n=Math.ceil(s.length/CH);return Array.from({length:n},(_,i)=>'CMLE2/'+id+'/'+(i+1)+'/'+n+'/'+s.slice(i*CH,(i+1)*CH))}
- root.classroomQr=encode;root.classroomQrSvg=svg;root.classroomQrPack=pack;
+ /* 11.90: Arbeitsstand wiederherstellen – die Lehrkraft zeigt aus einer gescannten Abgabe QR-Codes (Links #rs.id.k.n.daten),
+    das Schüler-iPad sammelt die Teile, fragt nach und schreibt den gesicherten Stand zurück. Alles lokal, ohne Server. */
+ const b64u=u=>{let bin='';for(const c of u)bin+=String.fromCharCode(c);return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+ const unb64=x=>{const b=x.replace(/-/g,'+').replace(/_/g,'/');const bin=atob(b+'==='.slice((b.length+3)%4));const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u};
+ async function restoreCodes(obj,base){const u8=new TextEncoder().encode(JSON.stringify(obj));let d;try{d='z'+b64u(new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()))}catch{d='j'+b64u(u8)}
+  const id=Math.random().toString(36).slice(2,8),CH=700,n=Math.max(1,Math.ceil(d.length/CH));return Array.from({length:n},(_,i)=>base.split('#')[0]+'#rs.'+id+'.'+(i+1)+'.'+n+'.'+d.slice(i*CH,(i+1)*CH))}
+ function restoreReceive(){if(typeof location==='undefined'||!/^#rs\./.test(location.hash))return;const m=/^#rs\.([a-z0-9]+)\.(\d+)\.(\d+)\.(.+)$/.exec(location.hash);const clean=()=>{try{history.replaceState(null,'',location.pathname+location.search)}catch{}};
+  const box=(html,btns)=>{const go=()=>{const o=document.createElement('div');o.style.cssText='position:fixed;inset:0;z-index:3000;background:#0007;display:flex;align-items:center;justify-content:center;padding:16px;font:16px/1.45 -apple-system,BlinkMacSystemFont,Inter,"Segoe UI",sans-serif;color:#243247';
+   o.innerHTML='<div style="background:#fff;border-radius:18px;max-width:460px;width:100%;padding:20px 22px;box-shadow:0 10px 30px #0004">'+html+'<div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px">'+btns.map((b,i)=>'<button type="button" data-i="'+i+'" style="min-height:46px;padding:0 16px;border-radius:12px;font:inherit;'+(b[2]?'background:#e8790c;border:1px solid #e8790c;color:#fff;font-weight:600':'background:#fff;border:1px solid #cfd8e6;color:#2f5f9b')+'">'+b[0]+'</button>').join('')+'</div></div>';
+   o.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const f=btns[+b.dataset.i][1];o.remove();f&&f()});document.body.append(o)};document.body?go():addEventListener('DOMContentLoaded',go)};
+  const esc=x=>String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  if(!m){clean();box('<b>Dieser Code ist nicht lesbar.</b><br>Bitte scanne ihn noch einmal.',[['OK']]);return}
+  const [,id,k,n,d]=m,PK='cm-restore-'+id;let P={};try{P=JSON.parse(localStorage.getItem(PK)||'{}')||{}}catch{}P[k]=d;P.n=+n;P.at=Date.now();try{localStorage.setItem(PK,JSON.stringify(P))}catch{}
+  const have=Array.from({length:+n},(_,i)=>P[i+1]).filter(Boolean).length;clean();
+  if(have<+n){box('<b>Teil '+have+' von '+n+' gespeichert ✓</b><br>Scanne jetzt den nächsten Code deiner Lehrkraft.',[['OK',null,1]]);return}
+  (async()=>{let j;try{const all=Array.from({length:+n},(_,i)=>P[i+1]).join('');const u=unb64(all.slice(1));const out=all[0]==='z'?new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()):u;j=JSON.parse(new TextDecoder().decode(out))}catch{try{localStorage.removeItem(PK)}catch{}box('<b>Die Codes passen nicht zusammen.</b><br>Bitte alle Teile noch einmal scannen.',[['OK']]);return}
+   const items=(j.r||[]).filter(x=>Array.isArray(x)&&typeof x[0]==='string'&&/^cm-/.test(x[0]));const main=items[0];let exists=false;try{exists=!!(main&&localStorage.getItem(main[0]))}catch{}
+   const when=j.ts?new Date(j.ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+   const apply=()=>{try{for(const [key,val] of items)localStorage.setItem(key,typeof val==='string'?val:JSON.stringify(val));localStorage.removeItem(PK)}catch(e){box('<b>Speichern nicht möglich.</b><br>'+esc(e.message),[['OK']]);return}
+    box('<b>Dein Arbeitsstand ist wieder da ✓</b>'+(j.hint?'<br>'+esc(j.hint):''),[['Weiter',()=>location.replace(location.pathname+location.search),1]])};
+   const head='<div style="font-size:1.2rem;font-weight:800;margin-bottom:6px">Arbeitsstand übernehmen?</div>Deine Lehrkraft hat dir einen gesicherten Stand geschickt.<div style="background:#f6f8fc;border:1px solid #dce3ef;border-radius:12px;padding:10px 12px;margin:12px 0"><b>'+esc(j.t||'')+'</b><br>'+esc(j.n||'')+(when?' · Stand vom '+when:'')+(j.d?'<br>'+esc(j.d):'')+'</div>';
+   if(exists)box(head+'<div style="color:#b45309;font-size:.95rem">Auf diesem iPad gibt es schon einen Arbeitsstand zu dieser Aufgabe. Er würde ersetzt.</div>',[['Vorhandenen behalten',()=>{try{localStorage.removeItem(PK)}catch{}}],['Trotzdem übernehmen',apply,1]]);
+   else box(head,[['Abbrechen',()=>{try{localStorage.removeItem(PK)}catch{}}],['Übernehmen',apply,1]])})()}
+ restoreReceive();if(typeof addEventListener==='function')addEventListener('hashchange',restoreReceive);
+ root.classroomQr=encode;root.classroomQrSvg=svg;root.classroomQrPack=pack;root.classroomRestoreCodes=restoreCodes;
 })(typeof window!=='undefined'?window:globalThis);
