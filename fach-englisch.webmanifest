@@ -1,0 +1,29 @@
+{
+  "name": "Englisch",
+  "short_name": "Englisch",
+  "description": "Englisch – meine Aufgaben aus dem Classroom-Manager",
+  "lang": "de",
+  "start_url": "./lernordner.html?fach=englisch",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f8fc",
+  "theme_color": "#2E9E4F",
+  "icons": [
+    {
+      "src": "fach-englisch-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "fach-englisch-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "fach-englisch-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

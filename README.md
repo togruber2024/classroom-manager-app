@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 14.11.2026 · Version 11.93
+Stand: 14.11.2026 · Version 11.94
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1472,3 +1472,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.91: Übersetzungs-Trainer: Schritte Objekt, AcI, satzwertige Konstruktionen (AcI/PC/Abl. abs. eingerahmt), Subjekte mit Attributen, Eingabefeld über der iPad-Tastatur; Lernordner (Schüler-Web-App); kürzere Abgabe-QR; Lerneinheiten-Liste neu; Datei-laden-Symbol; Spaltenköpfe umbrechen
 11.92: Übersetzungs-Trainer: Rubrik Stilmittel (erkennen, markieren, Wirkung), Vokabelabfrage nur mit Wörtern aus dem Text, Eingabefeld bleibt nach Enter aktiv; Vorschau-Kopfleiste iPhone; Knopf „Digitale Lerneinheiten-Übersicht“ mittig
 11.93: Übersetzungs-Trainer: Tastatur auf dem iPad zuverlässig erkannt, kein Sprung beim Tippen; Home-Bildschirm-Symbol für Schülerseiten; Übersichts-Knopf mittig
+11.94: Fach-Ordner mit Symbolen in den Heftfarben (13 Fächer), Lernordner-QR je Fach, Schülerseiten heißen wie das Fach; Übersichts-Knopf im Test-Kopf mittig (Querformat)

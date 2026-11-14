@@ -1,0 +1,29 @@
+{
+  "name": "Biologie",
+  "short_name": "Biologie",
+  "description": "Biologie – meine Aufgaben aus dem Classroom-Manager",
+  "lang": "de",
+  "start_url": "./lernordner.html?fach=biologie",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f8fc",
+  "theme_color": "#E3B505",
+  "icons": [
+    {
+      "src": "fach-biologie-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "fach-biologie-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "fach-biologie-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

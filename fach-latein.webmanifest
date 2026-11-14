@@ -1,0 +1,29 @@
+{
+  "name": "Latein",
+  "short_name": "Latein",
+  "description": "Latein – meine Aufgaben aus dem Classroom-Manager",
+  "lang": "de",
+  "start_url": "./lernordner.html?fach=latein",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f8fc",
+  "theme_color": "#1A9BF0",
+  "icons": [
+    {
+      "src": "fach-latein-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "fach-latein-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "fach-latein-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

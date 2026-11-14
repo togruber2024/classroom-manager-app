@@ -1,0 +1,29 @@
+{
+  "name": "Musik",
+  "short_name": "Musik",
+  "description": "Musik – meine Aufgaben aus dem Classroom-Manager",
+  "lang": "de",
+  "start_url": "./lernordner.html?fach=musik",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f8fc",
+  "theme_color": "#D63384",
+  "icons": [
+    {
+      "src": "fach-musik-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "fach-musik-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "fach-musik-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

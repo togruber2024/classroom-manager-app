@@ -101,8 +101,16 @@
   window.cmLoNote=p=>{p={...(p||{})};if(p.key){ID=page+'#'+p.key;delete p.key}note(p)};
   const later=()=>setTimeout(()=>{if(ID&&page!=='einheit.html')note({title:rd()[ID]?.title||document.title})},1500);
   const sa=(()=>{try{return navigator.standalone===true||matchMedia('(display-mode: standalone)').matches}catch{return false}})();
-  const back=()=>{if(!sa||document.getElementById('cmLoBack'))return;const a=document.createElement('a');a.id='cmLoBack';a.href='lernordner.html';a.textContent='‹ Lernordner';a.style.cssText='position:fixed;left:max(10px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));z-index:90;padding:9px 14px;border-radius:14px;background:#fff;border:1px solid #dce3ef;color:#2f5f9b;font:600 14px/1 -apple-system,BlinkMacSystemFont,Inter,"Segoe UI",sans-serif;text-decoration:none;box-shadow:0 4px 12px #233d6022';document.body.append(a)};
-  const go=()=>{later();back()};document.readyState==='loading'?addEventListener('DOMContentLoaded',go):go()})();
+  /* 11.94: Fach-Symbol – auf dem Home-Bildschirm heißt die Seite wie das Fach und trägt dessen Symbol; „‹ Latein“ führt zum Fach-Ordner */
+  const FACH={latein:'Latein',erdkunde:'Erdkunde',geschichte:'Geschichte',deutsch:'Deutsch',mathematik:'Mathematik',englisch:'Englisch',franzoesisch:'Französisch',musik:'Musik',kunst:'Kunst',religion:'Religion',biologie:'Biologie',physik:'Physik',politik:'Politik'};let SUBJ=KIND==='Lerneinheit'?'':'latein';
+  const head=(sel,make)=>{let el=document.head.querySelector(sel);if(!el){el=make();document.head.append(el)}return el};
+  const home=s=>{if(!FACH[s])return;SUBJ=s;try{head('link[rel="apple-touch-icon"]',()=>Object.assign(document.createElement('link'),{rel:'apple-touch-icon'})).href='fach-'+s+'-180.png';
+   head('link[rel="icon"]',()=>Object.assign(document.createElement('link'),{rel:'icon'})).href='fach-'+s+'-192.png';
+   head('meta[name="apple-mobile-web-app-title"]',()=>Object.assign(document.createElement('meta'),{name:'apple-mobile-web-app-title'})).content=FACH[s];
+   const b=document.getElementById('cmLoBack');if(b){b.href='lernordner.html?fach='+s;b.textContent='‹ '+FACH[s]}}catch{}};
+  const n0=note;note=patch=>{if(patch&&patch.subject)home(patch.subject);n0({...(SUBJ?{subject:SUBJ}:{}),...(patch||{})})};
+  const back=()=>{if(!sa||document.getElementById('cmLoBack'))return;const a=document.createElement('a');a.id='cmLoBack';a.href='lernordner.html'+(FACH[SUBJ]?'?fach='+SUBJ:'');a.textContent='‹ '+(FACH[SUBJ]||'Lernordner');a.style.cssText='position:fixed;left:max(10px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));z-index:90;padding:9px 14px;border-radius:14px;background:#fff;border:1px solid #dce3ef;color:#2f5f9b;font:600 14px/1 -apple-system,BlinkMacSystemFont,Inter,"Segoe UI",sans-serif;text-decoration:none;box-shadow:0 4px 12px #233d6022';document.body.append(a)};
+  const go=()=>{home(SUBJ);later();back()};document.readyState==='loading'?addEventListener('DOMContentLoaded',go):go()})();
  /* 11.91: Übersetzungs-Trainer – die Antworten (Satz 01 …) werden aus dem mitgeschickten Arbeitsstand aufgebaut, statt den Text doppelt zu übertragen */
  function ttAnswers(X,N){const w={},RT=['✗ noch nicht','≈ teilweise','✓ passt'];X=X||{};for(let i=0;i<N;i++){const x=X[i];if(!x)continue;
   if((x.tx||'').trim()||(x.vb||'').trim()||x.cmp)w['Satz '+String(i+1).padStart(2,'0')]=((x.tx||'').trim()||'(nichts geschrieben)')+(x.vb&&x.vb.trim()?'\n↳ Verbesserung: '+x.vb.trim():'')+(x.og&&x.cmp?'\n⚠ Musterübersetzung ohne eigene Übersetzung angesehen':'')+(x.r!=null?'\nSelbst: '+RT[x.r]:'')+(x.h?' · '+x.h+' Hilfe'+(x.h>1?'n':''):'')}

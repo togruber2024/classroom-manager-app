@@ -1,0 +1,29 @@
+{
+  "name": "Kunst",
+  "short_name": "Kunst",
+  "description": "Kunst – meine Aufgaben aus dem Classroom-Manager",
+  "lang": "de",
+  "start_url": "./lernordner.html?fach=kunst",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f8fc",
+  "theme_color": "#9AA6B8",
+  "icons": [
+    {
+      "src": "fach-kunst-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "fach-kunst-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "fach-kunst-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
