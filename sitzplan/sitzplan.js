@@ -38,7 +38,7 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
    ausdrücklich NICHT betroffen – dort bleibt die Fehlermeldung bestehen, damit nichts unbemerkt verloren geht. */
 (()=>{try{const P=Storage.prototype;if(P.__classroomGuard)return;P.__classroomGuard=true;const set=P.setItem,get=P.getItem,rem=P.removeItem,mem=new Map();
  const ui=k=>/^classroom-(previous-quarter:|next-quarter:|progress-v1$|ng-open-v1$|ov-mean-v1$|hatch-style-v1$|manager-hatching-v1$|manager-theme-v1$|mm-last-v1$)/.test(String(k));
- P.setItem=function(k,v){try{set.call(this,k,v);if(this===window.localStorage)mem.delete(String(k))}catch(e){if(this===window.localStorage&&ui(k)){mem.set(String(k),String(v));return}throw e}};
+ P.setItem=function(k,v){try{/* 11.99: unveränderte Werte nicht erneut schreiben (laut Standard ohnehin ohne Wirkung – spart beim Start Zeit) */if(get.call(this,k)===String(v)){if(this===window.localStorage)mem.delete(String(k));return}set.call(this,k,v);if(this===window.localStorage)mem.delete(String(k))}catch(e){if(this===window.localStorage&&ui(k)){mem.set(String(k),String(v));return}throw e}};
  P.getItem=function(k){if(this===window.localStorage&&mem.has(String(k)))return mem.get(String(k));return get.call(this,k)};
  P.removeItem=function(k){if(this===window.localStorage)mem.delete(String(k));return rem.call(this,k)}}catch{}})();
 /* Fehlerprotokoll auf dem Gerät (App, Noten-Manager, Unterrichts-Manager): nur Fehlermeldung, Datei/Zeile und Zeitpunkt,
@@ -239,13 +239,13 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
    Grundlage: frühere Namen in der gemeinsamen Klassenliste (formerNames). Ohne diese Angabe (ältere Umbenennungen) wird ein Name nur
    ersetzt, wenn genau eine Person der Klasse fast gleich heißt (höchstens 2 Buchstaben anders) und noch keinen Platz in diesem Plan hat. */
 (()=>{
- const norm=n=>String(n||'').trim().toLocaleLowerCase('de-DE'),TOK=new Set(['','X','PULT']);
+ const norm=n=>String(n||'').trim().toLowerCase(),TOK=new Set(['','X','PULT']);
  const dist=(a,b)=>{if(Math.abs(a.length-b.length)>2)return 9;let p=Array.from({length:b.length+1},(_,i)=>i);for(let i=1;i<=a.length;i++){const q=[i];let m=i;for(let j=1;j<=b.length;j++){q[j]=Math.min(p[j]+1,q[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));if(q[j]<m)m=q[j]}if(m>2)return 9;p=q}return p[b.length]};
  const readJ=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
- function prep(group){const active=(group?.students||[]).filter(s=>!s.deleted&&norm(s.name));const cur=new Set(active.map(s=>norm(s.name))),gone=new Set((group?.students||[]).filter(s=>s.deleted).map(s=>norm(s.name))),map=new Map();
-  for(const p of active)for(const f of p.formerNames||[])if(!cur.has(norm(f)))map.set(norm(f),p.name);return {active,cur,gone,map}}
+ /* 11.99: normierte Namen einmal vorab statt bei jedem Vergleich */function prep(group){const active=(group?.students||[]).filter(s=>!s.deleted&&norm(s.name));const activeN=active.map(p=>[p,norm(p.name)]);const cur=new Set(active.map(s=>norm(s.name))),gone=new Set((group?.students||[]).filter(s=>s.deleted).map(s=>norm(s.name))),map=new Map();
+  for(const p of active)for(const f of p.formerNames||[])if(!cur.has(norm(f)))map.set(norm(f),p.name);return {active,activeN,cur,gone,map}}
  function target(v,P,present){const n=norm(v);if(typeof v!=='string'||TOK.has(v.trim().toUpperCase())||P.cur.has(n)||P.gone.has(n))return null;
-  let to=P.map.get(n);if(!to&&n.length>=6){const c=P.active.filter(p=>!(present&&present.has(norm(p.name)))&&dist(n,norm(p.name))<=2);if(c.length===1)to=c[0].name}
+  let to=P.map.get(n);if(!to&&n.length>=6){const c=P.activeN.filter(([,pn])=>!(present&&present.has(pn))&&dist(n,pn)<=2);if(c.length===1)to=c[0][0].name}
   return to&&!(present&&present.has(norm(to)))?to:null}
  function fixGrid(grid,P){if(!Array.isArray(grid)||!grid.length||!grid.every(Array.isArray))return false;const present=new Set(grid.flat().filter(v=>typeof v==='string').map(norm));let ch=false;
   for(const row of grid)for(let i=0;i<row.length;i++){const to=target(row[i],P,present);if(to){row[i]=to;present.add(norm(to));ch=true}}return ch}
@@ -1142,7 +1142,7 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
 
         /* 9.92: Namensliste je Durchgang nur einmal aufbauen (vorher für jeden Tisch neu) */
         function sitzplatzKurzname(name) {
-            const normalize = value => String(value || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('de-DE');
+            const normalize = value => String(value || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLowerCase();
             let kurznameCache = sitzplatzKurzname.cache;
             if (!kurznameCache) {
                 const group = typeof classroomCurrentGroup === 'function' ? classroomCurrentGroup() : null;
@@ -1164,7 +1164,7 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
             const person = kurznameCache.people.get(normalize(name));
             if (!person) return String(name || '');
             const duplicate = (kurznameCache.firstCount.get(normalize(person.first)) || 0) > 1;
-            return person.first + (duplicate && person.last ? ' ' + Array.from(person.last)[0].toLocaleUpperCase('de-DE') + '.' : '');
+            return person.first + (duplicate && person.last ? ' ' + Array.from(person.last)[0].toUpperCase() + '.' : '');
         }
 
         function aktualisiereZellenDarstellung(cell, wert, gruppenIndex = null) {
@@ -1238,14 +1238,14 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
             const grid = document.getElementById('roomGrid');
             const status = document.getElementById('studentSearchStatus');
             if (!grid || !status) return;
-            const suchtext = suchbegriffSchueler.toLocaleLowerCase('de');
+            const suchtext = suchbegriffSchueler.toLowerCase();
             grid.classList.toggle('search-active', Boolean(suchtext));
             const treffer = [];
             grid.querySelectorAll('.cell').forEach(cell => {
                 cell.classList.remove('search-match');
                 const zeile = gridData[Number(cell.dataset.row)];
                 const wert = zeile ? zeile[Number(cell.dataset.col)] : '';
-                if (suchtext && wert && wert !== 'X' && wert !== 'PULT' && String(wert).toLocaleLowerCase('de').includes(suchtext)) {
+                if (suchtext && wert && wert !== 'X' && wert !== 'PULT' && String(wert).toLowerCase().includes(suchtext)) {
                     cell.classList.add('search-match');
                     treffer.push(cell);
                 }
@@ -1259,7 +1259,7 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
                     ...schuelerEinzel.map(s => s.name),
                     ...schuelerPaare.flatMap(p => [p.s1, p.s2])
                 ].filter(Boolean);
-                const inListe = namen.some(name => String(name).toLocaleLowerCase('de').includes(suchtext));
+                const inListe = namen.some(name => String(name).toLowerCase().includes(suchtext));
                 status.textContent = inListe ? 'In der Schülerliste, aber noch nicht im Sitzplan.' : 'Kein passender Name im Sitzplan gefunden.';
             }
         }
@@ -1339,18 +1339,18 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
         function ermittleZufaelligeSitzplaetze() {
             const abwesendeNamen = new Set();
             schuelerEinzel.forEach(s => {
-                if (s.abwesend && s.name && s.name.trim()) abwesendeNamen.add(s.name.trim().toLocaleLowerCase('de'));
+                if (s.abwesend && s.name && s.name.trim()) abwesendeNamen.add(s.name.trim().toLowerCase());
             });
             schuelerPaare.forEach(p => {
-                if (p.s1Abwesend && p.s1 && p.s1.trim()) abwesendeNamen.add(p.s1.trim().toLocaleLowerCase('de'));
-                if (p.s2Abwesend && p.s2 && p.s2.trim()) abwesendeNamen.add(p.s2.trim().toLocaleLowerCase('de'));
+                if (p.s1Abwesend && p.s1 && p.s1.trim()) abwesendeNamen.add(p.s1.trim().toLowerCase());
+                if (p.s2Abwesend && p.s2 && p.s2.trim()) abwesendeNamen.add(p.s2.trim().toLowerCase());
             });
 
             const kandidaten = [];
             for (let r = 0; r < ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
                     const name = gridData[r][c];
-                    if (name && name !== 'X' && name !== 'PULT' && name.trim() && !abwesendeNamen.has(name.trim().toLocaleLowerCase('de'))) {
+                    if (name && name !== 'X' && name !== 'PULT' && name.trim() && !abwesendeNamen.has(name.trim().toLowerCase())) {
                         kandidaten.push({r, c, name});
                     }
                 }
@@ -1541,18 +1541,18 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
         }
 
         function setzeAbwesenheit(nameKodiert, abwesend, quelle, index) {
-            const name = decodeURIComponent(nameKodiert).trim().toLocaleLowerCase('de');
+            const name = decodeURIComponent(nameKodiert).trim().toLowerCase();
             if (quelle === 'einzel') schuelerEinzel[index].abwesend = abwesend;
             if (quelle === 'paare1') schuelerPaare[index].s1Abwesend = abwesend;
             if (quelle === 'paare2') schuelerPaare[index].s2Abwesend = abwesend;
 
             if (name) {
                 schuelerEinzel.forEach(s => {
-                    if ((s.name || '').trim().toLocaleLowerCase('de') === name) s.abwesend = abwesend;
+                    if ((s.name || '').trim().toLowerCase() === name) s.abwesend = abwesend;
                 });
                 schuelerPaare.forEach(p => {
-                    if ((p.s1 || '').trim().toLocaleLowerCase('de') === name) p.s1Abwesend = abwesend;
-                    if ((p.s2 || '').trim().toLocaleLowerCase('de') === name) p.s2Abwesend = abwesend;
+                    if ((p.s1 || '').trim().toLowerCase() === name) p.s1Abwesend = abwesend;
+                    if ((p.s2 || '').trim().toLowerCase() === name) p.s2Abwesend = abwesend;
                 });
             }
             renderTables();
@@ -1567,14 +1567,14 @@ function classroomEscapeAttribute(value){return String(value??'').replace(/&/g,'
             return [...new Set(names.filter(name=>name?.trim()))].map(name=>({name,label:sitzplatzKurzname(name)}));
         }
         function classroomNameFromSuggestion(value){
-            const normalize=v=>String(v||'').normalize('NFC').trim().toLocaleLowerCase('de-DE');
+            const normalize=v=>String(v||'').normalize('NFC').trim().toLowerCase();
             const matches=classroomSuggestionPeople().filter(p=>normalize(p.label)===normalize(value));
             return matches.length===1?matches[0].name:value;
         }
         function classroomSuggestNames(value='') {
             let list=document.getElementById('classroomRosterNames');
             if(!list){list=document.createElement('datalist');list.id='classroomRosterNames';document.body.append(list)}
-            const normalize=v=>String(v||'').normalize('NFC').trim().toLocaleLowerCase('de-DE'),query=normalize(value);
+            const normalize=v=>String(v||'').normalize('NFC').trim().toLowerCase(),query=normalize(value);
             const candidates=classroomSuggestionPeople().filter(p=>!query||normalize(p.label).startsWith(query)).sort((a,b)=>a.label.localeCompare(b.label,'de-DE'));
             list.replaceChildren(...candidates.map(person=>{const option=document.createElement('option');option.value=person.label;return option}));
         }
@@ -1583,8 +1583,8 @@ function classroomEscapeAttribute(value){return String(value??'').replace(/&/g,'
         function classroomHideNames(){if(classroomNamePopup.hidden&&!classroomNameInput)return;classroomNamePopup.hidden=true;if(classroomNameInput)classroomNameInput.setAttribute('aria-expanded','false');classroomNameInput=null;classroomNameIndex=-1}
         function classroomChooseName(index){const input=classroomNameInput,person=classroomNameOptions[index];if(!input||!person)return;input.value=person.label;classroomHideNames();input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));classroomHideNames();input.blur()}
         function classroomShowNames(input){
-            const query=input.value.normalize('NFC').trim().toLocaleLowerCase('de-DE');if(!query){classroomHideNames();return}
-            classroomNameOptions=classroomSuggestionPeople().filter(p=>p.label.normalize('NFC').toLocaleLowerCase('de-DE').startsWith(query)).sort((a,b)=>a.label.localeCompare(b.label,'de-DE'));if(!classroomNameOptions.length){classroomHideNames();return}
+            const query=input.value.normalize('NFC').trim().toLowerCase();if(!query){classroomHideNames();return}
+            classroomNameOptions=classroomSuggestionPeople().filter(p=>p.label.normalize('NFC').toLowerCase().startsWith(query)).sort((a,b)=>a.label.localeCompare(b.label,'de-DE'));if(!classroomNameOptions.length){classroomHideNames();return}
             classroomNameInput=input;classroomNameIndex=-1;classroomNamePopup.replaceChildren();classroomNameOptions.forEach((person,index)=>{const button=document.createElement('button');button.type='button';button.textContent=person.label;button.setAttribute('role','option');button.setAttribute('aria-selected','false');button.onpointerdown=e=>{e.preventDefault();classroomChooseName(index)};classroomNamePopup.append(button)});
             const rect=input.getBoundingClientRect();classroomNamePopup.style.left=rect.left+'px';classroomNamePopup.style.top=(rect.bottom+3)+'px';classroomNamePopup.style.width=rect.width+'px';classroomNamePopup.hidden=false;input.setAttribute('aria-expanded','true');input.setAttribute('aria-autocomplete','list');
         }
@@ -1595,7 +1595,7 @@ function classroomEscapeAttribute(value){return String(value??'').replace(/&/g,'
         window.addEventListener('resize',classroomHideNames);window.addEventListener('scroll',classroomHideNames,true);
 
         function classroomPairKey(pair){
-            const names=[pair.s1,pair.s2].map(value=>classroomNameFromSuggestion(value||'').normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase('de-DE'));
+            const names=[pair.s1,pair.s2].map(value=>classroomNameFromSuggestion(value||'').normalize('NFC').trim().replace(/\s+/g,' ').toLowerCase());
             return names.every(Boolean)?names.sort().join('\u0000'):null;
         }
         function classroomCommitPair(input,type,index,side){
@@ -1733,7 +1733,7 @@ function classroomEscapeAttribute(value){return String(value??'').replace(/&/g,'
 
 /* ==== model.js ==== */
 (function(root){
-/* 9.92: gemerkt – wird beim Abgleich der Klassenlisten sehr oft mit denselben Namen aufgerufen */const normalizeCache=new Map();const normalize=value=>{const k=String(value||'');let r=normalizeCache.get(k);if(r===undefined){r=k.normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase('de-DE');if(normalizeCache.size>50000)normalizeCache.clear();normalizeCache.set(k,r)}return r};
+/* 9.92: gemerkt – wird beim Abgleich der Klassenlisten sehr oft mit denselben Namen aufgerufen */const normalizeCache=new Map();const normalize=value=>{const k=String(value||'');let r=normalizeCache.get(k);if(r===undefined){r=k.normalize('NFC').trim().replace(/\s+/g,' ').toLowerCase();if(normalizeCache.size>50000)normalizeCache.clear();normalizeCache.set(k,r)}return r};
 const uuid=()=>globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
 function newModel(){return {version:1,classes:[],sourceClasses:{},studentAliases:{}}}
 const classNameKey=value=>normalize(value).replace(/^klasse\s+/, '');
@@ -1788,7 +1788,7 @@ function seatNameLabels(names){
   people.set(key,{first,last});
  }
  const counts=new Map();for(const person of people.values()){const key=normalize(person.first);counts.set(key,(counts.get(key)||0)+1)}
- return new Map([...people].map(([key,person])=>[key,person.first+(counts.get(normalize(person.first))>1&&person.last?' '+Array.from(person.last)[0].toLocaleUpperCase('de-DE')+'.':'')]));
+ return new Map([...people].map(([key,person])=>[key,person.first+(counts.get(normalize(person.first))>1&&person.last?' '+Array.from(person.last)[0].toUpperCase()+'.':'')]));
 }
 function solveSeating({seats,students,tabuPairs=[],fixedPairs=[],alternate=false,maxNodes=70000,maxMillis=1500,random=Math.random,maxGenderConflicts=0,relaxGender=false,alternatePairs=false,pairSlots=false}){
  if(alternate&&relaxGender){
@@ -1928,7 +1928,7 @@ const api={normalize,newModel,repairRosterDuplicates,ingest,solveSeating,seatNam
 const classroomLinkMapKey='classroom-manager-linked-classes-v1';
 function classroomReadLinks(){try{return JSON.parse(localStorage.getItem(classroomLinkMapKey)||'{}')}catch{return {}}}
 function classroomStoragePrefix(name){return 'sitzplan_'+name.replace(/\s+/g,'_')+'_'}
-const classroomNameCache=new Map();function classroomNormalizeName(name){const k=String(name||'');let r=classroomNameCache.get(k);if(r===undefined){r=k.normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase('de-DE');if(classroomNameCache.size>50000)classroomNameCache.clear();classroomNameCache.set(k,r)}return r}
+const classroomNameCache=new Map();function classroomNormalizeName(name){const k=String(name||'');let r=classroomNameCache.get(k);if(r===undefined){r=k.normalize('NFC').trim().replace(/\s+/g,' ').toLowerCase();if(classroomNameCache.size>50000)classroomNameCache.clear();classroomNameCache.set(k,r)}return r}
 function classroomReadArray(key){const value=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(value)?value:[]}
 const classroomOriginalClassDropdown=aktualisiereKlassenDropdown;
 aktualisiereKlassenDropdown=function(){
@@ -2455,7 +2455,7 @@ window.addEventListener('message',event=>{const d=event.data;if(event.source!==p
    Es zählen alle Fächer/Kurse, die mit der aktuellen Lerngruppe verknüpft sind. Nur Anzeige – bearbeitet wird im Noten-Manager. */
 (()=>{
  const KEY='notenrechner-notizen-v1';
- const norm=n=>String(n||'').trim().toLocaleLowerCase('de-DE');
+ const norm=n=>String(n||'').trim().toLowerCase();
  const txt=v=>typeof v==='string'?v:(v&&typeof v.t==='string'?v.t:'');
  function refs(){try{const g=typeof classroomCurrentGroup==='function'&&classroomCurrentGroup(),src=typeof classroomLinkedModel!=='undefined'&&classroomLinkedModel?.sourceClasses;if(!g||!src)return [];return Object.keys(src).filter(k=>src[k]===g.id)}catch{return []}}
  function notesFor(name){let a={};try{a=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch{}const n=norm(name),out=[];for(const r of refs()){const t=txt(a[r+'::'+n]);if(t&&!out.includes(t))out.push(t)}return out}
@@ -2814,8 +2814,8 @@ document.addEventListener('keydown',event=>{
  const originalLoad=ladeDaten;ladeDaten=function(...args){const result=originalLoad(...args);selectForDate();load();return result};
  function change(id){if(id===room().id)return;datenSpeichern();entry().active=id;entry().usedByDate??={};entry().usedByDate[classroomDate.value]=id;persist();load();undoGridHistory=[];undoGroupHistory=[];initGrid();renderTables();aktualisiereUndoButton();window.dispatchEvent(new Event('classroom:room-change'))}
  select.onchange=()=>change(select.value);
- add.onclick=async ()=>{const name=await classroomPrompt('Name des Raums (zum Beispiel Raum 102):','');if(!name?.trim())return;const e=entry();if(e.rooms.some(r=>r.name.toLocaleLowerCase('de-DE')===name.trim().toLocaleLowerCase('de-DE'))){alert('Dieser Raum ist bereits vorhanden.');return}const id=crypto.randomUUID();e.rooms.push({id,name:name.trim(),grid:blank(),groups:leeresGruppenRaster(),anchors:{},people:[]});persist();change(id)};
- rename.onclick=async ()=>{const r=room(),name=await classroomPrompt('Raum umbenennen:',r.name);if(!name?.trim())return;if(entry().rooms.some(other=>other!==r&&other.name.toLocaleLowerCase('de-DE')===name.trim().toLocaleLowerCase('de-DE'))){alert('Dieser Raum ist bereits vorhanden.');return}r.name=name.trim();persist();refresh()};
+ add.onclick=async ()=>{const name=await classroomPrompt('Name des Raums (zum Beispiel Raum 102):','');if(!name?.trim())return;const e=entry();if(e.rooms.some(r=>r.name.toLowerCase()===name.trim().toLowerCase())){alert('Dieser Raum ist bereits vorhanden.');return}const id=crypto.randomUUID();e.rooms.push({id,name:name.trim(),grid:blank(),groups:leeresGruppenRaster(),anchors:{},people:[]});persist();change(id)};
+ rename.onclick=async ()=>{const r=room(),name=await classroomPrompt('Raum umbenennen:',r.name);if(!name?.trim())return;if(entry().rooms.some(other=>other!==r&&other.name.toLowerCase()===name.trim().toLowerCase())){alert('Dieser Raum ist bereits vorhanden.');return}r.name=name.trim();persist();refresh()};
  classroomDate.addEventListener('change',()=>{const before=room().id;selectForDate();if(room().id!==before){load();undoGridHistory=[];undoGroupHistory=[];initGrid();renderTables();aktualisiereUndoButton();window.dispatchEvent(new Event('classroom:room-change'))}},true);
  selectForDate();load();
 })();
@@ -3269,7 +3269,7 @@ document.addEventListener('keydown',event=>{
   for(const p of (typeof schuelerPaare!=='undefined'?schuelerPaare:[]))for(const n of [p?.s1,p?.s2])if(n)names.add(String(n).trim());
   return [...names].filter(Boolean).sort((a,b)=>a.localeCompare(b,'de',{sensitivity:'base'}));
  }
- const norm=v=>String(v||'').toLocaleLowerCase('de').normalize('NFD').replace(/[̀-ͯ]/g,'');
+ const norm=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
  // Vorschläge zeigen nur Vornamen; bei gleichen Vornamen hilft der Anfangsbuchstabe des Nachnamens.
  function firstName(full){const t=String(full).trim();if(t.includes(','))return t.split(',').slice(1).join(',').trim()||t;return t.split(/\s+/)[0]}
  function lastName(full){const t=String(full).trim();if(t.includes(','))return t.split(',')[0].trim();const parts=t.split(/\s+/);return parts.length>1?parts.at(-1):''}
@@ -3534,7 +3534,7 @@ document.addEventListener('keydown',event=>{
  }
  /* 11.68: leistungsbezogen – Noten aus dem Noten-Manager (aktuelles Halbjahr, gewählte Spalte) */
  let GC={half:'',cols:[]};
- const norm=n=>String(n||'').trim().toLocaleLowerCase('de-DE').replace(/\s+/g,' ');
+ const norm=n=>String(n||'').trim().toLowerCase().replace(/\s+/g,' ');
  function gradeCols(){GC={half:'',cols:[]};try{const nw=parent.document.getElementById('view-noten')?.contentWindow;if(!nw?.classroomGradeColumns)return;
   const g=typeof classroomCurrentGroup==='function'&&classroomCurrentGroup(),src=(typeof classroomLinkedModel!=='undefined'&&classroomLinkedModel?.sourceClasses)||{},refs=g?Object.keys(src).filter(k=>src[k]===g.id):[];
   const sel=nw.classroomCurrentSelection?.()||{},cur=sel.subject+'::'+sel.classId,key=refs.includes(cur)?cur:refs[0]||cur,[su,ci]=key.split('::');if(su&&ci)GC=nw.classroomGradeColumns(su,ci)||GC}catch(e){console.warn(e)}
@@ -4983,11 +4983,12 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  function pill(bar){const m=bar.querySelector(':scope>[data-zoom-minus]'),pl=bar.querySelector(':scope>[data-zoom-plus]');let bg=bar.querySelector(':scope>.vp-zoom-bg');
   if(!m||!pl||!m.offsetParent){if(bg)bg.hidden=true;return}if(!bg){bg=document.createElement('span');bg.className='vp-zoom-bg';bg.setAttribute('aria-hidden','true');bar.prepend(bg)}bg.hidden=false;
   const L=m.offsetLeft,R=pl.offsetLeft+pl.offsetWidth,T=m.offsetTop+(m.offsetHeight-36)/2,s=bg.style,l=L+'px',w=(R-L)+'px',t=T+'px';if(s.left!==l)s.left=l;if(s.width!==w)s.width=w;if(s.top!==t)s.top=t}
- function sync(){const bar=document.querySelector('.classroom-plan-zoom');if(!bar)return;pill(bar);const fit=bar.querySelector(':scope>[data-zoom-fit]'),reset=bar.querySelector(':scope>[data-zoom-reset]'),out=bar.querySelector(':scope>output');if(!reset)return;
+ /* 11.99: Hintergrund der Zoom-Pille gesammelt einmal pro Bild setzen (das Messen erzwingt sonst jedes Mal ein Layout) */let pq=0;const pillLater=bar=>{if(!pq)pq=requestAnimationFrame(()=>{pq=0;if(bar.isConnected)pill(bar)})};
+ function sync(){const bar=document.querySelector('.classroom-plan-zoom');if(!bar)return;pillLater(bar);const fit=bar.querySelector(':scope>[data-zoom-fit]'),reset=bar.querySelector(':scope>[data-zoom-reset]'),out=bar.querySelector(':scope>output');if(!reset)return;
   const on=fit?.getAttribute('aria-pressed')!=='true'&&/^\s*100\s*%/.test(out?.textContent||'');if(reset.hasAttribute('data-vp-on')!==on)reset.toggleAttribute('data-vp-on',on)}
- let obs=null;const watch=()=>{const bar=document.querySelector('.classroom-plan-zoom');if(!bar||bar===obs)return;obs=bar;/* 11.96: Leiste mittig – bei Breitenänderung rutscht der Regler, der Hintergrund muss mit */const ro=new ResizeObserver(()=>pill(bar));const obsAll=()=>{ro.observe(bar);for(const c of bar.children)ro.observe(c)};obsAll();new MutationObserver(()=>{obsAll();requestAnimationFrame(()=>pill(bar))}).observe(bar,{childList:true});document.fonts?.ready?.then(()=>pill(bar));new MutationObserver(sync).observe(bar,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-pressed']});sync()};
+ let obs=null;const watch=()=>{const bar=document.querySelector('.classroom-plan-zoom');if(!bar||bar===obs)return;obs=bar;/* 11.96: Leiste mittig – bei Breitenänderung rutscht der Regler, der Hintergrund muss mit */const later=()=>pillLater(bar);const ro=new ResizeObserver(later);const obsAll=()=>{ro.observe(bar);for(const c of bar.children)ro.observe(c)};obsAll();new MutationObserver(()=>{obsAll();later()}).observe(bar,{childList:true});document.fonts?.ready?.then(()=>pill(bar));new MutationObserver(sync).observe(bar,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-pressed']});sync()};
  if(typeof classroomOnDomChange==='function')classroomOnDomChange(watch);else new MutationObserver(watch).observe(document.body,{childList:true,subtree:true});
- watch();setTimeout(watch,800);addEventListener('resize',()=>{const b=document.querySelector('.classroom-plan-zoom');if(b)pill(b)});
+ watch();setTimeout(watch,800);addEventListener('resize',()=>{const b=document.querySelector('.classroom-plan-zoom');if(b)pillLater(b)});
 })();
 ;
 
@@ -5040,7 +5041,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
 
  /* ---------- Darstellung ---------- */
  const st=document.createElement('style');const P='body[data-module=sitzplan] .room-grid .cell';st.textContent=
-  P+':is(:has(>.si-tag),:has(>.si-ab)){position:relative;overflow:visible!important}'
+  P+'.si-on{position:relative;overflow:visible!important}'
   +P+'>.si-tag{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);z-index:3;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:750;line-height:1.4;white-space:nowrap;pointer-events:none;box-shadow:0 1px 3px #0002;background:#eef2f8;color:#38506f;border:1px solid #cfd8e6}'
   +P+'>.si-tag.si-zero{background:#e8790c;color:#fff;border-color:#e8790c}'+P+'>.si-tag.si-low{background:#fff1e3;color:#a4500a;border-color:#f3c08e}'
   +P+'>.si-tag.si-ok{background:#e3f4ea;color:#1f7a45;border-color:#a9dcbd}'+P+'>.si-tag.si-mid{background:#fff8dc;color:#8a6a00;border-color:#ecd98a}'
@@ -5082,11 +5083,12 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   if(!legend||!legend.isConnected){legend=document.createElement('div');legend.className='si-legend';legend.hidden=true;legend.setAttribute('role','status')}
   if(legend.previousElementSibling!==bar)bar.after(legend);
   for(const b of pill.querySelectorAll('[data-si]')){const on=String(b.dataset.si===mode);if(b.getAttribute('aria-pressed')!==on)b.setAttribute('aria-pressed',on)}
-  ensureFair();
+  ensureFair();window.classroomLegendEnsure?.();
   const go=document.getElementById('classroomStartButton');if(go&&go.onclick!==window.generiereSitzplan)go.onclick=window.generiereSitzplan;
  }
  function setLegend(html){if(!legend)return;if(!html){if(!legend.hidden)legend.hidden=true;return}if(legend.innerHTML!==html)legend.innerHTML=html;legend.hidden=false}
- const setTag=(cell,cls,text,title)=>{let t=cell.querySelector(':scope>.si-tag');if(!text){t?.remove();return}if(!t){t=document.createElement('span');t.className='si-tag';t.setAttribute('aria-hidden','true');cell.append(t)}const c='si-tag '+(cls||'');if(t.className!==c)t.className=c;if(t.textContent!==text)t.textContent=text;if(title){cell.title=(cell.title||'')+' · '+title}};
+ const mark=cell=>{const on=!!cell.querySelector(':scope>.si-tag,:scope>.si-ab');if(cell.classList.contains('si-on')!==on)cell.classList.toggle('si-on',on)};
+ const setTag=(cell,cls,text,title)=>{let t=cell.querySelector(':scope>.si-tag');if(!text){if(t){t.remove();mark(cell)}return}if(!t){t=document.createElement('span');t.className='si-tag';t.setAttribute('aria-hidden','true');cell.append(t)}const c='si-tag '+(cls||'');if(t.className!==c)t.className=c;if(t.textContent!==text)t.textContent=text;mark(cell);if(title){cell.title=(cell.title||'')+' · '+title}};
  const cellName=cell=>gridData[Number(cell.dataset.row)]?.[Number(cell.dataset.col)];
 
  /* ③ A/B im Schachbrett: Reihen und Spalten mit Plätzen werden durchgezählt (leere Zwischenreihen zählen nicht) */
@@ -5094,19 +5096,19 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  function paintAB(cells){
   const on=belegung()==='klassenarbeit',seats=cells.filter(c=>{const n=cellName(c);return on&&n&&n!=='X'&&n!=='PULT'&&personOf(n)});
   const rows=[...new Set(seats.map(c=>+c.dataset.row))].sort((a,b)=>a-b),cols=[...new Set(seats.map(c=>+c.dataset.col))].sort((a,b)=>a-b);let a=0,b=0;
-  for(const c of cells){let t=c.querySelector(':scope>.si-ab');if(!seats.includes(c)){t?.remove();continue}
-   const g=(rows.indexOf(+c.dataset.row)+cols.indexOf(+c.dataset.col))%2?'B':'A';g==='A'?a++:b++;if(!t){t=document.createElement('span');t.className='si-ab';c.append(t)}if(t.dataset.ab!==g){t.dataset.ab=g;t.textContent=g}t.setAttribute('aria-label','Gruppe '+g)}
+  for(const c of cells){let t=c.querySelector(':scope>.si-ab');if(!seats.includes(c)){if(t){t.remove();mark(c)}continue}
+   const g=(rows.indexOf(+c.dataset.row)+cols.indexOf(+c.dataset.col))%2?'B':'A';g==='A'?a++:b++;if(!t){t=document.createElement('span');t.className='si-ab';c.append(t)}if(t.dataset.ab!==g){t.dataset.ab=g;t.textContent=g}t.setAttribute('aria-label','Gruppe '+g);mark(c)}
   return on?{a,b}:null}
 
  let painting=false;
  function paint(){if(painting)return;painting=true;try{
   ensureUi();const cells=[...document.querySelectorAll('.room-grid .cell')],ab=paintAB(cells);
-  if(!mode){for(const c of cells)c.querySelector(':scope>.si-tag')?.remove();setLegend(ab?'Klassenarbeit: <b>Gruppe A</b> '+ab.a+' · <b>Gruppe B</b> '+ab.b+' – im Schachbrett, auch im Ausdruck':'');return}
-  if(mode==='count'){const m=quarterCounts();if(!m){for(const c of cells)c.querySelector(':scope>.si-tag')?.remove();setLegend('Für diese Klasse gibt es noch keine Seite „Mündliche Mitarbeit“.');return}
+  if(!mode){for(const c of cells)setTag(c);setLegend(ab?'Klassenarbeit: <b>Gruppe A</b> '+ab.a+' · <b>Gruppe B</b> '+ab.b+' – im Schachbrett, auch im Ausdruck':'');return}
+  if(mode==='count'){const m=quarterCounts();if(!m){for(const c of cells)setTag(c);setLegend('Für diese Klasse gibt es noch keine Seite „Mündliche Mitarbeit“.');return}
    const vals=[...m.values()],avg=vals.length?vals.reduce((s,x)=>s+x,0)/vals.length:0;let zero=0,low=0;
    for(const c of cells){const p=personOf(cellName(c));if(!p){setTag(c);continue}const n=m.get(p.id)??0;const cls=n===0?'si-zero':n<avg-.5?'si-low':'';if(n===0)zero++;else if(cls)low++;setTag(c,cls,String(n),n+' mündliche Note'+(n===1?'':'n')+' im Quartal')}
    setLegend('<b>Anzahl mündlicher Noten</b> · '+esc(quarterTarget()?.label||'')+' · Ø '+fmt(avg)+(zero?' · <b>'+zero+'</b> noch ohne Note':'')+(low?' · '+low+' unter dem Schnitt':''));}
-  else if(mode==='le'){const live=leLive();if(!live){for(const c of cells)c.querySelector(':scope>.si-tag')?.remove();setLegend('Für diese Klasse gibt es noch keine Lerneinheit mit gescannten Abgaben.');return}
+  else if(mode==='le'){const live=leLive();if(!live){for(const c of cells)setTag(c);setLegend('Für diese Klasse gibt es noch keine Lerneinheit mit gescannten Abgaben.');return}
    let fin=0,got=0;for(const c of cells){const p=personOf(cellName(c));if(!p){setTag(c);continue}const x=leFor(live,p);
     if(!x){setTag(c,absentToday(p)?'':'si-low','–','noch keine Abgabe');continue}got++;const full=live.total&&x.done>=live.total;if(full)fin++;
     setTag(c,full?'si-ok':x.done>=live.total*.6?'si-mid':'si-low',full?'fertig':x.done+'/'+live.total,x.done+' von '+live.total+' Stationen')}
@@ -5125,7 +5127,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   if(!fairBtn){fairBtn=document.createElement('button');fairBtn.type='button';fairBtn.id='fairRandomButton';fairBtn.className='btn btn-secondary spi-btn';fairBtn.innerHTML=SCALE;fairBtn.setAttribute('aria-label','Fair losen');
    fairBtn.title='Fair losen: Wer im gewählten Quartal seltener mündlich bewertet wurde, wird häufiger gezogen – zufällig bleibt es trotzdem.';fairBtn.addEventListener('click',()=>window.waehleZufaelligenSchueler(true))}
   if(fairBtn.disabled!==r.disabled)fairBtn.disabled=r.disabled;
-  let w=r.parentElement;if(!w?.matches('.si-rsplit')){w=document.createElement('span');w.className='si-rsplit';w.setAttribute('role','group');w.setAttribute('aria-label','Zufallsauswahl');r.before(w);w.append(r)}
+  let w=r.parentElement;if(!w?.matches('.si-rsplit')){for(const o of document.querySelectorAll('.si-rsplit'))if(!o.querySelector('#randomStudentButton')&&o!==fairBtn?.parentElement)o.remove();w=document.createElement('span');w.className='si-rsplit';w.setAttribute('role','group');w.setAttribute('aria-label','Zufallsauswahl');r.before(w);w.append(r)}
   if(fairBtn.parentElement!==w||r.nextElementSibling!==fairBtn)r.after(fairBtn)}
  const origDraw=window.waehleZufaelligenSchueler;
  window.waehleZufaelligenSchueler=function(fair){
@@ -5136,7 +5138,8 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   zufallsAuswahl=pool[i];const p=personOf(zufallsAuswahl.name),n=p?(m.get(p.id)??0):0;
   const status=document.getElementById('randomStudentStatus');if(status)status.textContent='Fair gelost: '+zufallsAuswahl.name+' · bisher '+n+' Note'+(n===1?'':'n')+' im Quartal';
   initGrid();ensureFair()};
- new MutationObserver(()=>{const r=document.getElementById('randomStudentButton');if(r&&(!r.parentElement?.matches('.si-rsplit')||fairBtn?.disabled!==r.disabled))ensureFair()}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled']});
+ /* 11.99: kein Beobachter auf dem ganzen Dokument mehr – der Knopf folgt der Zufallsauswahl, wenn sie (de)aktiviert wird */
+ const origUpd=window.aktualisiereZufallButton;if(typeof origUpd==='function')window.aktualisiereZufallButton=function(){const r=origUpd.apply(this,arguments);ensureFair();return r};
 
  /* ③/④ neue Sitzverteilungen */
  function addRadios(){const sec=document.querySelector('#tab-config .seat-option-group');if(!sec||sec.querySelector('[value=klassenarbeit]'))return;
@@ -5235,7 +5238,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  document.addEventListener('keydown',e=>{if(pop&&e.key==='Escape')close()});
  addEventListener('resize',close);addEventListener('scroll',e=>{if(pop&&!pop.contains(e.target))close()},true);
  classroomHooks.add('initGrid','seat-insights: Legende',{after(){setTimeout(ensure,0)}});
- new MutationObserver(()=>{if(!btnTop.isConnected||!btnBot.isConnected)ensure()}).observe(document.body,{childList:true,subtree:true});
+ window.classroomLegendEnsure=ensure;/* 11.99: Aufruf nach jedem Neuaufbau der Leisten (initGrid, Zeichnen der Marken) statt per Dokument-Beobachter */
  ensure();setTimeout(ensure,800);
 })();
 ;

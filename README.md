@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 14.11.2026 · Version 11.98
+Stand: 14.11.2026 · Version 11.99
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1477,3 +1477,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.96: Sitzplan × Noten (Anzahl/Lerneinheit/Trend am Platz, Fair losen per Waage, Klassenarbeit A/B, Lernpartner), Leisten mittig, Legende (ⓘ), klarere Namen; Schüler-App: Fach-Knopf oben links
 11.97: Übersetzungs-Trainer: „Nebensatz“ statt „Gliedsatz“, Erfolgsmeldungen blenden kurz ein und wieder aus
 11.98: Übersetzungs-Trainer: neuer Schritt „Im Nebensatz“ – Prädikat, Subjekt und Objekt je Nebensatz (neue Textdateien)
+11.99: schnellerer Start (Namensvergleich, unveränderte Speicherwerte, Sitzplan-Leisten); Lerneinheiten auf dem Home-Bildschirm mit Fach-Name und -Symbol (Fach im Start-Link)
