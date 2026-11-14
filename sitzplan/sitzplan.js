@@ -5237,7 +5237,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  const svg=el=>{const s=el?.querySelector?.('svg');if(!s)return '';const c=s.cloneNode(true);c.removeAttribute('class');c.removeAttribute('style');return c.outerHTML};
  const shown=el=>!!el&&(el.offsetParent!==null||el.classList.contains('plan-actions-collapsed')||el.classList.contains('zoom-collapsed'));
  const off=el=>el.classList.contains('plan-actions-collapsed')||el.classList.contains('zoom-collapsed')||!!el.closest('.plan-actions-collapsed,.zoom-collapsed');
- const row=(icon,cls,text,isOff)=>'<div class="r'+(isOff?' off':'')+'"><span class="ic '+(cls||'')+'">'+icon+'</span><span>'+text+(isOff?' <small>(im Menü „Mehr“)</small>':'')+'</span></div>';
+ const row=(icon,cls,text,isOff)=>'<div class="r'+(isOff?' off':'')+'"><span class="ic '+(cls||'')+'">'+icon+'</span><span>'+text+'</span></div>';
  function topRows(bar){const out=[];for(const c of bar.children){if(!shown(c)||c.matches('.vp-zoom-bg,.zoom-more,.sp-lg-btn,input,output'))continue;
    if(c.matches('.plan-col-pair')){const T=['Einstellungen ein-/ausblenden','Noten der Klasse ein-/ausblenden','Spalte links/rechts tauschen'];[...c.querySelectorAll('button')].forEach((b,i)=>out.push(row(svg(b),'rd',esc(T[i]||b.getAttribute('aria-label')||''))));continue}
    if(c.matches('[data-zoom-minus]')){out.push(row('−&thinsp;+','rd','Zoom: kleiner / größer'));continue}if(c.matches('[data-zoom-plus]'))continue;

@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 14.11.2026 · Version 12.10
+Stand: 14.11.2026 · Version 12.11
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1489,3 +1489,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.08: Sitzplan-Knöpfe einheitlich 40 px, „Ältere löschen“; Lerneinheiten mit Stationen nacheinander (meta.lock = seq)
 12.09: Lernordner mit Ordnern (nach Reihe, eigene, Erledigt); Einheiten umbenennen in „Inhalte organisieren“; Sitzplan-Leiste neu geordnet, Bewertungen rund
 12.10: Sitzplan-Leiste: „…“ vor dem i-Knopf
+12.11: Lernordner „Link einfügen“; kleinere Grammatik-QR-Codes, schärferer Scanner; Legende ohne „(im Menü „Mehr“)“

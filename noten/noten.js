@@ -5065,7 +5065,7 @@ window.LP=LP;window.lpLabels=labels;
   if(out.le)await regLoad();return out}
  /* 11.23: Üben (ohne Note) – Wörter bzw. Aufgaben mit Lösungen reisen im Link (#…) zur Seite ueben.html, nicht zum Server */
  const z1=async o=>{const bytes=new TextEncoder().encode(JSON.stringify(o));try{return 'z1.'+b64url(new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()))}catch{return 'j1.'+b64url(bytes)}};
- const QRMAX=2300;
+ const QRMAX=2300,QRG=1300;
  async function bibPractice(kind,k,anon){const V=window.classroomVocabPdf,lab=V.lessonLabel(String(k)),c=leCls();let o;
   if(kind==='v'||kind==='w'){const l=libOf(kind==='w'?'wh':'main'),L=l?.lessons?.[k];if(!L)return null;
    const w=L.sections.filter(x=>kind==='w'||!/^(Wiederholung|Übungen)$/.test(x.name)).flatMap(x=>x.entries||[]).map(e=>[e.lemma||'',e.info||'',e.meaning||'']).filter(x=>x[0]&&x[2]);if(!w.length)return null;
@@ -5074,7 +5074,7 @@ window.LP=LP;window.lpLabels=labels;
    const keep=it=>it.k==='tab'?{k:'tab',ti:it.ti,rw:it.rw,cl:it.cl,sol:it.sol,gv:it.gv}:it.k==='det'?{k:'det',ti:it.ti,f:it.f,d:it.d,sol:it.sol}:{k:'inp',ti:it.ti,p:it.p,sub:it.sub,sol:it.sol};
    const seed=Math.floor(Math.random()*1e9),make=n=>{const r=GR().rngOf(seed);const out=[];for(const tp of tps){let gen=null;try{gen=GR().gen(tp.g,k)}catch{}if(!gen)continue;for(const [,,cnt,mk] of gen.types){try{out.push(...mk(r,cnt?n:1).map(keep))}catch{}}}return out};
    let n=4,q=make(n);o={k:'g',t:'Grammatik '+lab,c,q,...(anon?{}:{u:'pg-'+k,n:leNames().map(x=>x.disp)})};
-   /* passend für einen QR-Code: notfalls weniger Aufgaben */while(n>1&&(await z1(o)).length>QRMAX){n--;q=make(n);o.q=q}if(!q.length)return null}
+   /* passend für einen QR-Code: notfalls weniger Aufgaben. 12.11: höchstens ~1300 Zeichen – dichtere Codes erkennt die iPad-Kamera am Bildschirm oft nicht */while(n>1&&(await z1(o)).length>QRG){n--;q=make(n);o.q=q}if(!q.length)return null}
   else return null;
   const h=await z1(o);return {hash:'#'+h,url:studentBase().replace(/vokabeltest\.html$/,'ueben.html')+'#'+h,qr:h.length<=QRMAX,n:o.k==='v'?o.w.length:o.q.length,title:o.t}}
  /* 11.42: Schulbuch-Datei einer Lerneinheit zum Weitergeben (AirDrop) – dieselbe Datei, die die Schüler mit „Datei laden …“ öffnen */
