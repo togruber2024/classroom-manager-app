@@ -97,7 +97,7 @@
   if(/[?&]vorschau=1/.test(location.search))return;
   const K='cm-lernordner-v1',H0=location.href,rs=/^#rs\./.test(location.hash);const rd=()=>{try{return JSON.parse(localStorage.getItem(K)||'{}')||{}}catch{return {}}};
   /* 11.99: ?fach=… gehört nicht zur Kennung (sonst doppelte Einträge im Lernordner) */const srch=location.search.replace(/([?&])fach=[^&]*&?/,'$1').replace(/[?&]$/,'');let ID=page==='vokabeltest.html'?page+(location.hash||'').slice(0,80):page==='texttrainer.html'?null:page+srch;
-  function note(patch){if(!ID||rs)return;const a=rd(),e=a[ID]??={id:ID,kind:KIND,url:H0,added:Date.now()};if(/#./.test(H0))e.url=H0;Object.assign(e,patch||{},{at:Date.now()});try{localStorage.setItem(K,JSON.stringify(a))}catch{}}
+  function note(patch){if(!ID||rs)return;const a=rd(),e=a[ID]??={id:ID,kind:KIND,url:H0,added:Date.now()};if(/#./.test(H0))e.url=H0;delete e.neu;Object.assign(e,patch||{},{at:Date.now()});try{localStorage.setItem(K,JSON.stringify(a))}catch{}}
   window.cmLoNote=p=>{p={...(p||{})};if(p.key){ID=page+'#'+p.key;delete p.key}note(p)};
   const later=()=>setTimeout(()=>{if(ID&&page!=='einheit.html')note({title:rd()[ID]?.title||document.title})},1500);
   const sa=(()=>{try{return navigator.standalone===true||matchMedia('(display-mode: standalone)').matches}catch{return false}})();
