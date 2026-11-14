@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 14.11.2026 · Version 12.15
+Stand: 14.11.2026 · Version 12.16
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1494,3 +1494,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.13: Gruppen bilden – Geschlecht zufällig/gemischt/getrennt, Nachnamen-Schalter, „Letztes Testergebnis“, Einstellungen in zwei Zeilen
 12.14: Unterricht – kompakte Zeilen, Sequenzen einklappbar, Sachinfo vor Lektionstext, Wiederholungs-/Lernvokabular
 12.15: Unterricht – Knöpfe bündig, „Buchübungen L16“ in der Kopfzeile
+12.16: Unterricht – einzelne Knöpfe wie „Öffnen“ rechtsbündig
