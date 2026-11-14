@@ -68,7 +68,9 @@ const SK='cm-lernordner-sort-v1',smode=()=>{try{return localStorage.getItem(SK)|
 const FK='cm-lernordner-folders-v1',NK='cm-lernordner-fnames-v1',OK='cm-lernordner-open-v1',DONE='\u0001done';
 const lg=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v==null?d:v}catch{return d}},ls=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 const pcOf=e=>{const m=/^(\d+)\/(\d+)$/.exec(e.p||'');return m&&+m[2]?Math.min(100,Math.round(+m[1]/+m[2]*100)):null};
-const fOf=e=>(pcOf(e)>=100)?DONE:(e.fd!=null?e.fd:(e.reihe||''));
+/* 12.12: Latein ohne Reihe → Ordner nach Lektion („L16“) aus dem Titel */
+const baseOf=e=>{if(e.reihe)return e.reihe;if(subjOf(e)!=='latein')return '';const m=/^L(\d+[a-z]?)\b/.exec(e.title||'')||/Lektion (\d+[a-z]?)\b/.exec(e.title||'');return m?'L'+m[1]:''};
+const fOf=e=>(pcOf(e)>=100)?DONE:(e.fd!=null?e.fd:baseOf(e));
 const fName=k=>k===DONE?'Erledigt':(lg(NK,{})[k]||k);
 const FSVG='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',DSVG='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 14.5l2 2 4-4"/></svg>';let FL=[];
 function draw(){const a=rd(),mode=smode(),fold=mode==='fold',own0=mode!=='recent',L=Object.values(a).sort(own0?((x,y)=>(y.ord==null)-(x.ord==null)||(x.ord==null?(y.added||y.at||0)-(x.added||x.at||0):x.ord-y.ord)):((x,y)=>(y.at||0)-(x.at||0)));
@@ -107,10 +109,10 @@ function renFolder(k){const cur=fName(k),n=(prompt('Neuer Name des Ordners:',cur
  if(c.includes(k)){c[c.indexOf(k)]=n;ls(FK,[...new Set(c)]);for(const e of Object.values(a))if(e.fd===k)e.fd=n;wr(a);const o=lg(OK,{});if(k in o){o[n]=o[k];delete o[k];ls(OK,o)}}
  else{const N=lg(NK,{});if(n===k)delete N[k];else N[k]=n;ls(NK,N)}draw()}
 function rmFolder(k){if(!confirm('Ordner „'+fName(k)+'“ löschen?\n\nDie Aufgaben darin bleiben erhalten und kommen zurück in ihren Reihen-Ordner.'))return;ls(FK,lg(FK,[]).filter(x=>x!==k));const a=rd();for(const e of Object.values(a))if(e.fd===k)delete e.fd;wr(a);draw()}
-function pickFolder(id){const a=rd(),e=a[id];if(!e)return;const cur=fOf(e)===DONE?(e.fd!=null?e.fd:(e.reihe||'')):fOf(e);
- const ks=[...new Set([...Object.values(a).map(x=>x.fd!=null?x.fd:(x.reihe||'')),...lg(FK,[])].filter(Boolean))].sort((x,y)=>fName(x).localeCompare(fName(y),'de'));
+function pickFolder(id){const a=rd(),e=a[id];if(!e)return;const cur=fOf(e)===DONE?(e.fd!=null?e.fd:baseOf(e)):fOf(e);
+ const ks=[...new Set([...Object.values(a).map(x=>x.fd!=null?x.fd:baseOf(x)),...lg(FK,[])].filter(Boolean))].sort((x,y)=>fName(x).localeCompare(fName(y),'de'));
  const o=document.createElement('div');o.className='fpick';o.innerHTML='<div role="dialog" aria-label="In einen Ordner legen"><h4>„'+esc(e.title||e.kind)+'“ in einen Ordner legen</h4>'+ks.map((k,i)=>'<button type="button" data-i="'+i+'" class="'+(k===cur?'on':'')+'">'+FSVG+esc(fName(k))+(k===cur?' ✓':'')+'</button>').join('')+'<button type="button" data-i="-1" class="'+(cur===''?'on':'')+'">Ohne Ordner'+(cur===''?' ✓':'')+'</button><hr><button type="button" class="nfb" data-new>+ Neuer Ordner …</button><button type="button" data-x>Abbrechen</button></div>';
- const put=k=>{const x=rd(),y=x[id];if(!y)return;if(k===(y.reihe||''))delete y.fd;else y.fd=k;wr(x);const op=lg(OK,{});if(k){op[k]=true;ls(OK,op)}o.remove();draw()};
+ const put=k=>{const x=rd(),y=x[id];if(!y)return;if(k===baseOf(y))delete y.fd;else y.fd=k;wr(x);const op=lg(OK,{});if(k){op[k]=true;ls(OK,op)}o.remove();draw()};
  o.onclick=ev=>{const b=ev.target.closest('button');if(!b){if(ev.target===o)o.remove();return}if(b.dataset.x!=null)return o.remove();if(b.dataset.new!=null){const n=newFolder();if(n)put(n);return}const i=+b.dataset.i;put(i<0?'':ks[i])};document.body.append(o)}
 /* Links der Lehrkraft zeigen auf die App im Internet – hier öffnen wir dieselbe Seite im eigenen Ordner (gleicher Speicher) */
 function local(u){try{const x=new URL(u,location.href),pg=x.pathname.split('/').pop();if(!PAGES.includes(pg))return null;return pg+x.search+x.hash}catch{return null}}
