@@ -8250,7 +8250,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  function sheet(cls){const d=document.createElement('dialog');d.className='nsv-dialog nsv-sheet '+cls;document.body.append(d);d.addEventListener('close',()=>d.remove());return d}
 
  /* ---------- Alle Notenspiegel der Klasse ---------- */
- function openList(){const n=N();if(!n||document.querySelector('dialog.nsv-sheet[open]'))return;const {exams,tests}=ownItems();const d=sheet('nsv-list-sheet');
+ function openList(){const n=N();if(!n||document.querySelector('dialog.nsv-sheet[open]'))return;let {exams,tests}=ownItems();const d=sheet('nsv-list-sheet');
   function render(){const one=it=>{const mx=Math.max(1e-9,...[...it.counts.values()].map(c=>n.getPct()?(it.n?c/it.n:0):c));const h=n.card(it,it,mx).replace('nsv-card ref','nsv-card').replace(' · Bezug','');return onPhone()?h:h.replace('<div class="nsv-card">','<div class="nsv-card nsv-go" role="link" tabindex="0" data-go="'+n.esc(it.id)+'" title="Zur '+(it.taskId?'Test':'Arbeit')+'-Seite"><span class="nsv-goarrow" aria-hidden="true">'+GO+'</span>')};
    const sec=(t,xs)=>xs.length?`<div class="nsv-sec"><span>${t}</span><span>${xs.length}</span></div>${xs.map(one).join('')}`:'';
    d.innerHTML=`<div class="nsv-shead"><h2>Notenspiegel · ${n.esc(className())}</h2><button type="button" class="nsv-sbtn" data-cmp>Vergleichen</button><button type="button" class="nsv-x" data-x aria-label="Schließen">✕</button></div>
@@ -8259,7 +8259,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    d.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{n.setPct(b.dataset.m==='p');const t=d.querySelector('.nsv-sbody').scrollTop;render();d.querySelector('.nsv-sbody').scrollTop=t});
    d.querySelector('[data-x]').onclick=()=>d.close();d.querySelector('[data-cmp]').onclick=()=>{d.close();openPick()};
    const items=new Map([...exams,...tests].map(x=>[x.id,x]));d.querySelectorAll('[data-go]').forEach(c=>{const go=()=>{const it=items.get(c.dataset.go);if(it){d.close();goTo(it)}};c.onclick=go;c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}}})}
-  render();d.showModal()}
+  render();d.showModal();
+  /* 12.06: Klasse oben gewechselt – die Notenspiegel der neuen Klasse zeigen */let key=currentSubject+'|'+currentClassId;const iv=setInterval(()=>{if(!d.isConnected||!d.open){clearInterval(iv);return}const k2=currentSubject+'|'+currentClassId;if(k2===key)return;key=k2;({exams,tests}=ownItems());render();const b=d.querySelector('.nsv-sbody');if(b)b.scrollTop=0},300)}
 
  /* 10.44: Vom Notenspiegel direkt zur Arbeit bzw. zum Test (auch aus der Noten-Schnellansicht im Unterrichts-Manager) */
  /* 10.46: am iPhone kein Sprung zur Arbeit (dort gibt es nur die Kartenansicht) */
