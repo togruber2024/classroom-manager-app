@@ -24,7 +24,7 @@ h1{font-size:1.5rem;margin:4px 0 0}.muted{color:var(--mut)}
 .pri{min-height:48px;padding:0 20px;border:0;border-radius:12px;background:var(--blue);color:#fff;font-weight:650}.pri:disabled{opacity:.4}
 .sec{min-height:48px;padding:0 16px;border:1px solid #b9c6da;border-radius:12px;background:#fff;color:var(--blue)}.sec:disabled{opacity:.45}
 .lnk{border:0;background:none;color:var(--mut);text-decoration:underline;min-height:44px}
-.fb{margin-top:12px;padding:10px 14px;border-radius:12px;font-weight:600}.fb.ok{background:var(--okbg);color:var(--ok)}.fb.no{background:var(--badbg);color:var(--bad)}.fb.info{background:#eef3fa;color:#2f4f7a}
+.fb{margin-top:12px;padding:10px 14px;border-radius:12px;font-weight:600}.fb.ok{background:var(--okbg);color:var(--ok)}.fb.fade{opacity:0;transform:translateY(-4px);transition:opacity .35s,transform .35s}.fb.no{background:var(--badbg);color:var(--bad)}.fb.info{background:#eef3fa;color:#2f4f7a}
 .cnt{font-weight:800;color:var(--blue)}
 .ev{display:flex;align-items:center;gap:10px;min-height:54px;margin:0 0 8px;padding:8px 10px 8px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
 .ev .grip{flex:none;color:#9aa6b6;font-size:1.3rem;cursor:grab}.ev .nr{flex:none;width:28px;height:28px;border-radius:50%;background:#eef2f8;color:var(--mut);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem}
@@ -83,7 +83,8 @@ function ttScore(){const N=T.s.length,X=ST.sent||{};let fe=0,oh=0,og=0,vb=0;cons
  const fd=d=>{try{return new Date(d).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}catch{return ''}};
  const ldh=(ST.ld||[]).map(x=>'⚠ Zwischenstand geladen am '+fd(x.at)+(x.saved?' (gesichert '+fd(x.saved)+')':'')+(x.nm?' · Datei von '+x.nm:'')+(x.same?'':' · von einem anderen Gerät'));
  const hin=[...ldh,og?og+(og>1?' Sätze':' Satz')+' ohne eigene Übersetzung verglichen':'',vb?vb+'× verbessert':'',rs?rs+'× alles zurückgesetzt':''].filter(Boolean);const vs=VOC().length&&ST.vo&&ST.vo.first!=null?{vo:[ST.vo.first,VOC().length]}:{};const smN=(T.sm||[]).length,sms=smN&&smDone()?{sm:[T.sm.reduce((a,_,k)=>a+(ST.sm?.[k]?.n1?1:0)+(ST.sm?.[k]?.w1?1:0),0),2*smN]}:{};const H=hin.length?{'Hinweise':hin.join('\n')}:{};return {s:{...vs,fe:[fe,N],oh:[oh,N],...sms},x:{},w:{...H,...w},wc:H,wt:N}}
-function start(t){T=t;try{window.cmLoNote?.({key:t.title,title:t.title,subject:'latein'})}catch{}ST=ls.get(key())||{pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};
+/* 11.97: immer „Nebensatz“ statt „Nebensatz“ – auch in den Angaben der Textdateien */const NS=x=>typeof x==='string'?x.replace(/Gliedsätze/g,'Nebensätze').replace(/Gliedsatzes/g,'Nebensatzes').replace(/Gliedsatz/g,'Nebensatz'):x;
+function start(t){for(const S of t?.s||[])for(const f of ['g','k'])if(Array.isArray(S[f]))S[f]=S[f].map(e=>Array.isArray(e)?e.map(NS):NS(e));T=t;try{window.cmLoNote?.({key:t.title,title:t.title,subject:'latein'})}catch{}ST=ls.get(key())||{pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};
  /* 11.77: wer schon vor dem Vokabel-Schritt angefangen hat, wird nicht ausgesperrt */if(!ST.vo&&!ST.voFree&&(ST.pp.length||ST.ppTaps||Object.keys(ST.sent).length||Object.keys(ST.pr).length||ST.evFirst!=null))ST.voFree=true;
  tab=voLocked()?'vo':(T.pp||[]).length?'pp':'vo';ls.set('cm-texttrainer-last',t);if(t.cm&&t.cm.u&&window.cmAbgabe&&!AB)AB=cmAbgabe({u:t.cm.u,title:t.title,cls:t.cm.c,names:t.cm.n,score:ttScore,restore:()=>[[key(),ST]]});render()}
 async function init(){let t=null;try{t=await fromHash(location.hash||window.CM_EMBED_HASH||'')}catch(e){console.warn(e)}
@@ -238,7 +239,7 @@ function pvBind(c){c.querySelector('#pvh').onclick=()=>pvSet(!PV);
  const end=e=>{if(y0==null)return;const was=drag;y0=null;drag=false;if(!was)return;swAt=Date.now();
   const open=st?cur>h*0.65:cur>h*0.35;pv.style.transition='max-height .22s ease,opacity .22s ease';apply(open?h:0);PV=open;pv.classList.toggle('hid',!open);const hh=$('#pvh');if(hh)hh.textContent=pvLab();setTimeout(clear,240)};
  c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end)}
-const STEPS=['Prädikat','Subjekt','Gliedsätze','Übersetzen'];
+const STEPS=['Prädikat','Subjekt','Nebensätze','Übersetzen'];
 function sstate(si){return ST.sent[si]??={step:0,p:[],s:[],g:[],miss:0,h:0,look:0,tx:'',r:null,bld:null}}
 function renderTR(b){cur=Math.min(cur,T.s.length-1);
  b.innerHTML='<div class="nav">'+T.s.map((_,i)=>{const x=ST.sent[i];return '<button data-n="'+i+'" class="'+(i===cur?'on ':'')+(x&&x.r!=null?'r'+x.r:'')+'">'+(i+1)+'</button>'}).join('')+'</div><div id="sb"></div>';
@@ -262,7 +263,7 @@ function renderTR(b){cur=Math.min(cur,T.s.length-1);
 let FBN=null,LFB=null;
 function showSent(b,si){const S=T.s[si],X=sstate(si),ws=words(si);
  /* 11.91: neue Schritte Objekt (Akk./Dat., Infinitivgruppe), AcI (Subjektsakkusativ · Prädikatsinfinitiv) und satzwertige Konstruktionen (AcI, PC, Abl. abs.) –
-    nur bei Texten mit geprüften Angaben (S.ob). Alte Arbeitsstände bleiben gültig: step 2 umfasst Objekt → AcI → Gliedsätze. */
+    nur bei Texten mit geprüften Angaben (S.ob). Alte Arbeitsstände bleiben gültig: step 2 umfasst Objekt → AcI → Nebensätze. */
  const OB=!!S.ob,SO=S.o||[],SA=(S.a||[]).flatMap(x=>x.sa||[]),PI=(S.a||[]).flatMap(x=>x.pi||[]),K=OB?(S.k||[]):[];
  const needO=OB&&!S.os&&!(SO.length===0&&SA.length),needA=OB&&SA.length>0,GG=S.g.map(x=>[x[0],x[1],x[2],'g']).concat(K.map(x=>[x[0],x[1],x[2],'k']));
  if(X.step===1&&X.s===true)X.step=2;
@@ -274,7 +275,7 @@ function showSent(b,si){const S=T.s[si],X=sstate(si),ws=words(si);
  const xo=X.o2||[],xa=X.as||[],xp=X.ap||[];
  const wcls=i=>{let c=[];if(X.p.includes(i))c.push('p');if(X.s!==true&&Array.isArray(X.s)&&X.s.includes(i))c.push('s');if(xo.includes(i))c.push('o');if(xa.includes(i))c.push('sa');if(xp.includes(i))c.push('pi');if(X.step===3&&S.w[i])c.push('g');return c.join(' ')};
  const wspan=i=>'<span class="w '+wcls(i)+'" data-i="'+i+'">'+esc(ws[i])+'</span>';
- /* Gliedsätze eingerückt, satzwertige Konstruktionen eingerahmt – verschachtelt (z. B. Relativsatz im AcI) */
+ /* Nebensätze eingerückt, satzwertige Konstruktionen eingerahmt – verschachtelt (z. B. Relativsatz im AcI) */
  const MK=GG.map((g,k)=>[g,k]).filter(([g,k])=>X.g.includes(k)).map(([g])=>g);
  const pick=(i,c,skip)=>MK.filter(x=>x[0]===i&&x[1]<=c&&x!==skip).sort((x,y)=>y[1]-x[1])[0];
  const inl=(a,c,skip)=>{const o=[];for(let i=a;i<=c;i++){const k=pick(i,c,skip);if(k&&k[3]==='k'){o.push('<span class="kfr"><span class="kfl">'+esc(k[2])+'</span>'+inl(k[0],k[1],k)+'</span>');i=k[1]}else o.push(wspan(i))}return o.join(' ')};
@@ -286,16 +287,16 @@ function showSent(b,si){const S=T.s[si],X=sstate(si),ws=words(si);
    else buf.push(wspan(i))}
   flush();return parts.join('')};
  const txt=lay(0,ws.length-1,null);
- const LAB=[['p','Prädikat'],['s','Subjekt'],...(needO?[['o','Objekt']]:[]),...(needA?[['a','AcI']]:[]),...(GG.length?[['g',K.length?'Gliedsätze & satzwertige Konstruktionen':'Gliedsätze']]:[]),['t','Übersetzen']];
+ const LAB=[['p','Prädikat'],['s','Subjekt'],...(needO?[['o','Objekt']]:[]),...(needA?[['a','AcI']]:[]),...(GG.length?[['g',K.length?'Nebensätze & satzwertige Konstruktionen':'Nebensätze']]:[]),['t','Übersetzen']];
  const cur=LAB.findIndex(x=>x[0]===P);
  const steps='<div class="steps">'+LAB.map(([k,l],i)=>'<span class="'+(i===cur?'on':i<cur?'done':'')+'">'+(i+1)+' '+l+'</span>').join('')+'</div>';
- /* 11.76: Satz mit Gliedsatz – ausdrücklich nach Prädikat und Subjekt des Hauptsatzes fragen */const HS=S.g.length?' des <b>Hauptsatzes</b>':'';
+ /* 11.76: Satz mit Nebensatz – ausdrücklich nach Prädikat und Subjekt des Hauptsatzes fragen */const HS=S.g.length?' des <b>Hauptsatzes</b>':'';
  const aPart=xa.length<SA.length||!SA.every(x=>xa.includes(x))?'sa':'pi';
- const task={p:'Tippe das <b>Prädikat</b>'+HS+' an – alle Wörter, die dazugehören (auch die Form von esse).'+(HS?' Gliedsätze (z. B. mit quī, cum, ut, quod) haben ein eigenes Prädikat – das ist hier nicht gemeint.':''),
+ const task={p:'Tippe das <b>Prädikat</b>'+HS+' an – alle Wörter, die dazugehören (auch die Form von esse).'+(HS?' Nebensätze (z. B. mit quī, cum, ut, quod) haben ein eigenes Prädikat – das ist hier nicht gemeint.':''),
   s:'Tippe das <b>Subjekt</b>'+HS+' an – alle Wörter, die dazugehören (z. B. auch Adjektive wie multī oder Genitive). Steckt es nur im Prädikat? Dann tippe auf den Knopf darunter.',
   o:'Tippe das <b>Objekt</b>'+HS+' an – alle Wörter, die dazugehören (Akkusativ- oder Dativ-Objekt, auch eine Infinitivgruppe). Gibt es keins? Dann tippe auf den Knopf darunter.',
   a:'Im Satz steckt ein <b>AcI</b>. '+(aPart==='sa'?'Tippe zuerst den <b>Subjektsakkusativ</b> an – alle Wörter, die dazugehören.':'Tippe jetzt den <b>Prädikatsinfinitiv</b> an.'),
-  g:'Tippe in jeden <b>Gliedsatz</b>'+(K.length?' und jede <b>satzwertige Konstruktion</b> (AcI, PC, Abl. abs.)':'')+' – '+(K.length?'Gliedsätze werden eingerückt, satzwertige Konstruktionen eingerahmt.':'er wird eingerückt. So siehst du, was zum Hauptsatz gehört.'),
+  g:'Tippe in jeden <b>Nebensatz</b>'+(K.length?' und jede <b>satzwertige Konstruktion</b> (AcI, PC, Abl. abs.)':'')+' – '+(K.length?'Nebensätze werden eingerückt, satzwertige Konstruktionen eingerahmt.':'er wird eingerückt. So siehst du, was zum Hauptsatz gehört.'),
   t:'<b>Übersetze</b> den Satz. Gepunktet unterstrichene Wörter kannst du nachschlagen – überlege aber zuerst selbst.'}[P];
  /* 11.77: nach unten wischen zeigt den vorherigen Satz über dem aktuellen, nach oben wischen blendet ihn aus */
  b.innerHTML='<div class="card'+(si?' swp':'')+'" id="sc">'+(si?'<div class="pvh" id="pvh">'+pvLab()+'</div>':'')+steps+'<p class="task">'+task+'</p>'+(si?'<div class="text pvs'+(PV?'':' hid')+'" id="pv">'+esc(T.s[si-1].t)+'</div>':'')+'<div class="text" id="st">'+txt+'</div>'
@@ -306,26 +307,26 @@ function showSent(b,si){const S=T.s[si],X=sstate(si),ws=words(si);
   +(X.step===3?'<div class="card" id="trc"></div>':'');
  const got=()=>({p:X.p,s:X.s,o:X.o2,a:aPart==='sa'?X.as:X.ap}[P]||[]);
  const left=()=>{const l=$('#left');if(!l||!need)return;const g=got();const n=(P==='a'?(aPart==='sa'?SA:PI):need).filter(i=>!(Array.isArray(g)?g:[]).includes(i)).length;l.textContent=n?'Noch '+n+' Wort'+(n>1?'e':''):''};left();
- const fb=(ok,t)=>{LFB=[ok,t];$('#fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'">'+t+'</div>'};if(FBN){fb(...FBN);FBN=null}
+ const fb=(ok,t)=>{LFB=[ok,t];$('#fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'">'+t+'</div>';/* 11.97: Erfolgsmeldung leuchtet kurz auf und verschwindet – der Platz über dem Textfeld bleibt frei */clearTimeout(window.__fbT);if(ok){const el=$('#fb').firstChild;window.__fbT=setTimeout(()=>{if(!el?.isConnected)return;el.classList.add('fade');setTimeout(()=>{if(el.isConnected){el.remove();if(LFB&&LFB[1]===t)LFB=null}},400)},1600)}};if(FBN){fb(...FBN);FBN=null}
  const redraw=(d)=>setTimeout(()=>{FBN=LFB;showSent(b,si)},d||450);
  const advance=()=>{X.step++;save();setTimeout(()=>showSent(b,si),X.step===3?250:450)};
  const nope=(w,t)=>{X.miss++;save();beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700);fb(false,t)};
  const predW=()=>S.p.length?'„'+esc(clean(ws[S.p[S.p.length-1]]))+'“':'das Prädikat';
  if(si)pvBind(b.querySelector('#sc'));
  b.querySelector('#st').onclick=e=>{if(Date.now()-swAt<450)return;const w=e.target.closest('.w');if(!w)return;const i=+w.dataset.i;
-  if(P==='p'){if(S.p.includes(i)){if(!X.p.includes(i)){X.p.push(i);w.classList.add('p');beep(true);save();left();if(S.p.every(x=>X.p.includes(x))){fb(true,'✓ Prädikat gefunden.');advance()}}}else if(inSub(i)>=0&&!S.p.some(x=>inSub(x)===inSub(i))){beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700);fb(false,'Dieses Wort gehört zum '+esc(/^Gliedsatz/.test(S.g[inSub(i)][2]||'')?S.g[inSub(i)][2]:'Gliedsatz')+'. Gesucht ist das Prädikat des Hauptsatzes.')}else nope(w,'Das ist nicht das Prädikat'+(S.g.length?' des Hauptsatzes':'')+'. Suche die finite Verbform'+(S.p.length>1?' (es sind '+S.p.length+' Wörter)':'')+'.')}
+  if(P==='p'){if(S.p.includes(i)){if(!X.p.includes(i)){X.p.push(i);w.classList.add('p');beep(true);save();left();if(S.p.every(x=>X.p.includes(x))){fb(true,'✓ Prädikat gefunden.');advance()}}}else if(inSub(i)>=0&&!S.p.some(x=>inSub(x)===inSub(i))){beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700);fb(false,'Dieses Wort gehört zum '+esc(/^Nebensatz/.test(S.g[inSub(i)][2]||'')?S.g[inSub(i)][2]:'Nebensatz')+'. Gesucht ist das Prädikat des Hauptsatzes.')}else nope(w,'Das ist nicht das Prädikat'+(S.g.length?' des Hauptsatzes':'')+'. Suche die finite Verbform'+(S.p.length>1?' (es sind '+S.p.length+' Wörter)':'')+'.')}
   else if(P==='s'){if(!S.su.length){X.miss++;save();beep(false);fb(false,'Hier gibt es kein eigenes Subjekt-Wort – es steckt im Prädikat.');return}
-   if(S.su.includes(i)){X.s=Array.isArray(X.s)?X.s:[];if(!X.s.includes(i)){X.s.push(i);w.classList.add('s');beep(true);save();left();if(S.su.every(x=>X.s.includes(x))){fb(true,'✓ Subjekt gefunden.');advance()}}}else if(inSub(i)>=0&&!S.su.some(x=>inSub(x)===inSub(i))){beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700);fb(false,'Dieses Wort gehört zu einem Gliedsatz. Gesucht ist das Subjekt des Hauptsatzes.')}else nope(w,'Das ist nicht das Subjekt. Frage: Wer oder was '+(S.p.length?'„'+esc(clean(ws[S.p[0]]))+'“':'tut etwas')+'? Achte auf den Nominativ.')}
+   if(S.su.includes(i)){X.s=Array.isArray(X.s)?X.s:[];if(!X.s.includes(i)){X.s.push(i);w.classList.add('s');beep(true);save();left();if(S.su.every(x=>X.s.includes(x))){fb(true,'✓ Subjekt gefunden.');advance()}}}else if(inSub(i)>=0&&!S.su.some(x=>inSub(x)===inSub(i))){beep(false);w.classList.add('x');setTimeout(()=>w.classList.remove('x'),700);fb(false,'Dieses Wort gehört zu einem Nebensatz. Gesucht ist das Subjekt des Hauptsatzes.')}else nope(w,'Das ist nicht das Subjekt. Frage: Wer oder was '+(S.p.length?'„'+esc(clean(ws[S.p[0]]))+'“':'tut etwas')+'? Achte auf den Nominativ.')}
   else if(P==='o'){if(!SO.length){nope(w,'Hier gibt es kein Objekt im Hauptsatz. Tippe auf „Kein Objekt“.');return}
    if(SO.includes(i)){X.o2=xo;if(!xo.includes(i)){xo.push(i);w.classList.add('o');beep(true);save();left();if(SO.every(x=>xo.includes(x))){X.od=true;save();fb(true,'✓ Objekt gefunden'+(S.ot?' – '+esc(S.ot):'')+'.');redraw()}}}
-   else if(inSub(i)>=0&&!SO.some(x=>inSub(x)===inSub(i)))nope(w,'Dieses Wort gehört zu einem Gliedsatz. Gesucht ist das Objekt des Hauptsatzes.');
+   else if(inSub(i)>=0&&!SO.some(x=>inSub(x)===inSub(i)))nope(w,'Dieses Wort gehört zu einem Nebensatz. Gesucht ist das Objekt des Hauptsatzes.');
    else nope(w,'Das gehört nicht zum Objekt. Frage: Wen oder was – oder wem – '+predW()+'? Achte auf Akkusativ und Dativ.')}
   else if(P==='a'){const tgt=aPart==='sa'?SA:PI,arr=aPart==='sa'?(X.as??=[]):(X.ap??=[]);
    if(tgt.includes(i)){if(!arr.includes(i)){arr.push(i);w.classList.add(aPart);beep(true);save();left();if(tgt.every(x=>arr.includes(x))){if(aPart==='sa'){fb(true,'✓ Subjektsakkusativ gefunden. Jetzt der Prädikatsinfinitiv.');redraw()}else{X.ad=true;save();fb(true,'✓ Richtig. Der AcI ist das Objekt zu '+predW()+'.');redraw(700)}}}}
    else nope(w,aPart==='sa'?'Das ist nicht der Subjektsakkusativ. Suche den Akkusativ, der im AcI „handelt“ – im Deutschen wird er zum Subjekt des dass-Satzes.':'Das ist nicht der Prädikatsinfinitiv. Suche den Infinitiv, der zum Subjektsakkusativ gehört.')}
   else if(P==='g'){const cands=GG.map((g,k)=>[g,k]).filter(([g,k])=>i>=g[0]&&i<=g[1]&&!X.g.includes(k)).sort((x,y)=>(x[0][1]-x[0][0])-(y[0][1]-y[0][0]));
    if(cands.length){X.g.push(cands[0][1]);beep(true);save();const done=GG.every((_,k)=>X.g.includes(k));if(done){X.step=3;save()}showSent(b,si);if(done)fb(true,'✓ Alles markiert.')}
-   else if(!GG.some(g=>i>=g[0]&&i<=g[1])){X.miss++;save();beep(false);fb(false,'Dieses Wort gehört zum Hauptsatz. Gliedsätze beginnen oft mit quī/quae/quod, quia, quamquam, sī …'+(K.length?' Satzwertige Konstruktionen sind AcI, PC und Abl. abs.':''))}}
+   else if(!GG.some(g=>i>=g[0]&&i<=g[1])){X.miss++;save();beep(false);fb(false,'Dieses Wort gehört zum Hauptsatz. Nebensätze beginnen oft mit quī/quae/quod, quia, quamquam, sī …'+(K.length?' Satzwertige Konstruktionen sind AcI, PC und Abl. abs.':''))}}
   else if(P==='t'&&S.w[i])lookup(w,si,i)};
  b.querySelector('[data-nosub]')?.addEventListener('click',()=>{if(S.su.length){X.miss++;save();beep(false);fb(false,'Doch – hier steht ein Subjekt im Nominativ. Suche es im Satz.');return}X.s=true;beep(true);save();fb(true,'✓ Richtig, das Subjekt steckt im Prädikat.');advance()});
  b.querySelector('[data-noobj]')?.addEventListener('click',()=>{if(SO.length){X.miss++;save();beep(false);fb(false,'Doch – hier gibt es ein Objekt. Frage: Wen oder was – oder wem – '+predW()+'?');return}X.od=true;beep(true);save();fb(true,'✓ Richtig, dieser Satz hat kein Objekt.');redraw()});
