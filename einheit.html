@@ -401,13 +401,13 @@ function kdb(k,o){const M=['J','F','M','A','M','J','J','A','S','O','N','D'],MN=[
  const sum=()=>{const a=J.T.filter(v=>v!=null),b=J.N.filter(v=>v!=null);return a.length===12&&b.length===12?'Dein Diagramm: <b style="color:#c2185b">T = '+fmt(Math.round(a.reduce((x,y)=>x+y,0)/12*10)/10)+' °C</b> · <b style="color:#2f7fd0">N = '+fmt(Math.round(b.reduce((x,y)=>x+y,0)))+' mm</b>':''};
  const draw=()=>keep(k,()=>{const r=R(),m=J.m,full=free.every(i=>J.T[i]!=null&&J.N[i]!=null),st=ST[k];
   frame('',(typeof o.before==='function'?o.before():o.before||'')+'<div class="card"><h2>'+esc(o.h||'Baue das Klimadiagramm')+'</h2><p style="margin:0 0 8px">'+md(o.task||'Tippe einen Monat an. Ziehe dann im Diagramm die Säule (Niederschlag) oder den Punkt (Temperatur) auf die richtige Höhe – oder nimm die Knöpfe.')+'</p>'
-   +'<div style="text-align:center;font-weight:700;margin:2px 0 6px">'+esc(o.ort||'')+'</div>'+svg()
+   +(o.table?'<div style="background:#f6f8fc;border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:4px 0 10px"><b>Die Klimadaten</b><div style="overflow-x:auto;font-variant-numeric:tabular-nums">'+o.table+'</div></div>':'')+'<div style="text-align:center;font-weight:700;margin:2px 0 6px">'+esc(o.ort||'')+'</div>'+svg()
    +(r<2?'<div class="row" style="justify-content:center;flex-wrap:wrap;gap:6px;margin-top:8px"><b style="min-width:7em">'+MN[m]+':</b>'
      +'<span style="color:#2f7fd0"><button class="sec" data-n="-2">−</button> <b>'+(J.N[m]!=null?fmt(J.N[m]):'–')+' mm</b> <button class="sec" data-n="2">+</button></span>'
      +'<span style="color:#c2185b"><button class="sec" data-t="-0.5">−</button> <b>'+(J.T[m]!=null?fmt(J.T[m]):'–')+' °C</b> <button class="sec" data-t="0.5">+</button></span></div>'
      +'<div class="row" style="justify-content:center;gap:6px"><button class="'+(J.mode==='N'?'pri':'sec')+'" data-md="N">Säule ziehen</button><button class="'+(J.mode==='T'?'pri':'sec')+'" data-md="T">Punkt ziehen</button></div>':'')
    +'<p class="muted" style="text-align:center;margin:6px 0 0">'+sum()+'</p>'
-   +(o.table?'<details style="margin-top:8px"><summary>Die Klimadaten</summary>'+o.table+'</details>':'')
+   
    +(r<2?'<div class="row"><span class="muted" style="font-size:.88rem">'+free.filter(i=>J.T[i]!=null&&J.N[i]!=null).length+' von '+free.length+' Monaten fertig · Toleranz ±'+fmt(tT)+' °C / ±'+tN+' mm</span><div class="sp"></div><button class="pri" data-chk '+(full?'':'disabled')+'>'+(r?'Zweiter Versuch: prüfen':'Prüfen')+'</button></div>':'')
    +(r===1?tries(1,st.t,st.t-st.p).replace('Karten liegen wieder oben','Werte sind rot – verbessere sie'):r===2?(st.p===st.t?fb(1,'⭐ Alles richtig gezeichnet! '+(o.done||'')):fb(0,st.p+' von '+st.t+' Werten beim ersten Versuch richtig. Gestrichelt: die richtigen Werte. '+(o.done||''))):'')+'</div>');
   const sv=app.querySelector('[data-kd]');if(r<2&&sv){const pt=e=>{const b=(app.querySelector('[data-kd]')||sv).getBoundingClientRect(),sx=W/b.width;return [(e.clientX-b.left)*sx,(e.clientY-b.top)*(Hh/b.height)]};
