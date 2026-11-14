@@ -1053,3 +1053,6 @@ html:not(.ph-lite) body[data-module=noten] .panel>.section-title>.oral-display-a
 body[data-module=noten] .panel>.section-title:has(>.oral-display-actions):not(#_){row-gap:10px}
 body[data-module=noten] .is-compact-view .task-actions>.ew-btn:not(#_){display:inline-flex!important}
 html:not(.ph-lite) body[data-module=noten] .panel>.section-title>.task-actions>.page-print-button:not(#_):not(#__){border-color:#a8bdd8!important}
+/* 11.96: längere Namen – „Zwischenstände löschen“ darf zweizeilig werden; Reiter teilen sich die Breite nach Textlänge („Feste Plätze“) */
+body[data-module=sitzplan] .classroom-plan-history-box .classroom-history-delete-actions .classroom-history-delete:not(#_){white-space:normal!important;line-height:1.12!important;text-align:center;overflow-wrap:anywhere}
+body[data-module=sitzplan] .tab-btn:not(#_){flex:1 1 auto;padding-left:6px;padding-right:6px;white-space:nowrap}

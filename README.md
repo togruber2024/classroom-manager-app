@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 14.11.2026 · Version 11.95
+Stand: 14.11.2026 · Version 11.96
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1474,3 +1474,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 11.93: Übersetzungs-Trainer: Tastatur auf dem iPad zuverlässig erkannt, kein Sprung beim Tippen; Home-Bildschirm-Symbol für Schülerseiten; Übersichts-Knopf mittig
 11.94: Fach-Ordner mit Symbolen in den Heftfarben (13 Fächer), Lernordner-QR je Fach, Schülerseiten heißen wie das Fach; Übersichts-Knopf im Test-Kopf mittig (Querformat)
 11.95: Mündliche Mitarbeit: „＋ Datum“ statt „＋ Termin“, Knopf quadratisch
+11.96: Sitzplan × Noten (Anzahl/Lerneinheit/Trend am Platz, Fair losen per Waage, Klassenarbeit A/B, Lernpartner), Leisten mittig, Legende (ⓘ), klarere Namen; Schüler-App: Fach-Knopf oben links

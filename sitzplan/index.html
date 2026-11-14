@@ -7,8 +7,8 @@
     <meta name="apple-mobile-web-app-title" content="Sitzplan 1.15">
     <meta name="app-version" content="1.15">
     <meta name="theme-color" content="#f6f8fc">
-    <link rel="icon" type="image/svg+xml" href="../icon.svg?v=1195">
-    <link rel="apple-touch-icon" href="../apple-touch-icon.png?v=1195">
+    <link rel="icon" type="image/svg+xml" href="../icon.svg?v=1196">
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png?v=1196">
     <title>Classroom-Manager · Sitzplan</title>
     <style>
         :root {
@@ -643,7 +643,7 @@
             .room-grid .cell { box-sizing: border-box; min-width: 0; font-size: 8pt; padding: 1px; }
         }
     </style>
-<link rel="stylesheet" href="../design.css?v=1195">
+<link rel="stylesheet" href="../design.css?v=1196">
 </head>
 <body data-module="sitzplan">
     <h1>Sitzplan-Generator 1.15</h1>
@@ -669,7 +669,7 @@
                 <button class="tab-btn active" title="Belegung, Verteilung nach Geschlecht und Sitzrichtung einstellen." onclick="switchTab('config', this)">Verteilung</button>
                 <button class="tab-btn" title="Zwei Personen als festes Sitzpaar auswählen. Dieselben Personen dürfen nicht zugleich als Tabu-Paar eingetragen sein." onclick="switchTab('paare', this)">Paare</button>
                 <button class="tab-btn" title="Schüler eintragen, die nicht nebeneinandersitzen sollen." onclick="switchTab('tabu', this)">Tabu</button>
-                <button class="tab-btn" title="Einzelne Schüler eintragen, importieren und feste Plätze zuweisen." onclick="switchTab('einzel', this)">Anker</button>
+                <button class="tab-btn" title="Einzelne Schüler eintragen, importieren und feste Plätze zuweisen." onclick="switchTab('einzel', this)">Feste Plätze</button>
             </div>
             <!-- TAB 1: OPTIONEN -->
             <div id="tab-config" class="tab-content active">
@@ -699,7 +699,7 @@
                 </div>
                 <div style="max-height: 160px; overflow: auto; margin-top: 8px;">
                     <table class="data-table" id="tableEinzel">
-                        <tr><th style="width:25px;"></th><th>Name</th><th>Anker</th></tr>
+                        <tr><th style="width:25px;"></th><th>Name</th><th>Platz</th></tr>
                     </table>
                 </div>
                 </section>
@@ -774,6 +774,6 @@
             </div>
         </div>
     </div>
-<script src="sitzplan.js?v=1195"></script>
+<script src="sitzplan.js?v=1196"></script>
 </body>
 </html>

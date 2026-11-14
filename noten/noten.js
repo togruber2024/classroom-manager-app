@@ -3526,7 +3526,7 @@ html.fs-view .fs-hide{display:none!important}
    head('meta[name="apple-mobile-web-app-title"]',()=>Object.assign(document.createElement('meta'),{name:'apple-mobile-web-app-title'})).content=FACH[s];
    const b=document.getElementById('cmLoBack');if(b){b.href='lernordner.html?fach='+s;b.textContent='‹ '+FACH[s]}}catch{}};
   const n0=note;note=patch=>{if(patch&&patch.subject)home(patch.subject);n0({...(SUBJ?{subject:SUBJ}:{}),...(patch||{})})};
-  const back=()=>{if(!sa||document.getElementById('cmLoBack'))return;const a=document.createElement('a');a.id='cmLoBack';a.href='lernordner.html'+(FACH[SUBJ]?'?fach='+SUBJ:'');a.textContent='‹ '+(FACH[SUBJ]||'Lernordner');a.style.cssText='position:fixed;left:max(10px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));z-index:90;padding:9px 14px;border-radius:14px;background:#fff;border:1px solid #dce3ef;color:#2f5f9b;font:600 14px/1 -apple-system,BlinkMacSystemFont,Inter,"Segoe UI",sans-serif;text-decoration:none;box-shadow:0 4px 12px #233d6022';document.body.append(a)};
+  const back=()=>{if(!sa||document.getElementById('cmLoBack'))return;const a=document.createElement('a');a.id='cmLoBack';a.href='lernordner.html'+(FACH[SUBJ]?'?fach='+SUBJ:'');a.textContent='‹ '+(FACH[SUBJ]||'Lernordner');/* 11.96: oben links, auf einer Höhe mit dem Namen (Abgabe-QR) oben rechts */a.style.cssText='position:fixed;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));z-index:90;box-sizing:border-box;display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:14px;background:#fff;border:1px solid #dce3ef;color:#2f5f9b;font:600 14px/1 -apple-system,BlinkMacSystemFont,Inter,"Segoe UI",sans-serif;text-decoration:none;box-shadow:0 4px 12px #233d6022';document.body.append(a);/* Platz oben frei halten, damit Knopf (links) und Name (rechts) den Titel nicht verdecken */const pt=parseFloat(getComputedStyle(document.body).paddingTop)||0;document.body.style.paddingTop=(pt+46)+'px'};
   const go=()=>{home(SUBJ);later();back()};document.readyState==='loading'?addEventListener('DOMContentLoaded',go):go()})();
  /* 11.91: Übersetzungs-Trainer – die Antworten (Satz 01 …) werden aus dem mitgeschickten Arbeitsstand aufgebaut, statt den Text doppelt zu übertragen */
  function ttAnswers(X,N){const w={},RT=['✗ noch nicht','≈ teilweise','✓ passt'];X=X||{};for(let i=0;i<N;i++){const x=X[i];if(!x)continue;
@@ -4951,6 +4951,12 @@ window.LP=LP;window.lpLabels=labels;
     +'<div class="dialog-actions"><button type="button" data-back>‹ Übersicht</button>'+(C.length>1?'<button type="button" data-pv'+(k?'':' disabled')+'>‹ Code</button><button type="button" data-nx'+(k<C.length-1?'':' disabled')+'>Nächster Code ›</button>':'')+'<span style="flex:1"></span><button type="button" data-x>Schließen</button></div></form>';
    dlg.querySelector('[data-back]').onclick=()=>leOverview(u,key);dlg.querySelector('[data-x]').onclick=()=>dlg.close();dlg.querySelector('[data-pv]')?.addEventListener('click',()=>{k--;draw()});dlg.querySelector('[data-nx]')?.addEventListener('click',()=>{k++;draw()})};
   draw();if(!dlg.open)dlg.showModal()}
+ /* 11.96: Live-Stand für den Sitzplan – die zuletzt bearbeitete Lerneinheit der Klasse (Stationen je Schüler:in) */
+ window.classroomLeLive=(subject,classId)=>{try{const a=leAll(),pre=subject+'::'+classId+'::';let best=null;
+  for(const [k,R] of Object.entries(a)){if(!k.startsWith(pre))continue;const u=k.slice(pre.length),U=UNITS[u];if(!U||U.prac)continue;const SV=Object.values(R.subs||{});if(!SV.length)continue;const last=Math.max(0,...SV.map(x=>x.at||x.ts||0));if(!best||last>best.last)best={u,U,R,last}}
+  if(!best)return null;const {U,R}=best,SV=Object.values(R.subs),want=U.modes?new Set(U.modes[SV.some(x=>x.b)?'b':'n']):null,cols=[...(U.cols||[]),...(U.book||[])].filter(([k])=>!want||want.has(k)||SV.some(x=>x.s&&x.s[k]!=null));
+  const subs={};for(const [name,x] of Object.entries(R.subs))subs[name]={n:x.n||'',done:cols.filter(([k])=>x.s?.[k]!=null).length,at:x.at||x.ts||0};
+  return {unit:best.u,title:U.title||best.u,total:cols.length,last:best.last,subs}}catch(e){console.warn(e);return null}};
  function leOverview(u,sel){const U=UNITS[u],names=leNames(),R=leAll()[leId(u)]||{subs:{}},subs=R.subs,absent=new Set(vtAbsentNames({subject:currentSubject,classId:currentClassId}).map(a=>matchName(a,names.map(x=>x.full))||a));
   const SV=Object.values(subs),cols0=[...U.cols,...U.book],want=U.modes?new Set(U.modes[SV.some(x=>x.b)?'b':'n']):null,cols=cols0.filter(([k])=>!want||want.has(k)||SV.some(x=>x.s&&x.s[k]!=null));
   const rows=[...names.map(x=>({key:x.full,disp:x.disp,abs:absent.has(x.full)})),...Object.keys(subs).filter(k=>!names.some(x=>x.full===k)).map(k=>({key:k,disp:subs[k].n+' (?)'}))];
@@ -6173,8 +6179,9 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
    Notenspiegel:'Die Verteilung der Ergebnisse dieser Seite anzeigen.',
    'Text kopieren':'Den angezeigten Text kopieren und das Fenster schließen.',
    'Version löschen':'Nur die ausgewählte gespeicherte Sitzplanversion löschen; die aktuelle Anordnung bleibt bestehen.',
-   'Tag bereinigen':'Zwischenstände dieses Tages entfernen; der letzte Sitzplan und alle Gruppeneinteilungen bleiben erhalten.',
+   'Zwischenstände löschen':'Zwischenstände dieses Tages entfernen; der letzte Sitzplan und alle Gruppeneinteilungen bleiben erhalten.',
    'Vorlage speichern':'Die aktuelle Tischanordnung als eigene Vorlage speichern.',
+   'Tischanordnung speichern':'Nur die Tische (ohne Namen) als eigene Anordnung speichern – sie erscheint dann unter den Tischanordnungen.',
    Schülerperspektive:'Den Sitzplan aus Sicht der Schülerinnen und Schüler anzeigen.',
    Lehrerperspektive:'Den Sitzplan aus Sicht der Lehrkraft anzeigen.',
    Vollbild:'Den Sitzplan im Vollbild anzeigen oder das Vollbild verlassen.',
