@@ -3510,7 +3510,9 @@ document.addEventListener('keydown',event=>{
    „Neu mischen“, „Groß zeigen“ (für Beamer/AirPlay), „Drucken“. Der Button steht neben „Zufallsauswahl“ (Anordnung: plan-actions.js). */
 (()=>{
  const key='classroom-random-groups-v1',colors=['#3b82c4','#e08a1e','#3f9b6b','#9b59b6','#d9534f','#2aa1a8','#c2569b','#6d7f2f','#5b6bd6','#a8642a'];
- let opt={mode:'count',count:4,size:4,absent:true,tabu:true,mix:false,perf:'off',col:''};try{Object.assign(opt,JSON.parse(localStorage.getItem(key)||'{}'))}catch{}
+ let opt={mode:'count',count:4,size:4,absent:true,tabu:true,mix:false,perf:'off',col:'',last:true};try{Object.assign(opt,JSON.parse(localStorage.getItem(key)||'{}'))}catch{}
+ /* 12.13: Geschlecht als Dreierschalter (zufällig | gemischt | getrennt), Nachnamen ein-/ausblendbar */
+ if(!opt.sex)opt.sex=opt.mix?'mix':'off';
  const save=()=>{try{localStorage.setItem(key,JSON.stringify(opt))}catch{}};
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
  const display=n=>{const m=/^\s*([^,]+),\s*(.+)$/.exec(n||'');return m?m[2].trim()+' '+m[1].trim():String(n||'').trim()};
@@ -3521,10 +3523,12 @@ document.addEventListener('keydown',event=>{
  dlg.innerHTML='<div class="rg-head"><div><h2></h2><p class="rg-sub"></p></div><span class="rg-hb"><button type="button" class="rg-small" data-rg-small>Normale Ansicht</button><button type="button" class="rg-x" data-rg-close aria-label="Schließen">×</button></span></div>'
   +'<div class="rg-opts"><span>Einteilen nach</span><span class="rg-seg" role="group"><button type="button" data-mode="count">Anzahl Gruppen</button><button type="button" data-mode="size">Gruppengröße</button></span>'
   +'<span class="rg-num"><button type="button" data-step="-1" aria-label="weniger">−</button><output></output><button type="button" data-step="1" aria-label="mehr">+</button></span>'
-  +'<label><input type="checkbox" data-opt="absent"> Abwesende auslassen</label><label><input type="checkbox" data-opt="tabu"> Tabu-Paare trennen</label><label><input type="checkbox" data-opt="mix"> gemischt m/w</label>'
-  +'<span class="rg-perf"><span>Leistung</span><span class="rg-seg" role="group"><button type="button" data-perf="off">zufällig</button><button type="button" data-perf="mix">leistungsgemischt</button><button type="button" data-perf="same">leistungsgleich</button></span><select data-col aria-label="Notenspalte"></select></span></div>'
-  +'<p class="rg-note" role="status"></p><div class="rg-grid"></div>'
-  +'<div class="rg-actions"><button type="button" data-rg-print>Drucken</button><button type="button" data-rg-big>Groß zeigen</button><button type="button" data-rg-shuffle>Neu mischen</button><button type="button" class="rg-primary" data-rg-close>Schließen</button></div>';
+  
+  +'<span class="rg-perf"><span>Geschlecht</span><span class="rg-seg" role="group"><button type="button" data-sex="off">zufällig</button><button type="button" data-sex="mix">gemischt</button><button type="button" data-sex="sep">getrennt</button></span></span>'
+  +'<span class="rg-br"></span><span class="rg-perf"><span>Leistung</span><span class="rg-seg" role="group"><button type="button" data-perf="off">zufällig</button><button type="button" data-perf="mix" title="leistungsgemischt">gemischt</button><button type="button" data-perf="same" title="leistungsgleich">gleich</button></span><select data-col aria-label="Notenspalte"></select></span>'
+  +'<label><input type="checkbox" data-opt="absent"> Abwesende auslassen</label><label title="Tabu-Paare trennen"><input type="checkbox" data-opt="tabu"> Tabu trennen</label>'+'</div>'
+  +'<p class="rg-note" role="status"></p><p class="rg-gn"></p><div class="rg-grid"></div>'
+  +'<div class="rg-actions"><label class="rg-ln"><input type="checkbox" data-opt="last"> Nachnamen</label><button type="button" data-rg-print>Drucken</button><button type="button" data-rg-big>Groß zeigen</button><button type="button" data-rg-shuffle>Neu mischen</button><button type="button" class="rg-primary" data-rg-close>Schließen</button></div>';
  document.body.append(dlg);
  const grid=dlg.querySelector('.rg-grid'),out=dlg.querySelector('output'),note=dlg.querySelector('.rg-note');
  let groups=[];
@@ -3559,7 +3563,13 @@ document.addEventListener('keydown',event=>{
      const score=conflicts(g);if(score<bestScore){best=g;bestScore=score}continue}
     if(un.length){const ins=[...order];for(const p of un)ins.splice(Math.floor(Math.random()*(ins.length+1)),0,p);order=ins}
    }
-   else if(opt.mix){const m=shuffle(present.filter(p=>p.gender==='m')),w=shuffle(present.filter(p=>p.gender==='w')),o=shuffle(present.filter(p=>p.gender!=='m'&&p.gender!=='w'));order=[];while(m.length||w.length){if(w.length)order.push(w.shift());if(m.length)order.push(m.shift())}order.push(...o)}
+   else if(opt.sex==='sep'){/* getrennt: Gruppen nur aus Mädchen bzw. nur aus Jungen; Anzahl der Gruppen anteilig */
+    const W=shuffle(present.filter(p=>p.gender==='w')),M=shuffle(present.filter(p=>p.gender==='m')),O=shuffle(present.filter(p=>p.gender!=='m'&&p.gender!=='w'));
+    let gw=W.length&&M.length?Math.max(1,Math.min(count-1,Math.round(count*W.length/(W.length+M.length)))):(W.length?count:0);if(count<2&&W.length&&M.length)gw=count;
+    const g=Array.from({length:count},()=>[]),deal=(L,a,b)=>{L.forEach((p,i)=>g[a+i%Math.max(1,b-a)].push(p))};if(gw>=count||!M.length)deal([...W,...M],0,count);else{deal(W,0,gw);deal(M,gw,count)}
+    for(const p of O){const min=Math.min(...g.map(x=>x.length)),c=g.filter(x=>x.length===min);c[Math.floor(Math.random()*c.length)].push(p)}
+    const score=conflicts(g);if(score<bestScore){best=g;bestScore=score}continue}
+   else if(opt.sex==='mix'){const m=shuffle(present.filter(p=>p.gender==='m')),w=shuffle(present.filter(p=>p.gender==='w')),o=shuffle(present.filter(p=>p.gender!=='m'&&p.gender!=='w'));order=[];while(m.length||w.length){if(w.length)order.push(w.shift());if(m.length)order.push(m.shift())}order.push(...o)}
    else order=shuffle([...present]);
    const g=Array.from({length:count},()=>[]);order.forEach((p,i)=>{const round=Math.floor(i/count),pos=i%count;g[round%2?count-1-pos:pos].push(p)});
    const score=conflicts(g);if(score<bestScore){best=g;bestScore=score}
@@ -3575,8 +3585,13 @@ document.addEventListener('keydown',event=>{
   for(const b of dlg.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',String(b.dataset.mode===opt.mode));
   for(const c of dlg.querySelectorAll('[data-opt]'))c.checked=!!opt[c.dataset.opt];
   for(const b of dlg.querySelectorAll('[data-perf]'))b.setAttribute('aria-pressed',String(b.dataset.perf===opt.perf));dlg.querySelector('[data-col]').hidden=opt.perf==='off';
+  for(const b of dlg.querySelectorAll('[data-sex]'))b.setAttribute('aria-pressed',String(b.dataset.sex===opt.sex));
+  const allP=people(),unk=allP.filter(p=>p.gender!=='m'&&p.gender!=='w').length;dlg.querySelector('.rg-gn').textContent=opt.sex!=='off'&&unk?'Bei '+unk+' Schüler:innen fehlt das Geschlecht (Klasse bearbeiten).':'';
+  const first=n=>display(n).split(/\s+/)[0]||display(n),lastOf=n=>{const d=display(n).split(/\s+/);return d.length>1?d[d.length-1]:''},fc={};for(const p of allP){const f=first(p.name);fc[f]=(fc[f]||0)+1}
+  const nm=n=>opt.last?display(n):(fc[first(n)]>1&&lastOf(n)?first(n)+' '+lastOf(n)[0]+'.':first(n));
+  const gch=g=>{if(opt.sex==='off')return '';const w=g.filter(p=>p.gender==='w').length,m=g.filter(p=>p.gender==='m').length;return `<span class="rg-v rg-sx">${w} w · ${m} m</span>`};
   const pf=opt.perf!=='off'&&GC.cols.length,avg=g=>{const v=g.map(p=>p.g).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
-  grid.innerHTML=groups.length?groups.map((g,i)=>`<div class="rg-card"><h4 style="background:${colors[i%colors.length]}">Gruppe ${i+1}${pf&&avg(g)!=null?`<span class="rg-v rg-avg">Ø ${fmt(avg(g))}</span>`:''}</h4><ul>${g.map(p=>`<li>${esc(display(p.name))}${pf?`<span class="rg-v rg-g">${p.g==null?'–':fmt(p.g)}</span>`:''}</li>`).join('')}</ul></div>`).join(''):'<p class="rg-empty">Keine Schüler:innen in dieser Klasse.</p>';
+  grid.innerHTML=groups.length?groups.map((g,i)=>`<div class="rg-card"><h4 style="background:${colors[i%colors.length]}">Gruppe ${i+1}${gch(g)}${pf&&avg(g)!=null?`<span class="rg-v rg-avg">Ø ${fmt(avg(g))}</span>`:''}</h4><ul>${g.map(p=>`<li>${esc(nm(p.name))}${pf?`<span class="rg-v rg-g">${p.g==null?'–':fmt(p.g)}</span>`:''}</li>`).join('')}</ul></div>`).join(''):'<p class="rg-empty">Keine Schüler:innen in dieser Klasse.</p>';
  }
  function open(){
   let label='';try{const g=typeof classroomCurrentGroup==='function'?classroomCurrentGroup():null;label=g?.name||aktuelleKlasse||''}catch{}
@@ -3587,7 +3602,8 @@ document.addEventListener('keydown',event=>{
  button.onclick=open;
  dlg.addEventListener('click',e=>{
   const t=e.target.closest('button');if(!t)return;
-  if(t.dataset.perf){opt.perf=t.dataset.perf;save();if(opt.perf!=='off'&&!GC.cols.length)note.textContent='';build();if(opt.perf!=='off'&&!GC.cols.length)note.textContent='Für diese Lerngruppe sind im aktuellen Halbjahr noch keine Noten eingetragen – die Gruppen werden zufällig gebildet.'}
+  if(t.dataset.sex){opt.sex=t.dataset.sex;opt.mix=opt.sex==='mix';save();build()}
+  else if(t.dataset.perf){opt.perf=t.dataset.perf;save();if(opt.perf!=='off'&&!GC.cols.length)note.textContent='';build();if(opt.perf!=='off'&&!GC.cols.length)note.textContent='Für diese Lerngruppe sind im aktuellen Halbjahr noch keine Noten eingetragen – die Gruppen werden zufällig gebildet.'}
   else if(t.dataset.mode){opt.mode=t.dataset.mode;save();build()}
   else if(t.dataset.step){const k=opt.mode==='count'?'count':'size';opt[k]=Math.max(opt.mode==='count'?1:2,Math.min(15,opt[k]+Number(t.dataset.step)));save();build()}
   else if(t.hasAttribute('data-rg-shuffle'))build();
@@ -3596,7 +3612,7 @@ document.addEventListener('keydown',event=>{
   else if(t.hasAttribute('data-rg-big')){const big=dlg.classList.toggle('rg-big');t.textContent=big?'Normale Ansicht':'Groß zeigen'}
   else if(t.hasAttribute('data-rg-print')){const w=window.open('','_blank');if(!w){alert('Bitte Pop-ups für den Druck erlauben.');return}w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${esc(dlg.querySelector('h2').textContent)}</title><style>body{font:14px/1.4 -apple-system,system-ui,sans-serif;margin:14mm;color:#24334b}h1{font-size:18px;margin:0 0 12px}.rg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.rg-card{border:1px solid #cfd8e6;border-radius:10px;overflow:hidden;break-inside:avoid}.rg-card h4{margin:0;padding:6px 10px;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.rg-card ul{margin:0;padding:6px 10px 8px;list-style:none}</style></head><body><h1>${esc(dlg.querySelector('h2').textContent)} · ${new Date().toLocaleDateString('de-DE')}</h1><div class="rg-grid">${grid.innerHTML.replace(/<span class="rg-v[^"]*">[^<]*<\/span>/g,'')}</div></body></html>`);w.document.close();setTimeout(()=>{w.focus();w.print()},250)}
  });
- dlg.addEventListener('change',e=>{if(e.target.matches('[data-col]')){opt.col=e.target.value;save();build();return}const c=e.target.closest('[data-opt]');if(c){opt[c.dataset.opt]=c.checked;save();build()}});
+ dlg.addEventListener('change',e=>{if(e.target.matches('[data-col]')){opt.col=e.target.value;save();build();return}const c=e.target.closest('[data-opt]');if(c){opt[c.dataset.opt]=c.checked;save();if(c.dataset.opt==='last')render();else build()}});
  const style=document.createElement('style');style.textContent=
   '.rg-dialog{width:min(900px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;padding:20px 22px;border:1px solid #dce3ef;border-radius:18px;background:#fff;color:#24334b;box-shadow:0 18px 60px #1c2b4630;font:15px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}'
   +'.rg-dialog::backdrop{background:#1c2b4638}.rg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.rg-head h2{margin:0;font-size:1.2rem}.rg-sub{margin:2px 0 12px;color:#66758a;font-size:.88rem}'
@@ -3608,7 +3624,7 @@ document.addEventListener('keydown',event=>{
   +'.rg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:14px}.rg-card{border:1px solid #dce3ef;border-radius:12px;overflow:hidden}.rg-card h4{margin:0;padding:7px 12px;color:#fff;font-size:.92rem}.rg-card ul{margin:0;padding:8px 12px 10px;list-style:none}.rg-card li{padding:2px 0}.rg-empty{color:#66758a}'
   +'.rg-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:16px}.rg-actions button{min-height:38px;padding:7px 16px;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:var(--primary,#2f5f9b);font:inherit;font-weight:600;cursor:pointer}.rg-actions .rg-primary{background:var(--primary,#2f5f9b);border-color:var(--primary,#2f5f9b);color:#fff}'
   +'.rg-dialog.rg-big{box-sizing:border-box;width:calc(100vw - 16px);max-width:none;height:calc(100dvh - 16px);max-height:none}.rg-big .rg-opts,.rg-big .rg-note,.rg-big .rg-sub,.rg-big [data-rg-print],.rg-big [data-rg-shuffle]{display:none}.rg-big .rg-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-top:14px}.rg-big .rg-actions{display:none}.rg-hb{display:flex;align-items:center;gap:10px}.rg-small{display:none}.rg-big .rg-small{display:inline-flex;align-items:center;height:40px;padding:0 16px;border:1px solid #cfd8e6;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:15px;cursor:pointer}.rg-big .rg-x{width:42px;height:40px;border:1px solid #cfd8e6;border-radius:10px;background:#fff;font-size:22px;display:inline-flex;align-items:center;justify-content:center}.rg-big .rg-head{align-items:center}.rg-big .rg-card h4{font-size:1.4rem;padding:10px 16px}.rg-big .rg-card li{font-size:1.45rem;padding:4px 0}.rg-big .rg-card ul{padding:10px 16px 14px}.rg-big h2{font-size:1.6rem}'
-  +'.rg-perf{display:inline-flex;flex-wrap:wrap;align-items:center;gap:8px;flex-basis:100%}.rg-perf select{height:32px;border:1px solid #cbd6e5;border-radius:8px;background:#fff;font:inherit;padding:0 6px;max-width:260px}.rg-perf select[hidden]{display:none}'
+  +'.rg-ln{display:inline-flex;gap:6px;align-items:center;margin-right:auto;font-size:.9rem;cursor:pointer}.rg-big .rg-ln{display:none}.rg-gn{color:#b45309;font-size:.85rem;margin:6px 2px 0}.rg-gn:empty{display:none}.rg-sx{margin-left:auto;font-size:.8em;font-weight:600;opacity:.92}.rg-sx+.rg-avg{margin-left:10px}.rg-perf{display:inline-flex;flex-wrap:wrap;align-items:center;gap:8px}.rg-opts .rg-br{flex-basis:100%;height:0}.rg-perf select{height:32px;border:1px solid #cbd6e5;border-radius:8px;background:#fff;font:inherit;padding:0 6px;max-width:180px}.rg-perf select[hidden]{display:none}'
   +'.rg-card h4{display:flex;justify-content:space-between;gap:8px}.rg-avg{font-weight:600;background:#ffffff33;border-radius:6px;padding:0 6px}.rg-card li{display:flex;justify-content:space-between;gap:8px}.rg-g{font-size:.8rem;color:#475569;background:#eef2f7;border-radius:6px;padding:0 6px;font-variant-numeric:tabular-nums}.rg-big .rg-v{display:none}';
  document.head.append(style);
 })();

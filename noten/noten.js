@@ -5576,10 +5576,12 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
    if(row.kind==='title'){const parts=String(row.cells[0]?.v||'').split(' · '),h=parts[2]||'',part=parts[3]||'';let H=hs.find(x=>x.half===h);if(!H){H={half:h,cols:[]};hs.push(H)}cur={H,part:/Halbjahres/.test(part)?'':part};hdr=[]}
    else if(row.kind==='header'&&cur){hdr=row.cells.slice(1).map(c=>({label:String(c.v??''),summary:!!c.summary}))}
    else if(row.kind==='data'&&cur){const name=String(row.cells[0]?.v||'').trim();if(!name)continue;row.cells.slice(1).forEach((c,i)=>{const h=hdr[i];if(!h||!ok(c.grade))return;
+     /* 12.13: „Letztes Testergebnis“ – je Schüler der jüngste Test des Halbjahres */{const m=!h.summary&&/^Tests?\s*·\s*(\d{1,2})\.(\d{1,2})\.(\d{4})/.exec(h.label);if(m){const t=+m[3]*1e4+ +m[2]*100+ +m[1],L=cur.H.lastT||(cur.H.lastT={});if(!L[name]||L[name].t<=t)L[name]={t,v:conv(c.grade)}}}
      if(/Selbsteinsch|Fehlend|Anzahl/i.test(h.label))return;if(cur.part&&!h.summary&&!/^Quartalsnote/.test(h.label))return;
      let label=h.label.replace(/\s*·\s*Mittelwert$/,'').replace(/^Quartalsnote\s*·\s*/,'Quartalsnote ');if(!/^Quartalsnote|^Halbjahresnote|^Klassenarbeit|^Klausur/.test(label))label+=' ('+(cur.part||'Halbjahr')+')';
      let col=cur.H.cols.find(x=>x.label===label);if(!col){col={id:cur.H.half+'|'+label,label,values:{}};cur.H.cols.push(col)}if(!h.summary||col.values[name]==null)col.values[name]=conv(c.grade)})}}}
   try{for(const e of window.classroomExamValues?.(subject,classId)||[]){const H=hs.find(x=>x.half===e.halfYear);if(!H)continue;const vals={};for(const [n,v] of Object.entries(e.values||{}))if(ok(v))vals[n]=conv(v);if(!Object.keys(vals).length)continue;const d=e.date?new Date(e.date+'T12:00').toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}):'';H.cols.push({id:H.half+'|exam:'+e.id,label:(e.label||'Klassenarbeit')+(e.topic?' · '+e.topic:d?' · '+d:''),values:vals})}}catch{}
+  for(const H of hs)if(H.lastT&&Object.keys(H.lastT).length)H.cols.push({id:H.half+'|lastTest',label:'Letztes Testergebnis',values:Object.fromEntries(Object.entries(H.lastT).map(([n,x])=>[n,x.v]))});
   const live=hs.filter(H=>H.cols.some(c=>Object.keys(c.values).length)),H=live.at(-1);return H?{half:H.half,cols:H.cols.filter(c=>Object.keys(c.values).length)}:{half:'',cols:[]}};
  window.addEventListener('message',event=>{
   const msg=event.data;if(event.source!==parent||!msg?.id)return;
