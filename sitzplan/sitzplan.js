@@ -3671,7 +3671,7 @@ document.addEventListener('keydown',event=>{
  function collapsibles(bar){const finder=bar.querySelector(':scope > .student-finder'),assign=bar.querySelector(':scope > [data-assign-student]');
   return [document.getElementById('classroomClearNamesButton'),document.getElementById('classroomResetButton'),[...bar.querySelectorAll(':scope > .btn')].find(b=>label(b)==='Drucken'),bar.querySelector(':scope > .grid-save-button'),bar.querySelector(':scope > .classroom-roll-split'),window.classroomRandomGroupsButton,(()=>{const r=document.getElementById('randomStudentButton');return r?.parentElement?.matches('.si-rsplit')?r.parentElement:r})(),document.getElementById('classroomRotateButton'),
    finder&&finder.dataset.open!=='true'&&!forceFinder?finder:null,assign&&assign.getAttribute('aria-pressed')!=='true'?assign:null].filter(el=>el&&el.parentElement===bar)}
- function proxy(text,target){const b=document.createElement('button');b.type='button';b.className='plan-actions-proxy'+(/^(classroomResetButton|classroomClearNamesButton)$/.test(target.id)?' pa-danger':'');b.setAttribute('role','menuitem');b.textContent=text;const ic=target.querySelector?.(':scope>.pa-mi-ic');if(ic)b.prepend(ic.cloneNode(true));b.disabled=!!target.disabled;b.onclick=()=>target.click();b._target=target;return b}
+ function proxy(text,target){const b=document.createElement('button');b.type='button';b.className='plan-actions-proxy'+(/^(classroomResetButton|classroomClearNamesButton)$/.test(target.id)?' pa-danger':'');b.setAttribute('role','menuitem');/* 12.07: nur Symbole – der Name steht als Infotext (Finger halten oder „i“) */const t=String(text).replace(/\s*…$/,'');b.setAttribute('aria-label',t);b.title=t;const ic=target.querySelector?.(':scope>.pa-mi-ic')||target.querySelector?.('svg');if(ic){const c=ic.cloneNode(true);c.removeAttribute('style');c.setAttribute('class','pa-mi-ic');b.append(c)}else if(/^Drucken/.test(t))b.innerHTML='<svg class="pa-mi-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9V4h10v5"/><path d="M7 17H5a1 1 0 0 1-1-1v-5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a1 1 0 0 1-1 1h-2"/><path d="M7 14h10v6H7z"/></svg>';else b.innerHTML='<span class="pa-ictxt">'+(/↓/.test(t)?'↓':/↑/.test(t)?'↑':t.slice(0,2))+'</span>';b.disabled=!!target.disabled;b.onclick=()=>target.click();b._target=target;return b}
  function fit(){
   fitPlanned=false;const bar=grid.querySelector('.classroom-plan-actions');if(!bar||!bar.dataset.arranged)return;
   const menu=bar.querySelector(':scope > .plan-actions-more .plan-actions-menu');if(!menu)return;
@@ -3731,7 +3731,7 @@ document.addEventListener('keydown',event=>{
   +'.plan-actions-more{position:relative;flex:none;display:flex;align-items:center;height:40px}'
   +'.plan-actions-more-toggle{gap:6px}.plan-actions-more-toggle span{font-size:.75em}'
   +'.plan-actions-menu{display:none;position:fixed;z-index:1000;min-width:210px;padding:6px;background:#fff;border:1px solid #dce3ef;border-radius:12px;box-shadow:0 12px 30px #1c2b4626}'
-  +'.plan-actions-more.open .plan-actions-menu{display:block}'
+  +'.plan-actions-more.open .plan-actions-menu{display:block}.plan-actions-menu{min-width:0!important}.plan-actions-overflow{display:flex;flex-wrap:wrap;gap:6px;max-width:260px}.plan-actions-menu-sep{display:none!important}'+'body[data-module=sitzplan] .plan-actions-menu .plan-actions-proxy.plan-actions-proxy:not(#_){width:46px!important;height:46px!important;padding:0!important;justify-content:center;border:1px solid #e3e9f2!important;border-radius:10px!important}body[data-module=sitzplan] .plan-actions-menu .plan-actions-proxy.pa-danger:not(#_){border-color:#f2c4b3!important}.plan-actions-proxy .pa-mi-ic{width:22px;height:22px;flex:none}.pa-ictxt{font-size:18px;font-weight:700}'
   +'body[data-module=sitzplan] .classroom-plan-actions>.pa-tool:not(.plan-actions-collapsed):not(#_):not(#__):not(#___){display:inline-flex!important;align-items:center;justify-content:center;box-sizing:border-box;width:40px!important;min-width:40px!important;height:40px!important;padding:0!important;font-size:0!important;gap:0!important;flex:none;background:#fff!important;border:1px solid #a8bdd8!important;border-radius:10px!important;color:#2f5f9b!important;box-shadow:none!important}'
   +'body[data-module=sitzplan] .classroom-plan-actions>.pa-tool:hover:not(#_):not(#__):not(#___){background:#f3f6fb!important}body[data-module=sitzplan] .classroom-plan-actions>:is(#classroomResetButton,#classroomClearNamesButton).pa-tool:not(#_):not(#__):not(#___){color:#b42318!important}body[data-module=sitzplan] .classroom-plan-actions>.pa-tool:disabled{opacity:.45}.pa-tool>.pa-mi-ic{width:22px;height:22px;flex:none}'
   +'body[data-module=sitzplan] .classroom-roll-split:has(.btn:disabled){opacity:.45;filter:grayscale(1);cursor:not-allowed}body[data-module=sitzplan] .classroom-roll-split:has(.btn:disabled)>.btn{background:#fff!important;color:inherit}body[data-module=sitzplan] .classroom-roll-split:has(.btn:disabled)>.classroom-roll-caption{opacity:1!important}'
@@ -3760,7 +3760,9 @@ document.addEventListener('keydown',event=>{
   +'.zoom-more{flex:none;position:relative}/* 9.05: direkt nach „Bewertungen“ statt isoliert rechts */.zoom-more[hidden]{display:none!important}'
   +'.classroom-plan-zoom .zoom-more-toggle{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.zoom-more-toggle span{font-size:.75em}'
   +'.zoom-more-menu{display:none;position:fixed;z-index:1000;min-width:200px;padding:6px;background:#fff;border:1px solid #dce3ef;border-radius:12px;box-shadow:0 12px 30px #1c2b4626}'
-  +'.zoom-more.open .zoom-more-menu{display:block}'
+  +'.zoom-more.open .zoom-more-menu,.zoom-more-menu.zm-float{display:flex;gap:6px}.zoom-more-menu{min-width:0!important}'
+  +'body .zoom-more-menu>button.zoom-more-menu-b:not(#_):not(#__),body[data-module=sitzplan] .zoom-more-menu>button:not(#_){width:46px!important;height:46px!important;padding:0!important;justify-content:center!important;border:1px solid #e3e9f2!important;border-radius:10px!important}'
+  +'.zoom-more-menu>button svg{width:22px;height:22px}.zoom-more-menu>button[aria-checked=true],.zoom-more-menu>button[aria-pressed=true]{background:#fff4e2!important;border-color:#f2c98a!important;color:#c2410c!important}.zm-txt{font-size:12px;font-weight:800}.zm-as{width:20px;height:14px;border-radius:4px;background:#c8e6b0;border:2.5px solid #d9534f}[aria-checked=false]>.zm-as{opacity:.45}'
   +'body[data-module=sitzplan] .zoom-more-menu>button{display:flex!important;align-items:center;justify-content:flex-start;gap:12px;width:100%!important;min-width:0!important;min-height:0!important;margin:0!important;padding:9px 12px!important;border:0!important;border-radius:8px!important;background:none!important;color:var(--primary,#2f5f9b)!important;text-align:left;font:inherit;font-size:.95rem;font-weight:500;white-space:nowrap;cursor:pointer}'
   +'body[data-module=sitzplan] .zoom-more-menu>button:hover{background:#f3f6fb!important}'
   +'.zoom-proxy-switch{position:relative;flex:0 0 34px;width:34px;height:20px;border-radius:999px;background:#c9d3e1;transition:background .15s}.zoom-proxy-switch::before{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #1c2b4635;transition:transform .15s}'
@@ -3769,14 +3771,14 @@ document.addEventListener('keydown',event=>{
   // iPhone: Regler darf schmaler werden, damit die Leiste in eine Zeile passt.
   +'@media(max-width:540px){body[data-module=sitzplan] .classroom-plan-zoom.zoom-fit-row input[type=range]{flex:1 1 130px;width:auto!important;min-width:56px}body[data-module=sitzplan] .classroom-plan-zoom.zoom-fit-row{gap:6px}}';
  document.head.append(style);
- function close(){open=false;document.querySelectorAll('.zoom-more.open').forEach(m=>{m.classList.remove('open');m.querySelector('.zoom-more-toggle')?.setAttribute('aria-expanded','false')})}
+ function close(){open=false;document.querySelectorAll('.zoom-more.open').forEach(m=>{m.classList.remove('open');m.querySelector('.zoom-more-toggle')?.setAttribute('aria-expanded','false');const mm=m._menu;if(mm){mm.classList.remove('zm-float');if(mm.parentElement!==m)m.append(mm)}})}
  function ensureMore(bar){
   let more=bar.querySelector(':scope > .zoom-more');
   if(!more){more=document.createElement('div');more.className='zoom-more';more.hidden=true;
    more.innerHTML='<button type="button" class="zoom-more-toggle" aria-haspopup="menu" aria-expanded="false" aria-label="Mehr" title="Mehr"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="5.5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18.5" cy="12" r="2"/></svg><span class="cm-more-lbl">Mehr</span></button><div class="zoom-more-menu" role="menu"></div>';
    const toggle=more.querySelector('.zoom-more-toggle');
-   toggle.onclick=e=>{e.stopPropagation();const was=more.classList.contains('open');close();if(was)return;more.classList.add('open');open=true;toggle.setAttribute('aria-expanded','true');const r=toggle.getBoundingClientRect(),m=more.querySelector('.zoom-more-menu');m.style.right=Math.max(8,innerWidth-r.right)+'px';m.style.left='auto';m.style.top=(r.bottom+6)+'px'};
-   more.querySelector('.zoom-more-menu').onclick=()=>close();
+   toggle.onclick=e=>{e.stopPropagation();const was=more.classList.contains('open');close();if(was)return;more.classList.add('open');open=true;toggle.setAttribute('aria-expanded','true');const r=toggle.getBoundingClientRect(),m=more._menu||more.querySelector('.zoom-more-menu');more._menu=m;document.body.append(m);m.classList.add('zm-float');m.style.right=Math.max(8,innerWidth-r.right)+'px';m.style.left='auto';m.style.top=(r.bottom+6)+'px'};
+   more._menu=more.querySelector('.zoom-more-menu');more._menu.onclick=()=>close();
   }
   if(bar.lastElementChild!==more)bar.append(more);
   return more;
@@ -3784,16 +3786,18 @@ document.addEventListener('keydown',event=>{
  /* 9.09: „Bewertungen“ wandert als Letztes ins Menü – es ist der wichtigste Schalter */function items(bar){return [bar.querySelector(':scope > .classroom-beamer-button'),bar.querySelector(':scope > [data-zoom-reset]'),bar.querySelector(':scope > [data-zoom-fit]'),bar.querySelector(':scope > .plan-assess-switch')].filter(Boolean)}
  function proxyFor(el){
   const b=document.createElement('button');b.type='button';b.setAttribute('role','menuitem');b._target=el;
-  if(el.matches('.plan-assess-switch')){const input=el.querySelector('input');b.setAttribute('role','menuitemcheckbox');b.innerHTML='<span>Bewertungen</span><span class="zoom-proxy-switch" aria-hidden="true"></span>';b.setAttribute('aria-checked',String(!!input?.checked));b.onclick=()=>input?.click()}
-  else if(el.matches('[data-zoom-fit]')){b.innerHTML='<span>Einpassen</span><span class="zoom-proxy-check" aria-hidden="true">✓</span>';b.setAttribute('aria-pressed',el.getAttribute('aria-pressed')||'false');b.onclick=()=>el.click()}
-  else{b.textContent=label(el);b.onclick=()=>el.click()}
+  const nm=el.matches('.plan-assess-switch')?'Bewertungen am Platz':el.matches('[data-zoom-fit]')?'Einpassen':el.matches('[data-zoom-reset]')?'Originalgröße 100 %':(el.getAttribute('aria-label')||label(el));b.setAttribute('aria-label',nm);b.title=nm;
+  const ic=()=>{const s=el.querySelector('svg');if(s){const c=s.cloneNode(true);c.removeAttribute('class');c.removeAttribute('style');return c.outerHTML}return '<span class="zm-txt">'+label(el).replace(/\s+/g,'')+'</span>'};
+  if(el.matches('.plan-assess-switch')){const input=el.querySelector('input');b.setAttribute('role','menuitemcheckbox');b.innerHTML='<span class="zm-as" aria-hidden="true"></span>';b.setAttribute('aria-checked',String(!!input?.checked));b.onclick=()=>input?.click()}
+  else if(el.matches('[data-zoom-fit]')){b.innerHTML=ic();b.setAttribute('aria-pressed',el.getAttribute('aria-pressed')||'false');b.onclick=()=>el.click()}
+  else{b.innerHTML=ic();b.onclick=()=>el.click()}
   return b;
  }
  function sync(menu){const put=(b,k,v)=>{if(b.getAttribute(k)!==v)b.setAttribute(k,v)};for(const b of menu.querySelectorAll('button')){const el=b._target;if(!el)continue;if(el.matches('.plan-assess-switch'))put(b,'aria-checked',String(!!el.querySelector('input')?.checked));else if(el.matches('[data-zoom-fit]'))put(b,'aria-pressed',el.getAttribute('aria-pressed')||'false');if(b.disabled!==!!el.disabled)b.disabled=!!el.disabled}}
  function fit(){
   planned=false;const bar=document.querySelector('.classroom-plan-zoom');if(!bar)return;
-  if(observed!==bar){observed=bar;new MutationObserver(list=>{if(list.some(m=>[...m.addedNodes,...m.removedNodes].some(n=>!n.closest?.('.zoom-more')&&!(n.matches?.('.zoom-more')))))schedule()}).observe(bar,{childList:true});new ResizeObserver(schedule).observe(bar);bar.addEventListener('change',()=>sync(bar.querySelector('.zoom-more-menu')||document.createElement('div')))}
-  const more=ensureMore(bar),menu=more.querySelector('.zoom-more-menu'),list=items(bar),beamer=document.documentElement.classList.contains('classroom-beamer');
+  if(observed!==bar){observed=bar;new MutationObserver(list=>{if(list.some(m=>[...m.addedNodes,...m.removedNodes].some(n=>!n.closest?.('.zoom-more')&&!(n.matches?.('.zoom-more')))))schedule()}).observe(bar,{childList:true});new ResizeObserver(schedule).observe(bar);bar.addEventListener('change',()=>sync(document.querySelector('.zoom-more-menu')||document.createElement('div')))}
+  const more=ensureMore(bar),menu=more._menu||more.querySelector('.zoom-more-menu'),list=items(bar),beamer=document.documentElement.classList.contains('classroom-beamer');
   const sig=[bar.clientWidth,innerWidth,document.documentElement.className,...[...bar.children].map(c=>String(c.className).replace(/\s*zoom-collapsed/g,'')+':'+c.textContent.length+':'+(c.disabled?1:0))].join('#');
   if(sig===zoomSig){sync(menu);return}
   for(const el of list)el.classList.remove('zoom-collapsed');more.hidden=false;bar.classList.add('zoom-fit-row');bar.classList.remove('zoom-fit-wrap');
@@ -3833,6 +3837,15 @@ async function clearNames(){
  gridData=gridData.map(z=>z.map(v=>named(v)?'X':v));
  initGrid();datenSpeichern();
 }
+
+/* 12.07: Symbole ohne Beschriftung – Finger kurz halten zeigt den Namen (Menüs „…“ und Schalter „Am Platz“) */
+(()=>{let t=0,tip=null,shown=false;const hide=()=>{clearTimeout(t);tip?.remove();tip=null};
+ document.addEventListener('pointerdown',e=>{const b=e.target.closest?.('.zoom-more-menu>button,.plan-actions-menu .plan-actions-proxy,.si-pill>button');hide();shown=false;if(!b)return;
+  t=setTimeout(()=>{const n=b.getAttribute('aria-label')||b.title;if(!n)return;shown=true;tip=document.createElement('div');tip.className='cm-hold-tip';tip.textContent=n;document.body.append(tip);const r=b.getBoundingClientRect();tip.style.left=Math.max(8,Math.min(innerWidth-tip.offsetWidth-8,r.left+r.width/2-tip.offsetWidth/2))+'px';tip.style.top=Math.max(8,r.top-tip.offsetHeight-8)+'px'},450)},true);
+ for(const ev of ['pointerup','pointercancel','scroll'])addEventListener(ev,()=>{clearTimeout(t);if(tip)setTimeout(hide,900)},true);
+ document.addEventListener('click',e=>{if(shown&&e.target.closest?.('.zoom-more-menu>button,.plan-actions-menu .plan-actions-proxy,.si-pill>button')){e.preventDefault();e.stopPropagation();shown=false}},true);
+ document.addEventListener('contextmenu',e=>{if(e.target.closest?.('.zoom-more-menu,.plan-actions-menu,.si-pill'))e.preventDefault()},true);
+ const st=document.createElement('style');st.textContent='.cm-hold-tip{position:fixed;z-index:3000;padding:6px 10px;border-radius:8px;background:#243247;color:#fff;font:600 13px/1.3 Inter,system-ui,sans-serif;pointer-events:none;white-space:nowrap;box-shadow:0 6px 16px #1c2b4640}.zoom-more-menu button,.plan-actions-menu button,.si-pill>button{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}';document.head.append(st)})();
 ;
 
 /* ==== sitzplan/flicker-diag.js ==== */
@@ -5060,6 +5073,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   /* Ansicht-Pille */
   +'html body[data-module=sitzplan] .classroom-plan-zoom>.si-pill:not(#_){display:inline-flex;align-items:center;gap:2px;height:36px;padding:3px;border-radius:999px;background:#e7edf6;flex:none}'
   +'.si-pill>button{height:30px;min-height:0!important;padding:0 11px!important;margin:0!important;border:0!important;border-radius:999px!important;background:transparent!important;color:#4b5b72!important;font:inherit;font-size:13px!important;font-weight:650!important;box-shadow:none!important;cursor:pointer;white-space:nowrap}'
+  +'html body .si-pill>button:not(#_){padding:0 10px!important;display:inline-flex!important;align-items:center;justify-content:center}.si-pill>button svg{width:21px;height:21px;display:block}'
   +'.si-pill>button[aria-pressed=true]{background:#fff!important;color:#c2410c!important;box-shadow:0 2px 5px rgba(35,61,96,.08)!important}.si-pill>button:hover{color:#2f5f9b!important}'
   +'.si-pill>.si-lbl{font-size:12px;font-weight:650;color:#66758a;padding:0 4px 0 9px}'
   +'html.ph-lite .si-pill,html.classroom-beamer .si-pill{display:none!important}'
@@ -5079,12 +5093,14 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  document.head.append(st);
 
  const LABEL={count:'Anzahl',le:'Lerneinheit',trend:'Trend'};
+ /* 12.07: Symbole statt Wörter – Anzahl (123 in der Sprechblase), Lerneinheit (iPad wie am iPhone), Trend (Börsenpfeil) */
+ const SIC={count:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H10l-4 3.5V17H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 5z"/><text x="12" y="13.9" font-size="8" font-family="Inter,Arial,sans-serif" font-weight="800" text-anchor="middle" fill="currentColor" stroke="none">123</text></svg>',le:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2.5" width="14" height="19" rx="2.5"/><path d="M21.9 3.4l.9.9-10.1 10.1-1.9.9.9-1.9z" stroke-width="1.6"/></svg>',trend:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 3 8-8"/><path d="M14 7h6v6"/></svg>'};window.classroomSiIcons=SIC;
  const TITLE={count:'Am Platz: Anzahl der mündlichen Noten im gewählten Quartal – orange = noch keine bzw. weniger als die anderen.',le:'Am Platz: Stand der zuletzt bearbeiteten Lerneinheit (aus den gescannten Abgabe-QR-Codes).',trend:'Am Platz: Trend der mündlichen Mitarbeit – letzte 4 Noten gegenüber den früheren im Halbjahr (ab 0,5 Unterschied).'};
  let pill=null,legend=null;
  function ensureUi(){
   const bar=document.querySelector('.classroom-plan-zoom');if(!bar)return;
   if(!pill||!pill.isConnected){pill=document.createElement('span');pill.className='si-pill';pill.setAttribute('role','group');pill.setAttribute('aria-label','Am Platz anzeigen');
-   pill.innerHTML=Object.entries(LABEL).map(([k,l])=>'<button type="button" data-si="'+k+'" aria-pressed="false" title="'+esc(TITLE[k])+'">'+l+'</button>').join('');
+   pill.innerHTML=Object.entries(LABEL).map(([k,l])=>'<button type="button" data-si="'+k+'" aria-pressed="false" aria-label="'+l+'" title="'+esc(l+': '+TITLE[k])+'">'+SIC[k]+'</button>').join('');
    pill.addEventListener('click',e=>{const b=e.target.closest('[data-si]');if(!b)return;mode=mode===b.dataset.si?'':b.dataset.si;wr(MODE_KEY,mode);paint()});}
   if(pill.parentElement!==bar){const more=bar.querySelector(':scope>.zoom-more'),sw=bar.querySelector(':scope>.plan-assess-switch');if(sw)sw.after(pill);else if(more)more.before(pill);else bar.append(pill)}
   if(!legend||!legend.isConnected){legend=document.createElement('div');legend.className='si-legend';legend.hidden=true;legend.setAttribute('role','status')}
@@ -5216,7 +5232,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    if(c.matches('[data-zoom-fit]')){out.push(row(svg(c),'rd','Einpassen',off(c)));continue}
    if(c.matches('[data-zoom-reset]')){out.push(row(svg(c),'rd','Originalgröße 100 %',off(c)));continue}
    if(c.matches('.plan-assess-switch')){out.push(row('','rd as','Bewertungen am Platz ein-/ausblenden',off(c)));continue}
-   if(c.matches('.si-pill')){out.push(row('123','rd','Am Platz: Anzahl · Lerneinheit · Trend'));continue}
+   if(c.matches('.si-pill')){{const I=window.classroomSiIcons||{};out.push(row(I.count||'123','rd','Am Platz: Anzahl der mündlichen Noten'),row(I.le||'LE','rd','Am Platz: Stand der Lerneinheit (Abgabe-QR)'),row(I.trend||'↗','rd','Am Platz: Trend der mündlichen Mitarbeit'))};continue}
    const t=c.getAttribute('aria-label')||c.textContent.trim();if(t)out.push(row(svg(c)||esc(t.slice(0,3)),'rd',esc(t),off(c)))}
   return out}
  function botRows(bar){const out=[];const lab=b=>b.getAttribute('aria-label')||b.textContent.trim();
