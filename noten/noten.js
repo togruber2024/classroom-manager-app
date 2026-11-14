@@ -5057,7 +5057,7 @@ window.LP=LP;window.lpLabels=labels;
    else if(d?.type==='classroom-text-trainer')texts.push(text);else if(d?.type==='classroom-lerneinheit')await unit(d);else if(d?.type==='classroom-reihe'&&d.id&&Array.isArray(d.entries)){try{await reiheSave(d);out.reihe=(out.reihe||0)+1;out.le+=Object.keys(d.units||{}).length}catch(e){if(e?.name==='QuotaExceededError')throw e;out.bad++}}else out.unknown++};
   const unit=async u=>{if(!u?.id||!(u.def||u.lps||UNITS[u.id]||Object.values(UNITS).some(x=>x.bookId===u.id)||(u.kind==='lateinarbeit'&&/^ala-\d+$/.test(u.id)))){out.unknown++;return}for(const x of Object.values(UNITS))if(x.bookId===u.id)delete x._book;
    /* 11.57: alte Schulbuch-Datei ohne Stationen – die gespeicherten Stationen bleiben erhalten */if(!u.def){let o=null;try{o=await leIDB('readonly',st=>st.get(u.id))}catch{}if(o&&o.def)u={...u,def:o.def}}
-   try{await leIDB('readwrite',st=>st.put(u,u.id));out.le++}catch{out.bad++}};
+   const nw=!!u.def&&!UNITS[u.id];try{await leIDB('readwrite',st=>st.put(u,u.id));out.le++;if(nw)neuMark(A=>{A['u:'+u.id]={t:Date.now()}})}catch{out.bad++}};
   for(const f of files){try{if(/\.zip$/i.test(f.name)||f.type==='application/zip'){for(const x of await ttUnzip(await f.arrayBuffer()))await one(x.name,x.text)}else await one(f.name,await f.text())}catch(e){if(e?.name==='QuotaExceededError')throw e;out.bad++}}
   if(texts.length){const r=await ttImport(texts.map((t,i)=>new File([t],'t'+i+'.cmtext')));out.tt+=r.got.length;out.bad+=r.bad}
   if(out.le)await regLoad();return out}
@@ -5108,7 +5108,10 @@ window.LP=LP;window.lpLabels=labels;
   for(const [id,u] of Object.entries(us)){if(!u||u.type!=='classroom-lerneinheit'||!u.def||u.id!==id)continue;const x={...u,def:{...u.def,meta:{...(u.def.meta||{}),subject:meta.subject,jg:meta.jg}}};await leIDB('readwrite',st=>st.put(x,id))}
   /* 11.59: mitgelieferte Änderungen an den Lernpaketen der Lektionen übernehmen – eigene Änderungen auf diesem Gerät haben Vorrang */
   if(d.ledits&&typeof d.ledits==='object')try{const K='classroom-reihen-edit-v1',a=JSON.parse(localStorage.getItem(K)||'{}')||{};for(const [k,v] of Object.entries(d.ledits))if(v&&typeof v==='object'&&!a['les:'+k])a['les:'+k]=v;localStorage.setItem(K,JSON.stringify(a))}catch{}
+  /* 12.00: Etikett „neu“ – neu dazugekommene Einträge merken (überschriebene bleiben ohne Etikett) */
+  try{await regReady;const old=REIHEN_[meta.id],oe=old?old.entries||[]:null;if(!/^eigen-/.test(meta.id)&&meta.entries.length){const nk=(oe?meta.entries.filter(e=>!oe.some(o=>o.k===e.k)&&!(e.u&&oe.some(o=>o.u===e.u))):meta.entries).map(e=>e.k);if(nk.length)neuMark(A=>{const r=A['r:'+meta.id]||{k:[]};r.t=Date.now();r.k=[...new Set([...(r.k||[]),...nk])];A['r:'+meta.id]=r})}}catch{}
   await leIDB('readwrite',st=>st.put(meta,RKEY(meta.id)));await regLoad();return meta}
+ function neuMark(f){try{const K='classroom-neu-v1',A=JSON.parse(localStorage.getItem(K)||'{}')||{};f(A);localStorage.setItem(K,JSON.stringify(A))}catch{}}
  async function reiheRemove(id){await regReady;const m=REIHEN_[id];if(!m)return false;const used=new Set(Object.values(REIHEN_).filter(r=>r.id!==id).flatMap(r=>r.entries.map(e=>e.u).filter(Boolean)));/* 11.69: verschobene Einheiten (eigene Einträge anderer Reihen) behalten */try{const E=JSON.parse(localStorage.getItem('classroom-reihen-edit-v1')||'{}')||{};for(const [rid,x] of Object.entries(E))if(rid!==id)for(const o of x?.own||[])if(o.u)used.add(o.u)}catch{}
   for(const e of m.entries)if(e.u&&!used.has(e.u))try{await leIDB('readwrite',st=>st.delete(e.u))}catch{}
   const usedD=new Set(Object.values(REIHEN_).filter(r=>r.id!==id).flatMap(r=>r.docs||[]));for(const x of m.docs||[])if(!usedD.has(x))try{await leIDB('readwrite',st=>st.delete(x))}catch{}

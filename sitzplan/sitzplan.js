@@ -4381,7 +4381,8 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
 .gl-meta .vt2{background:#fff3cf!important;color:#8a6200!important}.gl-meta .vt3{background:#fde3e1!important;color:#a33a34!important}.ein-ch{font-size:.86rem;font-weight:750;color:#243247;margin:10px 10px 2px;line-height:1.3}.ein-pt{font-size:.72rem;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:#8a97aa;margin:10px 10px 2px}.ein-jg{font-size:.78rem;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:#66758a;margin:14px 8px 4px}.ein-jg:first-child{margin-top:4px}
 .ein-row{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;border:0;background:transparent;border-radius:9px;padding:8px 10px;font:inherit;color:#243247;cursor:pointer}
 .ein-row:hover{background:#f3f6fb}.ein-row.on{background:#eaf0fa;color:#2f5f9b;font-weight:700}.ein-row span{flex:1;min-width:0}.ein-row small{color:#8a97aa;font-size:.8rem}.ein-row.dim span{color:#8a97aa}.ein-row.dim.on span{color:#2f5f9b}
-.ein-row .stand{font-size:.72rem;font-weight:700;color:#9a5400;background:#fff4e2;border:1px solid #f2c98a;border-radius:999px;padding:0 7px;flex:none}
+.ein-row .stand,.rh-row .stand{font-size:.72rem;font-weight:700;color:#9a5400;background:#fff4e2;border:1px solid #f2c98a;border-radius:999px;padding:0 7px;flex:none}
+.ein-row .neu,.rh-row .neu{font-size:.72rem;font-weight:700;color:#1d6b3a;background:#e6f6ec;border:1px solid #9fd7b2;border-radius:999px;padding:0 7px;flex:none}.ein-row .neu+.stand{margin-left:5px}.ein-rr .neu{margin-left:6px}
 .ein-foot{color:#8a97aa;font-size:.82rem;margin:16px 8px 0;line-height:1.5}.ein-foot a{color:#2f5f9b;cursor:pointer;text-decoration:underline}
 .ein-tile b .gl-pill{vertical-align:2px}.ein-tile b .gl-pill i{display:inline-block;width:7px;height:7px;margin:0;border-radius:50%;background:#1f8a4c}
 .ein-part{display:grid;grid-template-columns:190px 1fr;gap:14px;margin:0 0 14px}.ein-pl{padding-top:8px}.ein-pl .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#2f5f9b;color:#fff;font-weight:800;font-size:12.5px;margin-right:6px}.ein-pl b{font-size:1rem}.ein-pl small{display:block;color:#66758a;margin:2px 0 0 30px;font-size:.82rem}@media (max-width:900px){.ein-part{grid-template-columns:1fr}}
@@ -4447,6 +4448,12 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  const visIds=()=>{if(cx.subject==='latein'){if(ui.allL)return data.lessons.map(l=>'l:'+l.k);const RS=reihenOf('latein',cx.jg),T=topics('latein',cx.jg).map(t=>t.id),own=data.lessons.filter(l=>l.jg===cx.jg).map(l=>'l:'+l.k);return [...new Set([...RS.map(r=>'r:'+r.id),...T,...own])]}if(!cx.subject)return [];const RS=reihenOf(cx.subject,cx.jg).map(r=>'r:'+r.id),T=topics(cx.subject,cx.jg).map(t=>t.id),TA=topics(cx.subject,cx.jg,1).map(t=>t.id),U=data.units.filter(u=>u.subject===cx.subject&&u.jg===cx.jg).map(u=>'u:'+u.u);return [...RS,...T,...U.filter(id=>!TA.includes(id))]};
  const setStand=v=>{const s=rd(STAND);if(v)s[cx.key]=v;else delete s[cx.key];wr(STAND,s)};
  const isStand=id=>rd(STAND)[cx.key]===id;
+ /* 12.00: Etikett „neu“ für frisch importierte Reihen, Stunden und Lerneinheiten – weg nach dem Öffnen oder nach 14 Tagen */
+ const NEUK='classroom-neu-v1',NEUB='<span class="neu">neu</span>';let NEU={};
+ const neuLoad=()=>{const a=rd(NEUK),now=Date.now();let ch=0;for(const k of Object.keys(a)){const x=a[k];if(!x||!(now-(+x.t||0)<14*864e5)||(x.k&&!x.k.length)){delete a[k];ch=1}}if(ch)wr(NEUK,a);NEU=a;return a};
+ const neuTp=tp=>!!tp&&((NEU['r:'+tp.rid]?.k||[]).includes(tp.k)||(!!tp.u&&!!NEU['u:'+tp.u.u]));
+ const neuR=r=>!!(NEU['r:'+r.id]?.k||[]).length;
+ function neuSeen(id){if(!id||id.startsWith('r:'))return;const a=rd(NEUK);let ch=0;for(const tp of allTopics())if(tp.id===id){const x=a['r:'+tp.rid];if(x?.k?.includes(tp.k)){x.k=x.k.filter(k=>k!==tp.k);if(!x.k.length)delete a['r:'+tp.rid];ch=1}}if(id.startsWith('u:')&&a[id]){delete a[id];ch=1}if(ch)wr(NEUK,a)}
  const find=id=>id?.startsWith('r:')?{r:reiheOf(id.slice(2))}:id?.startsWith('l:')?{l:data.lessons.find(x=>x.k===id.slice(2))}:id?.startsWith('u:')?{u:data.units.find(x=>x.u===id.slice(2))}:id?.startsWith('t:')?{t:allTopics().find(x=>x.id===id)}:{};
  const sub=l=>[...l.formen.slice(0,3),l.syntax&&'Syntax: '+l.syntax].filter(Boolean).map(esc).join(' · ');
  /* 11.26: festes Seitenmenü (Breite per Schieber), Schalter „Aktuelle Lektion“, Punkte je Baustein, Suche nach Thema */
@@ -4464,27 +4471,27 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   const O=T.orig?'<div class="ein-tk">Originaltext (fakultativ)</div><div class="ein-tr"><b>'+esc(T.orig.t)+'</b>'+(T.orig.q?' · '+esc(T.orig.q):'')+'</div>':'';
   return (head?'<p class="ein-sub">'+head+'</p>':'')+'<div class="ein-toc"><div>'+(L?'<div class="ein-tk">Sprachkompetenz</div>'+L:'')+'</div><div>'+R+O+'</div></div>'}
  const dots=l=>'<span class="ein-dots" title="Vokabeln · Grammatik · Übersetzungs-Trainer · Wiederholung">'+[['dv',l.nV],['dg',l.gr.length],['dt',l.tt.length],['dw',l.nW]].map(([c,n])=>'<b class="'+(n?c:'')+'"></b>').join('')+'</span>';
- const rowL=(l,t,ind)=>'<button type="button" class="ein-row'+(ind?' ein-in':'')+(sel==='l:'+l.k?' on':'')+(blocks(l)&&(!ind||l.jg===cx.jg)?'':' dim')+'" data-sel="l:'+esc(l.k)+'"><span>'+esc(t?l.tag+' '+t:lname(l))+'</span>'+(isStand('l:'+l.k)?'<span class="stand">aktuell</span>':'')+'</button>';
+ const rowL=(l,t,ind,nw)=>'<button type="button" class="ein-row'+(ind?' ein-in':'')+(sel==='l:'+l.k?' on':'')+(blocks(l)&&(!ind||l.jg===cx.jg)?'':' dim')+'" data-sel="l:'+esc(l.k)+'"><span>'+esc(t?l.tag+' '+t:lname(l))+'</span>'+(nw?NEUB:'')+(isStand('l:'+l.k)?'<span class="stand">aktuell</span>':'')+'</button>';
  const GLP='';/* 11.60: ohne „Grundlagen“-Pille */
- const rowU=(u,t,ind)=>'<button type="button" class="ein-row'+(ind?' ein-in':'')+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>'+esc(t||u.title)+(u.gl?GLP:'')+'</span>'+(isStand('u:'+u.u)?'<span class="stand">aktuell</span>':'')+'</button>';
+ const rowU=(u,t,ind,nw)=>'<button type="button" class="ein-row'+(ind?' ein-in':'')+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'"><span>'+esc(t||u.title)+(u.gl?GLP:'')+'</span>'+(nw||NEU['u:'+u.u]?NEUB:'')+(isStand('u:'+u.u)?'<span class="stand">aktuell</span>':'')+'</button>';
  const norm=x=>String(x||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9äöüß]+/g,' ').trim();
  /* 11.43: Seitenmenü zeigt nur die Inhalte der gewählten Lerngruppe (Fach + Jahrgang), keine anderen Klassen oder Fächer */
- const rowR=(r,n)=>'<button type="button" class="ein-row ein-rr'+(sel==='r:'+r.id?' on':'')+'" data-sel="r:'+esc(r.id)+'"><span>'+esc((r.lab?r.lab+' ':'')+r.title)+'</span><small>'+n+'</small></button>';
- const rowT=t=>'<button type="button" class="ein-row ein-in dim'+(sel===t.id?' on':'')+'" data-sel="'+esc(t.id)+'" title="Noch keine Lerneinheit"><span>'+esc(t.title)+'</span>'+(isStand(t.id)?'<span class="stand">aktuell</span>':'')+'</button>';
- function treeHtml(){const subj=SUBJ[cx.subject]||cx.subject||'',ids=visIds(),t=norm(q);
+ const rowR=(r,n)=>'<button type="button" class="ein-row ein-rr'+(sel==='r:'+r.id?' on':'')+'" data-sel="r:'+esc(r.id)+'"><span>'+esc((r.lab?r.lab+' ':'')+r.title)+'</span>'+(neuR(r)?NEUB:'')+'<small>'+n+'</small></button>';
+ const rowT=(t,nw)=>'<button type="button" class="ein-row ein-in dim'+(sel===t.id?' on':'')+'" data-sel="'+esc(t.id)+'" title="Noch keine Lerneinheit"><span>'+esc(t.title)+'</span>'+(nw?NEUB:'')+(isStand(t.id)?'<span class="stand">aktuell</span>':'')+'</button>';
+ function treeHtml(){neuLoad();const subj=SUBJ[cx.subject]||cx.subject||'',ids=visIds(),t=norm(q);
   const L=ids.map(id=>find(id)).filter(x=>{if(!t)return true;if(x.r)return norm(x.r.title+' '+x.r.ch).includes(t);if(x.t)return norm(x.t.title+' '+x.t.part).includes(t);if(x.l){const l=x.l,T=l.toc||{};return [lname(l),l.label,T.syn,T.form,T.wort,...(T.textk||[]),...(T.kult||[]),T.text,T.sach,...l.gr,...l.formen,l.syntax].filter(Boolean).some(v=>norm(v).includes(t))}return norm(x.u.title+' '+x.u.sub).includes(t)});
   if(!ids.length)return '<div class="ein-empty" style="padding:8px">Für die '+esc(cx.short||'Lerngruppe')+(subj?' ('+esc(subj)+')':'')+' sind noch keine Einheiten vorhanden.</div>'+(cx.subject==='latein'?'<button type="button" class="ein-all" data-all>Alle Lektionen von Pontes einblenden</button>':'');
   if(!L.length)return '<div class="ein-empty" style="padding:8px">Nichts gefunden.</div>';
   /* 11.57: Reihen als eigene Zeile (antippen = Übersicht der Reihe), darunter ihre Einträge */
   const RS=cx.subject!=='latein'||!ui.allL?reihenOf(cx.subject,cx.jg):[];if(RS.length){const show=new Set(L.map(x=>x.r?'r:'+x.r.id:x.l?'l:'+x.l.k:x.u?'u:'+x.u.u:x.t.id));let h='<div class="ein-jg">Jahrgang '+cx.jg+' · '+esc(subj)+'</div>',ch='';const TP=topics(cx.subject,cx.jg);
-   for(const r of RS){const tps=TP.filter(x=>x.rid===r.id),vis=tps.filter(tp=>show.has(tp.id));if(t&&!vis.length&&!show.has('r:'+r.id))continue;if(r.ch&&r.ch!==ch){ch=r.ch;h+='<div class="ein-ch">'+esc(ch)+'</div>'}h+=rowR(r,tps.length);for(const tp of vis)h+=tp.l?rowL(tp.l,tp.title,1):tp.u?rowU(tp.u,tp.title,1):rowT(tp)}
+   for(const r of RS){const tps=TP.filter(x=>x.rid===r.id),vis=tps.filter(tp=>show.has(tp.id));if(t&&!vis.length&&!show.has('r:'+r.id))continue;if(r.ch&&r.ch!==ch){ch=r.ch;h+='<div class="ein-ch">'+esc(ch)+'</div>'}h+=rowR(r,tps.length);for(const tp of vis){const nw=neuTp(tp);h+=tp.l?rowL(tp.l,tp.title,1,nw):tp.u?rowU(tp.u,tp.title,1,nw):rowT(tp,nw)}}
    const TPA=topics(cx.subject,cx.jg,1),rest=L.filter(x=>x.u&&!TPA.some(tp=>tp.id==='u:'+x.u.u));if(rest.length)h+='<div class="ein-pt">Weitere Einheiten</div>'+rest.map(x=>rowU(x.u)).join('');
    if(cx.subject==='latein'){const rl=L.filter(x=>x.l&&x.l.jg===cx.jg&&!TPA.some(tp=>tp.id==='l:'+x.l.k));if(rl.length)h+='<div class="ein-pt">Weitere Lektionen</div>'+rl.map(x=>rowL(x.l)).join('');h+='<button type="button" class="ein-all" data-all>Alle Lektionen von Pontes einblenden</button>'}return h}
   /* 11.53: Latein – Knopf „Alle Lektionen von Pontes einblenden“ */const allB=cx.subject==='latein'?'<button type="button" class="ein-all" data-all>'+(ui.allL?'Nur Jahrgang '+cx.jg+' zeigen':'Alle Lektionen von Pontes einblenden')+'</button>':'';
   if(cx.subject==='latein'&&ui.allL){let h='',jg=null;for(const x of L){if(!x.l)continue;if(x.l.jg!==jg){jg=x.l.jg;h+='<div class="ein-jg">'+(jg?'Jahrgang '+jg:'ohne Jahrgang')+' · '+esc(subj)+'</div>'}h+=rowL(x.l)}return h+allB}
   return '<div class="ein-jg">Jahrgang '+cx.jg+' · '+esc(subj)+'</div>'+L.map(x=>x.l?rowL(x.l):rowU(x.u)).join('')+allB}
  function wireTree(){const T=view.querySelector('.ein-list');
-  T.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{sel=b.dataset.sel;sideOpen=false;draw()});
+  T.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{sel=b.dataset.sel;neuSeen(sel);sideOpen=false;draw()});
   T.querySelectorAll('[data-jg]').forEach(b=>b.onclick=()=>{openJg.add(+b.dataset.jg);T.innerHTML=treeHtml();wireTree()});
   T.querySelector('[data-all]')?.addEventListener('click',()=>{ui.allL=!ui.allL;saveUi();T.innerHTML=treeHtml();wireTree();if(!ui.allL&&!visIds().includes(sel)){sel=stand();draw()}});
   }
@@ -4493,7 +4500,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  function pinObj(l,u,cls,subj){const tt=find(sel).t;return {kind:'ein',sel,s:cx.subject,c:cx.classId,cls,subj:'Unterricht · '+subj,page:l?lname(l):u?u.title:tt?tt.title:'',topic:'',id:'ein|'+cx.subject+'|'+cx.classId+'|'+sel}}
  function pinBtn(l,u,cls,subj){const P=top()?.classroomPins;if(!P?.has||!cx.key)return '';const on=P.has('ein|'+cx.subject+'|'+cx.classId+'|'+sel);return '<button type="button" class="ein-pinb'+(on?' on':'')+'" data-pinb title="'+(on?'Angeheftet – tippen zum Lösen':'Diese '+(l?'Lektion':'Einheit')+' anheften (oben über die Nadel neben „?“ wieder öffnen)')+'" aria-pressed="'+on+'">'+PINI+'</button>'}
  const inR0=u=>u?topics(u.subject,u.jg,1).find(x=>x.id==='u:'+u.u):null;
- function draw(){const {l,u,t:tp,r:rh}=find(sel),cls=cx.short||'—',subj=SUBJ[cx.subject]||cx.subject||'';
+ function draw(){neuLoad();const {l,u,t:tp,r:rh}=find(sel),cls=cx.short||'—',subj=SUBJ[cx.subject]||cx.subject||'';
   const title=l?esc(l.label)+(l.name?' · '+esc(l.name):''):u?esc(inR0(u)?.title||u.title)+(u.gl?GLP:''):tp?esc(tp.title):'';const inR=u?topics(u.subject,u.jg,1).find(x=>x.id==='u:'+u.u):null;const st=isStand(sel);
   view.style.setProperty('--ein-w',(ui.w||290)+'px');view.classList.toggle('side-open',sideOpen);
   view.innerHTML='<div class="ein-side"><input type="search" class="ein-q" placeholder="Lektion oder Thema suchen …" value="'+esc(q)+'" autocomplete="off" autocorrect="off" spellcheck="false"><div class="ein-list">'+treeHtml()+'</div>'
@@ -4701,7 +4708,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  function reiheHtml(r){const L=eff(r),vis=L.filter(x=>!x.hid),nh=L.length-vis.length,subj=SUBJ[r.subject]||r.subject;
   const head='<div class="ein-mh"><h2>'+esc((r.lab?r.lab+' · ':'')+r.title)+'</h2><span class="sp"></span><button type="button" class="ein-b ein-ib" data-rexp>'+ICO.up+'Reihe exportieren</button><button type="button" class="ein-curb'+(rEdit?' on':'')+'" data-redit aria-pressed="'+rEdit+'" title="'+(rEdit?'Bearbeiten beenden':'Reihe bearbeiten: verschieben, umbenennen, ausblenden, löschen')+'">'+ICO.pen+'</button></div>'
    +'<p class="ein-sub">'+[r.ch&&esc(r.ch),esc(subj)+(r.subject==='latein'?'':' · Jahrgang '+r.jg),r.src&&esc(r.src),vis.length+' Einträge'+(nh?' · '+nh+' ausgeblendet':'')].filter(Boolean).join(' · ')+'</p>';
-  if(!rEdit)return head+'<div class="rh-list">'+vis.map((x,i)=>{const un=x.u&&data.units.find(y=>y.u===x.u),ll=x.les!=null?data.lessons.find(l=>l.k===x.les):null;return '<button type="button" class="rh-row" data-go="'+esc(topicId(r,r.jg,x,un))+'"><span class="rh-n">'+(ll?esc(ll.tag):i+1)+'</span><span class="rh-t">'+esc(x.t)+'<small>'+(ll?lesSum(ll):un?(un.gl?un.gl.n+' Stationen · ca. '+un.gl.min+' Min.':'Lerneinheit'):x.own?'eigener Eintrag':r.subject==='latein'?'im Buch':'noch keine Lerneinheit')+'</small></span>'+(un?GLP:'')+(isStand(topicId(r,r.jg,x,un))?'<span class="stand">aktuell</span>':'')+'</button>'}).join('')+'</div>'
+  if(!rEdit)return head+'<div class="rh-list">'+vis.map((x,i)=>{const un=x.u&&data.units.find(y=>y.u===x.u),ll=x.les!=null?data.lessons.find(l=>l.k===x.les):null;return '<button type="button" class="rh-row" data-go="'+esc(topicId(r,r.jg,x,un))+'"><span class="rh-n">'+(ll?esc(ll.tag):i+1)+'</span><span class="rh-t">'+esc(x.t)+'<small>'+(ll?lesSum(ll):un?(un.gl?un.gl.n+' Stationen · ca. '+un.gl.min+' Min.':'Lerneinheit'):x.own?'eigener Eintrag':r.subject==='latein'?'im Buch':'noch keine Lerneinheit')+'</small></span>'+(un?GLP:'')+((NEU['r:'+r.id]?.k||[]).includes(x.k)||(un&&NEU['u:'+un.u])?NEUB:'')+(isStand(topicId(r,r.jg,x,un))?'<span class="stand">aktuell</span>':'')+'</button>'}).join('')+'</div>'
    +'<p class="ein-foot" style="margin:14px 2px 0">Mit dem Stift kannst du die Reihe ändern. Die Änderungen gelten nur auf diesem Gerät; „Reihe exportieren“ speichert sie in eine neue Datei.</p>';
   return head+'<div class="rh-list rh-ed">'+L.map((x,i)=>'<div class="rh-er'+(x.hid?' hid':'')+(x.own?' own':'')+'" data-k="'+esc(x.k)+'"><span class="rh-grip" data-grip title="Ziehen zum Verschieben">⠿</span><span class="rh-n">'+(i+1)+'</span>'
     +(x.hid?'<span class="rh-t">'+esc(x.t)+'<small>ausgeblendet</small></span>':'<input class="rh-in" value="'+esc(x.t)+'" data-name aria-label="Name">')
@@ -4709,7 +4716,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    +'<button type="button" class="rh-add" data-add>+ Eigenen Eintrag hinzufügen (z. B. Test, Wiederholung, Exkursion)</button></div>'
    +'<p class="ein-foot" style="margin:12px 2px 0">Umbenennen ändert nur die Anzeige. Die Notenspalten heißen dann genauso, und die Ergebnisse bleiben bei der richtigen Einheit.'+(Object.keys(edOf(r.id)).length?' · <a data-reset>Ursprüngliche Reihe wiederherstellen</a>':'')+'</p>'}
  function wireReihe(r){const M=view.querySelector('.ein-main');if(!M)return;
-  M.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{sel=b.dataset.go;draw()});
+  M.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{sel=b.dataset.go;neuSeen(sel);draw()});
   M.querySelector('[data-redit]')?.addEventListener('click',()=>{rEdit=!rEdit;draw()});
   M.querySelector('[data-rexp]')?.addEventListener('click',e=>reiheExp(r,e.currentTarget));
   if(!rEdit)return;const e=()=>{const x=edOf(r.id);x.names??={};x.hid??=[];x.del??=[];x.own??=[];return x};
