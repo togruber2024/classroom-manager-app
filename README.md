@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 14.11.2026 · Version 12.07
+Stand: 14.11.2026 · Version 12.08
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1486,3 +1486,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.05: iPhone – Klasse kurz mit Fach-Plakette; Wiederherstellen-Hinweis mit richtigen Knöpfen; Klimadiagramm-Baukasten mit sichtbarer Datentabelle
 12.06: iPhone – Notenspiegel wechselt mit der Klasse oben
 12.07: Sitzplan – Schalter Anzahl/Lerneinheit/Trend mit Symbolen, „…“-Menüs nur Symbole (Name beim Halten), oberes Menü nicht mehr verdeckt
+12.08: Sitzplan-Knöpfe einheitlich 40 px, „Ältere löschen“; Lerneinheiten mit Stationen nacheinander (meta.lock = seq)
