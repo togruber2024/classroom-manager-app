@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="de"><head><meta charset="utf-8"><script>/* 11.22: Vorschau am Mac (?vorschau=1): Speicher nur im Arbeitsspeicher – nichts wird gespeichert, keine Abgabe */if(/[?&]vorschau=1/.test(location.search)){try{const m=new Map(),s={getItem:k=>m.has(k)?m.get(k):null,setItem:(k,v)=>{m.set(k,String(v))},removeItem:k=>{m.delete(k)},clear:()=>m.clear(),key:i=>[...m.keys()][i]??null,get length(){return m.size}};Object.defineProperty(window,"localStorage",{configurable:true,get:()=>s})}catch(e){}document.documentElement.classList.add("cm-vorschau");document.write("<style>.cm-vorschau #who{display:none!important}</style>")}</script><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f6f8fc"><meta name="robots" content="noindex">
-<title>Übersetzungs-Trainer</title>
+<link rel="apple-touch-icon" href="lernordner-180.png"><link rel="icon" href="lernordner-192.png"><title>Übersetzungs-Trainer</title>
 <!-- 11.06: Übersetzungs-Trainer des Classroom-Managers. Diese Seite enthält KEINEN Text: Text und Aufgaben kommen aus dem Link (#…)
      oder aus einer Datei der Lehrkraft. Läuft nach dem Laden ohne Internet; nichts wird an einen Server geschickt. -->
 <style>
@@ -243,13 +243,22 @@ function sstate(si){return ST.sent[si]??={step:0,p:[],s:[],g:[],miss:0,h:0,look:
 function renderTR(b){cur=Math.min(cur,T.s.length-1);
  b.innerHTML='<div class="nav">'+T.s.map((_,i)=>{const x=ST.sent[i];return '<button data-n="'+i+'" class="'+(i===cur?'on ':'')+(x&&x.r!=null?'r'+x.r:'')+'">'+(i+1)+'</button>'}).join('')+'</div><div id="sb"></div>';
  b.querySelectorAll('[data-n]').forEach(x=>x.onclick=()=>{cur=+x.dataset.n;renderTR(b)});showSent(b.querySelector('#sb'),cur)}
-/* 11.91: iPad-Tastatur – das Eingabefeld endet knapp über der Tastatur, der lateinische Satz bleibt darüber sichtbar (die Knöpfe darunter dürfen verdeckt sein) */
-(()=>{const vv=window.visualViewport;if(!vv)return;let tm=0;
- const fit=()=>{const ta=document.activeElement;if(!ta||ta.tagName!=='TEXTAREA')return;if(vv.height>window.innerHeight-120){document.body.style.paddingBottom='';return}/* keine Bildschirmtastatur */document.body.style.paddingBottom=Math.round(window.innerHeight-vv.height)+'px';/* genug Platz zum Hochschieben */
-  const r=ta.getBoundingClientRect(),bottom=vv.offsetTop+vv.height-10,d=r.bottom-bottom;if(Math.abs(d)>4){const top=r.top-d;/* nie den Anfang des Felds nach oben hinausschieben */window.scrollBy(0,top<vv.offsetTop+8?d-(vv.offsetTop+8-top):d)}};
- const later=ms=>{clearTimeout(tm);tm=setTimeout(fit,ms)};
- document.addEventListener('focusin',e=>{if(e.target.tagName==='TEXTAREA'){later(350);setTimeout(fit,700)}});
- vv.addEventListener('resize',()=>later(60));document.addEventListener('focusout',e=>{if(e.target.tagName==='TEXTAREA')setTimeout(()=>{if(document.activeElement?.tagName!=='TEXTAREA')document.body.style.paddingBottom=''},300)});document.addEventListener('input',e=>{if(e.target.tagName==='TEXTAREA')later(30)})})();
+/* 11.91/11.93: iPad-Tastatur – das Eingabefeld endet knapp über der Tastatur, der lateinische Satz bleibt darüber sichtbar (die Knöpfe darunter dürfen verdeckt sein).
+   11.93: Tastatur wird an der Höhe des sichtbaren Bereichs ohne Tastatur erkannt (iPad: innerHeight schrumpft mit); Polster bleibt, solange getippt wird – sonst springt die Seite nach oben; beim Tippen nur nach unten nachschieben. */
+(()=>{const vv=window.visualViewport;if(!vv)return;let tm=0,full=Math.max(vv.height,window.innerHeight),pad=0;
+ const isTa=el=>el&&el.tagName==='TEXTAREA';
+ const kb=()=>vv.height<full-120;
+ const setPad=()=>{const p=Math.max(pad,Math.round(full-vv.height)+40);if(p!==pad){pad=p;document.body.style.paddingBottom=p+'px'}};
+ const fit=grow=>{const ta=document.activeElement;if(!isTa(ta)||!kb())return;setPad();
+  const r=ta.getBoundingClientRect(),bottom=vv.offsetTop+vv.height-10,d=r.bottom-bottom;
+  if(grow&&d<=4)return;/* beim Tippen nie nach oben springen */
+  if(Math.abs(d)>4){const top=r.top-d,lim=vv.offsetTop+8;window.scrollBy(0,top<lim?d-(lim-top):d)}};
+ const later=(ms,g)=>{clearTimeout(tm);tm=setTimeout(()=>fit(g),ms)};
+ vv.addEventListener('resize',()=>{if(!isTa(document.activeElement))full=Math.max(full,vv.height);later(80)});
+ window.addEventListener('orientationchange',()=>{full=0;setTimeout(()=>{full=Math.max(vv.height,window.innerHeight)},600)});
+ document.addEventListener('focusin',e=>{if(isTa(e.target)){later(350);setTimeout(()=>fit(false),750)}});
+ document.addEventListener('focusout',e=>{if(isTa(e.target))setTimeout(()=>{if(!isTa(document.activeElement)&&!kb()){pad=0;document.body.style.paddingBottom=''}},400)});
+ document.addEventListener('input',e=>{if(isTa(e.target))later(60,true)})})();
 let FBN=null,LFB=null;
 function showSent(b,si){const S=T.s[si],X=sstate(si),ws=words(si);
  /* 11.91: neue Schritte Objekt (Akk./Dat., Infinitivgruppe), AcI (Subjektsakkusativ · Prädikatsinfinitiv) und satzwertige Konstruktionen (AcI, PC, Abl. abs.) –
