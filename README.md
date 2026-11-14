@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 14.11.2026 · Version 12.02
+Stand: 14.11.2026 · Version 12.03
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1481,3 +1481,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.00: Etikett „neu“ für frisch importierte Reihen, Stunden und Lerneinheiten (grün, verschwindet nach dem Öffnen oder nach 14 Tagen)
 12.01: Lerneinheiten mit mitwachsendem Glossar (Begriffe antippen, Begriffe-Quiz), Klimadiagramm-Baukasten und bewerteter Lernkontrolle (Notenvorschlag im Abgabe-QR)
 12.02: Lernordner mit „Datei öffnen“ (Lerneinheit ohne QR-Code hinzufügen); Name und Klasse gelten für alle Lerneinheiten auf dem iPad
+12.03: Lernpaket – Namensauswahl nach dem Start-QR repariert, Name und Klasse vom iPad übernommen
