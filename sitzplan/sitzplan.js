@@ -4361,6 +4361,37 @@ html.sp-fit .sp-fit-box{overflow:auto;overscroll-behavior:auto;-webkit-overflow-
 })();
 ;
 
+/* ==== cm-html.js ==== */
+/* 12.25: Lerneinheiten als HTML-Datei einlesen.
+   Eine HTML-Datei einer Lerneinheit („Für Kollegen …“ oder eine exportierte Einheit) trägt die Einheit selbst in sich
+   (window.CM_EMBED_BOOK=…). Optional: window.CM_EMBED_REIHE=… (Titel, Einträge und Angaben der Reihe, ohne die Einheiten).
+   cmHtmlToFiles(Dateien) ersetzt HTML-Dateien durch gleichwertige .cmeinheit-/.cmreihe-Dateien – Einheiten derselben Reihe
+   werden wieder zu einer Reihe zusammengesetzt. Aus der Datei wird kein Programmcode ausgeführt, nur die Daten gelesen. */
+(()=>{
+ const grab=(t,name)=>{const m='window.'+name+'=';let i=t.indexOf(m);while(i>=0&&t[i+m.length]!=='{'&&t[i+m.length]!=='[')i=t.indexOf(m,i+1);if(i<0)return null;let j=i+m.length;
+  /* JSON-Wert vom Anfang bis zum passenden Ende lesen (Klammern zählen, Zeichenketten überspringen) */
+  const c0=t[j];if(c0!=='{'&&c0!=='[')return null;let d=0,s=false,e=false;for(let k=j;k<t.length;k++){const c=t[k];
+   if(s){if(e)e=false;else if(c==='\\')e=true;else if(c==='"')s=false;continue}
+   if(c==='"')s=true;else if(c==='{'||c==='[')d++;else if(c==='}'||c===']'){d--;if(!d){try{return JSON.parse(t.slice(j,k+1))}catch{return null}}}}
+  return null};
+ const isHtml=f=>/\.html?$/i.test(f.name||'')||/^text\/html/.test(f.type||'');
+ window.cmHtmlParse=text=>{const u=grab(text,'CM_EMBED_BOOK');if(!u||u.type!=='classroom-lerneinheit'||!u.def)return null;return {unit:u,reihe:grab(text,'CM_EMBED_REIHE')}};
+ window.cmHtmlToFiles=async files=>{const out=[],R={};
+  for(const f of files||[]){if(!f||!isHtml(f)){out.push(f);continue}let p=null;try{p=cmHtmlParse(await f.text())}catch{}
+   if(!p){out.push(f);continue}
+   const r=p.reihe;if(r&&r.id){(R[r.id]??={meta:r,units:{}}).units[p.unit.id]=p.unit;continue}
+   out.push(new File([JSON.stringify(p.unit)],f.name.replace(/\.html?$/i,'')+'.cmeinheit',{type:'application/json'}))}
+  for(const {meta,units} of Object.values(R)){const have=new Set(Object.keys(units));
+   /* Reihenfolge: wie in der Reihe angegeben; Einträge ohne Einheit (Texte) bleiben, fehlende Einheiten entfallen */
+   const entries=(meta.entries||[]).filter(e=>!e.u||have.has(e.u));const d={...meta,type:'classroom-reihe',entries,units:{}};
+   for(const e of entries)if(e.u&&units[e.u])d.units[e.u]=units[e.u];for(const [id,u] of Object.entries(units))if(!d.units[id])d.units[id]=u;
+   out.push(new File([JSON.stringify(d)],String(meta.title||'Reihe').replace(/[\/\\:*?"<>|]/g,'-')+'.cmreihe',{type:'application/json'}))}
+  return out};
+ /* Text einer Datei lesen – bei HTML die eingebettete Einheit als JSON-Text */
+ window.cmFileText=async f=>{const t=await f.text();if(!isHtml(f)&&!/^\s*</.test(t))return t;const p=cmHtmlParse(t);return p?JSON.stringify(p.unit):t};
+})();
+;
+
 /* ==== sitzplan/einheiten.js ==== */
 /* 11.23: Bereich „Unterricht“ (Kopf: Sitzplan · Unterricht · Noten). Läuft im Sitzplan-Rahmen, der dafür ganz ausgefüllt wird.
    Gezeigt wird nur die Lerngruppe, in der du gerade bist (Stundenplan bzw. gewählte Klasse), mit ihrem „Stand“ (aktuelle Lektion/Einheit).
@@ -4830,7 +4861,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    if(touchDev()){const N=navigator;try{if(N.canShare&&N.canShare({files:[f]})){await N.share({files:[f],title:f.name});return}}catch(e){if(e&&e.name==='AbortError')return}}
    saveFile(f);alert('„'+f.name+'“ ('+Math.round(f.size/1024)+' KB) liegt jetzt in „Downloads“.')}catch(e){alert('Export nicht möglich: '+(e&&e.message||e))}finally{if(el){el.disabled=false}}}
  /* Reihe laden: Datei wählen → Dialog (neu / neuere Fassung) → speichern */
- async function reiheLoad(pre){const b=B();if(!b?.reiheParse)return;const fs=(pre||await pickFiles()).filter(Boolean);if(!fs.length)return;
+ async function reiheLoad(pre){const b=B();if(!b?.reiheParse)return;const fs=(pre||(window.cmHtmlToFiles?await cmHtmlToFiles(await pickFiles()):await pickFiles())).filter(Boolean);if(!fs.length)return;
   for(const f of fs){let P;try{P=await b.reiheParse(await f.text())}catch(e){alert('„'+f.name+'“: '+e.message);continue}if(!await reiheDialog(P))continue;
    try{await b.reiheSave(P.d,P.opt)}catch(e){alert('Laden nicht möglich: '+(e.name==='QuotaExceededError'?'Speicher voll.':e.message));return}
    sel='r:'+P.d.id}
@@ -4867,7 +4898,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   dlg.showModal()})}
  /* Paket laden */
  function pickFiles(){return new Promise(res=>{const i=document.createElement('input');i.type='file';i.multiple=true;i.hidden=true;document.body.append(i);i.onchange=()=>{res([...i.files]);i.remove()};i.addEventListener('cancel',()=>{res([]);i.remove()});i.click()})}
- async function loadPkg(){const b=B();if(!b)return;const all=await pickFiles();if(!all.length)return;let r;
+ async function loadPkg(){const b=B();if(!b)return;/* 12.25: auch HTML-Dateien von Lerneinheiten */const all=window.cmHtmlToFiles?await cmHtmlToFiles(await pickFiles()):await pickFiles();if(!all.length)return;let r;
   /* 11.60: „Datei laden …“ für alles – Reihen bekommen ihren Dialog, der Rest wird zusammengeführt */
   const rs=[],fs=[];for(const f of all){let isR=/\.cmreihe$/i.test(f.name);if(!isR&&!/\.zip$/i.test(f.name)&&f.size<60e6){try{const head=await f.slice(0,400).text();isR=/"type"\s*:\s*"classroom-reihe"/.test(head)}catch{}}(isR?rs:fs).push(f)}
   if(rs.length){await reiheLoad(rs);if(!fs.length)return}
