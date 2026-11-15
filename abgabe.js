@@ -11,6 +11,8 @@ window.cmVocabOk=(()=>{const plain=s=>String(s||'').normalize('NFD').replace(/[\
  const all=m=>{const a=parts(m),b=parts(String(m||'').replace(/[()]/g,' '));return [...new Set([...a,...b])]};
  return (inp,m)=>{const v=parts(String(inp||'').replace(/[()]/g,' '))[0]||'';if(!v)return false;return all(m).some(p=>near(v,p)||p.split(' ').some(w=>w.length>=4&&near(v,w)))}})();
 
+/* 12.24: Prüfsumme für Abgabe-Dateien (gleiche Funktion beim Einlesen auf dem Mac) */
+window.cmAbgabeHash=async d=>{const {h,...r}=d||{};const txt='cm-abgabe-v1|'+JSON.stringify(r);try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,24)}catch{let x=2166136261;for(let i=0;i<txt.length;i++){x^=txt.charCodeAt(i);x=Math.imul(x,16777619)>>>0}return 'f'+x.toString(16)}};
 (()=>{
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
  const css='#cmab{position:fixed;top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));z-index:80;display:flex;align-items:center;gap:8px;min-height:46px;padding:5px 10px 5px 12px;border:1px solid #dce3ef;border-radius:14px;background:#fff;color:#243247;font:600 13px/1.2 -apple-system,BlinkMacSystemFont,Inter,"Segoe UI",sans-serif;box-shadow:0 4px 12px #233d6018;cursor:pointer;text-align:left}#cmab b{display:block;font-size:14px}#cmab small{color:#2f5f9b;font-weight:600}#cmab svg{width:22px;height:22px}'
@@ -36,7 +38,7 @@ window.cmVocabOk=(()=>{const plain=s=>String(s||'').normalize('NFD').replace(/[\
      :'<div>Trage deinen Namen ein (Vor- und Nachname):</div><input id="cmabIn" value="'+esc(pick||'')+'" placeholder="Vorname Nachname">')
     +'<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button type="button" data-x>Abbrechen</button><button type="button" class="p" data-ok>'+(pick?'Das bin ich: '+esc(pick):'Speichern')+'</button></div>';
     ov.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{pick=b.dataset.n;draw()});const inp=ov.querySelector('#cmabIn');if(inp)inp.oninput=()=>{pick=inp.value.trim();ov.querySelector('[data-ok]').textContent=pick?'Das bin ich: '+pick:'Speichern'};
-    ov.querySelector('[data-x]').onclick=()=>ov.remove();ov.querySelector('[data-ok]').onclick=()=>{if(!pick||pick.length<2)return;S.me=pick;save();ov.remove();update();showQr()}};
+    ov.querySelector('[data-x]').onclick=()=>ov.remove();ov.querySelector('[data-ok]').onclick=()=>{if(!pick||pick.length<2)return;/* 12.24: Name wird einmal bestätigt und ist danach fest */if(!confirm('Bist du wirklich „'+pick+'“?\n\nDein Name kann danach nicht mehr geändert werden.'))return;S.me=pick;S.lk=1;save();ov.remove();update();showQr()}};
    draw();document.body.append(ov)}
   /* 11.73: lange Abgaben (z. B. Übersetzungen) gehen komprimiert auf mehrere QR-Codes (CMLE2/id/k/n/…), die Lehrkraft scannt sie nacheinander */
   /* 11.90: mit o.restore (z. B. Übersetzungs-Trainer) geht der vollständige Arbeitsstand mit – die Lehrkraft kann ihn später als Wiederherstellen-QR zurückgeben */
@@ -46,9 +48,17 @@ window.cmVocabOk=(()=>{const plain=s=>String(s||'').normalize('NFD').replace(/[\
    let C=[];try{C=await codes()}catch(e){C=[payload()]}let k=0;
    const draw=()=>{let q='';try{q=classroomQrSvg(C[k],{ecc:'L',boost:false,dark:'#243247',border:3}).replace('<svg','<svg class="q"')}catch(e){q='<p>QR-Code nicht möglich: '+esc(e.message)+'</p>'}
     ov.innerHTML='<div style="color:#66758a">Abgabe · '+esc(o.title||'')+(S.cls?' · '+esc(S.cls):'')+'</div><div class="nm">'+esc(S.me)+'</div>'+(C.length>1?'<div style="font-weight:800;color:#c2410c">Code '+(k+1)+' von '+C.length+'</div>':'')+q+'<div style="color:#66758a;font-size:.9rem">Stand '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' · '+prog()+' Punkte'+(C.length>1?' · nach dem Scannen „Nächster Code“':'')+'</div>'
-     +'<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">'+(C.length>1?'<button type="button" data-pv'+(k?'':' disabled')+'>‹ Zurück</button><button type="button" class="p" data-nx'+(k<C.length-1?'':' disabled')+'>Nächster Code ›</button>':'')+'<button type="button"'+(C.length>1?'':' class="p"')+' data-c>Schließen</button></div><button type="button" class="lnk" data-ch>Nicht dein Name? Ändern</button>';
+     +'<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">'+(C.length>1?'<button type="button" data-pv'+(k?'':' disabled')+'>‹ Zurück</button><button type="button" class="p" data-nx'+(k<C.length-1?'':' disabled')+'>Nächster Code ›</button>':'')+'<button type="button"'+(C.length>1?'':' class="p"')+' data-c>Schließen</button></div><button type="button" data-file>Abgabe als Datei</button>'+(S.lk?'<div style="color:#66758a;font-size:.85rem">Falscher Name? Sag deiner Lehrkraft Bescheid.</div>':'<button type="button" class="lnk" data-ch>Nicht dein Name? Ändern</button>');
     ov.querySelector('[data-pv]')?.addEventListener('click',()=>{k=Math.max(0,k-1);draw()});ov.querySelector('[data-nx]')?.addEventListener('click',()=>{k=Math.min(C.length-1,k+1);draw()});
-    ov.querySelector('[data-c]').onclick=()=>ov.remove();ov.querySelector('[data-ch]').onclick=()=>{if(confirm('Deinen Namen wirklich ändern? Deine Lehrkraft sieht den neuen Namen.')){ov.remove();who()}}};draw()}
+    ov.querySelector('[data-c]').onclick=()=>ov.remove();ov.querySelector('[data-ch]')?.addEventListener('click',()=>{if(confirm('Deinen Namen wirklich ändern? Deine Lehrkraft sieht den neuen Namen.')){ov.remove();who()}});ov.querySelector('[data-file]').onclick=e=>saveFile(e.currentTarget)};draw()}
+  /* 12.24: Abgabe als Datei (z. B. für IServ-Aufgaben) – gleicher Inhalt wie der QR, mit Prüfsumme gegen nachträgliches Ändern */
+  async function fileData(){const r=sc(),R=rest(),C=!!(R.r&&r.wt&&window.classroomTtExpand),w=C?r.wc:r.w;const d={type:'classroom-abgabe',v:1,t:o.title||document.title,u:o.u,c:S.cls||'',n:S.me,dv:S.dv,ts:Date.now(),b:0,s:r.s||{},x:r.x||{},...(w&&Object.keys(w).length?{w}:{}),...(C?{wt:r.wt}:{}),...R};
+   d.h=await window.cmAbgabeHash(d);return d}
+  async function saveFile(btn){if(!S.me){who();return}const old=btn.textContent;try{const d=await fileData(),ti=String(o.title||'Abgabe'),m=/Lektion\s+(\d+\w?)/.exec(ti),short=m?'L'+m[1]:ti.replace(/\s*·.*$/,'').slice(0,40);
+    const nm=(short+' - '+S.me).replace(/[\\/:*?"<>|]/g,'')+'.cmabgabe',file=new File([JSON.stringify(d)],nm,{type:'application/octet-stream'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:nm});btn.textContent='✓ gesichert'}
+    else{const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=nm;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);btn.textContent='✓ geladen'}}
+   catch(e){if(e&&e.name==='AbortError')return;alert('Die Abgabe-Datei konnte nicht erstellt werden: '+(e&&e.message||e))}setTimeout(()=>{if(btn.isConnected)btn.textContent=old},2500)}
   window.cmAbgabeCodes=codes;
   btn.onclick=showQr;update();if(roster&&!S.me)setTimeout(who,400);
   return {update}};

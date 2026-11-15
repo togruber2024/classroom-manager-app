@@ -164,9 +164,10 @@ $('#fopen').onclick=fileOpen;
 /* 12.11: „Link einfügen“ – ein Link aus AirDrop/Nachrichten öffnet sich in Safari; kopiert und hier eingefügt öffnet er sich in der Web-App (gleicher Speicher wie der Lernordner) */
 const linkOf=t=>{const m=String(t||'').match(/https?:\/\/\S+|(?:einheit|texttrainer|ueben|uebungen|vokabeltest|lernpaket)\.html\S*/);return m?local(m[0].replace(/[>)\]"'.,;]+$/,'')):null};
 function goLink(to){if(to){location.href=to;return true}return false}
-async function pasteLink(){let t='';try{t=await navigator.clipboard.readText()}catch{}if(goLink(linkOf(t)))return;
+/* 12.24: Zwischenablage nicht mehr sofort öffnen – sonst landet man immer wieder beim zuletzt kopierten Link; er steht nur vorausgefüllt im Feld */
+async function pasteLink(){let t='';try{t=await navigator.clipboard.readText()}catch{}
  const o=document.createElement('div');o.className='lp';o.innerHTML='<form novalidate><h4>Link einfügen</h4><p>Halte den Link in Safari oder Nachrichten gedrückt, tippe auf <b>„Link kopieren“</b> und füge ihn hier ein (Feld antippen → <b>Einfügen</b>).</p><input type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://…" aria-label="Link"><div class="er" hidden></div><div class="ac"><button type="button" class="no">Abbrechen</button><button type="submit" class="ok">Öffnen</button></div></form>';
- document.body.append(o);const i=o.querySelector('input'),er=o.querySelector('.er');if(/https?:/.test(t))i.value=t;i.focus();
+ document.body.append(o);const i=o.querySelector('input'),er=o.querySelector('.er');if(/https?:/.test(t)){i.value=t;i.select()}i.focus();
  const bad=()=>{er.hidden=false;er.textContent=i.value.trim()?'Das ist kein Link zu einer Aufgabe. Kopiere den Link, den du von deiner Lehrkraft bekommen hast.':'Füge zuerst den Link ein.'};
  o.querySelector('.no').onclick=()=>o.remove();o.onclick=e=>{if(e.target===o)o.remove()};i.oninput=()=>{er.hidden=true;const to=linkOf(i.value);if(to)goLink(to)};
  o.querySelector('form').onsubmit=e=>{e.preventDefault();if(!goLink(linkOf(i.value)))bad()}}
