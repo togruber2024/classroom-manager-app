@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 15.11.2026 · Version 12.22
+Stand: 15.11.2026 · Version 12.23
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1501,3 +1501,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.20: iPhone quer – Unterricht in voller Breite; Griff der Notenspalte; Design-Datei aufgeräumt
 12.21: Wiederholungseinheiten mit kleinem Link „Alle Materialien zum Nachschlagen“ statt der Materialkarte
 12.22: Neun neue Bausteine für Lerneinheiten: Text markieren, Quellenvergleich, Karte beschriften, Bild untersuchen, Diagramm lesen, Rechnen, Wirkungsgefüge, Zeitstrahl, Vergleichstabelle
+12.23: Übersetzungen automatisch korrigieren (Prüfstellen, Fehler, Notenvorschlag); Hilfe 3 und „Lösung zeigen“ im Übersetzungs-Trainer entfernt

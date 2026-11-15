@@ -115,6 +115,7 @@ function textHtml(cls){return T.s.map((s,si)=>words(si).map((w,i)=>'<span class=
 /* ---------- Kopf und Reiter ---------- */
 /* 11.20: Formen-Jäger je Lektion (T.hunt), Tabs ohne Daten entfallen */
 const HU=()=>Object.assign({name:'Passiv-Jäger',task:'Tippe alle Formen im <b>Perfekt</b> und <b>Plusquamperfekt Passiv</b> an (PPP + Form von esse).',hint:'Nicht jede Form auf -erat oder -ērunt ist Passiv; ein Infinitiv wie „positam esse“ zählt hier nicht.',short:'Passivformen',legend:'Perfekt und Plusquamperfekt Passiv'},T&&T.hunt||{});
+/* 12.23: „Hilfe 3: Bausteine“ und „Lösung zeigen“ bei den Satzgliedern entfernt – zu nah an der fertigen Lösung */
 /* 11.77: neue Reihenfolge – erst Vokabeln und Grammatik, dann übersetzen, danach Inhalt */
 const TABS0=[['vo','Vokabular bekannt?'],['pp',''],['tr','Übersetzen'],['ev','Zeitstrahl'],['pr','Wer ist gemeint?'],['sm','Stilmittel'],['res','Auswertung']];
 const VOC=()=>(T&&Array.isArray(T.voc)?T.voc:[]);
@@ -308,7 +309,7 @@ function showSent(b,si){const S=T.s[si],X=sstate(si),ws=words(si);
   +(P==='s'?'<div class="row"><button class="sec" data-nosub>Subjekt steckt im Prädikat</button></div>':'')
   +(P==='o'?'<div class="row"><button class="sec" data-noobj>Kein Objekt</button></div>':'')
   +(P==='n'&&CST==='s'?'<div class="row"><button class="sec" data-nnosub>Subjekt steckt im Prädikat</button></div>':'')+(P==='n'&&CST==='o'?'<div class="row"><button class="sec" data-nnoobj>Kein Objekt</button></div>':'')
-  +(P!=='t'?'<div class="row"><span class="muted" id="left"></span><div class="sp"></div><button class="lnk" data-solve>Lösung zeigen</button></div>':'')
+  +(P!=='t'?'<div class="row"><span class="muted" id="left"></span></div>':'')
   +'<div class="legend"><span style="--c:var(--pred)">Prädikat</span><span style="--c:var(--subj)">Subjekt</span>'+(needO||NSL.length?'<span style="--c:var(--obj)">Objekt</span>':'')+(NSL.length&&(P==='n'||X.step===3)?'<span class="nsl">gestrichelt = im Nebensatz</span>':'')+(needA?'<span class="dsh" style="--c:var(--subj)">Subjektsakkusativ</span><span class="dsh" style="--c:var(--pred)">Prädikatsinfinitiv</span>':'')+'</div><div id="fb"></div></div>'
   +(X.step===3?'<div class="card" id="trc"></div>':'');
  const got=()=>({n:CN?((X.nx||{})[CN.k]||{})[CST]:[],p:X.p,s:X.s,o:X.o2,a:aPart==='sa'?X.as:X.ap}[P]||[]);
@@ -351,7 +352,7 @@ function showSent(b,si){const S=T.s[si],X=sstate(si),ws=words(si);
 function renderTranslate(c,si){const S=T.s[si],X=sstate(si);const H=S.h;
  /* 11.73: nach „Vergleichen“ ist die eigene Übersetzung gesperrt – Verbesserungen kommen in ein eigenes Feld */
  c.innerHTML='<textarea id="ta" placeholder="Deine Übersetzung …"'+(X.cmp?' readonly class="lock"':'')+'>'+esc(X.tx)+'</textarea>'+(X.cmp?'<div class="lockt">🔒 Nach dem Vergleichen nicht mehr änderbar – deine Verbesserung schreibst du unten.</div>':'')
-  +'<div class="row"'+(X.cmp?' style="display:none"':'')+'><button class="sec" data-h="1">Hilfe 1</button><button class="sec" data-h="2">Hilfe 2</button><button class="sec" data-h="3">Hilfe 3: Bausteine</button><div class="sp"></div><button class="pri" data-cmp>Vergleichen</button></div><div id="hl"></div><div id="cmp"></div>';
+  +'<div class="row"'+(X.cmp?' style="display:none"':'')+'><button class="sec" data-h="1">Hilfe 1</button><button class="sec" data-h="2">Hilfe 2</button><div class="sp"></div><button class="pri" data-cmp>Vergleichen</button></div><div id="hl"></div><div id="cmp"></div>';
  const ta=c.querySelector('#ta');ta.oninput=()=>{if(X.cmp){ta.value=X.tx;return}X.tx=ta.value;save()};
  const used=X.hu||(X.hu=[]);
  const showH=()=>{const hl=c.querySelector('#hl');hl.innerHTML=used.filter(n=>n<3).map(n=>'<div class="hbox"><b>Hilfe '+n+':</b> '+esc(H[n-1])+'</div>').join('');if(used.includes(3))hl.insertAdjacentHTML('beforeend','<div class="hbox"><b>Hilfe 3:</b> Tippe die Bausteine in der richtigen Reihenfolge an.<div class="chips" id="bk"></div><div class="build" id="bd"></div></div>');if(used.includes(3))buildPuzzle(c,si);c.querySelectorAll('[data-h]').forEach(x=>x.disabled=used.includes(+x.dataset.h))};
