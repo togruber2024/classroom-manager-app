@@ -73,6 +73,63 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
    if(ok){st.className='st ok';st.textContent='✓ Offline bereit';document.getElementById('steps').hidden=false;net();return}
    if(++tries>40||!swOk){st.className='st bad';st.textContent=swOk?'Noch nicht bereit. Bitte mit Internet diesen QR-Code noch einmal scannen.':'Dieses Gerät kann den Test nicht offline speichern. Der Test geht nur mit Internet.';return}
    setTimeout(check,500)};check();return}
+ /* 12.26: Ergebnis-QR der Lehrkraft (#r1.…) – dieses iPad bewertet seine eigene Abgabe mit denselben Regeln wie der Classroom-Manager */
+ if(/^#r1[zj]\./.test(location.hash)){
+ const normLat=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/j/g,'i');
+ const latTokens=s=>normLat(s).replace(/[^a-z]+/g,' ').trim().split(' ').filter(Boolean);
+ const GENUS_WORDS={m:'m',mask:'m',maskulin:'m',masculinum:'m',f:'f',fem:'f',feminin:'f',femininum:'f',n:'n',neutr:'n',neutrum:'n'};
+ const fold=s=>s.replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+ function normDe(s){let t=String(s||'').toLowerCase().replace(/\(\s*\+[^)]*\)/g,' ').replace(/[()]/g,'');t=fold(t).replace(/\b(etw|etwas|jdn|jdm|jmd|jmdn|jmdm|jemanden|jemandem|jemand)\b\.?/g,' ').replace(/[.!?"„“'’]/g,' ').replace(/-\s+/g,'').replace(/\s+/g,' ').trim();
+  t=t.replace(/^(der|die|das|den|dem|des|ein|eine|einen|einem|einer|eines)\s+/,'');return t.trim()}
+ const compact=s=>s.replace(/[\s-]+/g,'');
+ function lev(a,b){if(a===b)return 0;const m=a.length,n=b.length;if(Math.abs(m-n)>2)return 9;let p=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+ 
+ /* 10.22: 1 Punkt je verlangtem Wort, je Genus und für die Bedeutung; Latein: jeder Fehler = falsch; 10.62: Deutsch 1 Buchstabe falsch = ½ */
+ const lemmaMax=item=>item.kind==='x'?0:item.kind==='n'?2:item.kind==='v'?Math.max(1,(item.need||[]).length):1;
+ const maxOf=item=>item&&item.k?window.classroomGrammar.pts(item):lemmaMax(item)+1;
+ function gradeLemma(item,ans){
+  const max=lemmaMax(item);if(!max)return {p:0,max:0};
+  const toks=latTokens(ans.l);let ge=ans.ge||'';const rest=[];for(const t of toks){if(GENUS_WORDS[t]&&!(item.need||[]).map(normLat).includes(t)){if(!ge)ge=GENUS_WORDS[t];continue}if(t==='pl'||t==='plural')continue;rest.push(t)}
+  const need=(item.need||[]).map(normLat);
+  const want=item.kind==='v'?need:need.slice(0,1);
+  /* 10.71: ohne Trennzeichen zusammengeschrieben (z. B. „audireaudio“) – trotzdem erkennen */for(let k=rest.length-1;k>=0;k--){const tk=rest[k];if(want.includes(tk))continue;for(let a=0;a<want.length;a++)for(let b=0;b<want.length;b++)if(a!==b&&tk===want[a]+want[b]){rest.splice(k,1,want[a],want[b]);a=b=want.length}}
+  const found=want.filter(t=>rest.includes(t));let p=found.length;const miss=want.filter(t=>!rest.includes(t));
+  const notes=[];if(!rest.length)notes.push('leer');else if(miss.length)notes.push('fehlt/falsch: '+miss.join(', '));
+  if(item.kind==='n'){const ok=(item.genus||[]).includes(ge);/* 10.23: richtiges Genus zählt immer */if(ok)p++;else notes.push(ge?'Genus falsch ('+ge+')':'Genus fehlt')}
+  return {p,max,ge,note:notes.join(' · ')}}
+ function gradeMeaning(item,ans){
+  const raw=String(ans.m||'').trim();if(!raw)return {p:0,max:1,note:'leer'};
+  const exp=new Set();for(const m of item.meanings||[])for(const part of String(m).split(/[;,]/)){const n=normDe(part);if(n){exp.add(n);exp.add(compact(n))}}
+  const rawP=raw.split(/[,;\/]|\s+(?:oder|bzw\.?)\s+/i),orig={};rawP.forEach(x=>{const n=normDe(x);if(n&&!orig[n])orig[n]=x.trim()});const pieces=rawP.map(normDe).filter(Boolean);
+  const bag=x=>x.split(' ').sort().join(' '),bags=new Set([...exp].map(bag));
+  let hits=0,part='',misses=[],typos=[];
+  /* 10.62: Deutsch – genau 1 Buchstabe falsch/zu viel/zu wenig (ab 4 Buchstaben) = ½ Punkt Abzug, mehr Fehler = 0; Latein bleibt streng */
+  const oneOff=p=>{const c=compact(p);if(c.length<4)return false;for(const e of exp){const ce=compact(e);if(ce.length>=4&&lev(c,ce)===1)return true}return false};
+  for(const p of pieces){if(exp.has(p)||exp.has(compact(p))||bags.has(bag(p))){hits++;continue}
+   if(oneOff(p)){typos.push(orig[p]||p);continue}
+   let f='';for(const e of exp)if(e.length>=4&&p.length>=4&&(p.includes(e)||e.includes(p))){f=p.includes(e)?'mehr':'weniger';break}
+   if(f&&!part)part=f;if(!f)misses.push(p)}
+  const tn=typos.length?'Rechtschreibfehler: '+typos.join(', ')+' (−½)':'';
+  if((hits||typos.length)&&!misses.length&&!part)return typos.length?{p:.5,max:1,note:tn}:{p:1,max:1};
+  if(hits||typos.length)return {q:true,s:typos.length?.5:1,max:1,note:[tn,'zusätzlich: '+[...misses,...(part?['(ähnlich)']:[])].join(', ')].filter(Boolean).join(' · ')};
+  if(part)return {q:true,s:part==='mehr'?1:0,max:1,note:'ähnlich wie die Lösung'};
+  return {p:0,max:1,note:'falsch'}}
+  const SIGNS={1:'++',2:'+',3:'o',4:'-',5:'--',6:'---'};
+  let E;try{const h=decodeURIComponent(location.hash.slice(1)),raw=b64(h.slice(4));const bytes=h[2]==='z'?new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()):raw;E=JSON.parse(new TextDecoder().decode(bytes))}catch{fail('Der Ergebnis-Code ist unvollständig. Bitte noch einmal scannen.');return}
+  document.title='Ergebnis · '+(E.t||'Vokabeltest');
+  let g=null,d=null;for(const k of Object.keys(E.G||{})){try{const x=JSON.parse(localStorage.getItem('vt-draft-'+E.i+'-'+k)||'null');if(x&&x.sent&&Array.isArray(x.a)){g=k;d=x;break}}catch{}}
+  if(!d){app.innerHTML='<div class="card"><h1>'+esc(E.t||'Vokabeltest')+'</h1><p class="muted">Auf diesem iPad gibt es keine abgegebene Arbeit zu diesem Test. Das Ergebnis siehst du nur auf dem iPad, auf dem du den Test geschrieben und abgegeben hast.</p></div>';return}
+  const items=(E.G[g]||[]).map(([kind,need,genus,meanings,form])=>({kind,need,genus,meanings,form}));let pts=0,tot=0;const R=E.R||{1:90,2:80,3:70,4:60,5:50};
+  const mark=(x)=>x.max?(x.q?(x.s>=1?'ok':x.s>0?'hf':'no'):(x.p>=x.max?'ok':x.p>0?'hf':'no')):'';
+  const sym={ok:'✓',hf:'½',no:'✗'};
+  const rows=items.map((it,i)=>{const a=d.a[i]||{},L=gradeLemma(it,a),M=gradeMeaning(it,a),lp=L.q?L.s:L.p,mp=M.q?M.s:M.p;pts+=(lp||0)+(mp||0);tot+=(L.max||0)+(M.max||0);
+   const sol=it.kind==='x'?'':it.kind==='n'?(it.need[0]||'')+' '+(it.genus||[]).join('/')+'.':it.need.join(', ');
+   return '<tr><td><b>'+esc(it.form)+'</b></td><td>'+(L.max?'<span class="rs rs-'+mark(L)+'">'+sym[mark(L)]+'</span> '+esc(a.l||'–')+(it.kind==='n'?' · '+esc(a.ge||L.ge||'–'):'')+(mark(L)!=='ok'?'<small>Lösung: '+esc(sol)+'</small>':''):'<span class="muted">–</span>')+'</td><td><span class="rs rs-'+mark(M)+'">'+sym[mark(M)]+'</span> '+esc(a.m||'–')+(mark(M)!=='ok'?'<small>Lösung: '+esc((it.meanings||[]).join('; '))+'</small>':'')+(M.q?'<small>deine Lehrkraft prüft das noch</small>':'')+'</td><td class="rp">'+String((lp||0)+(mp||0)).replace('.',',')+'/'+((L.max||0)+(M.max||0))+'</td></tr>'});
+  const r=tot?pts/tot*100:0;let sg=SIGNS[6];for(const k of ['1','2','3','4','5'])if(r+1e-9>=R[k]){sg=SIGNS[k];break}
+  const st=document.createElement('style');st.textContent='.rtb{width:100%;border-collapse:collapse;font-size:.95rem}.rtb th,.rtb td{text-align:left;padding:8px 6px;border-bottom:1px solid #e6ecf3;vertical-align:top}.rtb small{display:block;color:#66758a;font-size:.82rem;margin-top:2px}.rs{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;font-weight:700;margin-right:4px}.rs-ok{background:#e5f5ea;color:#1f8a4c}.rs-hf{background:#fff4d6;color:#8a6a00}.rs-no{background:#fdeceb;color:#b42318}.rp{white-space:nowrap;text-align:right!important}.rsum{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:8px 0 4px}.rsum b.big{font-size:2.2rem;padding:4px 16px;border-radius:14px;background:#eaf0fa;color:#2f5f9b}';document.head.append(st);
+  app.innerHTML='<div class="card"><h1>'+esc(E.t||'Vokabeltest')+' · Gruppe '+esc(g)+'</h1><div class="muted">'+esc(d.name||'')+'</div><div class="rsum"><b class="big">'+sg+'</b><span><b>'+String(pts).replace('.',',')+' von '+tot+' Punkten</b> ('+Math.round(r)+' %)</span></div><p class="muted" style="margin:6px 0 0">Ergebnis automatisch berechnet – mit denselben Regeln wie bei deiner Lehrkraft. Wenn du meinst, dass die App sich geirrt hat: zeig es deiner Lehrkraft.</p></div>'
+   +'<div class="card"><table class="rtb"><thead><tr><th>Wort</th><th>Grundform</th><th>Bedeutung</th><th class="rp">Punkte</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';
+  return}
  let test;
  try{const h=decodeURIComponent(location.hash.slice(1));if(!h)throw new Error('Kein Test im Link. Bitte den QR-Code noch einmal scannen.');
   let bytes;if(h.startsWith('z1.')){if(typeof DecompressionStream!=='function')throw new Error('Bitte Safari aktualisieren.');bytes=new Uint8Array(await new Response(new Blob([b64(h.slice(3))]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())}

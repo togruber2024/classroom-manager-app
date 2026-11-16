@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 16.11.2026 · Version 12.25
+Stand: 16.11.2026 · Version 12.26
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1504,3 +1504,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.23: Übersetzungen automatisch korrigieren (Prüfstellen, Fehler, Notenvorschlag); Hilfe 3 und „Lösung zeigen“ im Übersetzungs-Trainer entfernt
 12.24: Übersetzungs-Trainer mit Stationen nacheinander und „Ablativ-Detektiv“; Abgabe als Datei (IServ) mit Korrektur je Schüler; Elternbrief mit Daten und E-Mail; Stundenplan-Farben je Fach und neuer Raum; Sitzplan-Ausblenden am iPad repariert
 12.25: Lerneinheiten und Reihen als HTML-Datei laden (Einheiten, Lernordner); „＋ Datum“ bei Hausaufgaben und Material
+12.26: Vokabeltest-Ergebnisse per QR freigeben; neue Übersicht im Übersetzungs-Trainer; Lerneinheiten mit Abgabe als Datei und festem Namen; Raum aus dem Stundenplan anlegen; Ausblenden der Bewertungen bei Schraffur aus repariert
