@@ -2080,6 +2080,8 @@ function classroomMarkAbsent(){const group=classroomCurrentGroup();if(!group)ret
 classroomHooks.add('initGrid','classroom-link: Abwesende markieren',{after(){classroomMarkAbsent()}});
 function classroomApplyAttendance(){const group=classroomCurrentGroup();if(!group)return;const flags=group.attendance?.[classroomDate.value]||{};for(const person of schuelerEinzel){const central=group.students.find(s=>s.id===person.classroomId||ClassroomCore.normalize(s.name)===ClassroomCore.normalize(person.name));person.abwesend=!!flags[central?.id]}
  for(const pair of schuelerPaare)for(const side of ['s1','s2']){const person=group.students.find(s=>ClassroomCore.normalize(s.name)===ClassroomCore.normalize(pair[side]));pair[side+'Abwesend']=!!flags[person?.id]}
+ /* 12.53: nur neu aufbauen, wenn sich Anwesenheit, Klasse, Datum oder Liste wirklich geändert haben (nach jeder Bewertung kommt derselbe Stand) */
+ {const sig=JSON.stringify([group.id,classroomDate.value,aktuelleKlasse,schuelerEinzel.map(p=>p.name+(p.abwesend?'!':'')),schuelerPaare.map(p=>p.s1+'/'+p.s2+(p.s1Abwesend?'!':'')+(p.s2Abwesend?'!':''))]);if(sig===window.__cmAttSig&&!classroomApplyAttendance.force)return;window.__cmAttSig=sig}
  renderTables();initGrid();datenSpeichern();
 }
 classroomDate.onchange=classroomApplyAttendance;
@@ -2108,7 +2110,9 @@ window.addEventListener('message',event=>{
   const active=msg.model.sourceClasses[msg.snapshot.activeClass];
   const shouldFollow=classroomLastSource!==msg.snapshot.activeClass;
   classroomLastSource=msg.snapshot.activeClass;
-  classroomSyncRosters({classes,activeClass:shouldFollow?active:classroomCurrentGroup()?.id||active});
+  /* 12.53: Nach jeder Bewertung schickt der Noten-Manager den Stand – Klassenlisten unverändert? Dann den Sitzplan nicht komplett neu aufbauen (sparte ~70 ms je Bewertung) */
+  {const act=shouldFollow?active:classroomCurrentGroup()?.id||active,sig=JSON.stringify([classes,act]),links=classroomReadLinks(),target=links[act]?.storageName;
+   if(sig!==window.__cmRosterSig||!target||target!==aktuelleKlasse){classroomSyncRosters({classes,activeClass:act});window.__cmRosterSig=sig}}
   // The central class list is authoritative; remove deleted pupils from linked local lists and placements.
   const group=classroomCurrentGroup();if(group){const allowed=new Set(group.students.filter(s=>!s.deleted).map(s=>s.id));const removed=schuelerEinzel.filter(s=>s.classroomId&&!allowed.has(s.classroomId));schuelerEinzel=schuelerEinzel.filter(s=>!s.classroomId||allowed.has(s.classroomId));for(const person of removed){for(const row of gridData)for(let c=0;c<row.length;c++)if(row[c]===person.name)row[c]='X';schuelerPaare=schuelerPaare.filter(p=>p.s1!==person.name&&p.s2!==person.name);tabuPaare=tabuPaare.filter(p=>p.s1!==person.name&&p.s2!==person.name)}}
   classroomApplyAttendance();
@@ -2713,7 +2717,8 @@ document.addEventListener('keydown',event=>{
 
 /* ==== sitzplan/plan-zoom.js ==== */
 /* 12.24: Safari (iPad) zeichnet die verkleinerte Sitzplan-Fläche nach Farbwechseln nicht immer vollständig neu – Fläche kurz unsichtbar machen und sofort wieder zeigen, das erzwingt ein komplettes Neuzeichnen. */
-window.classroomRepaintBoard=()=>{for(const b of document.querySelectorAll('.classroom-zoom-board,.room-grid')){b.style.opacity='0.999';void b.offsetHeight}requestAnimationFrame(()=>requestAnimationFrame(()=>{for(const b of document.querySelectorAll('.classroom-zoom-board,.room-grid')){b.style.removeProperty('opacity');void b.offsetHeight}}))};
+/* 12.53: mehrere Aufrufe im selben Moment zu einem Neuzeichnen bündeln – ohne erzwungene Zwischenmessungen */
+{let rp=0;window.classroomRepaintBoard=()=>{if(rp)return;rp=requestAnimationFrame(()=>{const L=[...document.querySelectorAll('.classroom-zoom-board,.room-grid')];for(const b of L)b.style.opacity='0.999';requestAnimationFrame(()=>{for(const b of L)b.style.removeProperty('opacity');rp=0})})}}
 // Zoom only the seats and coordinate headings; controls remain full size.
 (()=>{
  const grid=document.getElementById('roomGrid');if(!grid)return;
