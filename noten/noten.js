@@ -2019,8 +2019,8 @@ function classroomApplyCentral(model){
    if(!Array.isArray(data.students))continue;changed=classroomCanonicalRoster(data,key)||changed;
    for(const student of data.students){
     student.classroomAbsenceGrades??={};student.classroomAbsenceHomework??={};
-    /* 12.36: Hat jemand in einem Test Rohpunkte (z. B. digitale Lerneinheit am selben Tag), rechnet der Test die Note selbst – Abwesenheit setzt dort kein „x“, sonst Endlosschleife (x ↔ berechnete Note) */
-    for(const task of participationPage?data.tasks||[]:[]){if(!task.date)continue;if(task.testDetail&&student.rawScores?.[task.id]!=null&&student.rawScores[task.id]!==''){if(Object.hasOwn(student.classroomAbsenceGrades,task.id)){delete student.classroomAbsenceGrades[task.id];changed=true}continue}const absent=group.attendance?.[task.date]?.[student.id]===true;
+    /* 12.36: 12.37: Tests mit Rohpunkten (auch digitale Lerneinheiten) rechnen ihre Note immer selbst aus den Punkten – Abwesenheit setzt dort kein „x“ (auch ohne Punkte), sonst Endlosschleife (x ↔ berechnete Note) */
+    for(const task of participationPage?data.tasks||[]:[]){if(!task.date)continue;if(task.testDetail){if(Object.hasOwn(student.classroomAbsenceGrades,task.id)){delete student.classroomAbsenceGrades[task.id];changed=true}continue}const absent=group.attendance?.[task.date]?.[student.id]===true;
      if(absent){if(!Object.hasOwn(student.classroomAbsenceGrades,task.id)){student.classroomAbsenceGrades[task.id]=student.grades[task.id]==='x'?'':student.grades[task.id]??'';changed=true}if(student.grades[task.id]!=='x'){student.grades[task.id]='x';changed=true}}
      else if(Object.hasOwn(student.classroomAbsenceGrades,task.id)){student.grades[task.id]=student.classroomAbsenceGrades[task.id];delete student.classroomAbsenceGrades[task.id];changed=true}
     }
