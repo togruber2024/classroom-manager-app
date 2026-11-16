@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 16.11.2026 · Version 12.42
+Stand: 16.11.2026 · Version 12.43
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1521,3 +1521,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.40: iPad-Tests öffnen direkt den neuesten, Umschalter am Titel für ältere Tests, Datum als Kalenderblatt
 12.41: Lernkontrollen-Symbol aus der Kopfleiste entfernt, Menü-Knöpfe schließen beim 2. Klick
 12.42: Einblendungen statt OK-Fenster, drei Etikett-Typen, Seitenleiste abgestuft, Grammatiktests nur Themenformen, Wiederholungsvokabular zuerst
+12.43: Wiederholungs- und Grammatiktest direkt zur Lektion, Themen-Reiter, feste Knopf-Spalten, Sitzplan-Leiste mittig, Seitenmenü ohne Zoom
