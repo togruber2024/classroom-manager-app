@@ -11,7 +11,7 @@
    if(c==='"')s=true;else if(c==='{'||c==='[')d++;else if(c==='}'||c===']'){d--;if(!d){try{return JSON.parse(t.slice(j,k+1))}catch{return null}}}}
   return null};
  const isHtml=f=>/\.html?$/i.test(f.name||'')||/^text\/html/.test(f.type||'');
- window.cmHtmlParse=text=>{const u=grab(text,'CM_EMBED_BOOK');if(!u||u.type!=='classroom-lerneinheit'||!u.def)return null;return {unit:u,reihe:grab(text,'CM_EMBED_REIHE')}};
+ window.cmHtmlParse=text=>{const u=grab(text,'CM_EMBED_BOOK');/* 12.31: auch Buchdateien mit Lernpaketen (lps), z. B. „L16A … für Kollegen“ */if(!u||u.type!=='classroom-lerneinheit'||!(u.def||(u.lps&&typeof u.lps==='object')))return null;return {unit:u,reihe:grab(text,'CM_EMBED_REIHE')}};
  window.cmHtmlToFiles=async files=>{const out=[],R={};
   for(const f of files||[]){if(!f||!isHtml(f)){out.push(f);continue}let p=null;try{p=cmHtmlParse(await f.text())}catch{}
    if(!p){out.push(f);continue}

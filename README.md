@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 16.11.2026 · Version 12.30
+Stand: 16.11.2026 · Version 12.31
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1509,3 +1509,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.28: Kombitest (Vokabeln + Grammatik), iPad bewertet Grammatik selbst, „Mein Ergebnis ansehen“, iPad-Auswertung auf der Testseite, Oberstufenkurse (z. B. EK1e28) im richtigen Jahrgang
 12.29: Übersetzungs-Trainer – Musterübersetzung, Verbesserung und Selbsteinschätzung erst nach der Abgabe, dann Satz für Satz vergleichen
 12.30: iPad-Tests nach der Abgabe gesperrt (veränderte Nachabgaben werden nicht übernommen), Pluralwörter mit „Nom. Pl.“
+12.31: Inhalte direkt in der Seitenleiste ordnen (Häkchen, ⋯-Menü, Ziehen, Neue Reihe), Lernpaket-Bausteine Markieren/Tabelle/Satzgefüge, Lehrer-HTML mit Lernpaketen wird erkannt, Kurzversion 1.23 im Kopf

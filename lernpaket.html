@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de"><head><meta charset="utf-8"><script>/* 11.22: Vorschau am Mac (?vorschau=1): Speicher nur im Arbeitsspeicher – nichts wird gespeichert, keine Abgabe */if(/[?&]vorschau=1/.test(location.search)){try{const m=new Map(),s={getItem:k=>m.has(k)?m.get(k):null,setItem:(k,v)=>{m.set(k,String(v))},removeItem:k=>{m.delete(k)},clear:()=>m.clear(),key:i=>[...m.keys()][i]??null,get length(){return m.size}};Object.defineProperty(window,"localStorage",{configurable:true,get:()=>s})}catch(e){}document.documentElement.classList.add("cm-vorschau");document.write("<style>.cm-vorschau #who{display:none!important}</style>")}</script><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f6f8fc"><meta name="robots" content="noindex">
+<html lang="de"><head><meta charset="utf-8"><script>/* 11.22: Vorschau am Mac (?vorschau=1): Speicher nur im Arbeitsspeicher – nichts wird gespeichert, keine Abgabe */if(/[?&]vorschau=1/.test(location.search)){try{const m=new Map(),s={getItem:k=>m.has(k)?m.get(k):null,setItem:(k,v)=>{m.set(k,String(v))},removeItem:k=>{m.delete(k)},clear:()=>m.clear(),key:i=>[...m.keys()][i]??null,get length(){return m.size}};Object.defineProperty(window,"localStorage",{configurable:true,get:()=>s})}catch(e){}document.documentElement.classList.add("cm-vorschau");document.write("<style>.cm-vorschau #who{display:none!important}/* 12.22 Text markieren */.mkc .sn{padding:1px 0}.mkc .mkbar{position:sticky;top:0;z-index:4;background:#fff;display:flex;gap:6px;flex-wrap:wrap;padding:8px 0;margin:4px 0 2px;border-bottom:1px solid var(--line)}.mkbar .pen{min-height:42px;padding:0 14px}.mkbar .pen small{font-weight:650;opacity:.75;margin-left:4px}.mkq{font-size:.98rem;line-height:1.4}.mkhint{color:#b45309;font-weight:700}.pen.mk0{color:#17603a;border-color:#7cc69a;background:#dff3e5}.pen.mk1{color:#a33a0c;border-color:#f0a982;background:#fde5da}.pen.mk2{color:#1d4f8f;border-color:#8db8ea;background:#e1eefc}.pen.mk3{color:#5b2f9b;border-color:#b79ae8;background:#efe6fd}.sn.mk2{background:#cfe3fb}.sn.mk2.dim{box-shadow:inset 0 -3px 0 #6fa3e3}.mkleg{list-style:none;padding:0;margin:10px 0 0}.mkleg li{margin:4px 0}.mkdot{display:inline-block;width:14px;height:14px;border-radius:4px;margin-right:8px;vertical-align:-2px}.mkdot.mk0{background:#c8edd3;border:1px solid #7cc69a}.mkdot.mk1{background:#fbd3c0;border:1px solid #f0a982}.mkdot.mk2{background:#cfe3fb;border:1px solid #8db8ea}.mkdot.mk3{background:#e6d9fb;border:1px solid #b79ae8}.mk2 .mkcol{position:sticky;top:6px;align-self:start}/* 12.22 Bausteine */.gtw{overflow-x:auto;margin-top:12px}.gtab{border-collapse:separate;border-spacing:6px;width:100%}.gtab th{font-size:.9rem;color:#2f5f9b;text-align:left;padding:4px 6px;vertical-align:middle}.gtab td.gcell{background:#f6f8fc;border:1.5px dashed #cfd8e6;border-radius:12px;min-width:120px;height:64px;vertical-align:top;padding:6px}.gcell.tgt{border-color:#e8a23a;background:#fff8ec}.gcell.hov,.lpt.hov .lnum{outline:3px solid #e8a23a}.gcell .chip{margin:3px}.chw{position:relative;margin-top:12px;background:#f8fafd;border-radius:14px;border:1px solid var(--line)}.chs{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.chn{position:absolute;transform:translate(-50%,-50%);max-width:30%;min-width:110px;padding:10px 12px;border-radius:12px;border:2px solid #9db6d6;background:#fff;font-weight:650;font-size:.92rem;line-height:1.25;text-align:center;z-index:1;color:#1f2b3d}.chn.on{border-color:#e8790c;box-shadow:0 0 0 4px #e8790c44}.chn{min-width:0;max-width:27%;font-size:.76rem;padding:6px 6px}</style>")}</script><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f6f8fc"><meta name="robots" content="noindex">
 <link rel="apple-touch-icon" href="lernordner-180.png"><link rel="icon" href="lernordner-192.png"><title>Lernpaket</title>
 <!-- 11.38: Lernpakete des Classroom-Managers (z. B. Latein L16). Eigene Beispielsätze; Buchübungen nur aus der privaten Lehrkraft-Datei.
      Optional lädt die Lehrkraft-Datei (.cmeinheit, privat, nicht im Repo) Schulbuchmaterial – gespeichert nur lokal in IndexedDB. -->
@@ -342,7 +342,99 @@ function wRead(st,o){const k=st.k,A=ST[k+'A']??=[],N=o.qs.length,T=o.paras.flat(
 function textSheet(){const st=P.steps.find(x=>x.k===P.text);if(!st)return;const o=DATA(st);const d=document.createElement('div');d.className='txsheet';
  d.innerHTML='<div class="txin"><div class="row" style="margin:0 0 8px"><b style="flex:1;font-size:1.1rem">📖 '+esc(o.h||st.t)+'</b><button class="sec" data-x>Schließen</button></div><div class="muted" style="font-size:.8rem;margin-bottom:6px">'+esc(o.src||'')+'</div>'+o.paras.map(pa=>'<p>'+pa.map(md).join(' ')+'</p>').join('')+'</div>';
  d.onclick=e=>{if(e.target===d||e.target.closest('[data-x]'))d.remove()};document.body.append(d)}
-const WID={read:wRead,sorter:wSorter,swiper:wSwiper,quiz:wQuiz,pairs:wPairs,order:wOrder,tarn:wTarn,memory:wMemory,wheels:wWheels,build:wBuild,arrow:wArrow,pant:wPant};
+/* 12.31: Bausteine aus den Lerneinheiten – Text markieren, Vergleichstabelle, Wirkungsgefüge (gleiche Bedienung wie in einheit.html) */
+const sents=a=>{a=String(a);const o=[];let c='';for(let i=0;i<a.length;i++){c+=a[i];if('.!?'.includes(a[i])&&(i===a.length-1||(/\s/.test(a[i+1])&&/^\s+[A-ZÄÖÜ„"(*\[0-9]/.test(a.slice(i+1,i+4))&&!(a[i]==='.'&&ABBR.has((c.match(/([A-Za-zÄÖÜäöüß]+)\.$/)||[])[1]))))){o.push(c.trim());c=''}}if(c.trim())o.push(c.trim());return o};
+const triesE=(r,N,wrong)=>r===0?'':r===1?tries(N,N-wrong):'';
+const mkSplit=a=>{a=String(a||'');return a.includes('|')?a.split('|').filter(x=>x!==''):sents(a)};
+function mkSegs(T){const out=[];T.forEach(p=>{if(!p.q)mkSplit(p.a).forEach(x=>out.push(x))});return out}
+function wMark(k,o){const T=o.text||[],SG=mkSegs(T),P=o.pens||[],SOL={},FREE=new Set(o.free||[]),QS=o.qs||[];(o.marks||[]).forEach(([s,p])=>SOL[s]=p);
+ const SK=Object.keys(SOL).map(Number).sort((a,b)=>a-b),NA=SK.length,NB=QS.length;
+ if(SOLV&&!ST[k])SOLVW.mark(k,o);
+ const M=ST[k+'M']??={},A=ST[k+'A']??=[],B=ST[k+'B']??=[];if(ST[k+'R']==null)ST[k+'R']=NA?0:2;
+ const R=()=>ST[k+'R'],part=()=>R()<2?'a':'b';let pen=0,qi=SOLV?0:Math.max(0,Math.min(QS.findIndex((q,i)=>A[i]==null||(q[4]&&q[4].length&&B[i]==null)),NB-1));if(qi<0)qi=0;
+ const score=()=>{let ok=0,bad=0;for(const [s,v] of Object.entries(M)){const t=SOL[+s];if(t===v)ok++;else if(!(FREE.has(+s)&&t==null))bad++}return Math.max(0,ok-bad)};
+ const qDone=i=>A[i]!=null&&(!(QS[i][4]&&QS[i][4].length)||B[i]!=null);
+ const finish=()=>{if(ST[k]||part()!=='b'||!QS.every((_,i)=>qDone(i)))return;const x=SK.map((s,i)=>(ST[k+'W']||[]).includes(s)?i:-1).filter(i=>i>=0);let pb=0,tb=0;
+  QS.forEach((q,i)=>{const hb=q[4]&&q[4].length,okA=A[i]===q[2],okB=!hb||q[4].includes(B[i]);pb+=(okA?1:0)+(hb&&okB?1:0);tb+=1+(hb?1:0);if(!okA||!okB)x.push(NA+i)});
+  fin(k,(ST[k+'F']??0)+pb,NA+tb,x)};
+ const draw=()=>keep(k,()=>{const r=R(),pt=part(),q=QS[qi],a=A[qi],bb=B[qi],hb=q&&q[4]&&q[4].length;
+  const cls=s=>{if(pt==='a')return M[s]!=null?' mk'+M[s]+((ST[k+'L']||[]).includes(s)?' lock':''):'';const t=SOL[s];
+   return (t!=null?' mk'+t+' dim':'')+(hb&&bb===s?(q[4].includes(s)?' bok':' bsel'):'')+(hb&&a!=null&&bb!=null&&q[4].includes(s)&&bb!==s?' bsol':'')};
+  let si=0;const tx='<div class="tx">'+T.map(p=>{if(p.q)return '<p class="tq">'+md(p.q)+'</p>';const a2=String(p.a||''),L=mkSplit(a2),sep=a2.includes('|')?'':' ';
+   return '<p class="tp">'+L.map(x=>{const s=si++;return '<span class="sn'+cls(s)+'" data-mk="'+s+'">'+md(x)+'</span>'+sep}).join('')+'</p>'}).join('')+'</div>';
+  const nOf=i=>Object.values(M).filter(v=>v===i).length,need=i=>SK.filter(s=>SOL[s]===i).length;
+  const bar=pt==='a'?'<div class="mkbar">'+P.map((p,i)=>'<button class="pen mk'+i+(pen===i?' on':'')+'" data-pen="'+i+'">'+esc(p[0])+' <small>'+nOf(i)+'</small></button>').join('')+'<button class="pen e'+(pen===-1?' on':'')+'" data-pen="-1">Radierer</button></div>'
+   :(q?'<div class="mkbar mkq"><b>Frage '+(qi+1)+'/'+NB+':</b> '+esc(q[0])+(a!=null&&hb&&bb==null?' <span class="mkhint">→ Tippe den Beleg im Text an.</span>':'')+'</div>':'');
+  const tb='<div class="card txtc mkc"><b>'+esc(o.h||'')+'</b>'+bar+tx+(o.cap?'<div class="cap">'+esc(o.cap)+'</div>':'')+'</div>';
+  let side='';
+  if(pt==='a')side='<div class="card mkside"><h2>'+(NB?'Teil A · ':'')+'Markieren</h2><p style="margin:0">'+(o.task?md(o.task):'Markiere die passenden Textstellen.')+'</p>'
+   +'<ul class="mkleg">'+P.map((p,i)=>'<li><i class="mkdot mk'+i+'"></i><b>'+esc(p[0])+'</b>'+(p[1]?' – '+esc(p[1]):'')+' <span class="muted">('+need(i)+' Stellen)</span></li>').join('')+'</ul>'
+   +'<p class="muted" style="margin:6px 0 0">Stift wählen, dann im Text auf die Stelle tippen. Nochmal tippen hebt die Markierung auf.'+(r===0?' Falsch markierte Stellen kosten einen Punkt.':'')+'</p>'
+   +'<div class="row"><div class="sp"></div><button class="pri" data-chk '+(Object.keys(M).length?'':'disabled')+'>'+(r?'Zweiter Versuch: prüfen':'Prüfen')+'</button></div>'
+   +(r===1?fb(0,'⚠︎ '+(ST[k+'F']??0)+' von '+NA+' Punkten – diese zählen. Richtige Markierungen sind jetzt fest (unterstrichen), falsche sind gelöscht: <b>ein</b> zweiter Versuch (ohne Punkte).'):'')+'</div>';
+  else{side=(NA?'<div class="card">'+fb(ST[k+'F']===NA,(NB?'Teil A: ':'')+(ST[k+'F']??0)+' von '+NA+' Punkten. Im Text farbig unterstrichen: die richtigen Stellen.')+'</div>':'');
+   if(q)side+='<div class="card mkside"><h2>'+(NA?'Teil B · ':'')+'Fragen zum Text</h2><div class="prog"><span>Frage '+(qi+1)+' von '+NB+'</span><div class="bar"><i style="width:'+QS.filter((_,i)=>qDone(i)).length/NB*100+'%"></i></div></div>'
+    +'<p style="font-size:1.08rem;margin:0 0 10px"><b>'+esc(q[0])+'</b></p>'+q[1].map((x,j)=>'<button class="opt'+(a!=null?(j===q[2]?' ok':j===a?' no':''):'')+'" data-ans="'+j+'" '+(a!=null?'disabled':'')+'>'+esc(x)+'</button>').join('')
+    +(a==null?'':hb&&bb==null?'<div class="fb info">'+(a===q[2]?'✓ Richtig. ':'✗ Richtig ist: '+esc(q[1][q[2]])+'. ')+'Tippe jetzt im Text auf die Stelle, die das belegt.</div>'
+     :fb(a===q[2]&&(!hb||q[4].includes(bb)),(a===q[2]?'✓ Richtig.':'✗ Richtig ist: '+esc(q[1][q[2]])+'.')+(hb?(q[4].includes(bb)?' ✓ Der Beleg passt.':' ✗ Der passende Beleg ist gelb umrandet.'):'')+(q[3]?' '+esc(q[3]):''))
+      +'<div class="row"><button class="sec" data-pq '+(qi?'':'disabled')+'>‹</button><div class="sp"></div>'+(qi<NB-1?'<button class="pri" data-nq>Nächste Frage ›</button>':'')+'</div>')+'</div>'}
+  if(ST[k])side+='<div class="card">'+fb(ST[k].p===ST[k].t,'⭐ Textarbeit: '+ST[k].p+' von '+ST[k].t+' Punkten.'+(o.done?' '+esc(o.done):''))+'</div>';
+  frame((typeof o.before==='function'?o.before():o.before||'')+'<div class="two txt2 mk2">'+tb+'<div class="mkcol">'+side+'</div></div>');
+  app.querySelectorAll('[data-pen]').forEach(b=>b.onclick=()=>{pen=+b.dataset.pen;draw()});
+  app.querySelectorAll('[data-mk]').forEach(sp=>sp.onclick=()=>{const s=+sp.dataset.mk;
+   if(part()==='a'){if((ST[k+'L']||[]).includes(s))return;if(pen===-1||M[s]===pen)delete M[s];else M[s]=pen;save();draw()}
+   else{const qq=QS[qi];if(!qq||A[qi]==null||!(qq[4]&&qq[4].length)||B[qi]!=null)return;B[qi]=s;finish();save();draw()}});
+  app.querySelectorAll('[data-ans]').forEach(b=>b.onclick=()=>{if(A[qi]!=null)return;A[qi]=+b.dataset.ans;finish();save();draw()});
+  const nq=app.querySelector('[data-nq]');if(nq)nq.onclick=()=>{qi++;draw()};const pq=app.querySelector('[data-pq]');if(pq)pq.onclick=()=>{qi--;draw()};
+  const chk=app.querySelector('[data-chk]');if(chk)chk.onclick=()=>{
+   if(R()===0){ST[k+'F']=score();ST[k+'W']=SK.filter(s=>M[s]!==SOL[s]);ST[k+'L']=Object.keys(M).map(Number).filter(s=>M[s]===SOL[s]);for(const s of Object.keys(M))if(M[s]!==SOL[+s])delete M[s];
+    ST[k+'R']=ST[k+'F']===NA&&Object.keys(M).length===NA?2:1}
+   else ST[k+'R']=2;if(ST[k+'R']===2&&!NB)fin(k,ST[k+'F']??0,NA,SK.map((s,i)=>(ST[k+'W']||[]).includes(s)?i:-1).filter(i=>i>=0));save();scrollTo(0,0);draw()}});
+ draw()}
+const pre=o=>typeof o.before==='function'?o.before():o.before||'';
+function plCheck(k,N,okAt,place){const pl=ST[k+'P'],sol=ST[k+'S']??=[];const wrong=[...Array(N).keys()].filter(i=>!okAt(i));
+ if(!(ST[k+'R']>0)){fin(k,N-wrong.length,N,wrong);if(wrong.length){wrong.forEach(i=>delete pl[i]);ST[k+'R']=1}else ST[k+'R']=2}
+ else{wrong.forEach(i=>{place(i);sol.push(i)});ST[k+'R']=2}save()}
+const plMsg=(k,N,done)=>{const r=ST[k+'R']||0;return r===1?triesE(1,N,N-ST[k].p):r===2?(ST[k].p===N?fb(1,'⭐ Alles auf Anhieb richtig! '+esc(done||'')):fb(0,ST[k].p+' von '+N+' beim ersten Versuch richtig. '+((ST[k+'S']||[]).length?'Gelb umrandet: die richtige Lösung. ':'')+esc(done||''))):''};
+
+function wGrid(k,o){const N=o.items.length,pl=ST[k+'P']??={},R=()=>ST[k+'R']||0,ord=shuffleOnce(k,o.items.map((_,i)=>i));let pick=null;
+ if(SOLV&&!ST[k])SOLVW.grid(k,o);const C=o.cols.length,cell=i=>o.items[i][1]*C+o.items[i][2],fixed=i=>R()>0&&pl[i]===cell(i);
+ const draw=()=>keep(k,()=>{const n=Object.keys(pl).length,r=R(),sol=ST[k+'S']||[];
+  const chip=i=>sol.includes(i)?'<span class="chip sol">'+md(o.items[i][0])+'</span>':fixed(i)?'<span class="chip ok">'+md(o.items[i][0])+'</span>':'<button class="chip" data-back="'+i+'" data-dg="'+i+'">'+md(o.items[i][0])+'</button>';
+  frame(pre(o)+'<div class="card"><h2>'+esc(o.h||'')+'</h2><p style="margin:0">'+md(o.task||'Ordne jede Karte dem passenden Feld der Tabelle zu.')+' <b>'+n+' von '+N+'</b></p>'
+   +'<div class="pool" style="margin-top:12px">'+ord.map(i=>pl[i]==null?'<button class="chip'+(pick===i?' on':'')+(r===1?' retry':'')+'" data-c="'+i+'" data-dg="'+i+'">'+md(o.items[i][0])+'</button>':'').join('')+'</div>'
+   +'<div class="gtw"><table class="gtab"><tr><th></th>'+o.cols.map(c=>'<th>'+md(c)+'</th>').join('')+'</tr>'+o.rows.map((rw,ri)=>'<tr><th>'+md(rw)+'</th>'+o.cols.map((_,ci)=>{const e=ri*C+ci;return '<td class="gcell'+(pick!=null?' tgt':'')+'" data-cell="'+e+'" data-drop="'+e+'">'+ord.filter(i=>pl[i]===e).map(chip).join('')+'</td>'}).join('')+'</tr>').join('')+'</table></div>'
+   +(r<2?'<div class="row"><div class="sp"></div><button class="pri" data-chk '+(n<N?'disabled':'')+'>'+(r?'Zweiter Versuch: prüfen':'Prüfen')+'</button></div>':'')+plMsg(k,N,o.done)+'</div>'+(o.after||''));
+  app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{if(b.dataset.moved)return;pick=pick===+b.dataset.c?null:+b.dataset.c;draw()});
+  app.querySelectorAll('[data-cell]').forEach(c=>c.onclick=e=>{if(e.target.closest('[data-back]')||pick==null)return;pl[pick]=+c.dataset.cell;pick=null;save();draw()});
+  app.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{if(b.dataset.moved||R()>=2)return;delete pl[+b.dataset.back];save();draw()});
+  dragify((i,e)=>{if(fixed(+i)||R()>=2)return;pl[+i]=+e;pick=null;save();draw()});
+  const chk=app.querySelector('[data-chk]');if(chk)chk.onclick=()=>{plCheck(k,N,i=>pl[i]===cell(i),i=>pl[i]=cell(i));draw()}});draw()}
+
+function wChain(k,o){const NO=o.nodes,S=o.edges.map(e=>e[0]+'>'+e[1]),NS=S.length,E=ST[k+'E']??=[],R=()=>ST[k+'R']||0;let pick=null;
+ if(SOLV&&!ST[k])SOLVW.chain(k,o);
+ const cols=Math.ceil(Math.sqrt(NO.length)),POS=o.pos||NO.map((_,i)=>[(i%cols+.5)/cols,(Math.floor(i/cols)+.5)/Math.ceil(NO.length/cols)]);
+ const draw=()=>keep(k,()=>{const r=R(),L=ST[k+'L']||[];
+  frame(pre(o)+'<div class="card"><h2>'+esc(o.h||'')+'</h2><p style="margin:0">'+md(o.task||'Verbinde Ursache und Folge: Tippe erst die Ursache an, dann die Folge. Ein Pfeil entsteht. Nochmal so tippen löscht ihn.')+' <b>'+E.length+' Pfeile</b> <span class="muted">(gesucht: '+NS+')</span></p>'
+   +'<div class="chw" style="height:'+(o.hgt||Math.max(320,Math.ceil(NO.length/cols)*120))+'px"><svg class="chs"></svg>'+NO.map((t,i)=>'<button class="chn'+(pick===i?' on':'')+'" data-n="'+i+'" style="left:'+POS[i][0]*100+'%;top:'+POS[i][1]*100+'%">'+md(t)+'</button>').join('')+'</div>'
+   +(r<2?'<div class="row"><span class="muted">'+(pick!=null?'Jetzt die Folge antippen …':'')+'</span><div class="sp"></div><button class="pri" data-chk '+(E.length?'':'disabled')+'>'+(r?'Zweiter Versuch: prüfen':'Prüfen')+'</button></div>':'')
+   +(r===1?fb(0,'⚠︎ '+(ST[k+'F']??0)+' von '+NS+' Punkten – diese zählen. Richtige Pfeile sind jetzt grün und fest, falsche sind gelöscht: <b>ein</b> zweiter Versuch (ohne Punkte).'):r===2?(ST[k+'F']===NS?fb(1,'⭐ Alle Zusammenhänge auf Anhieb richtig! '+esc(o.done||'')):fb(0,(ST[k+'F']??0)+' von '+NS+' Punkten beim ersten Versuch. Gestrichelt: fehlende Pfeile. '+esc(o.done||''))):'')+'</div>'+(o.after||''));
+  const W=app.querySelector('.chw'),sv=W.querySelector('svg');
+  const arrows=()=>{const wr=W.getBoundingClientRect();sv.setAttribute('viewBox','0 0 '+wr.width+' '+wr.height);const box=i=>{const b=W.querySelector('[data-n="'+i+'"]').getBoundingClientRect();return {x:b.left-wr.left+b.width/2,y:b.top-wr.top+b.height/2,w:b.width/2+5,h:b.height/2+5}};
+   const cut=(a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,t=Math.min(a.w/Math.abs(dx||1e-9),a.h/Math.abs(dy||1e-9));return [a.x+dx*t,a.y+dy*t]};
+   const line=(s,c,d)=>{const [f,g]=s.split('>').map(Number),A=box(f),B=box(g),p=cut(A,B),q=cut(B,A);return '<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+q[0]+'" y2="'+q[1]+'" stroke="'+c+'" stroke-width="3"'+(d?' stroke-dasharray="7 6"':'')+' marker-end="url(#ah'+c.slice(1)+')"/>'};
+   const CC=['#2f5f9b','#1f8a4c','#c2410c','#e8a23a'];
+   let h='<defs>'+CC.map(c=>'<marker id="ah'+c.slice(1)+'" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="'+c+'"/></marker>').join('')+'</defs>';
+   E.forEach(s=>{h+=line(s,r===2?(S.includes(s)?'#1f8a4c':'#c2410c'):L.includes(s)?'#1f8a4c':'#2f5f9b')});if(r===2)S.filter(s=>!E.includes(s)).forEach(s=>{h+=line(s,'#e8a23a',1)});sv.innerHTML=h};
+  arrows();requestAnimationFrame(arrows);
+  app.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{if(R()>=2)return;const i=+b.dataset.n;if(pick==null){pick=i;draw();return}if(pick===i){pick=null;draw();return}
+   const s=pick+'>'+i,j=E.indexOf(s);if(j>=0){if(!(ST[k+'L']||[]).includes(s))E.splice(j,1)}else E.push(s);pick=null;save();draw()});
+  const chk=app.querySelector('[data-chk]');if(chk)chk.onclick=()=>{const ok=E.filter(s=>S.includes(s)),bad=E.filter(s=>!S.includes(s));
+   if(R()===0){ST[k+'F']=Math.max(0,ok.length-bad.length);fin(k,ST[k+'F'],NS,S.map((s,i)=>ok.includes(s)?-1:i).filter(i=>i>=0));ST[k+'L']=ok;E.splice(0,E.length,...ok);ST[k+'R']=ok.length===NS?2:1}
+   else ST[k+'R']=2;save();draw()}});
+ draw();if(!window.__chR){window.__chR=1;addEventListener('resize',()=>{const W=app.querySelector('.chw');if(W&&CURK)goStep(CURK)})}}
+
+const WID={mark:(st,o)=>wMark(st.k,o),grid:(st,o)=>wGrid(st.k,o),chain:(st,o)=>wChain(st.k,o),read:wRead,sorter:wSorter,swiper:wSwiper,quiz:wQuiz,pairs:wPairs,order:wOrder,tarn:wTarn,memory:wMemory,wheels:wWheels,build:wBuild,arrow:wArrow,pant:wPant};
 /* 11.47: Lehrkraft-Vorschau – „Lösungen“ zeigt jede Station schon richtig gelöst (in der Seite), „Lösungsblatt“ alles auf einer Seite */
 let SOLV=false,SNAP=null;
 function solveW(st,o){const k=st.k,T=n=>{ST[k]={p:n,t:n}};switch(st.type){
@@ -356,7 +448,10 @@ function solveW(st,o){const k=st.k,T=n=>{ST[k]={p:n,t:n}};switch(st.type){
  case 'wheels':ST[k+'A']=o.forms.map(f=>[f[1]-1,f[2],f[3]]);T(o.forms.length);break;
  case 'build':ST[k+'A']=o.items.map(it=>[it[3],it[5]]);T(o.items.length);break;
  case 'arrow':ST[k+'A']=o.items.map(it=>({p:it.ans,r:[].concat(it.ref)[0]}));T(o.items.length*2);break;
- case 'read':ST[k+'A']=o.qs.map(q=>({w:[],r:q[1],e:1}));T(o.qs.length);break}}
+ case 'read':ST[k+'A']=o.qs.map(q=>({w:[],r:q[1],e:1}));T(o.qs.length);break
+ case 'grid':{const C=o.cols.length,P={};o.items.forEach((it,i)=>P[i]=it[1]*C+it[2]);ST[k+'P']=P;ST[k+'R']=2;ST[k+'S']=[];T(o.items.length);break}
+ case 'chain':{const S=o.edges.map(e=>e[0]+'>'+e[1]);ST[k+'E']=S.slice();ST[k+'L']=S.slice();ST[k+'F']=S.length;ST[k+'R']=2;T(S.length);break}
+ case 'mark':{const M={};(o.marks||[]).forEach(([x,p])=>M[x]=p);ST[k+'M']=M;ST[k+'R']=2;ST[k+'F']=(o.marks||[]).length;ST[k+'W']=[];ST[k+'L']=Object.keys(M).map(Number);const Q=o.qs||[];ST[k+'A']=Q.map(q=>q[2]);ST[k+'B']=Q.map(q=>q[4]&&q[4].length?q[4][0]:null);T((o.marks||[]).length+Q.reduce((a,q)=>a+1+(q[4]&&q[4].length?1:0),0));break}}}
 const STEPS=P?P.steps.map(st=>[st.k,st.t,st.d,st.min,()=>{const o=DATA(st);if(SOLV&&!ST[st.k])try{solveW(st,o)}catch(e){console.warn(e)}WID[st.type](st,o)}]):[];
 const TOTMIN=Math.round(STEPS.reduce((a,s)=>a+s[3],0));
 
