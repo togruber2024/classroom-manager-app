@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 16.11.2026 · Version 12.47
+Stand: 16.11.2026 · Version 12.48
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1526,3 +1526,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.45: Pontes-Bibliothek im Lernkontrolle-Menü
 12.46: Rohpunkte als Standard bei Klassenarbeiten, Dreifachschalter auf der Seite des Seitenmenüs
 12.47: Nadel aus dem Sitzplan öffnet Noten, Umschalter gleich groß
+12.48: Notengrenzen-Skala nicht mehr treppenartig nach Öffnen im Hintergrund
