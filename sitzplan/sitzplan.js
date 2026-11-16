@@ -4495,8 +4495,9 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  function mode(v){on=!!v;document.documentElement.classList.toggle('cm-unterricht',on);if(on){sel=null;q='';sideOpen=false;render()}}
  window.classroomEinheiten={mode,show:()=>mode(true),hide:()=>mode(false),get on(){return on},/* 11.43: von einer Nadel aus öffnen */open:async id=>{sel=id;await render()},pinId:()=>on&&cx&&sel?'ein|'+cx.subject+'|'+cx.classId+'|'+sel:null};
  /* Kontext der Lerngruppe (der Noten-Manager führt; der Sitzplan folgt ihm) */
- function ctx(){const b=B();let c={};try{c=b?.context()||{}}catch{}const lab=c.label||'';const m=/(\d{1,2})\s*[a-zäöü]?\s*$/i.exec(lab)||/(\d{1,2})/.exec(lab);
-  return {subject:c.subject||'',label:lab,short:lab.replace(/^Klasse\s+/i,''),classId:c.classId||'',jg:m?+m[1]:0,key:(c.subject||'')+'::'+(c.classId||'')}}
+ const jgOf=lab=>{lab=String(lab||'').trim();const d=new Date(),end=d.getMonth()>=7?d.getFullYear()+1:d.getFullYear();/* 12.28: Oberstufen-Kurs mit Abiturjahrgang am Ende (z. B. EK1e28 → Abitur 2028 → Jg. 12) */const k=/^[A-Za-zÄÖÜäöü]{1,4}\s*\d?\s*[A-Za-z]{0,2}\s*(\d{2})$/.exec(lab);if(k){const jg=13-(2000+ +k[1]-end);if(jg>=10&&jg<=13)return jg}const m=/(\d{1,2})\s*[a-zäöü]?\s*$/i.exec(lab)||/(\d{1,2})/.exec(lab);const n=m?+m[1]:0;return n>=1&&n<=13?n:0};
+ function ctx(){const b=B();let c={};try{c=b?.context()||{}}catch{}const lab=c.label||'';
+  return {subject:c.subject||'',label:lab,short:lab.replace(/^Klasse\s+/i,''),classId:c.classId||'',jg:jgOf(lab),key:(c.subject||'')+'::'+(c.classId||'')}}
  let data=null,openJg=new Set(),cx=null,ALA={};
  const load=async()=>{const b=B();if(!b)return null;return {lessons:b.lessons(),units:(await b.units()).map(u=>{const t=(edOf('_units').names||{})[u.u];return t?{...u,t0:u.title,title:t}:u}),reihen:(b.reihen?await b.reihen():[]).map(r=>{const t=edOf(r.id).title;return t?{...r,title:t}:r})}};/* 11.84: umbenannte Reihen */
  const blocks=l=>(l.nV?1:0)+(l.nW?1:0)+(l.gr.length?1:0)+(l.ueb?1:0)+(l.tt.length?1:0);
