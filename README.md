@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 16.11.2026 · Version 12.51
+Stand: 16.11.2026 · Version 12.52
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1530,3 +1530,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.49: AirDrop-Knopf rechts neben Start
 12.50: „+ Test“ quadratisch, lose Einheiten nach Titel sortiert, Dreifachschalter ohne Überlappen, Start-Hinweis
 12.51: „+ Test“ und „+ Datum“ gleich groß
+12.52: Testnamen in der Tests-Übersicht auf 10 Zeichen gekürzt
