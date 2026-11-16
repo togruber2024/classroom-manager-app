@@ -129,7 +129,7 @@ details summary{cursor:pointer;color:var(--blue);font-weight:600;min-height:40px
 .time{display:inline-flex;align-items:center;gap:6px;margin-left:8px;padding:6px 12px;border-radius:999px;background:#eaf0fa;color:var(--blue);font-weight:700}
 .urkunde{text-align:center;padding:22px;border:3px solid var(--blue);border-radius:20px;background:linear-gradient(#fff,#f1f6fd)}.urkunde .big{font-size:2.4rem;font-weight:800;color:var(--blue)}
 </style></head><body><button type="button" id="who" hidden aria-label="Abgabe-QR zeigen"></button><div class="wrap" id="app"></div><div id="printBox"></div>
-<script src="qr-code.js"></script><script src="unit-pdf.js"></script><script src="lp-data.js"></script>
+<script src="glyph-icons.js"></script><script src="qr-code.js"></script><script src="unit-pdf.js"></script><script src="lp-data.js"></script>
 <script>
 /* 11.58: Lernpaket laden – aus der Datei der Lehrkraft (Buchdatei mit „lps“, auch in einer Reihen-Datei) oder eingebaut */
 (()=>{const UQ=(new URLSearchParams(location.search).get('u')||window.CM_EMBED_U||'l16a').replace(/[^a-z0-9_-]/gi,'');window.CM_UQ=UQ;
@@ -411,7 +411,7 @@ function wGrid(k,o){const N=o.items.length,pl=ST[k+'P']??={},R=()=>ST[k+'R']||0,
   dragify((i,e)=>{if(fixed(+i)||R()>=2)return;pl[+i]=+e;pick=null;save();draw()});
   const chk=app.querySelector('[data-chk]');if(chk)chk.onclick=()=>{plCheck(k,N,i=>pl[i]===cell(i),i=>pl[i]=cell(i));draw()}});draw()}
 
-function wChain(k,o){const NO=o.nodes,S=o.edges.map(e=>e[0]+'>'+e[1]),NS=S.length,E=ST[k+'E']??=[],R=()=>ST[k+'R']||0;let pick=null;
+function wChain(k,o){/* 12.38: o.given = schon vorgegebene Pfeile (grau, fest, zählen nicht) – für schrittweise wachsende Wirkungsgefüge */const NO=o.nodes,G=(o.given||[]).map(e=>e[0]+'>'+e[1]),S=o.edges.map(e=>e[0]+'>'+e[1]),NS=S.length,E=ST[k+'E']??=[],R=()=>ST[k+'R']||0;let pick=null;
  if(SOLV&&!ST[k])SOLVW.chain(k,o);
  const cols=Math.ceil(Math.sqrt(NO.length)),POS=o.pos||NO.map((_,i)=>[(i%cols+.5)/cols,(Math.floor(i/cols)+.5)/Math.ceil(NO.length/cols)]);
  const draw=()=>keep(k,()=>{const r=R(),L=ST[k+'L']||[];
@@ -423,12 +423,12 @@ function wChain(k,o){const NO=o.nodes,S=o.edges.map(e=>e[0]+'>'+e[1]),NS=S.lengt
   const arrows=()=>{const wr=W.getBoundingClientRect();sv.setAttribute('viewBox','0 0 '+wr.width+' '+wr.height);const box=i=>{const b=W.querySelector('[data-n="'+i+'"]').getBoundingClientRect();return {x:b.left-wr.left+b.width/2,y:b.top-wr.top+b.height/2,w:b.width/2+5,h:b.height/2+5}};
    const cut=(a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,t=Math.min(a.w/Math.abs(dx||1e-9),a.h/Math.abs(dy||1e-9));return [a.x+dx*t,a.y+dy*t]};
    const line=(s,c,d)=>{const [f,g]=s.split('>').map(Number),A=box(f),B=box(g),p=cut(A,B),q=cut(B,A);return '<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+q[0]+'" y2="'+q[1]+'" stroke="'+c+'" stroke-width="3"'+(d?' stroke-dasharray="7 6"':'')+' marker-end="url(#ah'+c.slice(1)+')"/>'};
-   const CC=['#2f5f9b','#1f8a4c','#c2410c','#e8a23a'];
+   const CC=['#2f5f9b','#1f8a4c','#c2410c','#e8a23a','#94a3b8'];
    let h='<defs>'+CC.map(c=>'<marker id="ah'+c.slice(1)+'" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="'+c+'"/></marker>').join('')+'</defs>';
-   E.forEach(s=>{h+=line(s,r===2?(S.includes(s)?'#1f8a4c':'#c2410c'):L.includes(s)?'#1f8a4c':'#2f5f9b')});if(r===2)S.filter(s=>!E.includes(s)).forEach(s=>{h+=line(s,'#e8a23a',1)});sv.innerHTML=h};
+   G.forEach(s=>{h+=line(s,'#94a3b8')});E.forEach(s=>{h+=line(s,r===2?(S.includes(s)?'#1f8a4c':'#c2410c'):L.includes(s)?'#1f8a4c':'#2f5f9b')});if(r===2)S.filter(s=>!E.includes(s)).forEach(s=>{h+=line(s,'#e8a23a',1)});sv.innerHTML=h};
   arrows();requestAnimationFrame(arrows);
   app.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{if(R()>=2)return;const i=+b.dataset.n;if(pick==null){pick=i;draw();return}if(pick===i){pick=null;draw();return}
-   const s=pick+'>'+i,j=E.indexOf(s);if(j>=0){if(!(ST[k+'L']||[]).includes(s))E.splice(j,1)}else E.push(s);pick=null;save();draw()});
+   const s=pick+'>'+i,j=E.indexOf(s);if(G.includes(s)){pick=null;draw();return}if(j>=0){if(!(ST[k+'L']||[]).includes(s))E.splice(j,1)}else E.push(s);pick=null;save();draw()});
   const chk=app.querySelector('[data-chk]');if(chk)chk.onclick=()=>{const ok=E.filter(s=>S.includes(s)),bad=E.filter(s=>!S.includes(s));
    if(R()===0){ST[k+'F']=Math.max(0,ok.length-bad.length);fin(k,ST[k+'F'],NS,S.map((s,i)=>ok.includes(s)?-1:i).filter(i=>i>=0));ST[k+'L']=ok;E.splice(0,E.length,...ok);ST[k+'R']=ok.length===NS?2:1}
    else ST[k+'R']=2;save();draw()}});
