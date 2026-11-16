@@ -134,10 +134,28 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
   });
   const result=queue.then(run,run);queue=result.catch(()=>{});return result;
  }
- window.classroomAlert=(text,opts)=>open('alert',text,opts);
+ /* 12.42: kurze Hinweise als Einblendung unten statt OK-Fenster. Erfolg: dunkel, verschwindet nach ca. 3 s. Problem: rot umrandet, bleibt bis zum Wegklicken.
+    Lange oder mehrzeilige Texte bleiben ein Dialog ({dialog:true} erzwingt ihn). */
+ const isErr=t=>/(nicht|fehler|ungültig|kein[e ]?|bitte|fehlt|konnte|unmöglich|zu groß|abgebrochen|gesperrt|leer|falsch|achtung|warnung)/i.test(t);
+ const tcss=document.createElement('style');tcss.textContent='.cm-toasts{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:2147483000;display:flex;flex-direction:column-reverse;align-items:center;gap:8px;pointer-events:none;max-width:calc(100vw - 24px)}'
+  +'.cm-toast{pointer-events:auto;display:flex;align-items:center;gap:10px;max-width:640px;background:#1f2f47;color:#fff;border-radius:12px;padding:10px 14px 10px 16px;box-shadow:0 10px 26px rgba(10,20,40,.3);font:600 14.5px/1.35 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;opacity:0;transform:translateY(8px);transition:opacity .18s,transform .18s}'
+  +'.cm-toast.in{opacity:1;transform:none}.cm-toast svg{flex:none;width:18px;height:18px}.cm-toast span{white-space:pre-line}'
+  +'.cm-toast.err{background:#fff;color:#a3261b;border:1px solid #f0c4bf}.cm-toast button{flex:none;border:0;background:none;color:inherit;opacity:.75;cursor:pointer;padding:2px;display:grid;place-items:center;font:inherit}.cm-toast button:hover{opacity:1}.cm-toast .u{color:#9cc0f0;font-weight:700;opacity:1}';
+ (document.head||document.documentElement).append(tcss);
+ const OKI='<svg viewBox="0 0 24 24" fill="none" stroke="#7fd39a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',ERI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg>',XI='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+ function toastHere(text,o={}){const err=o.type?o.type==='error':isErr(text);let box=document.querySelector('.cm-toasts');if(!box){box=document.createElement('div');box.className='cm-toasts';box.setAttribute('role','status');box.setAttribute('aria-live','polite');(document.body||document.documentElement).append(box)}
+  const t=document.createElement('div');t.className='cm-toast'+(err?' err':'');t.innerHTML=(err?ERI:OKI)+'<span></span>';t.querySelector('span').textContent=String(text??'');
+  const close=()=>{t.classList.remove('in');setTimeout(()=>t.remove(),200)};
+  if(o.undo){const u=document.createElement('button');u.type='button';u.className='u';u.textContent=o.undoLabel||'Rückgängig';u.onclick=()=>{close();try{o.undo()}catch{}};t.append(u)}
+  if(err||o.sticky){const x=document.createElement('button');x.type='button';x.setAttribute('aria-label','Schließen');x.innerHTML=XI;x.onclick=close;t.append(x)}
+  box.append(t);while(box.children.length>3)box.firstChild.remove();requestAnimationFrame(()=>t.classList.add('in'));
+  if(!(err||o.sticky))setTimeout(close,Math.min(6000,2600+String(text).length*35));return t}
+ window.classroomToast=(text,o={})=>{try{if(window.top!==window&&window.top.classroomToast&&window.top.document.body)return window.top.classroomToast(text,o)}catch{}return toastHere(text,o)};
+ const short=t=>{t=String(t??'');return t.length<=170&&t.split('\n').filter(Boolean).length<=2&&!/\n\s*\n/.test(t)};
+ window.classroomAlert=(text,opts={})=>{if(!opts.dialog&&short(text)){window.classroomToast(text,opts);return Promise.resolve()}return open('alert',text,opts)};
  window.classroomConfirm=(text,opts)=>open('confirm',text,opts);
  window.classroomPrompt=(text,value='',opts={})=>open('prompt',text,{...opts,value});
- window.alert=text=>{if(!document.body){nativeAlert(text);return}open('alert',text)};
+ window.alert=text=>{if(!document.body){nativeAlert(text);return}window.classroomAlert(text)};
 })();
 /* Datenschutzmodus (zum Vorführen): Namen unscharf, Bewertungen unleserlich mit Zufallsfarben ohne Bezug zur echten Bewertung.
    Gilt für App, Noten- und Unterrichts-Manager; endet mit dem Schließen der App (sessionStorage). Ändert keine Daten.
@@ -4111,11 +4129,11 @@ html.fs-view .fs-hide{display:none!important}
   const isT=m=>tp.t.includes(m.t)&&m.v===tp.v&&m.m===tp.m&&(!m.g||m.g==='m')&&L.persons.has(m.p);
   const dims=()=>{const d=[['Person',['1.','2.','3.']],['Numerus',['Sg.','Pl.']],['Tempus',['praes','impf','fut','perf','plqpf'].filter(t=>L.tenses.has(t)).map(t=>TNAME[t])]];if(L.konj)d.push(['Modus',['Ind.','Konj.']]);if(L.passive)d.push(['Genus verbi',['Akt.','Pass.']]);return d};
   const ana=m=>{const a=[String(m.p%3+1)+'.',m.p<3?'Sg.':'Pl.',TNAME[m.t]];if(L.konj)a.push(m.m==='k'?'Konj.':'Ind.');if(L.passive)a.push(m.v==='p'?'Pass.':'Akt.');return a};
-  const types=[['det','Formen bestimmen',1,(r,n)=>{const out=[];let guard=0;while(out.length<n&&guard++<n*30){const v=pick(pool,r),keys=Object.keys(v.forms).filter(k=>allowed(v.meta[k])),tk=keys.filter(k=>isT(v.meta[k]));const k=r()<.7&&tk.length?pick(tk,r):pick(keys,r);if(!k)continue;const f=v.forms[k];if(out.some(y=>norm(y.f)===norm(f)))continue;
+  const types=[['det','Formen bestimmen',1,(r,n)=>{const out=[];let guard=0;while(out.length<n&&guard++<n*30){const v=pick(pool,r),keys=Object.keys(v.forms).filter(k=>allowed(v.meta[k])),tk=keys.filter(k=>isT(v.meta[k]));/* 12.42: nur Formen des Themas abfragen (früher 30 % andere gelernte Formen) */if(!tk.length)continue;const k=pick(tk,r);const f=v.forms[k];if(out.some(y=>norm(y.f)===norm(f)))continue;
      const as=keys.filter(x=>norm(v.forms[x])===norm(f)).map(x=>ana(v.meta[x]));out.push({...detItem(f,dims(),as),ti:'Bestimme die Verbform ('+v.lemma+')'})}return out}],
-   ['tempus','Tempus zuordnen',1,(r,n)=>{const out=[];let guard=0;const TS=['praes','impf','fut','perf','plqpf'].filter(t=>L.tenses.has(t));while(out.length<n&&guard++<n*30){const v=pick(pool,r),keys=Object.keys(v.forms).filter(k=>allowed(v.meta[k])&&(!v.meta[k].g||v.meta[k].g==='m'));const want=pick(TS,r),ks=keys.filter(k=>v.meta[k].t===want);const k=pick(ks.length?ks:keys,r);if(!k)continue;const f=v.forms[k];if(out.some(y=>norm(y.f)===norm(f)))continue;
+   ['tempus','Tempus zuordnen',1,(r,n)=>{const out=[];let guard=0;const TS=['praes','impf','fut','perf','plqpf'].filter(t=>L.tenses.has(t));while(out.length<n&&guard++<n*30){const v=pick(pool,r),keys=Object.keys(v.forms).filter(k=>allowed(v.meta[k])&&(!v.meta[k].g||v.meta[k].g==='m'));/* 12.42: abgefragte Form aus dem Thema, Auswahl bleiben alle gelernten Tempora */const tkeys=keys.filter(k=>{const m=v.meta[k];return tp.t.includes(m.t)&&m.v===tp.v&&m.m===tp.m});if(!tkeys.length)continue;const want=pick(tp.t,r),ks=tkeys.filter(k=>v.meta[k].t===want);const k=pick(ks.length?ks:tkeys,r);if(!k)continue;const f=v.forms[k];if(out.some(y=>norm(y.f)===norm(f)))continue;
      out.push({...detItem(f,[['Tempus',TS.map(t=>TNAME[t])]],[...new Set(keys.filter(x=>norm(v.forms[x])===norm(f)).map(x=>TNAME[v.meta[x].t]))].map(x=>[x])),ti:'In welchem Tempus steht die Form?'})}return out}],
-   ...(kind==='irr'?[]:[['herk','Woher kommt die Form? (Grundform nennen)',1,(r,n)=>herkunft(r,n,pool,v=>Object.keys(v.forms).filter(k=>allowed(v.meta[k])&&(tp.t.includes(v.meta[k].t)||r()<.3)).map(k=>v.forms[k]),'Woher kommt die Verbform?')]]),
+   ...(kind==='irr'?[]:[['herk','Woher kommt die Form? (Grundform nennen)',1,(r,n)=>herkunft(r,n,pool,v=>Object.keys(v.forms).filter(k=>allowed(v.meta[k])&&tp.t.includes(v.meta[k].t)&&v.meta[k].v===tp.v&&v.meta[k].m===tp.m).map(k=>v.forms[k]),'Woher kommt die Verbform?')]]),
    ['tab','Konjugieren',0,r=>{const v=pick(pool,r);const ts=tp.t.filter(t=>Object.values(v.meta).some(m=>m.t===t&&m.v===tp.v&&m.m===tp.m));const rows=PERS.filter((p,i)=>L.persons.has(i));
      return [tabItem('Konjugiere '+v.lemma+(v.sg?', '+v.sg:'')+' – '+ts.map(t=>TNAME[t]).join(', ')+(tp.v==='p'?' Passiv':'')+(tp.m==='k'?' Konjunktiv':''),rows,ts,(row,t)=>{const p=PERS.indexOf(row);const k=Object.keys(v.meta).find(x=>{const m=v.meta[x];return m.p===p&&m.t===t&&m.v===tp.v&&m.m===tp.m&&(!m.g||m.g==='m')});return k?v.forms[k]:null},{r,noHalf:true,colLabel:t=>TNAME[t]})]}]];
   if(kind!=='irr')types.splice(types.length-1,0,['conv','Formen umwandeln',1,(r,n)=>{const out=[];let guard=0;while(out.length<n&&guard++<n*40){const v=pick(pool,r),tk=Object.keys(v.forms).filter(k=>isT(v.meta[k]));if(!tk.length)continue;const k=pick(tk,r),m=v.meta[k];
@@ -4650,7 +4668,7 @@ pb.onclick=e=>{e.stopPropagation();pm.hidden=!pm.hidden;/* 12.33: Menü immer ga
    bookSel=new Set();openBook('Gelesen: '+Object.keys(lessons).length+' Lektionen, '+words+' Vokabeln'+(loose?' ('+loose+' Wendungen u. Ä.: nur die Bedeutung wird abgefragt)':'')+(unk?' ('+unk+' nicht erkannt – werden nicht abgefragt)':'')+(skipped.length?' · ohne Vokabular: '+skipped.join(', '):'')+'.')}
   catch(e){console.error(e);dlg.close();alert('Vokabular: '+(e.message||e))}}
  /* 10.35: eine Rubrik, zwei Reiter wie im Aktenordner */
- const tabs=()=>'<div class="vt-tabs" role="tablist">'+[['main','Lernvokabular'],['wh','Wiederholungsvokabular'],['gr','Grammatik']].map(([id,l])=>'<button type="button" role="tab" aria-selected="'+(cur===id)+'" class="vt-tabb'+(cur===id?' on':'')+'" data-tab="'+id+'">'+l+'</button>').join('')+'</div>';
+ const tabs=()=>'<div class="vt-tabs" role="tablist">'+[['wh','Wiederholungsvokabular'],['main','Lernvokabular'],['gr','Grammatik']].map(([id,l])=>'<button type="button" role="tab" aria-selected="'+(cur===id)+'" class="vt-tabb'+(cur===id?' on':'')+'" data-tab="'+id+'">'+l+'</button>').join('')+'</div>';
  const bindTabs=()=>{addDb();dlg.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{if(b.dataset.tab!==cur){cur=b.dataset.tab;bookSel=new Set();openBook()}})};
  /* ---------- 10.88: Latein-Datenbank exportieren / importieren (Vokabular, Wiederholung, Grammatik, Testvorlagen – nie Schülerdaten) ---------- */
  const DBX='classroom-latein-db-backup-v1',DBT='classroom-latein-datenbank';
