@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 16.11.2026 · Version 12.44
+Stand: 16.11.2026 · Version 12.45
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1523,3 +1523,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.42: Einblendungen statt OK-Fenster, drei Etikett-Typen, Seitenleiste abgestuft, Grammatiktests nur Themenformen, Wiederholungsvokabular zuerst
 12.43: Wiederholungs- und Grammatiktest direkt zur Lektion, Themen-Reiter, feste Knopf-Spalten, Sitzplan-Leiste mittig, Seitenmenü ohne Zoom
 12.44: Test erstellen ohne Reiter, Navigium als Link
+12.45: Pontes-Bibliothek im Lernkontrolle-Menü
