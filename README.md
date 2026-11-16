@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 16.11.2026 · Version 12.28
+Stand: 16.11.2026 · Version 12.29
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1507,3 +1507,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.26: Vokabeltest-Ergebnisse per QR freigeben; neue Übersicht im Übersetzungs-Trainer; Lerneinheiten mit Abgabe als Datei und festem Namen; Raum aus dem Stundenplan anlegen; Ausblenden der Bewertungen bei Schraffur aus repariert
 12.27: Übersetzungs-Trainer – Ablative im Satz markieren und ihre Funktion bestimmen (statt eigener Station)
 12.28: Kombitest (Vokabeln + Grammatik), iPad bewertet Grammatik selbst, „Mein Ergebnis ansehen“, iPad-Auswertung auf der Testseite, Oberstufenkurse (z. B. EK1e28) im richtigen Jahrgang
+12.29: Übersetzungs-Trainer – Musterübersetzung, Verbesserung und Selbsteinschätzung erst nach der Abgabe, dann Satz für Satz vergleichen
