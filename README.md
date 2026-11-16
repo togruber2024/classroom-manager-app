@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 16.11.2026 · Version 12.35
+Stand: 16.11.2026 · Version 12.36
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1514,3 +1514,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.33: Drucken-Menü im Vokabeltest wird nicht mehr abgeschnitten
 12.34: Rückfragen und Eingaben als App-Dialoge, Hauptaktion einheitlich dunkelblau
 12.35: Messung bei langsamem Speichern aus dem Sitzplan (Fehlerprotokoll)
+12.36: Endlosschleife bei Abwesenheit und digitaler Lerneinheit am selben Tag behoben (Trägheit, Flackern)
