@@ -3898,7 +3898,7 @@ html.fs-view .fs-hide{display:none!important}
   if(lex.kind==='x')return {form:lex.lemma,kind:'x',meanings:[lex.meaning],det:'unveränderlich',lex};
   const c=chooseForm(lex,o,taken);if(!c)return null;taken.forms.add(plain(c.form));taken.labels.set(c.tag,(taken.labels.get(c.tag)||0)+1);if(c.p!=null)taken.labels.set('p'+c.p,(taken.labels.get('p'+c.p)||0)+1);
   const base={form:c.form,meanings:[lex.meaning],det:shortLabel(c.labels),warn:c.unsure,lex};
-  if(lex.kind==='n')return {...base,kind:'n',need:[lex.lemma],genus:lex.genus,also:[lex.gen]};
+  if(lex.kind==='n')return {...base,kind:'n',need:[lex.lemma],genus:lex.genus,also:[lex.gen],...(lex.pluralOnly?{pl:1}:{})};
   if(lex.kind==='v')return {...base,kind:'v',need:[lex.lemma,lex.sg],also:lex.also};
   return {...base,kind:'a',need:[lex.lemma],also:lex.nomAlso||[]}}
  function eligible(lex,o){if(lex.kind==='?')return false;const n=o.lesson??99;
@@ -4249,7 +4249,10 @@ window.LP=LP;window.lpLabels=labels;
   try{const raw=Uint8Array.from(atob(test.sk.replace(/-/g,'+').replace(/_/g,'/')+'=='.slice(0,(4-test.sk.length%4)%4)),c=>c.charCodeAt(0)),key=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt']);
    const iv=new Uint8Array(12);iv[0]=String(g).charCodeAt(0)||65;const data=new TextEncoder().encode(JSON.stringify(items.map(it=>it.k==='tab'?{s:it.sol,h:(it.hf||[]).map(r=>r.map(x=>x?1:0))}:{s:it.sol})));
    return b64url(new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,data)))}catch{return ''}}
- async function studentUrl(test,g){const payload=isKB(test)?{i:test.id,t:test.title,g,c:test.className||'',d:test.date||'',k:'kb',r:vocOf(test.groups[g]).map(it=>[it.form,it.kind]),q:grOf(test.groups[g]).map(window.classroomGrammar.studentPart),s:await sealSol(test,g,grOf(test.groups[g]))}:test.kind==='grammar'?{i:test.id,t:test.title,g,c:test.className||'',d:test.date||'',k:'gr',q:(test.groups[g]||[]).map(window.classroomGrammar.studentPart),s:await sealSol(test,g,test.groups[g]||[])}:{i:test.id,t:test.title,g,c:test.className||'',d:test.date||'',r:(test.groups[g]||[]).map(it=>[it.form,it.kind])};const bytes=new TextEncoder().encode(JSON.stringify(payload));
+ /* 12.30: Pluralwörter (castra, -ōrum) – Schüler sehen „Nom. Pl.“; ältere Tests: an Grundform und Genitiv erkennen */
+ const isPl=it=>it.kind==='n'&&(!!it.pl||/(es|ēs|ae|a|i|ī)$/.test(String(it.need?.[0]||''))&&/(um|rum)$/.test(String(it.also?.[0]||'').trim()));
+ const rOf=it=>isPl(it)?[it.form,it.kind,1]:[it.form,it.kind];
+ async function studentUrl(test,g){const payload=isKB(test)?{i:test.id,t:test.title,g,c:test.className||'',d:test.date||'',k:'kb',r:vocOf(test.groups[g]).map(rOf),q:grOf(test.groups[g]).map(window.classroomGrammar.studentPart),s:await sealSol(test,g,grOf(test.groups[g]))}:test.kind==='grammar'?{i:test.id,t:test.title,g,c:test.className||'',d:test.date||'',k:'gr',q:(test.groups[g]||[]).map(window.classroomGrammar.studentPart),s:await sealSol(test,g,test.groups[g]||[])}:{i:test.id,t:test.title,g,c:test.className||'',d:test.date||'',r:(test.groups[g]||[]).map(rOf)};const bytes=new TextEncoder().encode(JSON.stringify(payload));
   let hash;try{if(typeof CompressionStream!=='function')throw 0;const z=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());hash='z1.'+b64url(z)}catch{hash='j1.'+b64url(bytes)}
   return studentBase()+'#'+hash}
  /* ---------- Testdatei ---------- */
@@ -4257,7 +4260,7 @@ window.LP=LP;window.lpLabels=labels;
   const need=s.split(/[,;]/).map(x=>x.trim()).filter(Boolean);return {need:kind==='n'||kind==='a'?need.slice(0,1):need,genus}}
  const lemmaText=it=>it.kind==='x'?'':it.kind==='n'?(it.need?.[0]||'')+' '+(it.genus||[]).join('/')+'.':(it.need||[]).join(', ');
  function normalizeTest(raw){if(!raw||raw.type!=='classroom-vokabeltest'||!raw.groups)throw new Error('Das ist keine Vokabeltest-Datei (.cmvok).');
-  const groups={};for(const [g,list] of Object.entries(raw.groups)){if(!Array.isArray(list)||!list.length)continue;groups[g]=list.map(x=>{const kind=['n','v','a','x'].includes(x.kind)?x.kind:'x';return {form:String(x.form||''),kind,need:Array.isArray(x.need)?x.need.map(String):parseLemmaText(kind,x.lemma).need,genus:kind==='n'?(x.genus||[]).map(String):[],also:(x.also||[]).map(String),meanings:(x.meanings||[]).map(String),det:String(x.det||'')}})}
+  const groups={};for(const [g,list] of Object.entries(raw.groups)){if(!Array.isArray(list)||!list.length)continue;groups[g]=list.map(x=>{const kind=['n','v','a','x'].includes(x.kind)?x.kind:'x';return {form:String(x.form||''),kind,need:Array.isArray(x.need)?x.need.map(String):parseLemmaText(kind,x.lemma).need,genus:kind==='n'?(x.genus||[]).map(String):[],also:(x.also||[]).map(String),meanings:(x.meanings||[]).map(String),det:String(x.det||''),...(x.pl?{pl:1}:{})}})}
   if(!Object.keys(groups).length)throw new Error('Die Datei enthält keine Vokabeln.');
   return {id:Math.random().toString(36).slice(2,8),title:String(raw.title||'Vokabeltest'),name:String(raw.name||raw.title||'Vokabeltest').slice(0,40),groups,date:today(),created:Date.now(),subject:currentSubject,classId:currentClassId,halfYearId:currentHalfYearId,className:classLabel(),subs:{}}}
  /* ---------- Oberfläche ---------- */
@@ -4339,7 +4342,7 @@ window.LP=LP;window.lpLabels=labels;
    +'<section><h3><i>2</i>Im Unterricht: ausgeben</h3><ol><li>In der Jamf-Teacher-App bei der Klasse unter „Web-Links“ nur diese Adresse freigeben:<code>'+esc(url)+'</code></li><li>Im Test „Am Smartboard zeigen“ – Sitzplan mit Gruppen und QR-Codes. „Beide QR-Codes groß zeigen“ zeigt A und B nebeneinander.</li><li>Die Klasse scannt mit der iPad-Kamera den Code ihrer Gruppe, tippt den Link an und trägt den vollständigen Namen ein. Danach ist kein Internet mehr nötig.</li></ol></section>'
    +'<section><h3><i>3</i>Abgabe einscannen</h3><ol><li>Wer fertig ist, tippt „Abgeben“ und lässt den QR-Code offen (bei langen Tests: „Code 1 von 2“ …).</li><li>Wenn alle fertig sind: Reiter „Abgaben“ → „Abgaben scannen“.</li><li>Herumgehen und die Kamera kurz auf jeden Code halten – kein Knopf nötig. Ein Ton und eine grüne Meldung mit Name und Punkten bestätigen jede Abgabe.</li><li>„Wer fehlt noch?“ zeigt, wessen Abgabe noch fehlt. „Fertig – zur Auswertung“ beendet das Scannen.</li></ol></section>'
    +'<section><h3><i>4</i>Auswertung</h3><ol><li>Abgaben den Personen zuordnen (die App schlägt sie vor).</li><li>Unter „Bitte kurz prüfen“ unsichere Antworten mit „✓ richtig“ oder „✗ falsch“ entscheiden.</li><li>„Test anlegen“ – der Test steht als Rohpunkte-Test in der Notenübersicht. Nachzügler kannst du jederzeit nachscannen.</li></ol></section>'
-   +'<section><h3><i>?</i>Wenn etwas hakt</h3><ul><li><b>Seite öffnet nicht:</b> Adresse in Jamf genau prüfen, WLAN kurz aus und ein.</li><li><b>Kein Jamf:</b> „Ohne Jamf: iPads offline vorbereiten“ unter „Ausgeben“.</li><li><b>Code wird nicht erkannt:</b> Schüler-iPad heller stellen, etwas Abstand halten oder „Foto aufnehmen“.</li><li><b>iPad ausgefallen:</b> Papierfassung über „Drucken“.</li><li><b>Zu früh abgegeben:</b> „Zurück zum Test“, korrigieren, neu abgeben – es zählt die neueste Abgabe.</li></ul></section>'
+   +'<section><h3><i>?</i>Wenn etwas hakt</h3><ul><li><b>Seite öffnet nicht:</b> Adresse in Jamf genau prüfen, WLAN kurz aus und ein.</li><li><b>Kein Jamf:</b> „Ohne Jamf: iPads offline vorbereiten“ unter „Ausgeben“.</li><li><b>Code wird nicht erkannt:</b> Schüler-iPad heller stellen, etwas Abstand halten oder „Foto aufnehmen“.</li><li><b>iPad ausgefallen:</b> Papierfassung über „Drucken“.</li><li><b>Nach dem Abgeben:</b> Die Antworten sind gesperrt und können nicht mehr geändert werden. Eine später veränderte Abgabe übernimmt die App nicht.</li></ul></section>'
    +'<div class="dialog-actions"><button type="button" class="primary" data-gx>Schließen</button></div></form>';
   g.querySelector('[data-gx]').onclick=()=>g.close();g.showModal()}
  async function loadFile(){const [f]=await pick('.cmvok,.json,application/json');if(!f)return;try{const t=normalizeTest(JSON.parse(await f.text()));saveTest(t);state={test:t,g:Object.keys(t.groups)[0]};showTest()}catch(e){alert('Vokabeltest: '+(e.message||e))}}
@@ -4392,12 +4395,12 @@ window.LP=LP;window.lpLabels=labels;
   const head=(g,extra)=>'<div class="vp-top"><div><h1>'+esc(t.title)+'</h1><div class="vp-sub">'+sub+(extra||'')+'</div></div><div class="vp-tag">Gruppe '+esc(g)+'</div></div>';
   const half=(g)=>{const its=t.groups[g],tot=total(g),rowH=Math.max(19,Math.min(30,Math.floor(300/Math.max(1,its.length))));
    return '<section class="vp-half">'+head(g)+'<div class="vp-name"><div>Name:</div><div>Datum:</div><div>Punkte: ___ / '+tot+'</div></div><table><thead><tr><th>Nr.</th><th>Form</th><th>Grundform</th><th>Bedeutung</th><th>P</th></tr></thead><tbody>'+
-    its.map((it,i)=>'<tr style="height:'+rowH+'px"><td class="vp-n">'+(i+1)+'</td><td class="vp-f">'+esc(it.form)+'</td><td><span class="vp-h">'+esc(it.kind==='x'?'—':HINT[it.kind]||'Grundform')+'</span></td><td></td><td class="vp-p">/'+maxOf(it)+'</td></tr>').join('')+
+    its.map((it,i)=>'<tr style="height:'+rowH+'px"><td class="vp-n">'+(i+1)+'</td><td class="vp-f">'+esc(it.form)+'</td><td><span class="vp-h">'+esc(it.kind==='x'?'—':isPl(it)?'Nom. Pl. + Genus':HINT[it.kind]||'Grundform')+'</span></td><td></td><td class="vp-p">/'+maxOf(it)+'</td></tr>').join('')+
     '</tbody></table><div class="vp-foot"><span>'+esc(limits(tot))+'</span><span class="vp-box">Punkte ___ / '+tot+' · Bewertung ___</span></div></section>'};
   /* D (Standard): eine Seite je Gruppe, Schreiblinien, Genus zum Ankreuzen */
   const fullD=g=>{const its=t.groups[g],tot=total(g),rowH=Math.max(26,Math.min(60,Math.floor(660/Math.max(1,its.length))));
    return '<div class="vp-page vp-full vp-d'+(its.length>16?' vp-dense':'')+'">'+head(g)+'<div class="vp-name"><div>Name:</div><div>Datum:</div><div>Punkte: ___ / '+tot+'</div></div><table><thead><tr><th>Nr.</th><th>Form</th><th>Grundform</th><th>Genus</th><th>Bedeutung</th><th>P</th></tr></thead><tbody>'+
-    its.map((it,i)=>'<tr style="height:'+rowH+'px"><td class="vp-n">'+(i+1)+'</td><td class="vp-f">'+esc(it.form)+'</td><td>'+(it.kind==='x'?'<span class="vp-h">—</span>':'<div class="vp-h">'+esc(HINT[it.kind]==='Nom. Sg. + Genus'?'Nom. Sg.':HINT[it.kind]||'Grundform')+'</div><div class="vp-line"></div>')+'</td><td class="vp-g">'+(it.kind==='n'?'<span>m</span><span>f</span><span>n</span>':'<span class="vp-h">—</span>')+'</td><td><div class="vp-line"></div></td><td class="vp-p">/'+maxOf(it)+'</td></tr>').join('')+
+    its.map((it,i)=>'<tr style="height:'+rowH+'px"><td class="vp-n">'+(i+1)+'</td><td class="vp-f">'+esc(it.form)+'</td><td>'+(it.kind==='x'?'<span class="vp-h">—</span>':'<div class="vp-h">'+esc(isPl(it)?'Nom. Pl.':HINT[it.kind]==='Nom. Sg. + Genus'?'Nom. Sg.':HINT[it.kind]||'Grundform')+'</div><div class="vp-line"></div>')+'</td><td class="vp-g">'+(it.kind==='n'?'<span>m</span><span>f</span><span>n</span>':'<span class="vp-h">—</span>')+'</td><td><div class="vp-line"></div></td><td class="vp-p">/'+maxOf(it)+'</td></tr>').join('')+
     '</tbody></table><div class="vp-foot"><span>'+esc(limits(tot))+'</span><span class="vp-box">Punkte ___ / '+tot+' · Bewertung ___</span></div></div>'};
   const sheets=[];
   if(what==='s'||what==='b')for(const g of groups)sheets.push(fullD(g));
@@ -4414,10 +4417,10 @@ window.LP=LP;window.lpLabels=labels;
   const go=()=>{try{frame.contentWindow.focus();frame.contentWindow.print()}catch(e){console.warn(e)}};(d.fonts?.ready||Promise.resolve()).then(()=>setTimeout(go,50))}
  function beamer(t,g,qr){const o=document.createElement('div');o.className='vt-beamer';o.innerHTML='<div><h1>'+esc(t.title)+' · Gruppe '+esc(g)+'</h1><div class="vt-big">'+qr+'</div><p>Mit der Kamera scannen · Antippen zum Schließen</p></div>';o.onclick=()=>o.remove();dlg.append(o)}
  /* 10.75: eine Abgabe übernehmen (aus Datei oder QR-Code) */
- function ingest(t,j){if(!j||j.type!=='classroom-vokabeltest-abgabe')return 'bad';if(j.i!==t.id)return 'other';const key=(j.g||'')+'|'+String(j.name||'').trim().toLowerCase();t.subs??={};const old=t.subs[key];if(old&&old.ts>j.ts)return 'old';const dup=!!(old&&old.ts===j.ts);t.subs[key]={g:j.g,name:String(j.name||'').trim(),ts:j.ts,a:j.a||[],student:old?.student||'',over:old?.over||{}};return dup?'dup':'ok'}
- async function readSubs(){const files=await pick('.json,application/json',true);if(!files.length)return;const t=state.test;let ok=0,other=0,bad=0;
-  for(const f of files){try{const r=ingest(t,JSON.parse(await f.text()));if(r==='ok'||r==='dup')ok++;else if(r==='other')other++;else if(r==='bad')bad++}catch{bad++}}
-  saveTest(t);if(other||bad)alert(ok+' Abgaben eingelesen.'+(other?'\n'+other+' Datei(en) gehören zu einem anderen Test.':'')+(bad?'\n'+bad+' Datei(en) konnten nicht gelesen werden.':''));review()}
+ function ingest(t,j){if(!j||j.type!=='classroom-vokabeltest-abgabe')return 'bad';if(j.i!==t.id)return 'other';const key=(j.g||'')+'|'+String(j.name||'').trim().toLowerCase();t.subs??={};const old=t.subs[key];if(old&&old.ts>j.ts)return 'old';/* 12.30: eingelesene Abgaben sind gesperrt – eine spätere, veränderte Abgabe wird nicht übernommen */if(old&&old.ts!==j.ts&&JSON.stringify(old.a)!==JSON.stringify(j.a||[]))return 'locked';const dup=!!(old&&old.ts===j.ts);t.subs[key]={g:j.g,name:String(j.name||'').trim(),ts:j.ts,a:j.a||[],student:old?.student||'',over:old?.over||{}};return dup?'dup':'ok'}
+ async function readSubs(){const files=await pick('.json,application/json',true);if(!files.length)return;const t=state.test;let ok=0,other=0,bad=0,lk=0;
+  for(const f of files){try{const r=ingest(t,JSON.parse(await f.text()));if(r==='ok'||r==='dup')ok++;else if(r==='other')other++;else if(r==='bad')bad++;else if(r==='locked')lk++}catch{bad++}}
+  saveTest(t);if(other||bad||lk)alert(ok+' Abgaben eingelesen.'+(lk?'\n'+lk+' Datei(en) waren schon abgegeben und wurden danach verändert – nicht übernommen.':'')+(other?'\n'+other+' Datei(en) gehören zu einem anderen Test.':'')+(bad?'\n'+bad+' Datei(en) konnten nicht gelesen werden.':''));review()}
  /* ---------- 10.75: Abgaben scannen – QR-Code vom Schüler-iPad, ohne AirDrop ---------- */
  let qrLib=null;
  function jsqr(){if(window.jsQR)return Promise.resolve(window.jsQR);return qrLib??=new Promise((res,rej)=>{const inl=document.querySelector('script[type="text/plain"][data-vendor="jsqr"]'),sc=document.createElement('script');
@@ -4501,6 +4504,7 @@ window.LP=LP;window.lpLabels=labels;
    const r=ingest(t,j);
    if(r==='other'){beep(false);toast(esc(j.name||'Abgabe')+': gehört zu einem anderen Test.',false);return}
    if(r==='bad'){beep(false);toast('Das ist keine Abgabe.',false);return}
+   if(r==='locked'){beep(false);toast(esc(j.name||'Abgabe')+': schon abgegeben – die veränderte Abgabe wird nicht übernommen.',false);return}
    const key=(j.g||'')+'|'+String(j.name||'').trim().toLowerCase(),sub=t.subs[key];
    if(r==='dup'||r==='old'){beep(true);toast(esc(sub.name)+' ist schon eingelesen.',true);return}
    saveTest(t);const sc=scoreOf(t,sub);seen.unshift({name:sub.name,...sc});beep(true);toast('<span class="vs-okc">✓</span>'+esc(sub.name)+' · '+String(sc.pts).replace('.',',')+'/'+sc.tot+' P · '+esc(sc.sign),true);upd()}
@@ -4794,7 +4798,7 @@ window.LP=LP;window.lpLabels=labels;
   dlg.querySelectorAll('[data-re]').forEach(b=>b.onclick=()=>{if(!window.classroomVocabPdf.redrawOne(lexPool(),st.draw,g,+b.dataset.re,drawOpts()))alert('Keine weitere Vokabel verfügbar.');pdfPreview()});
   dlg.querySelector('[data-all]').onclick=()=>{st.draw=window.classroomVocabPdf.draw(lexPool(),{count:st.count,groups:Object.keys(st.draw),...drawOpts()});pdfPreview()};
   dlg.querySelector('[data-back]').onclick=()=>pdfSetup();
-  dlg.querySelector('form').onsubmit=e=>{e.preventDefault();const strip=it=>({form:it.form,kind:it.kind,need:it.need,genus:it.genus,also:it.also,meanings:it.meanings,det:it.det});
+  dlg.querySelector('form').onsubmit=e=>{e.preventDefault();const strip=it=>({form:it.form,kind:it.kind,need:it.need,genus:it.genus,also:it.also,meanings:it.meanings,det:it.det,...(it.pl?{pl:1}:{})});
    const raw={type:'classroom-vokabeltest',version:1,title:'Vokabeltest '+(st.info.label||(st.info.lesson?'Lektion '+st.info.lesson:st.name)),name:st.name,groups:Object.fromEntries(Object.entries(st.draw).map(([k,v])=>[k,v.map(strip)]))};
    const t=normalizeTest(raw);t.date=st.date||today();t.source=st.file;if(combo){combo.voc=t;gSel=combo.les;openGrammar('Kombitest – Teil A ('+(Object.values(t.groups)[0]||[]).length+' Vokabeln) steht. Wähle jetzt das Grammatikthema für Teil B.');return}saveTest(t);state={test:t,g:'A'};showTest()};
   if(!dlg.open)dlg.showModal()}
