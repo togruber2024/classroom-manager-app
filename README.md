@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 17.11.2026 · Version 12.73
+Stand: 17.11.2026 · Version 12.74
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1552,3 +1552,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.71: Eine Navigation (Klassenwechsel öffnet aktuelle Stunde, Material ohne eigene Klassenwahl); iPhone-Layout für Unterricht und Lerneinheiten; Fix „[object Object]“ bei Buch-Infos; „Vokabeltest (Wdh.)“.
 12.72: Fix iPhone: Vorschau-Leiste passt in die Bildschirmbreite.
 12.73: Fix iPhone: Lerneinheiten nicht mehr breiter als der Bildschirm; Glossar-Knopf über der Weiter-Zeile.
+12.74: Material nur Bibliothek (ohne Tabelle/Filter, „Alle Jahrgänge“), öffnet bei der Klasse; „Zur Notentabelle“ bleibt in Noten; „aktuell“ sichtbar; Test-Pille ohne „Invalid Date“; iPhone: Auge mittig.
