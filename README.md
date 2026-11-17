@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 17.11.2026 · Version 12.55
+Stand: 17.11.2026 · Version 12.56
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1534,3 +1534,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.53: Geschwindigkeit – Bewerten im Sitzplan ohne doppelten Neuaufbau, Quartalsnoten liest jede Notenseite nur einmal, Klassenarbeitsseite ohne zweiten Aufbau, „Auffällig“ zählt nicht mehr bei jedem Seitenwechsel neu.
 12.54: Geschwindigkeit – Änderungsprotokoll vergleicht nur geänderte Teile, Klassenarbeitsseite misst die Tabelle einmal, Symbolknöpfe in einer Suche.
 12.55: Akku – Seitenleiste, iPhone-Datum und Backup-Abgleich ohne Dauerschleifen; eingebettete Fenster melden Speicherungen direkt, Sicherheitsvergleich alle 30 s.
+12.56: Lerneinheiten-Fenster mit Seitenleiste (Klassen · Fächer · Datum), Symbol „Lerneinheiten (iPad)“ neben dem Lesezeichen, Latein-Lektüre-Reihen nach Jahrgang, Suche auch in anderen Jahrgängen, „Aktuell“ für Latein-Einheiten.

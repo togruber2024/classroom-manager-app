@@ -4478,6 +4478,8 @@ html.sp-fit .sp-fit-box{overflow:auto;overscroll-behavior:auto;-webkit-overflow-
  const top=()=>{try{return parent!==window?parent:null}catch{return null}};
  const NF=()=>{try{return top().document.getElementById('view-noten').contentWindow}catch{return null}};
  const B=()=>{try{return NF()?.classroomBibliothek||null}catch{return null}};
+ /* 12.56: „Lerneinheiten (iPad)“ – Start-QR, Abgaben scannen, Übersicht aller Einheiten – links neben dem Lesezeichen */
+ const LUB='<button type="button" class="ein-curb ein-lu" style="margin-right:-4px" data-do="lu" data-k="" title="Lerneinheiten (iPad): Start-QR, Abgaben scannen, Übersicht" aria-label="Lerneinheiten (iPad)"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M9 7h6M9 10.5h6M9 14h3"/><circle cx="12" cy="18.2" r=".6" fill="currentColor"/></svg></button>';
  const SUBJ={latein:'Latein',erdkunde:'Erdkunde',geschichte:'Geschichte'};
  const css=`html.cm-unterricht .container{grid-template-columns:1fr!important}
 html.cm-unterricht .container>.panel,html.cm-unterricht .sp-side-handle,html.cm-unterricht .classroom-sidebar-toggle{display:none!important}
@@ -4598,13 +4600,13 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   const ord=e.order||[],pos=k=>{const i=ord.indexOf(k);return i<0?1e6:i};
   return L.map((x,i)=>({...x,i})).sort((a,b)=>pos(a.k)-pos(b.k)||a.i-b.i).map(x=>({k:x.k,t:names[x.k]||x.t,t0:x.t,u:x.u||null,...(x.les!=null?{les:String(x.les)}:{}),own:!!x.own,hid:hid.has(x.k)||(!!x.hid&&!show.has(x.k))}))}
  const lesJg=k=>(data?.lessons||[]).find(l=>l.k===String(k))?.jg;
- const reihenOf=(subj,jg)=>(data?.reihen||[]).filter(r=>r.subject===subj&&(subj==='latein'?(r.entries||[]).some(e=>e.les!=null&&lesJg(e.les)===+jg):+r.jg===+jg)).sort((a,b)=>(+a.n||0)-(+b.n||0)||String(a.ch).localeCompare(String(b.ch))||String(a.title).localeCompare(String(b.title)));
+ /* 12.56: Latein-Reihen ohne Pontes-Lektionen (z. B. Lektüre) nach ihrem Jahrgang wie in den anderen Fächern */const reihenOf=(subj,jg)=>(data?.reihen||[]).filter(r=>r.subject===subj&&(subj==='latein'&&(r.entries||[]).some(e=>e.les!=null)?(r.entries||[]).some(e=>e.les!=null&&lesJg(e.les)===+jg):+r.jg===+jg)).sort((a,b)=>(+a.n||0)-(+b.n||0)||String(a.ch).localeCompare(String(b.ch))||String(a.title).localeCompare(String(b.title)));
  const topicId=(r,jg,x,unit)=>x.les!=null?'l:'+x.les:unit?'u:'+x.u:r.subject==='latein'?'t:'+r.id+'.'+x.k:'t:'+jg+':'+(x.own?r.id+'.'+x.k:x.k);
  const topicsOf=(r,jg,all)=>{const o=[];for(const x of eff(r)){if(x.hid&&!all)continue;const unit=x.u&&data.units.find(y=>y.u===x.u),les=x.les!=null?data.lessons.find(l=>l.k===String(x.les))||null:null;if(x.les!=null&&!les)continue;o.push({id:topicId(r,jg,x,unit),k:x.k,title:x.t,u:unit||null,l:les,ch:r.ch,part:r.title,rid:r.id,jg,own:x.own,hid:x.hid})}return o};
  const topics=(subj,jg,all)=>reihenOf(subj,jg).flatMap(r=>topicsOf(r,jg,all));
  const allTopics=()=>(data?.reihen||[]).flatMap(r=>topicsOf(r,r.subject==='latein'?0:+r.jg));
  const reiheOf=id=>(data?.reihen||[]).find(r=>r.id===id)||null;
- const items=()=>cx.subject==='latein'?[...data.lessons.map(l=>'l:'+l.k),...allTopics().filter(t=>!t.u&&!t.l).map(t=>t.id)]:cx.subject?[...data.units.map(u=>'u:'+u.u),...allTopics().filter(t=>!t.u).map(t=>t.id)]:[];
+ /* 12.56: auch Lerneinheiten aus Latein-Reihen (z. B. Lektüre) lassen sich als „aktuell“ markieren */const items=()=>cx.subject==='latein'?[...data.lessons.map(l=>'l:'+l.k),...data.units.filter(u=>u.subject==='latein').map(u=>'u:'+u.u),...allTopics().filter(t=>!t.u&&!t.l).map(t=>t.id)]:cx.subject?[...data.units.map(u=>'u:'+u.u),...allTopics().filter(t=>!t.u).map(t=>t.id)]:[];
  function stand(){const s=rd(STAND)[cx.key];if(s&&items().includes(s))return s;
   /* 11.43: nur Inhalte dieser Lerngruppe (Fach + Jahrgang) – sonst nichts vorwählen */
   const v=visIds();if(cx.subject&&cx.subject!=='latein')return v.find(id=>id.startsWith('u:'))||v.find(id=>id.startsWith('t:'))||v[0]||'';
@@ -4624,7 +4626,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  async function render(){if(!on)return;cx=ctx();data=await load();
   /* 11.53: Alternative Lateinarbeiten (private Dateien) ab Lektion 15 */ALA={};try{const b=B();if(data&&b?.ala)for(const l of data.lessons)if(/^\d+$/.test(l.k)&&+l.k>=15){const x=await b.ala(l.k);if(x)ALA[l.k]=x}}catch{}
   if(!data){view.innerHTML='<div class="ein-body ein-empty">Der Unterricht ist gerade nicht erreichbar. Öffne einmal „Noten“ und versuche es erneut.</div>';return}
-  {const f=find(sel);if((!f.l&&!f.u&&!f.t&&!f.r)||!visIds().includes(sel))sel=stand()}draw()}
+  {const f=find(sel);if((!f.l&&!f.u&&!f.t&&!f.r)||!okSel(sel))sel=stand()}draw()}
  /* 11.28: Buchstaben-Chips (V · G · Ü · W) in der Zeile unter dem Lektionstitel – kräftig = vorhanden, blass = fehlt noch */
  const chips=l=>'<span class="ein-chips">'+[['V',l.nV,'Vokabeln'],['G',l.gr.length,'Grammatik'],['Ü',l.tt.length,'Übersetzungs-Trainer','t'],['W',l.nW,'Wiederholung']].map(([c,n,t,o])=>'<i class="'+(n?(o?'on t':'on'):'')+'" title="'+t+(n?'':' – fehlt noch')+'">'+c+'</i>').join('')+'</span>';
  /* 11.29: Themen aus dem Inhaltsverzeichnis unter dem Lektionstitel (ohne Inhaltsverzeichnis: Grammatik-Themen) */
@@ -4650,7 +4652,18 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  const rowT=(t,nw)=>'<button type="button" class="ein-row ein-in dim'+(sel===t.id?' on':'')+'" data-sel="'+esc(t.id)+'" title="Noch keine Lerneinheit"><span>'+esc(t.title)+'</span>'+(nw?NEUB:'')+(isStand(t.id)?'<span class="stand">aktuell</span>':'')+'</button>';
  /* 12.32: Obertitel mit ⋯ (umbenennen, neue Reihe) – und Ziel beim Ziehen einer Reihe */
  const chHead=c=>c?'<div class="ein-ch" data-chn="'+esc(c)+'"><span>'+esc(c)+'</span>'+tDots('data-tmc="'+esc(c)+'"','Obertitel '+c)+'</div>':'<div class="ein-ch ein-ch0" data-chn="">Ohne Obertitel</div>';
- function treeHtml(){neuLoad();const subj=SUBJ[cx.subject]||cx.subject||'',ids=visIds(),t=norm(q);
+ /* 12.56: Suche auch in anderen Jahrgängen – Treffer stehen unter „In anderen Jahrgängen“ und lassen sich öffnen */
+ const FOR=new Set(),okSel=id=>visIds().includes(id)||FOR.has(id);
+ const rJg=r=>{const e=(r.entries||[]).find(x=>x.les!=null);return (e&&lesJg(e.les))||+r.jg||''};
+ function otherJg(){const t=norm(q);if(!t||!data||(cx.subject==='latein'&&ui.allL))return '';const vis=new Set(visIds());
+  const R=(data.reihen||[]).filter(r=>r.subject===cx.subject&&!vis.has('r:'+r.id)&&norm([r.title,r.ch,r.lab,...(r.entries||[]).map(e=>e.t)].join(' ')).includes(t));
+  const U=cx.subject==='latein'?[]:data.units.filter(u=>u.subject===cx.subject&&!vis.has('u:'+u.u)&&!R.some(r=>(r.entries||[]).some(e=>e.u===u.u))&&norm(u.title+' '+(u.sub||'')).includes(t));
+  if(!R.length&&!U.length)return '';
+  const jg=x=>x?'<small>Jg. '+esc(x)+'</small>':'';
+  return '<div class="ein-pt ein-ojg">In anderen Jahrgängen</div>'+R.map(r=>'<button type="button" class="ein-row ein-ojr'+(sel==='r:'+r.id?' on':'')+'" data-sel="r:'+esc(r.id)+'" data-ojg><span>'+esc((r.lab?r.lab+' ':'')+r.title)+'</span>'+jg(rJg(r))+'</button>').join('')
+   +U.map(u=>'<button type="button" class="ein-row'+(sel==='u:'+u.u?' on':'')+'" data-sel="u:'+esc(u.u)+'" data-ojg><span>'+esc(u.title)+'</span>'+jg(u.jg)+'</button>').join('')}
+ function treeHtml(){const h=treeHtml0(),o=otherJg();if(!o)return h;return /Nichts gefunden\./.test(h)?o:h+o}
+ function treeHtml0(){neuLoad();const subj=SUBJ[cx.subject]||cx.subject||'',ids=visIds(),t=norm(q);
   const L=ids.map(id=>find(id)).filter(x=>{if(!t)return true;if(x.r)return norm(x.r.title+' '+x.r.ch).includes(t);if(x.t)return norm(x.t.title+' '+x.t.part).includes(t);if(x.l){const l=x.l,T=l.toc||{};return [lname(l),l.label,T.syn,T.form,T.wort,...(T.textk||[]),...(T.kult||[]),T.text,T.sach,...l.gr,...l.formen,l.syntax].filter(Boolean).some(v=>norm(v).includes(t))}return norm(x.u.title+' '+x.u.sub).includes(t)});
   if(!ids.length)return '<div class="ein-empty" style="padding:8px">Für die '+esc(cx.short||'Lerngruppe')+(subj?' ('+esc(subj)+')':'')+' sind noch keine Einheiten vorhanden.</div>'+(cx.subject==='latein'?'<button type="button" class="ein-all" data-all>Alle Lektionen von Pontes einblenden</button>':'');
   if(!L.length)return '<div class="ein-empty" style="padding:8px">Nichts gefunden.</div>';
@@ -4663,7 +4676,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   if(cx.subject==='latein'&&ui.allL){let h='',jg=null;for(const x of L){if(!x.l)continue;if(x.l.jg!==jg){jg=x.l.jg;h+='<div class="ein-jg">'+(jg?'Jahrgang '+jg:'ohne Jahrgang')+' · '+esc(subj)+'</div>'}h+=rowL(x.l)}return h+allB}
   return '<div class="ein-jg">Jahrgang '+cx.jg+' · '+esc(subj)+'</div>'+L.map(x=>x.l?rowL(x.l):rowU(x.u)).join('')+allB}
  function wireTree(){const T=view.querySelector('.ein-list');
-  T.querySelectorAll('[data-sel]').forEach(b=>b.onclick=e=>{if(e.target.closest('[data-tck],[data-tmu],[data-tmr],[data-tgrip],[data-tgripr],[data-tmc]'))return;const tg=e.target.closest('[data-tg]');if(tg){e.stopPropagation();ui.cl={...(ui.cl||{})};if(ui.cl[tg.dataset.tg])delete ui.cl[tg.dataset.tg];else ui.cl[tg.dataset.tg]=1;saveUi();const sc=T.scrollTop;T.innerHTML=treeHtml();wireTree();T.scrollTop=sc;return}sel=b.dataset.sel;neuSeen(sel);sideOpen=false;draw()});
+  T.querySelectorAll('[data-sel]').forEach(b=>b.onclick=e=>{if(b.hasAttribute('data-ojg')){const id=b.dataset.sel;FOR.add(id);if(id.startsWith('r:'))for(const en of reiheOf(id.slice(2))?.entries||[]){if(en.u)FOR.add('u:'+en.u);if(en.k)FOR.add(en.k)}}if(e.target.closest('[data-tck],[data-tmu],[data-tmr],[data-tgrip],[data-tgripr],[data-tmc]'))return;const tg=e.target.closest('[data-tg]');if(tg){e.stopPropagation();ui.cl={...(ui.cl||{})};if(ui.cl[tg.dataset.tg])delete ui.cl[tg.dataset.tg];else ui.cl[tg.dataset.tg]=1;saveUi();const sc=T.scrollTop;T.innerHTML=treeHtml();wireTree();T.scrollTop=sc;return}sel=b.dataset.sel;neuSeen(sel);sideOpen=false;draw()});
   T.querySelectorAll('[data-jg]').forEach(b=>b.onclick=()=>{openJg.add(+b.dataset.jg);T.innerHTML=treeHtml();wireTree()});
   T.querySelectorAll('[data-tck]').forEach(x=>x.onclick=e=>{e.preventDefault();e.stopPropagation();const t=x.dataset.tck,id=x.dataset.id;CHK[t].has(id)?CHK[t].delete(id):CHK[t].add(id);treeRefresh()});
   T.querySelectorAll('[data-tmu]').forEach(x=>x.onclick=e=>{e.preventDefault();e.stopPropagation();tMenuU(x)});
@@ -4671,7 +4684,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   T.querySelectorAll('[data-tmu],[data-tmr]').forEach(x=>x.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();x.click()}});
   T.querySelectorAll('[data-tgrip]').forEach(g=>g.onpointerdown=e=>tDrag(g,e));
   selBar();
-  T.querySelector('[data-all]')?.addEventListener('click',()=>{ui.allL=!ui.allL;saveUi();T.innerHTML=treeHtml();wireTree();if(!ui.allL&&!visIds().includes(sel)){sel=stand();draw()}});
+  T.querySelector('[data-all]')?.addEventListener('click',()=>{ui.allL=!ui.allL;saveUi();T.innerHTML=treeHtml();wireTree();if(!ui.allL&&!okSel(sel)){sel=stand();draw()}});
   }
  /* ---------- 12.31: Ordnen im Baum ---------- */
  const tRefresh=async()=>{data=await load();draw()};
@@ -4767,7 +4780,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    +'<div class="ein-sacts ein-sacts2 ein-sb">'+(orgOn()?'<button type="button" class="ein-b" data-newr2 title="Neue, leere Reihe für '+esc(SUBJ[cx.subject]||cx.subject)+' · Jahrgang '+cx.jg+'">'+ICO.plus+'Neue Reihe</button><button type="button" class="ein-b ein-ib ein-ico" data-ord title="Alle Inhalte: alle Fächer und Jahrgänge auf einen Blick" aria-label="Alle Inhalte …"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></button>':'<button type="button" class="ein-b" data-ord title="Reihen und Einheiten ordnen, laden, exportieren und entfernen">Inhalte organisieren …</button>')+'<button type="button" class="ein-b ein-ib ein-ico" data-load title="Datei laden: Reihen (.cmreihe), Einheiten (.cmeinheit), Vokabel- und Grammatik-Pakete, Übersetzungstexte (.cmtext) oder ein Zip" aria-label="Datei laden …">'+ICO.down+'</button></div></div>'
    +'<div class="ein-handle" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Seitenmenü breiter oder schmaler ziehen" title="Ziehen: Seitenmenü breiter oder schmaler · Doppelklick: Standardbreite"><span class="sp-side-pill" aria-hidden="true">⋮</span><span class="sp-side-line" aria-hidden="true"></span><span class="sp-side-badge" aria-hidden="true"></span></div>'
    +'<div class="ein-main"><button type="button" class="ein-pick" data-pick>☰ '+(rh?esc(rh.title):l?esc(lname(l)):u?esc(inR0(u)?.title||u.title):tp?esc(tp.title):'Einheit wählen')+' ▾</button>'
-   +(rh?reiheHtml(rh):l||u||tp?'<div class="ein-mh"><h2>'+title+'</h2><span class="sp"></span>'+airHead(l)+lkHead(l)+(cx.key&&items().includes(sel)?'<span class="ein-togw"><button type="button" class="ein-curb'+(st?' on':'')+'" data-stand aria-pressed="'+!!st+'" aria-label="Aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+'" title="'+(st?'Aktuell – „Unterricht“ öffnet für die '+esc(cls)+' automatisch diese '+(l?'Lektion':'Einheit')+'. Tippen zum Aufheben.':'Als aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+' markieren')+'"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path class="bm" d="M7 3h10v18l-5-4-5 4z"/></svg></button>'+pinBtn(l,u,cls,subj)+(l&&data.units.some(x=>x.subject==='latein'&&String(x.lesson)===l.k)||l&&edOf('les:'+l.k).own?.length?'<button type="button" class="ein-curb'+(lEdit?' on':'')+'" data-ledit aria-pressed="'+lEdit+'" title="'+(lEdit?'Bearbeiten beenden':'Lernpakete bearbeiten: verschieben, umbenennen, ausblenden, löschen')+'" style="margin-left:8px">'+ICO.pen+'</button>':'')+'</span>':cx.key?'<span class="ein-tog off" style="cursor:default" title="„Aktuell“ gilt je Lerngruppe. Wechsle in eine '+(l?'Latein':'Erdkunde')+'-Klasse, um diese '+(l?'Lektion':'Einheit')+' dort als aktuell zu markieren.">„Aktuell“ nur in einer '+(l?'Latein':'Erdkunde')+'-Klasse · gewählt: '+esc(cls)+' · '+esc(subj)+'</span>':'')+'</div>'
+   +(rh?reiheHtml(rh):l||u||tp?'<div class="ein-mh"><h2>'+title+'</h2><span class="sp"></span>'+airHead(l)+lkHead(l)+LUB+(cx.key&&items().includes(sel)?'<span class="ein-togw"><button type="button" class="ein-curb'+(st?' on':'')+'" data-stand aria-pressed="'+!!st+'" aria-label="Aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+'" title="'+(st?'Aktuell – „Unterricht“ öffnet für die '+esc(cls)+' automatisch diese '+(l?'Lektion':'Einheit')+'. Tippen zum Aufheben.':'Als aktuelle '+(l?'Lektion':'Einheit')+' der '+esc(cls)+' markieren')+'"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path class="bm" d="M7 3h10v18l-5-4-5 4z"/></svg></button>'+pinBtn(l,u,cls,subj)+(l&&data.units.some(x=>x.subject==='latein'&&String(x.lesson)===l.k)||l&&edOf('les:'+l.k).own?.length?'<button type="button" class="ein-curb'+(lEdit?' on':'')+'" data-ledit aria-pressed="'+lEdit+'" title="'+(lEdit?'Bearbeiten beenden':'Lernpakete bearbeiten: verschieben, umbenennen, ausblenden, löschen')+'" style="margin-left:8px">'+ICO.pen+'</button>':'')+'</span>':cx.key?'<span class="ein-tog off" style="cursor:default" title="„Aktuell“ gilt je Lerngruppe. Wechsle in eine '+(l?'Latein':(SUBJ[(u||tp)?.subject]||'passende'))+'-Klasse, um diese '+(l?'Lektion':'Einheit')+' dort als aktuell zu markieren.">„Aktuell“ nur in einer '+(l?'Latein':(SUBJ[(u||tp)?.subject]||'passenden'))+'-Klasse · gewählt: '+esc(cls)+' · '+esc(subj)+'</span>':'')+'</div>'
      +(l?tocHtml(l)+lessonTiles(l):tp?'<p class="ein-sub">'+[tp.ch,tp.part].filter(Boolean).map(esc).concat('Jahrgang '+tp.jg).join(' · ')+'</p><div class="ein-empty">Zu diesem Thema gibt es noch keine digitale Lerneinheit. Du kannst es trotzdem als aktuelles Thema der '+esc(cls)+' markieren oder anheften.</div>':'<p class="ein-sub">'+[...(inR?[inR.ch,inR.part]:[u.sub]).filter(Boolean).map(esc),'Jahrgang '+u.jg].join(' · ')+'</p>'+unitTiles(u))
     :'<div class="ein-empty">Für die '+esc(cls)+(subj?' ('+esc(subj)+')':'')+' sind noch keine Einheiten vorhanden.</div>')+'</div>';
   wireTree();
@@ -5033,7 +5046,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    +'<button type="button" class="rh-add" data-add>+ Eigenen Eintrag hinzufügen (z. B. Test, Wiederholung, Exkursion)</button></div>'
    +'<p class="ein-foot" style="margin:12px 2px 0">Umbenennen ändert nur die Anzeige. Die Notenspalten heißen dann genauso, und die Ergebnisse bleiben bei der richtigen Einheit.'+(Object.keys(edOf(r.id)).length?' · <a data-reset>Ursprüngliche Reihe wiederherstellen</a>':'')+'</p>'}
  function wireReihe(r){const M=view.querySelector('.ein-main');if(!M)return;
-  M.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{sel=b.dataset.go;neuSeen(sel);draw()});
+  M.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{if(FOR.has('r:'+r.id))FOR.add(b.dataset.go);sel=b.dataset.go;neuSeen(sel);draw()});
   M.querySelector('[data-redit]')?.addEventListener('click',()=>{rEdit=!rEdit;draw()});
   M.querySelector('[data-rexp]')?.addEventListener('click',e=>reiheExp(r,e.currentTarget));
   if(!rEdit)return;const e=()=>{const x=edOf(r.id);x.names??={};x.hid??=[];x.del??=[];x.own??=[];return x};
