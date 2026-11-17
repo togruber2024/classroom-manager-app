@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 17.11.2026 · Version 12.59
+Stand: 17.11.2026 · Version 12.60
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1538,3 +1538,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.57: Hilfe mit drei Bereichen (Sitzplan-, Unterrichts-, Noten-Manager), Latein-Lektüre-Reihen unter „Inhalte organisieren“ mit Einheiten, Lernordner-QR nach Fach der gewählten Lerngruppe.
 12.58: Latein-Lektüre unter Pontes und unter „Alle Lektionen“, Übersetzungs-Trainer in der Einheit und in Reihen-Dateien, Datenschutzmodus im Lerneinheiten-Fenster.
 12.59: Übersetzungs-Trainer mit Station Grammatik (Wiederholung, Beispiele) und neuer Reihenfolge, weitere Stilmittel, Knopf-Spalten in Fabel-Einheiten.
+12.60: Lektüre-Reihen in „Alle Lektionen“ mit eingerückten, ein- und ausklappbaren Einheiten.
