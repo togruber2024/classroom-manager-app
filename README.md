@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 17.11.2026 · Version 12.63
+Stand: 17.11.2026 · Version 12.64
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1542,3 +1542,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.61: Übersetzungs-Trainer mit Grammatikseite (Lesefragen) und mitwachsendem Lexikon mit Fachbegriffen und Tabellen.
 12.62: Fenster „Material“ – alle Fächer und Jahrgänge als Bibliothek oder Tabelle, mit Filter, Suche und Nutzung.
 12.63: Lexikon mit neuen Begriffen und Tabellen für die Grammatik-Station der Pontes-Trainer L16–L23.
+12.64: Übersetzungs-Trainer: Lernordner prüft Trainer-Links, .cmtext per „Datei öffnen“, klare Meldung bei abgeschnittenem Link; Lexikon für Pontes S–L15 und L24–L31.

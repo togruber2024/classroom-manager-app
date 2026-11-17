@@ -155,6 +155,9 @@ async function addUnit(u,rh){await IDB('readwrite',st=>st.put(u,u.id));const M=u
  const e=a[id]??={id,kind:'Lerneinheit',added:Date.now(),p:'0/'+n};Object.assign(e,{reihe:String(rh||M.reihe||e.reihe||'').trim().slice(0,60),url:'einheit.html?u='+u.id+(subj?'&fach='+subj:''),title:M.title||u.title||'Lerneinheit',subject:subj,neu:1,at:Date.now(),me:e.me||(kl&&kl.me)||me0.me||'',cls:e.cls||(kl&&kl.c)||me0.cls||''});wr(a);return e}
 function fileOpen(){const i=document.createElement('input');i.type='file';i.style.display='none';document.body.append(i);
  i.onchange=async()=>{const f=i.files[0];i.remove();if(!f)return;let d=null;try{d=JSON.parse(window.cmFileText?await cmFileText(f):await f.text())}catch{}
+  /* 12.64: auch die Datei eines Übersetzungs-Trainers (.cmtext) – per AirDrop sicherer als der sehr lange Link */
+  const tt=ttOk(d)?d:null;
+  if(tt){try{localStorage.setItem(TTK,JSON.stringify(tt))}catch(e){alert('Speichern nicht möglich: Der Speicher ist voll.');return}location.href='texttrainer.html';return}
   const L=unitOk(d)?[d]:d&&d.type==='classroom-reihe'&&d.units?Object.values(d.units).filter(unitOk):[];
   if(!L.length){alert('Diese Datei ist keine Lerneinheit. Öffne die Datei, die du von deiner Lehrkraft bekommen hast (z. B. per AirDrop).');return}
   try{const E=[];for(const u of L)E.push(await addUnit(u,d.type==='classroom-reihe'?d.title:''));okMsg=E.length===1?'„'+E[0].title+'“ ist jetzt auf diesem iPad. Tippe auf „Öffnen ›“.':E.length+' Lerneinheiten sind jetzt auf diesem iPad.';edit=false;draw();scrollTo(0,0)}
@@ -164,13 +167,20 @@ $('#fopen').onclick=fileOpen;
 /* 12.11: „Link einfügen“ – ein Link aus AirDrop/Nachrichten öffnet sich in Safari; kopiert und hier eingefügt öffnet er sich in der Web-App (gleicher Speicher wie der Lernordner) */
 const linkOf=t=>{const m=String(t||'').match(/https?:\/\/\S+|(?:einheit|texttrainer|ueben|uebungen|vokabeltest|lernpaket)\.html\S*/);return m?local(m[0].replace(/[>)\]"'.,;]+$/,'')):null};
 function goLink(to){if(to){location.href=to;return true}return false}
+/* 12.64: Übersetzungs-Trainer – den Text schon hier auspacken und merken; kommt der lange Link beim Öffnen nicht ganz an, lädt der Trainer ihn trotzdem */
+const TTK='cm-texttrainer-last',ttOk=t=>!!(t&&t.type==='classroom-text-trainer'&&Array.isArray(t.s)&&t.s.length);
+async function ttPrep(to){if(!/^texttrainer\.html/.test(to||''))return to;const m=/#(z1|j1)\.([A-Za-z0-9_-]+)/.exec(to);if(!m)return null;
+ try{let s=m[2].replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
+  const by=m[1]==='z1'?new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()):u;const t=JSON.parse(new TextDecoder().decode(by));
+  if(!ttOk(t))return null;try{localStorage.setItem(TTK,JSON.stringify(t))}catch{}return to}catch{return null}}
 /* 12.24: Zwischenablage nicht mehr sofort öffnen – sonst landet man immer wieder beim zuletzt kopierten Link; er steht nur vorausgefüllt im Feld */
 async function pasteLink(){let t='';try{t=await navigator.clipboard.readText()}catch{}
  const o=document.createElement('div');o.className='lp';o.innerHTML='<form novalidate><h4>Link einfügen</h4><p>Halte den Link in Safari oder Nachrichten gedrückt, tippe auf <b>„Link kopieren“</b> und füge ihn hier ein (Feld antippen → <b>Einfügen</b>).</p><input type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://…" aria-label="Link"><div class="er" hidden></div><div class="ac"><button type="button" class="no">Abbrechen</button><button type="submit" class="ok">Öffnen</button></div></form>';
  document.body.append(o);const i=o.querySelector('input'),er=o.querySelector('.er');if(/https?:/.test(t)){i.value=t;i.select()}i.focus();
- const bad=()=>{er.hidden=false;er.textContent=i.value.trim()?'Das ist kein Link zu einer Aufgabe. Kopiere den Link, den du von deiner Lehrkraft bekommen hast.':'Füge zuerst den Link ein.'};
- o.querySelector('.no').onclick=()=>o.remove();o.onclick=e=>{if(e.target===o)o.remove()};i.oninput=()=>{er.hidden=true;const to=linkOf(i.value);if(to)goLink(to)};
- o.querySelector('form').onsubmit=e=>{e.preventDefault();if(!goLink(linkOf(i.value)))bad()}}
+ const bad=to=>{er.hidden=false;er.textContent=/^texttrainer\.html/.test(to||'')?'Der Link ist unvollständig ('+i.value.trim().length+' Zeichen) – beim Kopieren ist ein Teil verloren gegangen. Tippe in Safari auf „Link kopieren“ und versuche es noch einmal – oder öffne die Datei des Trainers mit „Datei öffnen“.':i.value.trim()?'Das ist kein Link zu einer Aufgabe. Kopiere den Link, den du von deiner Lehrkraft bekommen hast.':'Füge zuerst den Link ein.'};
+ const go=async quiet=>{const to=linkOf(i.value);if(!to)return quiet||bad();const ok=await ttPrep(to);if(ok)goLink(ok);else bad(to)};
+ o.querySelector('.no').onclick=()=>o.remove();o.onclick=e=>{if(e.target===o)o.remove()};i.oninput=()=>{er.hidden=true;if(linkOf(i.value))go(true)};
+ o.querySelector('form').onsubmit=e=>{e.preventDefault();go()}}
 $('#lpaste').onclick=pasteLink;
 $('#scan').onclick=scan;addEventListener('storage',draw);addEventListener('pageshow',draw);draw();
 window.cmLernordner={local,draw};
