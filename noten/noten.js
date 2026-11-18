@@ -8084,6 +8084,120 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
 })();
 ;
 
+/* ==== noten/class-notes.js ==== */
+/* 12.94: Hinweise zur Klasse – kurzer Text je Fach und Klasse, der ab einem Zeitpunkt aufploppt, sobald die Klasse geöffnet ist.
+   Standard: Beginn der nächsten Stunde dieser Klasse laut Stundenplan; sonst „Sofort“ oder ein gewähltes Datum.
+   „Erledigt“ blendet ihn aus, „Später“ zeigt ihn beim nächsten Öffnen der Klasse wieder. Offene Hinweise stehen zusätzlich in der Glocke.
+   Gespeichert unter notenrechner-klassenhinweise-v1 (Objekt je ID – im Backup, wird beim Zusammenführen ergänzt). */
+(()=>{
+ const KEY='notenrechner-klassenhinweise-v1';
+ const TOP=(()=>{try{return window.top.document}catch{return null}})();if(!TOP)return;const TW=TOP.defaultView;
+ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const load=()=>{try{const o=JSON.parse(localStorage.getItem(KEY)||'{}');return o&&typeof o==='object'&&!Array.isArray(o)?o:{}}catch{return {}}};
+ const save=o=>{try{localStorage.setItem(KEY,JSON.stringify(o))}catch{}};
+ const DAYS=['So','Mo','Di','Mi','Do','Fr','Sa'],p2=n=>String(n).padStart(2,'0');
+ const when=ms=>{const d=new Date(ms);return DAYS[d.getDay()]+' '+p2(d.getDate())+'.'+p2(d.getMonth()+1)+'. · '+d.getHours()+':'+p2(d.getMinutes())+' Uhr'};
+ const cur=()=>{try{return currentSubject&&currentClassId?{subject:currentSubject,classId:currentClassId}:null}catch{return null}};
+ const labelOf=(s,c)=>{try{return (classesBySubject?.[s]||[]).find(x=>x.id===c)?.label||''}catch{return ''}};
+ const subjLabel=s=>{try{return subjects?.[s]?.label||''}catch{return ''}};
+ /* Beginn der nächsten Stunde dieser Klasse (Stundenplan inkl. erkannter Stunden und A/B-Wochen), höchstens drei Wochen voraus */
+ function nextLesson(subject,classId){const ref=subject+'::'+classId,now=Date.now();
+  for(let d=0;d<21;d++){const day=new Date();day.setHours(12,0,0,0);day.setDate(day.getDate()+d);const w=day.getDay();if(w<1||w>5)continue;let pl;try{pl=TW.classroomTimetableFor?.(day)}catch{}if(!pl)return null;
+   const row=pl.days?.[String(w)]||{};for(let i=0;i<(pl.slots||[]).length;i++){if(row[i]?.ref!==ref)continue;const [h,m]=String(pl.slots[i].start||'').split(':').map(Number);if(!Number.isFinite(h)||!Number.isFinite(m))continue;
+    const at=new Date(day);at.setHours(h,m,0,0);if(at.getTime()>now)return {at:at.getTime(),slot:i+1}}}
+  return null}
+ const openOf=(s,c)=>Object.values(load()).filter(n=>n&&!n.done&&n.text&&(!s||n.subject===s&&n.classId===c)).sort((a,b)=>(a.due||0)-(b.due||0));
+ const dueOf=(s,c)=>openOf(s,c).filter(n=>(n.due||0)<=Date.now());
+ /* für die Glocke */
+ window.classroomClassNotes={open:()=>openOf().map(n=>({...n,label:n.label||labelOf(n.subject,n.classId),isDue:(n.due||0)<=Date.now()})),done:id=>done(id),edit:id=>{const n=load()[id];if(n)editor(n.subject,n.classId,n)},when};
+ function done(id){const o=load();if(o[id]){o[id].done=Date.now();save(o)}later.delete(id);try{TW.classroomReminders?.refresh?.()}catch{}refreshBtn()}
+ const later=new Set();
+ const ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h10l4 4v14H5z"/><path d="M15 3v4h4M8.5 12h7M8.5 16h5"/></svg>';
+
+ /* ---------- Schreiben / bearbeiten ---------- */
+ const dlg=TOP.getElementById('cnDialog')||(()=>{const d=TOP.createElement('dialog');d.id='cnDialog';d.className='cn-dialog';TOP.body.append(d);return d})();
+ const localInput=ms=>{const d=new Date(ms);return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+'T'+p2(d.getHours())+':'+p2(d.getMinutes())};
+ function editor(subject,classId,note){
+  const lbl=labelOf(subject,classId)||note?.label||'',nx=nextLesson(subject,classId),mode=note?(note.mode==='next'&&nx?'next':note.mode==='date'?'date':note.mode==='next'?'date':'now'):(nx?'next':'now');
+  const others=openOf(subject,classId).filter(n=>n.id!==note?.id);
+  const opt=(v,t,s)=>`<label class="cn-opt"><input type="radio" name="cnWhen" value="${v}"${mode===v?' checked':''}><span class="cn-r"></span><span>${t}${s?`<small>${s}</small>`:''}</span></label>`;
+  dlg.innerHTML=`<form method="dialog" class="cn-form"><div class="cn-grip"></div><h2>Hinweis zur ${esc(/^klasse\b/i.test(lbl)?lbl:'Klasse '+lbl)}</h2>
+   ${others.length?`<div class="cn-list"><div class="cn-lbl">OFFEN</div>${others.map(n=>`<div class="cn-li"><div><b>${esc(n.text)}</b><small>${(n.due||0)<=Date.now()?'fällig seit '+esc(when(n.due||n.created)):'ab '+esc(when(n.due))}</small></div><button type="button" data-cn-ed="${esc(n.id)}">Bearbeiten</button><button type="button" data-cn-ok="${esc(n.id)}">Erledigt</button></div>`).join('')}</div>`:''}
+   <div class="cn-lbl">${note?'HINWEIS BEARBEITEN':others.length?'NEUER HINWEIS':'HINWEIS'}</div><textarea class="cn-ta" rows="3" maxlength="600" placeholder="z. B. Backup vom Mac holen und Vokabeltest einscannen">${esc(note?.text||'')}</textarea>
+   <div class="cn-lbl">ANZEIGEN AB</div>
+   ${nx?opt('next','Nächste Stunde',esc(when(nx.at))+' ('+nx.slot+'. Stunde)'):''}${opt('now','Sofort')}${opt('date','Datum wählen …','Tag und Uhrzeit')}
+   <input type="datetime-local" class="cn-dt" value="${localInput(note?.due&&note.due>Date.now()?note.due:nx?.at||Date.now()+864e5)}"${mode==='date'?'':' hidden'}>
+   ${nx?'':'<p class="cn-note">Für diese Klasse steht keine Stunde im Stundenplan – „Nächste Stunde“ ist deshalb nicht möglich.</p>'}
+   <p class="cn-err" hidden></p>
+   <div class="cn-row">${note?'<button type="button" class="cn-del" data-cn-del>Löschen</button>':''}<span></span><button type="button" data-cn-cancel>Abbrechen</button><button type="button" class="cn-pri" data-cn-save>Speichern</button></div></form>`;
+  const ta=dlg.querySelector('.cn-ta'),dt=dlg.querySelector('.cn-dt'),err=dlg.querySelector('.cn-err');
+  dlg.querySelectorAll('[name=cnWhen]').forEach(r=>r.onchange=()=>{dt.hidden=r.value!=='date'||!r.checked;if(!dt.hidden)dt.focus()});
+  dlg.querySelector('[data-cn-cancel]').onclick=()=>dlg.close();
+  dlg.querySelectorAll('[data-cn-ok]').forEach(b=>b.onclick=()=>{done(b.dataset.cnOk);editor(subject,classId,note)});
+  dlg.querySelectorAll('[data-cn-ed]').forEach(b=>b.onclick=()=>editor(subject,classId,load()[b.dataset.cnEd]));
+  dlg.querySelector('[data-cn-del]')?.addEventListener('click',()=>{const o=load();delete o[note.id];save(o);later.delete(note.id);dlg.close();try{TW.classroomReminders?.refresh?.()}catch{}refreshBtn()});
+  dlg.querySelector('[data-cn-save]').onclick=()=>{const text=ta.value.trim();if(!text){err.textContent='Bitte einen Text eingeben.';err.hidden=false;ta.focus();return}
+   const m=dlg.querySelector('[name=cnWhen]:checked')?.value||'now';let due=Date.now();
+   if(m==='next'){const n=nextLesson(subject,classId);due=n?n.at:Date.now()}else if(m==='date'){const t=Date.parse(dt.value);if(!Number.isFinite(t)){err.textContent='Bitte Tag und Uhrzeit wählen.';err.hidden=false;return}due=t}
+   const o=load(),id=note?.id||'cn-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+   o[id]={...(o[id]||{}),id,subject,classId,label:labelOf(subject,classId)||note?.label||'',text,mode:m,due,created:note?.created||Date.now(),done:0};
+   /* alte erledigte Hinweise (über 60 Tage) aufräumen */for(const [k,v] of Object.entries(o))if(v?.done&&Date.now()-v.done>60*864e5)delete o[k];
+   save(o);later.delete(id);dlg.close();try{TW.classroomReminders?.refresh?.()}catch{}refreshBtn();setTimeout(check,300)};
+  if(!dlg.open)dlg.showModal();if(!note)setTimeout(()=>ta.focus({preventScroll:true}),60)}
+ window.classroomClassNoteEditor=()=>{const c=cur();if(c)editor(c.subject,c.classId)};
+
+ /* ---------- Aufploppen ---------- */
+ const pop=TOP.getElementById('cnPop')||(()=>{const d=TOP.createElement('dialog');d.id='cnPop';d.className='cn-dialog cn-pop';TOP.body.append(d);return d})();
+ function show(n){
+  pop.innerHTML=`<div class="cn-tag">${ICON}Hinweis · ${esc(n.label||labelOf(n.subject,n.classId))}${subjLabel(n.subject)?' · '+esc(subjLabel(n.subject)):''}</div><p class="cn-txt">${esc(n.text)}</p><small class="cn-meta">Geschrieben am ${esc(when(n.created).replace(/ · .*/,''))} · fällig seit ${esc(new Date(n.due||n.created).toDateString()===new Date().toDateString()?when(n.due||n.created).replace(/^\S+ \S+ · /,''):when(n.due||n.created))}</small><div class="cn-two"><button type="button" data-l>Später</button><button type="button" class="cn-pri" data-d>Erledigt</button></div>`;
+  pop.querySelector('[data-l]').onclick=()=>{later.add(n.id);pop.close();setTimeout(check,400)};
+  pop.querySelector('[data-d]').onclick=()=>{done(n.id);pop.close();setTimeout(check,400)};
+  pop.oncancel=()=>later.add(n.id);
+  pop.showModal()}
+ let lastKey='',hiddenAt=0;
+ function busy(){try{if(TOP.documentElement.classList.contains('classroom-beamer-active')||TOP.documentElement.classList.contains('cm-qrfull'))return true;if([...TOP.querySelectorAll('dialog[open]')].some(d=>d!==pop))return true;if(document.querySelector('dialog[open]'))return true;try{if(TW.document.getElementById('view-sitzplan')?.contentDocument?.querySelector('dialog[open]'))return true}catch{}}catch{}return false}
+ function check(){const c=cur();if(!c)return;const k=c.subject+'|'+c.classId;if(k!==lastKey){lastKey=k;later.clear()}refreshBtn();
+  if(TOP.visibilityState==='hidden'||pop.open||busy())return;const n=dueOf(c.subject,c.classId).find(x=>!later.has(x.id));if(n)show(n)}
+ TOP.addEventListener('visibilitychange',()=>{if(TOP.visibilityState==='hidden')hiddenAt=Date.now();else{if(hiddenAt&&Date.now()-hiddenAt>5*6e4)later.clear();hiddenAt=0;setTimeout(check,800)}});
+ setInterval(check,15000);setTimeout(check,2500);
+ let pk='';setInterval(()=>{const c=cur(),k=c?c.subject+'|'+c.classId:'';if(k!==pk){pk=k;setTimeout(check,900)}},1500);
+ addEventListener('storage',e=>{if(e.key===KEY){refreshBtn();setTimeout(check,500)}});
+
+ /* ---------- Knopf im Auswahlmenü (Mac/iPad: aufgeklappte Leiste, iPhone: Blatt „Fach und Klasse“) ---------- */
+ function refreshBtn(){const fly=TOP.querySelector('.compact-navigation-flyout');if(!fly)return;const c=cur();let b=fly.querySelector('.cn-navrow');
+  if(!c){b?.remove();return}
+  const n=openOf(c.subject,c.classId).length,lbl=labelOf(c.subject,c.classId),txt='Hinweis zur '+(/^klasse\b/i.test(lbl)?lbl:'Klasse '+lbl)+' …'+(n?' ('+n+')':'');
+  if(!b){b=TOP.createElement('div');b.className='cn-navrow';b.innerHTML='<button type="button" class="cn-navbtn">'+ICON+'<span></span></button>';b.querySelector('button').onclick=e=>{e.stopPropagation();try{TOP.querySelector('.compact-navigation-backdrop')?.click()}catch{}const cc=cur();if(cc)setTimeout(()=>editor(cc.subject,cc.classId),60)}}
+  const sp=b.querySelector('span');if(sp.textContent!==txt)sp.textContent=txt;b.querySelector('button').classList.toggle('has-n',!!n);
+  const clsBtn=[...fly.querySelectorAll('button[data-class-id]')].find(x=>x.dataset.classId===c.classId),row=clsBtn?.closest('.compact-navigation-row');
+  const want=row||null;if(want){if(want.nextElementSibling!==b)want.after(b)}else if(b.parentElement!==fly||fly.lastElementChild!==b)fly.append(b)}
+ (()=>{const fly=TOP.querySelector('.compact-navigation-flyout');if(!fly)return;let t=0;new MutationObserver(()=>{if(t)return;t=setTimeout(()=>{t=0;refreshBtn()},30)}).observe(fly,{childList:true})})();
+
+ if(!TOP.getElementById('cnStyle')){const st=TOP.createElement('style');st.id='cnStyle';st.textContent=`
+ .cn-navrow{display:flex;padding:2px 0 4px 44px}@media (max-width:600px),(max-height:500px) and (pointer:coarse){.cn-navrow{padding:4px 0 6px}.cn-navbtn{height:44px;font-size:16px}}.cn-navbtn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border:1px dashed #a8bdd8;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:.92rem;cursor:pointer}.cn-navbtn svg{width:18px;height:18px;flex:none}.cn-navbtn.has-n{border-style:solid;font-weight:600}
+ .cn-dialog{width:min(480px,calc(100vw - 24px));max-height:calc(100dvh - 40px);box-sizing:border-box;padding:18px 20px;border:1px solid #dbe3ef;border-radius:18px;color:#243247;font:16px/1.45 ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;overflow:auto}
+ .cn-dialog::backdrop{background:rgba(28,43,70,.38)}
+ .cn-dialog h2{margin:0 0 4px;font-size:1.2rem}.cn-grip{display:none}
+ .cn-lbl{font-size:.74rem;font-weight:700;letter-spacing:.04em;color:#66758a;margin:14px 0 6px}
+ .cn-ta{display:block;box-sizing:border-box;width:100%;min-height:84px;padding:10px 12px;border:1.5px solid #9bb6dc;border-radius:12px;font:inherit;font-size:15px;line-height:1.4;color:#243247;background:#fbfcfe;resize:vertical}
+ .cn-opt{display:flex;align-items:center;gap:10px;border:1.5px solid #dce3ef;border-radius:12px;padding:9px 12px;margin-bottom:7px;font-size:15px;cursor:pointer}.cn-opt small{display:block;color:#66758a;font-size:12.5px}
+ .cn-opt input{position:absolute;opacity:0;pointer-events:none}.cn-r{width:18px;height:18px;border-radius:50%;border:2px solid #a8bdd8;flex:none;box-sizing:border-box}
+ .cn-opt:has(input:checked){border-color:#e8a25a;background:#fff8ef}.cn-opt:has(input:checked) .cn-r{border:5px solid #e8790c}
+ .cn-dt{display:block;box-sizing:border-box;width:100%;height:42px;margin:2px 0 6px;padding:0 10px;border:1.5px solid #9bb6dc;border-radius:10px;font:inherit;font-size:15px;color:#243247}.cn-dt[hidden]{display:none}
+ .cn-note{margin:4px 0 0;font-size:.82rem;color:#66758a}.cn-err{margin:6px 0 0;color:#b42318;font-size:.88rem}.cn-err[hidden]{display:none}
+ .cn-row{display:flex;gap:8px;align-items:center;margin-top:16px}.cn-row>span{flex:1}
+ .cn-dialog button{box-sizing:border-box;height:42px;padding:0 16px;border:1px solid #a8bdd8;border-radius:11px;background:#fff;color:#2f5f9b;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+ .cn-dialog button.cn-pri{background:#2f5f9b;border-color:#2f5f9b;color:#fff}.cn-dialog button.cn-del{border-color:#efb4b4;color:#b42318}
+ .cn-list{margin-top:10px}.cn-li{display:flex;gap:8px;align-items:center;border:1px solid #dce3ef;border-radius:12px;padding:8px 10px;margin-bottom:6px}.cn-li>div{flex:1;min-width:0}.cn-li b{display:block;font-weight:600;font-size:14px}.cn-li small{color:#66758a;font-size:12px}.cn-dialog .cn-li button{height:34px;padding:0 10px;font-size:13px}
+ .cn-pop{width:min(440px,calc(100vw - 28px));padding:18px}.cn-tag{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;font-weight:700;color:#2f5f9b;background:#e8f0fb;border-radius:999px;padding:4px 11px}.cn-tag svg{width:15px;height:15px}
+ .cn-txt{font-size:17px;line-height:1.45;margin:12px 0 6px;font-weight:600;white-space:pre-wrap}.cn-meta{color:#66758a;font-size:12.5px}
+ .cn-two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.cn-dialog .cn-two button{height:46px}
+ @media (max-width:600px){.cn-dialog:not(.cn-pop){width:100vw;max-width:100vw;margin:auto 0 0;border-radius:22px 22px 0 0;padding:10px 16px calc(18px + env(safe-area-inset-bottom));max-height:92dvh}.cn-dialog:not(.cn-pop) .cn-grip{display:block;width:40px;height:5px;border-radius:3px;background:#cfd8e4;margin:0 auto 10px}.cn-row{flex-wrap:wrap}.cn-row [data-cn-save],.cn-row [data-cn-cancel]{flex:1}.cn-row>span{display:none}}
+ .cr-it.cr-cn .cr-top b{display:inline-flex;gap:6px;align-items:center}`;TOP.head.append(st)}
+ refreshBtn();
+})();
+;
+
 /* ==== noten/reminders.js ==== */
 /* 9.63: Erinnerungen – fehlende Hausaufgaben bzw. fehlendes Material: ab dem 3. und erneut ab dem 5. Mal im Halbjahr.
    Glocke mit rotem Punkt oben in der Kopfzeile (Hauptfenster); das Fenster „Erinnerungen“ listet alle Klassen und Fächer.
@@ -8179,7 +8293,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const orgaHtml=orga.map((o,i)=>`<div class="cr-it cr-orga"><div class="cr-top"><b>${esc(o.name)}</b><span>Organisation · ${esc(o.classLabel)}</span></div><div class="cr-why">${o.open} noch offen · Frist ${esc(dm(o.due))}${o.late?' · überschritten':''}</div><div class="cr-act"><button type="button" class="cr-pri" data-orga-open="${i}">Liste öffnen</button><button type="button" data-orga-later="${i}">Später</button></div></div>`).join('');
   /* 12.82: neue bzw. ergänzte iPad-Tests aus einem Backup */const vtn=(()=>{try{return window.classroomVtNews?.()||[]}catch{return []}})(),vtK=v=>v.kind==='grammar'?'Grammatiktest':v.kind==='combo'?'Kombitest':'Vokabeltest';
   const vtHtml=vtn.map((v,i)=>`<div class="cr-it cr-vt"><div class="cr-top"><b>${v.isNew?'Neuer '+vtK(v):vtK(v)+' ergänzt'}</b><span>aus dem Backup${v.cls?' · '+esc(v.cls):''}</span></div><div class="cr-why">${esc(v.title)} · ${v.isNew?v.subs+' Abgabe'+(v.subs===1?'':'n'):v.add+' neue Abgabe'+(v.add===1?'':'n')+' ('+v.subs+' insgesamt)'}</div><div class="cr-act"><button type="button" class="cr-pri" data-vt-open="${i}">Zu den Abgaben ›</button><button type="button" data-vt-done="${i}">Erledigt</button></div></div>`).join('');
-  dlg.innerHTML=`<div class="cr-head"><div><h2>Erinnerungen</h2><p>Fehlende Hausaufgaben bzw. Material im laufenden Halbjahr – Erinnerung beim 3. und 5. Mal.</p></div><span class="cr-head-btns"><button type="button" data-cr-tpl>Vorlagen …</button><button type="button" class="cr-close" data-cr-close>Schließen</button></span></div><div class="cr-body">${vtHtml}${orgaHtml}${open.length?open.map(item).join(''):orga.length||vtn.length?'':'<p class="cr-empty">Keine offenen Erinnerungen.</p>'}${done.length?`<details class="cr-done"${doneOpen()?' open':''}><summary>Erledigt <span class="cr-n">${done.length}</span></summary>${done.map(doneItem).join('')}</details>`:''}</div>`;
+  /* 12.94: Hinweise zur Klasse – fällige zuerst, künftige mit „ab …“ */const cnl=(()=>{try{return window.classroomClassNotes?.open()||[]}catch{return []}})();
+  const cnHtml=cnl.map((n,i)=>`<div class="cr-it cr-cn"><div class="cr-top"><b>Hinweis zur Klasse</b><span>${esc(subjects[n.subject]?.label||'')}${n.label?' · '+esc(n.label):''}</span></div><div class="cr-why">${esc(n.text)}<span class="cr-ago">${n.isDue?'fällig seit '+esc(window.classroomClassNotes.when(n.due||n.created)):'erscheint ab '+esc(window.classroomClassNotes.when(n.due))}</span></div><div class="cr-act">${n.isDue?`<button type="button" class="cr-pri" data-cn-done="${i}">Erledigt</button>`:''}<button type="button" data-cn-edit="${i}">Bearbeiten</button>${n.isDue?'':`<button type="button" data-cn-done="${i}">Erledigt</button>`}</div></div>`).join('');
+  dlg.innerHTML=`<div class="cr-head"><div><h2>Erinnerungen</h2><p>Fehlende Hausaufgaben bzw. Material im laufenden Halbjahr – Erinnerung beim 3. und 5. Mal.</p></div><span class="cr-head-btns"><button type="button" data-cr-tpl>Vorlagen …</button><button type="button" class="cr-close" data-cr-close>Schließen</button></span></div><div class="cr-body">${cnHtml}${vtHtml}${orgaHtml}${open.length?open.map(item).join(''):orga.length||vtn.length||cnl.length?'':'<p class="cr-empty">Keine offenen Erinnerungen.</p>'}${done.length?`<details class="cr-done"${doneOpen()?' open':''}><summary>Erledigt <span class="cr-n">${done.length}</span></summary>${done.map(doneItem).join('')}</details>`:''}</div>`;
   dlg.querySelector('[data-cr-close]').onclick=()=>dlg.close();dlg.querySelector('[data-cr-tpl]').onclick=editTemplates;
   dlg.querySelector('.cr-done')?.addEventListener('toggle',e=>{try{localStorage.setItem('notenrechner-erinnerungen-erledigt-offen-v1',e.target.open?'1':'0')}catch{}});
   dlg.querySelectorAll('[data-cr-done]').forEach(b=>b.onclick=()=>{ack(open[+b.dataset.crDone]);list()});
@@ -8188,6 +8304,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   dlg.querySelectorAll('[data-cr-letter]').forEach(b=>b.onclick=()=>compose(open[+b.dataset.crLetter]));
   dlg.querySelectorAll('[data-orga-open]').forEach(b=>b.onclick=()=>{const o=orga[+b.dataset.orgaOpen];dlg.close();try{TOP.defaultView.selectView?.('noten')}catch{}window.classroomOrgaOpenFor?.(o.classKey)});
   dlg.querySelectorAll('[data-vt-open]').forEach(b=>b.onclick=()=>{const v=vtn[+b.dataset.vtOpen];dlg.close();window.classroomVtNewsOpen?.(v.id);refresh()});
+  dlg.querySelectorAll('[data-cn-done]').forEach(b=>b.onclick=()=>{window.classroomClassNotes?.done(cnl[+b.dataset.cnDone].id);refresh();list()});
+  dlg.querySelectorAll('[data-cn-edit]').forEach(b=>b.onclick=()=>{const n=cnl[+b.dataset.cnEdit];dlg.close();window.classroomClassNotes?.edit(n.id)});
   dlg.querySelectorAll('[data-vt-done]').forEach(b=>b.onclick=()=>{window.classroomVtNewsDone?.(vtn[+b.dataset.vtDone].id);refresh();list()});
   dlg.querySelectorAll('[data-orga-later]').forEach(b=>b.onclick=()=>{window.classroomOrgaSnooze?.(orga[+b.dataset.orgaLater].id);refresh();list()})}
  function compose(r){const text=letter(r);
@@ -8206,7 +8324,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  dlg.addEventListener('pointerdown',e=>{downOut=e.target===dlg&&outside(e)});
  dlg.addEventListener('click',e=>{const ok=downOut&&e.target===dlg&&outside(e);downOut=false;if(ok&&!dlg.querySelector('.cr-tpl'))dlg.close()});
  dlg.addEventListener('cancel',e=>{if(dlg.querySelector('.cr-tpl'))e.preventDefault()});
- let last='';function refresh(){placeBell();let n=0;try{n=state().open.length}catch(e){console.warn('Erinnerungen',e)}/* 9.99: Fristen aus „Organisation“ */try{n+=(window.classroomOrgaDue?.()||[]).length}catch{}try{n+=(window.classroomVtNews?.()||[]).length}catch{}const dot=bell.querySelector('.cr-dot'),sig=String(n);if(sig!==last){last=sig;dot.hidden=!n;dot.textContent=n>9?'9+':String(n);bell.classList.toggle('has-open',!!n);bell.title=n?`${n} offene Erinnerung${n===1?'':'en'}`:'Erinnerungen'}}
+ let last='';function refresh(){placeBell();let n=0;try{n=state().open.length}catch(e){console.warn('Erinnerungen',e)}/* 9.99: Fristen aus „Organisation“ */try{n+=(window.classroomOrgaDue?.()||[]).length}catch{}try{n+=(window.classroomVtNews?.()||[]).length}catch{}try{n+=(window.classroomClassNotes?.open()||[]).filter(x=>x.isDue).length}catch{}const dot=bell.querySelector('.cr-dot'),sig=String(n);if(sig!==last){last=sig;dot.hidden=!n;dot.textContent=n>9?'9+':String(n);bell.classList.toggle('has-open',!!n);bell.title=n?`${n} offene Erinnerung${n===1?'':'en'}`:'Erinnerungen'}}
  if(!TOP.getElementById('crStyle')){const st=TOP.createElement('style');st.id='crStyle';st.textContent=`
  .cr-bell{position:relative;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:42px;height:42px;padding:0;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:#2f5f9b;cursor:pointer}
  .cr-bell svg{width:20px;height:20px}.cr-dot{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 4px;box-sizing:border-box;border:2px solid #fff;border-radius:999px;background:#d64545;color:#fff;font:700 11.5px/16px system-ui,sans-serif;text-align:center}.cr-dot[hidden]{display:none}
