@@ -124,5 +124,9 @@
   return w}
  /* Empfang: kompakte Abgabe (wt = Anzahl Sätze) → Antworten aus r wiederherstellen */
  function ttExpand(j){try{if(!j||!j.wt||!Array.isArray(j.r))return j;const it=j.r.find(x=>Array.isArray(x)&&/^cm-texttrainer-/.test(String(x[0]))&&!/-rs$/.test(String(x[0])));if(!it)return j;return {...j,w:{...(j.w||{}),...ttAnswers(it[1]&&it[1].sent,j.wt)}}}catch{return j}}
- root.classroomTtAnswers=ttAnswers;root.classroomTtExpand=ttExpand;root.classroomQr=encode;root.classroomQrSvg=svg;root.classroomQrPack=pack;root.classroomRestoreCodes=restoreCodes;
+ root.classroomTtAnswers=ttAnswers;root.classroomTtExpand=ttExpand;root.classroomQr=encode;root.classroomQrSvg=svg;root.classroomQrPack=pack;
+ /* 12.80: Abgabe als Datei (für IServ) – Name: Lerneinheit/Test, Datum (JJJJ-MM-TT), Vorname; Prüfsumme wie in einheit.html/abgabe.js */
+ root.classroomSubFile=(title,name)=>{const d=new Date(),dt=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const c=s=>String(s||'').replace(/[\\/:*?"<>|.]+/g,' ').replace(/\s+/g,' ').trim();return (c(title).slice(0,60)||'Abgabe')+' '+dt+' '+(c(name)||'ohne Name')+'.cmabgabe'};
+ root.classroomAbgHash=async d=>{const {h,...r}=d||{};const txt='cm-abgabe-v1|'+JSON.stringify(r);try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,24)}catch{let x=2166136261;for(let i=0;i<txt.length;i++){x^=txt.charCodeAt(i);x=Math.imul(x,16777619)>>>0}return ('f'+x.toString(16)).padEnd(24,'0')}};
+ root.classroomSaveFile=async file=>{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:file.name});return 'share'}const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);return 'download'};root.classroomRestoreCodes=restoreCodes;
 })(typeof window!=='undefined'?window:globalThis);

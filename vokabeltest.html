@@ -49,12 +49,12 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
     +(svg?(codes.length>1?'<div class="qn">Code '+(k+1)+' von '+codes.length+'</div>':'')+'<div class="qrbox'+(big?' big':'')+'">'+svg+'</div><p class="muted">Zeig diesen Code deiner Lehrkraft.'+(codes.length>1?' Nach dem Scannen auf „Nächster Code“ tippen.':' Lass die Seite offen, bis er gescannt ist.')+'</p>'
      :'<p class="muted">Der QR-Code kann auf diesem iPad nicht angezeigt werden. Bitte die Datei per AirDrop senden.</p>')
     +'<div class="acts">'+(svg&&codes.length>1?'<button class="btn" id="qnext">'+(k+1<codes.length?'Nächster Code':'Wieder Code 1')+'</button>':'')+(svg?'<button class="btn sec" id="qbig">'+(big?'Code kleiner':'Code größer anzeigen')+'</button>':'')
-    +'<button class="btn '+(svg?'sec':'')+'" id="again">Als Datei senden (AirDrop)</button><button class="btn sec" id="edit">Meine Antworten ansehen</button></div><p class="muted" id="dmsg" style="margin-top:10px"></p>'
+    +'<button class="btn '+(svg?'sec':'')+'" id="again">Abgabe als Datei sichern</button><button class="btn sec" id="edit">Meine Antworten ansehen</button></div><p class="muted" id="dmsg" style="margin-top:10px"></p>'
     +'<div class="mres"><button class="btn" id="mres"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M8 12h8"/></svg>Mein Ergebnis ansehen</button><p class="muted">Scanne den Code am Smartboard, sobald deine Lehrkraft die Ergebnisse freigibt.</p></div>';
    card.querySelector('#mres').onclick=resScan;
    card.querySelector('#qnext')?.addEventListener('click',()=>{k=(k+1)%codes.length;draw()});
    card.querySelector('#qbig')?.addEventListener('click',()=>{big=!big;draw()});
-   card.querySelector('#again').onclick=async()=>{if(await send())card.querySelector('#again').textContent='Datei noch einmal senden'};
+   card.querySelector('#again').onclick=async()=>{if(await send())card.querySelector('#again').textContent='Datei noch einmal sichern'};
    card.querySelector('#edit').onclick=()=>done.classList.remove('on')};
   draw();done.classList.add('on');lockPage()}
  /* 12.30: nach dem Abgeben ist der Test gesperrt – Antworten nur noch ansehen, nicht ändern */
@@ -249,10 +249,10 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
    const b=e.target.closest('.gch button');if(!b)return;const card=b.closest('.gcard'),a=draft.a[+card.dataset.i],di=+b.dataset.d;a.d[di]=a.d[di]===b.dataset.v?'':b.dataset.v;card.querySelectorAll('.gch button[data-d="'+di+'"]').forEach(x=>x.classList.toggle('on',x.dataset.v===a.d[di]));save();count()});
   count();
   const ascii=x=>String(x||'').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/Ä/g,'Ae').replace(/Ö/g,'Oe').replace(/Ü/g,'Ue').replace(/ß/g,'ss').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
-  const fileName=()=>'Kombitest_'+ascii((test.t||'').replace(/^Kombitest\s*/i,'')).slice(0,40)+'_'+test.g+'_'+(ascii(draft.name)||'ohne_Name')+'.json';
+  const fileName=()=>classroomSubFile(String(test.t||'Kombitest').split(' · ')[0]+' Gruppe '+test.g,draft.name);/* 12.80 */
   const makeBody=()=>({type:'classroom-vokabeltest-abgabe',v:1,k:'kb',i:test.i,g:test.g,t:test.t,name:draft.name.trim(),ts:new Date().toISOString(),a:draft.a.map((a,i)=>i<nV?{l:a.l.trim(),ge:a.ge,m:a.m.trim()}:a)});let sentBody=null;
   async function send(){const body=sentBody||makeBody();
-   const file=new File([JSON.stringify(body)],fileName(),{type:'application/json'});
+   const file=new File([JSON.stringify(body)],fileName(),{type:'application/octet-stream'});
    try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:fileName()});return true}}catch(e){if(e?.name==='AbortError')return false}
    const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
    document.getElementById('dmsg').textContent='Die Datei „'+file.name+'“ wurde gespeichert. Schicke sie an deine Lehrkraft (z. B. per AirDrop aus der Dateien-App).';return true}
@@ -282,10 +282,10 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
   app.addEventListener('click',e=>{const b=e.target.closest('.gch button');if(!b)return;const card=b.closest('.gcard'),a=draft.a[+card.dataset.i],di=+b.dataset.d;a.d[di]=a.d[di]===b.dataset.v?'':b.dataset.v;card.querySelectorAll('.gch button[data-d="'+di+'"]').forEach(x=>x.classList.toggle('on',x.dataset.v===a.d[di]));save();count()});
   count();
   const ascii=x=>String(x||'').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/Ä/g,'Ae').replace(/Ö/g,'Oe').replace(/Ü/g,'Ue').replace(/ß/g,'ss').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
-  const fileName=()=>'Grammatiktest_'+ascii((test.t||'').replace(/^Grammatiktest\s*/i,'')).slice(0,40)+'_'+test.g+'_'+(ascii(draft.name)||'ohne_Name')+'.json';
+  const fileName=()=>classroomSubFile(String(test.t||'Grammatiktest').split(' · ')[0]+' Gruppe '+test.g,draft.name);/* 12.80 */
   const makeBody=()=>({type:'classroom-vokabeltest-abgabe',v:1,k:'gr',i:test.i,g:test.g,t:test.t,name:draft.name.trim(),ts:new Date().toISOString(),a:draft.a});let sentBody=null;
   async function send(){const body=sentBody||makeBody();
-   const file=new File([JSON.stringify(body)],fileName(),{type:'application/json'});
+   const file=new File([JSON.stringify(body)],fileName(),{type:'application/octet-stream'});
    try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:fileName()});return true}}catch(e){if(e?.name==='AbortError')return false}
    const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
    document.getElementById('dmsg').textContent='Die Datei „'+file.name+'“ wurde gespeichert. Schicke sie an deine Lehrkraft (z. B. per AirDrop aus der Dateien-App).';return true}
@@ -309,11 +309,11 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
  count();
  /* Dateiname nur aus einfachen Zeichen – AirDrop, Dateien-App und Browser kommen damit überall zurecht */
  const ascii=x=>String(x||'').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/Ä/g,'Ae').replace(/Ö/g,'Oe').replace(/Ü/g,'Ue').replace(/ß/g,'ss').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
- const fileName=()=>'Vokabeltest_'+ascii((test.t||'').replace(/^Vokabeltest\s*/i,''))+'_'+test.g+'_'+(ascii(draft.name)||'ohne_Name')+'.json';
+ const fileName=()=>classroomSubFile(String(test.t||'Vokabeltest').split(' · ')[0]+' Gruppe '+test.g,draft.name);/* 12.80 */
  const makeBody=()=>({type:'classroom-vokabeltest-abgabe',v:1,i:test.i,g:test.g,t:test.t,name:draft.name.trim(),ts:new Date().toISOString(),a:draft.a.map(a=>({l:a.l.trim(),ge:a.ge,m:a.m.trim()}))});let sentBody=null;
  async function send(){
   const body=sentBody||makeBody();
-  const file=new File([JSON.stringify(body)],fileName(),{type:'application/json'});
+  const file=new File([JSON.stringify(body)],fileName(),{type:'application/octet-stream'});
   try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:fileName()});return true}}catch(e){if(e?.name==='AbortError')return false}
   const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
   document.getElementById('dmsg').textContent='Die Datei „'+file.name+'“ wurde gespeichert. Schicke sie an deine Lehrkraft (z. B. per AirDrop aus der Dateien-App).';return true}
