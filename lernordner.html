@@ -170,7 +170,7 @@ const linkOf=t=>{const m=String(t||'').match(/https?:\/\/\S+|(?:einheit|texttrai
 function goLink(to){if(to){location.href=to;return true}return false}
 /* 12.64: Übersetzungs-Trainer – den Text schon hier auspacken und merken; kommt der lange Link beim Öffnen nicht ganz an, lädt der Trainer ihn trotzdem */
 const TTK='cm-texttrainer-last',ttOk=t=>!!(t&&t.type==='classroom-text-trainer'&&Array.isArray(t.s)&&t.s.length);
-async function ttPrep(to){if(!/^texttrainer\.html/.test(to||''))return to;const m=/#(z1|j1)\.([A-Za-z0-9_-]+)/.exec(to);if(!m)return null;
+async function ttPrep(to){if(!/^texttrainer\.html/.test(to||''))return to;if(/#ttk\./.test(to))return to;/* 12.85: Freischalt-Code */const m=/#(z1|j1)\.([A-Za-z0-9_-]+)/.exec(to);if(!m)return null;
  try{let s=m[2].replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
   const by=m[1]==='z1'?new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()):u;const t=JSON.parse(new TextDecoder().decode(by));
   if(!ttOk(t))return null;try{localStorage.setItem(TTK,JSON.stringify(t))}catch{}return to}catch{return null}}

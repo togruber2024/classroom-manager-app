@@ -43,6 +43,7 @@ h1{font-size:1.5rem;margin:4px 0 0}.muted{color:var(--mut)}
 textarea{width:100%;min-height:96px;padding:12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;font-size:1.05rem;resize:vertical}
 .lock{background:#f1f3f7!important;color:#3a475c;border-style:dashed!important}button.fd{background:#eef2f8;color:#2f5f9b;border-color:#8fb0dc}.finbox{margin-top:14px;padding:14px;border-radius:14px;background:#fff4ea;border:1px solid #f3c99b}.finbox p{margin:0 0 10px}.lockt{font-size:.82rem;color:#66758a;margin:6px 0 0}.vbx{margin-top:12px}.vbx b{color:#b45309}.vbx textarea{margin-top:6px;border-color:#f0c27a;background:#fffaf2;min-height:70px}.hbox{margin-top:10px;padding:10px 14px;border-radius:12px;background:#f4f7fc;border:1px solid #e1e8f2}.hbox b{color:var(--blue)}
 .build{min-height:52px;margin-top:8px;padding:8px;border:2px dashed #cfd8e6;border-radius:12px;display:flex;flex-wrap:wrap;gap:6px}.build .chip{min-height:40px}
+.wait{margin-top:12px;padding:12px 14px;border:1px dashed #c9d6e8;border-radius:12px;text-align:center;color:#4a5b73;background:#fbfcfe}.wait b{display:block;color:#1d2b3d;margin-bottom:4px}
 .model{margin-top:12px;padding:12px 14px;border-radius:12px;background:#eef6f0;border:1px solid #cfe7d7}.model b{display:block;color:var(--ok);font-size:.85rem;margin-bottom:2px}
 .rate{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.rate button{min-height:48px;padding:0 16px;border:1px solid #cfd8e6;border-radius:12px;background:#fff;font-weight:600}
 .pop{position:fixed;z-index:50;max-width:320px;padding:12px 14px;border-radius:14px;background:#fff;border:1px solid var(--line);box-shadow:0 14px 34px #1c2b4633;font-size:.95rem}.pop b{font-size:1.1rem}.pop .sec{min-height:40px;margin-top:8px}
@@ -78,6 +79,15 @@ const fromB64=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=
 async function fromHash(h){const m=/^#?(z1|j1)\.(.+)$/.exec(h||'');if(!m)return null;const u=fromB64(m[2]);const bytes=m[1]==='z1'?new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()):u;return JSON.parse(new TextDecoder().decode(bytes))}
 function valid(t){return t&&t.type==='classroom-text-trainer'&&Array.isArray(t.s)&&t.s.length}
 let AB=null;
+/* 12.85: Musterübersetzung erst nach Freigabe durch die Lehrkraft (QR „Musterübersetzung freigeben“) – verschlüsselt im Link (dz), Schlüssel im Freigabe-Code */
+const TKK='cm-tt-keys',thOf=x=>{let h=2166136261;for(const ch of String(x||''))h=Math.imul(h^ch.charCodeAt(0),16777619)>>>0;return h.toString(36)},ub64=x=>{x=String(x).replace(/-/g,'+').replace(/_/g,'/');while(x.length%4)x+='=';const b=atob(x),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
+const ttKeys=()=>{try{return JSON.parse(localStorage.getItem(TKK)||'{}')||{}}catch{return {}}};
+let DE=null;const DEPV=/[?&]vorschau=1/.test(location.search);
+async function deLoad(){DE=null;if(!T)return;if(DEPV){DE=T.s.map(x=>x.de||'');return}const K=ttKeys();
+ if(T.dz){const sk=K[T.dk];if(!sk)return;try{const raw=ub64(T.dz),key=await crypto.subtle.importKey('raw',ub64(sk),'AES-GCM',false,['decrypt']);DE=JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:raw.slice(0,12)},key,raw.slice(12))))}catch{DE=null}}
+ else if(K['t:'+thOf(T.title)])DE=T.s.map(x=>x.de||'')}
+function ttKeyIn(txt){const m=/#ttk\.([A-Za-z0-9_-]*)\.([A-Za-z0-9_-]*)\.([a-z0-9]+)/.exec(String(txt||''));if(!m)return false;const K=ttKeys();if(m[1]&&m[2])K[m[1]]=m[2];K['t:'+m[3]]=1;try{localStorage.setItem(TKK,JSON.stringify(K))}catch{}return true}
+async function ttUnlockScan(){if(!window.cmScanQr){alert('Scanne den Code mit „QR scannen“ in deinem Lernordner.');return}cmScanQr(async txt=>{if(!ttKeyIn(txt))return false;await deLoad();if(DE)alert('Musterübersetzung freigeschaltet ✓');else alert('Dieser Code gehört zu einem anderen Text.');render();return true},'Freischalt-Code deiner Lehrkraft scannen')}
 /* 11.45: Abgabe-QR – gezählt: fertige Sätze (mit Selbsteinschätzung) und davon ohne Hilfe; Klassenliste kommt mit dem Link (t.cm) */
 function ttScore(){const N=T.s.length,X=ST.sent||{};let fe=0,oh=0,og=0,vb=0;const w={},RT=['✗ noch nicht','≈ teilweise','✓ passt'];for(let i=0;i<N;i++){const x=X[i];if(!x)continue;if(sDone(x)){fe++;if(!x.h&&!x.og)oh++}if(x.og&&x.cmp)og++;if(x.vb&&x.vb.trim())vb++;
   /* 11.73/11.91: Übersetzungen gehen mit der Abgabe – Aufbau in qr-code.js (classroomTtAnswers) */}
@@ -89,8 +99,8 @@ function ttScore(){const N=T.s.length,X=ST.sent||{};let fe=0,oh=0,og=0,vb=0;cons
 /* 11.97: immer „Nebensatz“ statt „Nebensatz“ – auch in den Angaben der Textdateien */const NS=x=>typeof x==='string'?x.replace(/Gliedsatz-/g,'Nebensatz-').replace(/Gliedsätze/g,'Nebensätze').replace(/Gliedsatzes/g,'Nebensatzes').replace(/Gliedsatz/g,'Nebensatz'):x;
 function start(t){const walk=o=>{if(Array.isArray(o)){for(let i=0;i<o.length;i++)o[i]=typeof o[i]==='string'?NS(o[i]):(walk(o[i]),o[i])}else if(o&&typeof o==='object')for(const k of Object.keys(o))o[k]=typeof o[k]==='string'?NS(o[k]):(walk(o[k]),o[k])};try{walk(t)}catch{}T=t;try{window.cmLoNote?.({key:t.title,title:String(t.title).replace(/^Lektion (\S+) ·/,'L$1 ·'),subject:'latein'})}catch{}keepHash(t);ST=ls.get(key())||{pp:[],ppMiss:0,ppDone:false,ev:null,evFirst:null,pr:{},sent:{}};
  /* 11.77: wer schon vor dem Vokabel-Schritt angefangen hat, wird nicht ausgesperrt */if(!t.gram&&!ST.vo&&!ST.voFree&&(ST.pp.length||ST.ppTaps||Object.keys(ST.sent).length||Object.keys(ST.pr).length||ST.evFirst!=null))ST.voFree=true;
- tab=firstOpen()||tabsOf()[0]?.[0]||'vo';ls.set('cm-texttrainer-last',t);if(t.cm&&t.cm.u&&window.cmAbgabe&&!AB)AB=cmAbgabe({u:t.cm.u,title:t.title,cls:t.cm.c,names:t.cm.n,score:ttScore,restore:()=>[[key(),ST]]});render()}
-async function init(){let t=null;const H=location.hash||window.CM_EMBED_HASH||'';try{t=await fromHash(H)}catch(e){console.warn(e)}
+ tab=firstOpen()||tabsOf()[0]?.[0]||'vo';ls.set('cm-texttrainer-last',t);if(t.cm&&t.cm.u&&window.cmAbgabe&&!AB)AB=cmAbgabe({u:t.cm.u,title:t.title,cls:t.cm.c,names:t.cm.n,score:ttScore,restore:()=>[[key(),ST]]});deLoad().then(render)}
+async function init(){let t=null;if(ttKeyIn(location.hash)){try{history.replaceState(null,'',location.pathname+location.search)}catch{}setTimeout(()=>alert('Musterübersetzung freigeschaltet ✓'),300)}const H=location.hash||window.CM_EMBED_HASH||'';try{t=await fromHash(H)}catch(e){console.warn(e)}
  /* 12.64: Link kaputt (z. B. beim Kopieren abgeschnitten) → klar sagen, statt still einen anderen Text zu zeigen */
  const broken=/^#?(z1|j1)\./.test(H)&&!valid(t),last=ls.get('cm-texttrainer-last');
  if(!broken&&!valid(t))t=last;if(valid(t))return start(t);
@@ -459,15 +469,16 @@ function showSent(b,si){const S=T.s[si],X=sstate(si),ws=words(si);
 function renderTranslate(c,si){const S=T.s[si],X=sstate(si);const H=S.h;
  /* 12.29: Musterübersetzung, Verbesserung und Selbsteinschätzung erst nach der Abgabe – bis dahin bleibt die Übersetzung änderbar */
  const F=fin(),lock=F||X.cmp,last=si===T.s.length-1,open=T.s.map((_,i)=>i).filter(i=>!sDone(ST.sent[i]));
- c.innerHTML='<textarea id="ta" placeholder="Deine Übersetzung …"'+(lock?' readonly class="lock"':'')+'>'+esc(X.tx)+'</textarea>'+(lock?'<div class="lockt">🔒 Abgegeben – vergleiche jetzt deine Übersetzung mit der Musterübersetzung.</div>':X.fd?'<div class="lockt">✓ Fertig. Bis zur Abgabe kannst du noch ändern.</div>':'')
+ c.innerHTML='<textarea id="ta" placeholder="Deine Übersetzung …"'+(lock?' readonly class="lock"':'')+'>'+esc(X.tx)+'</textarea>'+(lock?'<div class="lockt">🔒 Abgegeben'+(DE?' – vergleiche jetzt deine Übersetzung mit der Musterübersetzung.':' – ihr besprecht die Übersetzung im Unterricht.')+'</div>':X.fd?'<div class="lockt">✓ Fertig. Bis zur Abgabe kannst du noch ändern.</div>':'')
   +'<div class="row"'+(lock?' style="display:none"':'')+'><button class="sec" data-h="1">Hilfe 1</button><button class="sec" data-h="2">Hilfe 2</button><div class="sp"></div><button class="pri" data-fd>'+(last?'Fertig':'Fertig – nächster Satz')+'</button></div><div id="hl"></div><div id="cmp"></div>'
-  +(!F&&!open.length?'<div class="finbox"><p><b>Alle Sätze sind übersetzt.</b> Gib jetzt ab. Danach siehst du die Musterübersetzung und vergleichst Satz für Satz.</p><button class="pri" data-fin>Abgeben und dann vergleichen</button></div>':'');
+  +(!F&&!open.length?'<div class="finbox"><p><b>Alle Sätze sind übersetzt.</b> Gib jetzt ab. Danach besprecht ihr die Übersetzung im Unterricht.</p><button class="pri" data-fin>Abgeben</button></div>':'');
  const ta=c.querySelector('#ta');ta.oninput=()=>{if(lock){ta.value=X.tx;return}X.tx=ta.value;save()};
  const used=X.hu||(X.hu=[]);
  const showH=()=>{const hl=c.querySelector('#hl');if(lock){hl.innerHTML='';return}hl.innerHTML=used.filter(n=>n<3).map(n=>'<div class="hbox"><b>Hilfe '+n+':</b> '+esc(H[n-1])+'</div>').join('');if(used.includes(3))hl.insertAdjacentHTML('beforeend','<div class="hbox"><b>Hilfe 3:</b> Tippe die Bausteine in der richtigen Reihenfolge an.<div class="chips" id="bk"></div><div class="build" id="bd"></div></div>');if(used.includes(3))buildPuzzle(c,si);c.querySelectorAll('[data-h]').forEach(x=>x.disabled=used.includes(+x.dataset.h))};
  c.querySelectorAll('[data-h]').forEach(x=>x.onclick=()=>{const n=+x.dataset.h;if(!used.includes(n)){used.push(n);X.h++;save()}showH()});showH();
- const showCmp=()=>{const box=c.querySelector('#cmp');box.innerHTML='<div class="model"><b>Musterübersetzung</b>'+esc(S.de)+'</div><div class="vbx"><b>Meine Verbesserung</b> <span class="muted">(freiwillig)</span><textarea id="vb" placeholder="Hier kannst du deine Übersetzung verbessern …">'+esc(X.vb||'')+'</textarea></div><div class="muted" style="margin-top:10px">Wie gut passt deine Übersetzung?</div><div class="rate"><button data-r="2">✓ Passt</button><button data-r="1">≈ Teilweise</button><button data-r="0">✗ Noch nicht</button></div>';
-  {const vb=box.querySelector('#vb');vb.oninput=()=>{X.vb=vb.value;save()}}
+ const showCmp=()=>{const box=c.querySelector('#cmp');/* 12.85: ohne Freigabe nur die eigene Übersetzung – kein Muster, kein Schreibfeld */
+  if(!DE||!DE[si]){box.innerHTML='<div class="wait"><b>Musterübersetzung</b>Gibt es erst, wenn deine Lehrkraft sie freischaltet.<div style="margin-top:10px"><button class="sec" data-unl>Freischalt-Code scannen</button></div></div>';box.querySelector('[data-unl]').onclick=ttUnlockScan;return}
+  box.innerHTML='<div class="model"><b>Musterübersetzung</b>'+esc(DE[si])+'</div><div class="muted" style="margin-top:10px">Wie gut passt deine Übersetzung?</div><div class="rate"><button data-r="2">✓ Passt</button><button data-r="1">≈ Teilweise</button><button data-r="0">✗ Noch nicht</button></div>';
   box.querySelectorAll('[data-r]').forEach(r=>{if(X.r!=null&&+r.dataset.r===X.r)r.style.borderColor='#2f5f9b';r.onclick=()=>{X.r=+r.dataset.r;save();refreshTabs();if(cur<T.s.length-1){cur++;renderTR($('#body'));scrollTo({top:0,behavior:'smooth'})}else{tab=nextTab('tr');render();scrollTo(0,0)}}})};
  c.querySelector('[data-fd]').onclick=()=>{const nw=X.tx.trim().split(/\s+/).filter(Boolean).length;if(nw<3&&!confirm((nw?'Du hast erst sehr wenig geschrieben.':'Du hast noch nichts geschrieben.')+' Trotzdem als fertig markieren?'))return;X.fd=true;X.og=nw<3;save();refreshTabs();
   const nx=T.s.map((_,i)=>i).find(i=>i>si&&!sDone(ST.sent[i]))??T.s.map((_,i)=>i).find(i=>!sDone(ST.sent[i]));if(nx!=null){cur=nx;renderTR($('#body'));scrollTo({top:0,behavior:'smooth'})}else renderTranslate(c,si)};
@@ -476,7 +487,7 @@ function renderTranslate(c,si){const S=T.s[si],X=sstate(si);const H=S.h;
 /* 12.29: abgeben (Abgabe-QR bzw. Datei), danach sind die Übersetzungen gesperrt und der Vergleich beginnt bei Satz 1 */
 function finishTr(){const go=()=>{ST.fin=Date.now();T.s.forEach((_,i)=>{const x=sstate(i);if(!x.fd)x.og=x.tx.trim().split(/\s+/).filter(Boolean).length<3;x.cmp=true});save();cur=0;tab='tr';render();scrollTo(0,0)};
  const open=T.s.filter((_,i)=>!sDone(ST.sent[i])).length;if(open&&!confirm(open+(open>1?' Sätze sind':' Satz ist')+' noch nicht fertig. Trotzdem abgeben?'))return;
- if(AB&&AB.show){alert('Zeige jetzt deinen Abgabe-QR (oder sichere die Abgabe als Datei). Danach siehst du die Musterübersetzung.');AB.show(go);return}
+ if(AB&&AB.show){alert('Zeige jetzt deinen Abgabe-QR (oder sichere die Abgabe als Datei). Danach besprecht ihr die Übersetzung im Unterricht.');AB.show(go);return}
  if(confirm('Übersetzungen jetzt abschließen? Danach kannst du sie nicht mehr ändern, siehst aber die Musterübersetzung.'))go()}
 function buildPuzzle(c,si){const S=T.s[si],X=sstate(si),parts=S.h[2];X.bld??={order:shuffle(parts.map((_,i)=>i)),pick:[]};const P=X.bld;
  const bk=c.querySelector('#bk'),bd=c.querySelector('#bd');
@@ -502,7 +513,7 @@ function renderRes(b){const sents=T.s.map((_,i)=>ST.sent[i]||{});const rated=sen
   +'<tr><td>Wer ist gemeint?</td><td>'+prOk+' von '+T.pron.length+' richtig</td></tr>'
   +((T.sm||[]).length?'<tr><td>Stilmittel</td><td>'+smDone()+' von '+T.sm.length+' bearbeitet · '+T.sm.filter((_,k)=>ST.sm?.[k]?.n1).length+' sofort erkannt · '+T.sm.filter((_,k)=>ST.sm?.[k]?.w1).length+' Wirkungen richtig</td></tr>':'')
   +'<tr><td>Übersetzen</td><td>'+sents.filter(sDone).length+' von '+T.s.length+' Sätzen'+(fin()?' · '+rated.filter(x=>x.r===2).length+' passen':' · noch nicht verglichen')+' · '+sents.reduce((a,x)=>a+(x.h||0),0)+' Hilfen · '+sents.reduce((a,x)=>a+(x.look||0),0)+' Wörter nachgeschlagen</td></tr></table></div>'
-  +(!fin()?'<div class="card finbox"><p><b>Übersetzungen abgeben</b> – danach vergleichst du Satz für Satz mit der Musterübersetzung.</p><button class="pri" data-fin>Abgeben und dann vergleichen</button></div>':'')
+  +(!fin()?'<div class="card finbox"><p><b>Übersetzungen abgeben</b> – danach besprecht ihr die Übersetzung im Unterricht.</p><button class="pri" data-fin>Abgeben</button></div>':'')
   +(talk.length?'<div class="card"><p class="task"><b>Diese Sätze solltest du dir noch einmal ansehen</b></p>'+talk.map(({x,i})=>'<div style="margin:6px 0"><button class="sec" data-go="'+i+'">Satz '+(i+1)+'</button> <span class="muted">'+(x.r!=null?lab[x.r]:'')+((x.h||0)>=3?' · viele Hilfen':'')+'</span></div>').join('')+'</div>':'')
   +'<div class="card"><p class="task"><b>Für meine Unterlagen</b></p><div class="hint" style="margin-bottom:10px">Erstellt eine Seite mit dem Text, den '+HU().short+', dem Zeitstrahl, deinen Übersetzungen neben der Musterübersetzung und deinen nachgeschlagenen Wörtern. Es entsteht eine PDF-Datei. Am iPad öffnet sich das Teilen-Menü: GoodNotes wählen.</div><div class="row" style="margin-top:0"><input id="pn" placeholder="Dein Name (optional)" style="min-height:48px;padding:0 12px;border:1px solid #cfd8e6;border-radius:12px;font:inherit;flex:1;min-width:200px"><button class="pri" data-pdf>Für meine Unterlagen sichern</button></div></div>'
   +'<div class="row"><button class="lnk" data-reset>Alles zurücksetzen</button></div>';
@@ -517,7 +528,7 @@ async function printNotes(name,btn){const pp=new Set(T.pp.flatMap(([si,ws])=>ws.
  const blocks=[{t:'h1',s:T.title},{t:'sub',s:(T.sub?T.sub+' · ':'')+(name?name+' · ':'')+new Date().toLocaleDateString('de-DE')},
   {t:'h2',s:'Text'},{t:'p',s:text,sz:11.5},{t:'p',s:'Fett: '+HU().legend,sz:8.5,col:'#5c6b80'},
   {t:'h2',s:'Was geschah nacheinander?'},{t:'list',num:true,items:T.ev.slice()},
-  {t:'h2',s:'Übersetzung'},...T.s.map((x,si)=>{const m=ST.sent[si]||{};return {t:'table',w:[.24,.76],rows:[['**Satz '+(si+1)+'**',x.t],['Meine Übersetzung',m.tx?.trim()||'—'],...(fin()&&m.vb?.trim()?[['Meine Verbesserung',m.vb.trim()]]:[]),...(fin()?[['Musterübersetzung',x.de||'']]:[])]}}),
+  {t:'h2',s:'Übersetzung'},...T.s.map((x,si)=>{const m=ST.sent[si]||{};return {t:'table',w:[.24,.76],rows:[['**Satz '+(si+1)+'**',x.t],['Meine Übersetzung',m.tx?.trim()||'—'],...(fin()&&DE&&DE[si]?[['Musterübersetzung',DE[si]]]:[])]}}),
   vocab.length?{t:'h2',s:'Meine Wörter zum Lernen'}:null,vocab.length?{t:'table',w:[.35,.65],firstBold:true,rows:vocab.map(v=>[v[0],v[1]])}:null].filter(Boolean);
  const t=btn?btn.textContent:'';if(btn)btn.textContent='PDF wird erstellt …';
  try{const blob=cmPdf.build(blocks,{title:T.title,foot:T.title+(name?' · '+name:'')});const how=await cmPdf.save(blob,String(T.title).replace(/[\\/:*?"<>|]/g,'')+(name?' - '+name.replace(/[\\/:*?"<>|]/g,''):'')+'.pdf');if(btn)btn.textContent=how==='download'?'✓ PDF geladen':how==='share'?'✓ Geteilt':t}
