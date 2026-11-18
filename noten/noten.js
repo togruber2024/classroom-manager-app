@@ -8101,11 +8101,14 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const labelOf=(s,c)=>{try{return (classesBySubject?.[s]||[]).find(x=>x.id===c)?.label||''}catch{return ''}};
  const subjLabel=s=>{try{return subjects?.[s]?.label||''}catch{return ''}};
  /* Beginn der nächsten Stunde dieser Klasse (Stundenplan inkl. erkannter Stunden und A/B-Wochen), höchstens drei Wochen voraus */
- function nextLesson(subject,classId){const ref=subject+'::'+classId,now=Date.now();
-  for(let d=0;d<21;d++){const day=new Date();day.setHours(12,0,0,0);day.setDate(day.getDate()+d);const w=day.getDay();if(w<1||w>5)continue;let pl;try{pl=TW.classroomTimetableFor?.(day)}catch{}if(!pl)return null;
-   const row=pl.days?.[String(w)]||{};for(let i=0;i<(pl.slots||[]).length;i++){if(row[i]?.ref!==ref)continue;const [h,m]=String(pl.slots[i].start||'').split(':').map(Number);if(!Number.isFinite(h)||!Number.isFinite(m))continue;
-    const at=new Date(day);at.setHours(h,m,0,0);if(at.getTime()>now)return {at:at.getTime(),slot:i+1}}}
-  return null}
+ /* 12.99: die nächsten Stunden einer Klasse (Doppelstunden zusammengefasst: Beginn der ersten Stunde) */
+ function nextLessons(subject,classId,count=6){const ref=subject+'::'+classId,now=Date.now(),out=[];
+  for(let d=0;d<42&&out.length<count;d++){const day=new Date();day.setHours(12,0,0,0);day.setDate(day.getDate()+d);const w=day.getDay();if(w<1||w>5)continue;let pl;try{pl=TW.classroomTimetableFor?.(day)}catch{}if(!pl)break;
+   const row=pl.days?.[String(w)]||{},n=(pl.slots||[]).length;for(let i=0;i<n&&out.length<count;i++){if(row[i]?.ref!==ref)continue;let j=i;while(j+1<n&&row[j+1]?.ref===ref)j++;
+    const [h,m]=String(pl.slots[i].start||'').split(':').map(Number);if(Number.isFinite(h)&&Number.isFinite(m)){const at=new Date(day);at.setHours(h,m,0,0);if(at.getTime()>now)out.push({at:at.getTime(),slot:i+1,to:j+1})}i=j}}
+  return out}
+ const slotTxt=x=>x.to>x.slot?x.slot+'.–'+x.to+'. Stunde':x.slot+'. Stunde';
+ function nextLesson(subject,classId){return nextLessons(subject,classId,1)[0]||null}
  const openOf=(s,c)=>Object.values(load()).filter(n=>n&&!n.done&&n.text&&(!s||n.subject===s&&n.classId===c)).sort((a,b)=>(a.due||0)-(b.due||0));
  const dueOf=(s,c)=>openOf(s,c).filter(n=>(n.due||0)<=Date.now());
  /* für die Glocke */
@@ -8118,21 +8121,26 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const dlg=TOP.getElementById('cnDialog')||(()=>{const d=TOP.createElement('dialog');d.id='cnDialog';d.className='cn-dialog';TOP.body.append(d);return d})();
  const localInput=ms=>{const d=new Date(ms);return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+'T'+p2(d.getHours())+':'+p2(d.getMinutes())};
  function editor(subject,classId,note,draft){
-  const lbl=labelOf(subject,classId)||note?.label||'',nx=nextLesson(subject,classId),mode=note?(note.mode==='next'&&nx?'next':note.mode==='date'?'date':note.mode==='next'?'date':'now'):(nx?'next':'now');
+  const lbl=labelOf(subject,classId)||note?.label||'',NL=nextLessons(subject,classId,6),nx=NL[0]||null,mode=note?(note.mode==='next'&&nx?'next':note.mode==='date'?'date':note.mode==='next'?'date':'now'):(nx?'next':'now');
   const others=openOf(subject,classId).filter(n=>n.id!==note?.id);
+  let pick=(note?.mode==='next'&&NL.find(x=>x.at===note.due))||nx;
   const opt=(v,t,s)=>`<label class="cn-opt"><input type="radio" name="cnWhen" value="${v}"${mode===v?' checked':''}><span class="cn-r"></span><span>${t}${s?`<small>${s}</small>`:''}</span></label>`;
   dlg.innerHTML=`<form method="dialog" class="cn-form"><div class="cn-grip"></div><h2>${note?'Hinweis bearbeiten':'Neuer Hinweis'}</h2>
    <div class="cn-lbl">KLASSE</div><select class="cn-sel">${(()=>{let h='';try{for(const [sk,list] of Object.entries(classesBySubject||{}))for(const c of list||[]){const v=sk+'|'+c.id,l=c.label||'';h+=`<option value="${esc(v)}"${sk===subject&&c.id===classId?' selected':''}>${esc(subjLabel(sk))} · ${esc(/^klasse\b/i.test(l)?l:'Klasse '+l)}</option>`}}catch{}return h})()}</select>
    ${others.length?`<div class="cn-list"><div class="cn-lbl">OFFEN</div>${others.map(n=>`<div class="cn-li"><div><b>${esc(n.text)}</b><small>${(n.due||0)<=Date.now()?'fällig seit '+esc(when(n.due||n.created)):'ab '+esc(when(n.due))}</small></div><button type="button" data-cn-ed="${esc(n.id)}">Bearbeiten</button><button type="button" data-cn-ok="${esc(n.id)}">Erledigt</button></div>`).join('')}</div>`:''}
    <div class="cn-lbl">${note?'HINWEIS BEARBEITEN':others.length?'NEUER HINWEIS':'HINWEIS'}</div><textarea class="cn-ta" rows="3" maxlength="600" placeholder="z. B. Backup vom Mac holen und Vokabeltest einscannen">${esc(draft??note?.text??'')}</textarea>
    <div class="cn-lbl">ANZEIGEN AB</div>
-   ${nx?opt('next','Nächste Stunde',esc(when(nx.at))+' ('+nx.slot+'. Stunde)'):''}${opt('now','Sofort')}${opt('date','Datum wählen …','Tag und Uhrzeit')}
+   ${nx?`<div class="cn-nextw">${opt('next',pick===nx?'Nächste Stunde':'Stunde laut Stundenplan','<span class="cn-pick">'+esc(when(pick.at))+' ('+slotTxt(pick)+')</span>')}${NL.length>1?'<button type="button" class="cn-tg" data-cn-tg aria-expanded="false" title="Weitere Stunden zeigen">▾</button>':''}</div><div class="cn-more" hidden>${NL.map((x,i)=>`<button type="button" class="cn-li${x===pick?' on':''}" data-cn-at="${i}"><span class="cn-r"></span><b>${esc(when(x.at).replace(/ · .*/,''))}</b> ${esc(when(x.at).replace(/^.* · /,''))}<small>${slotTxt(x)}${x.to>x.slot?' · Doppelstunde':''}</small></button>`).join('')}</div>`:''}${opt('now','Sofort','ab jetzt – beim nächsten Öffnen der Klasse')}${opt('date','Datum wählen …','Tag und Uhrzeit')}
    <input type="datetime-local" class="cn-dt" value="${localInput(note?.due&&note.due>Date.now()?note.due:nx?.at||Date.now()+864e5)}"${mode==='date'?'':' hidden'}>
    ${nx?'':'<p class="cn-note">Für diese Klasse steht keine Stunde im Stundenplan – „Nächste Stunde“ ist deshalb nicht möglich.</p>'}
    <p class="cn-err" hidden></p>
    <div class="cn-row">${note?'<button type="button" class="cn-del" data-cn-del>Löschen</button>':''}<span></span><button type="button" data-cn-cancel>Abbrechen</button><button type="button" class="cn-pri" data-cn-save>Speichern</button></div></form>`;
   const ta=dlg.querySelector('.cn-ta'),dt=dlg.querySelector('.cn-dt'),err=dlg.querySelector('.cn-err');
   dlg.querySelectorAll('[name=cnWhen]').forEach(r=>r.onchange=()=>{dt.hidden=r.value!=='date'||!r.checked;if(!dt.hidden)dt.focus()});
+  const more=dlg.querySelector('.cn-more'),tg=dlg.querySelector('[data-cn-tg]');
+  tg?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();more.hidden=!more.hidden;tg.textContent=more.hidden?'▾':'▴';tg.setAttribute('aria-expanded',String(!more.hidden))});
+  dlg.querySelectorAll('[data-cn-at]').forEach(b=>b.onclick=()=>{pick=NL[+b.dataset.cnAt];dlg.querySelectorAll('[data-cn-at]').forEach(x=>x.classList.toggle('on',x===b));const r=dlg.querySelector('[name=cnWhen][value=next]');r.checked=true;dt.hidden=true;
+   r.closest('.cn-opt').querySelector('span:last-child').firstChild.textContent=pick===nx?'Nächste Stunde':'Stunde laut Stundenplan';dlg.querySelector('.cn-pick').textContent=when(pick.at)+' ('+slotTxt(pick)+')'});
   dlg.querySelector('.cn-sel').onchange=e=>{const [ns,nc]=e.target.value.split('|');editor(ns,nc,note,ta.value)};
   dlg.querySelector('[data-cn-cancel]').onclick=()=>dlg.close();
   dlg.querySelectorAll('[data-cn-ok]').forEach(b=>b.onclick=()=>{done(b.dataset.cnOk);editor(subject,classId,note)});
@@ -8140,7 +8148,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   dlg.querySelector('[data-cn-del]')?.addEventListener('click',()=>{const o=load();delete o[note.id];save(o);later.delete(note.id);dlg.close();try{TW.classroomReminders?.refresh?.()}catch{}refreshBtn()});
   dlg.querySelector('[data-cn-save]').onclick=()=>{const text=ta.value.trim();if(!text){err.textContent='Bitte einen Text eingeben.';err.hidden=false;ta.focus();return}
    const m=dlg.querySelector('[name=cnWhen]:checked')?.value||'now';let due=Date.now();
-   if(m==='next'){const n=nextLesson(subject,classId);due=n?n.at:Date.now()}else if(m==='date'){const t=Date.parse(dt.value);if(!Number.isFinite(t)){err.textContent='Bitte Tag und Uhrzeit wählen.';err.hidden=false;return}due=t}
+   if(m==='next'){const n=pick&&pick.at>Date.now()?pick:nextLesson(subject,classId);due=n?n.at:Date.now()}else if(m==='date'){const t=Date.parse(dt.value);if(!Number.isFinite(t)){err.textContent='Bitte Tag und Uhrzeit wählen.';err.hidden=false;return}due=t}
    const o=load(),id=note?.id||'cn-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
    o[id]={...(o[id]||{}),id,subject,classId,label:labelOf(subject,classId)||note?.label||'',text,mode:m,due,created:note?.created||Date.now(),done:0};
    /* alte erledigte Hinweise (über 60 Tage) aufräumen */for(const [k,v] of Object.entries(o))if(v?.done&&Date.now()-v.done>60*864e5)delete o[k];
@@ -8178,7 +8186,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .cn-opt{display:flex;align-items:center;gap:10px;border:1.5px solid #dce3ef;border-radius:12px;padding:9px 12px;margin-bottom:7px;font-size:15px;cursor:pointer}.cn-opt small{display:block;color:#66758a;font-size:12.5px}
  .cn-opt input{position:absolute;opacity:0;pointer-events:none}.cn-r{width:18px;height:18px;border-radius:50%;border:2px solid #a8bdd8;flex:none;box-sizing:border-box}
  .cn-opt:has(input:checked){border-color:#e8a25a;background:#fff8ef}.cn-opt:has(input:checked) .cn-r{border:5px solid #e8790c}
- .cn-dt{display:block;box-sizing:border-box;width:100%;height:42px;margin:2px 0 6px;padding:0 10px;border:1.5px solid #9bb6dc;border-radius:10px;font:inherit;font-size:15px;color:#243247}.cn-dt[hidden]{display:none}
+ .cn-nextw{position:relative}.cn-nextw .cn-opt{padding-right:52px}.cn-tg{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:34px!important;height:34px!important;padding:0!important;border-radius:9px!important;font-size:13px!important}.cn-more{display:grid;gap:5px;margin:-2px 0 8px 26px}.cn-more[hidden]{display:none}.cn-dialog .cn-li{display:flex;align-items:center;gap:9px;height:auto;min-height:38px;padding:6px 11px;border:1.5px solid #dce3ef;border-radius:10px;background:#fff;color:#243247;font-weight:400;font-size:14px;text-align:left}.cn-li b{font-weight:650}.cn-li small{margin-left:auto;color:#66758a;font-size:12px}.cn-li .cn-r{width:16px;height:16px}.cn-dialog .cn-li.on{border-color:#e8a25a;background:#fff8ef}.cn-li.on .cn-r{border:4px solid #e8790c}.cn-dt{display:block;box-sizing:border-box;width:100%;height:42px;margin:2px 0 6px;padding:0 10px;border:1.5px solid #9bb6dc;border-radius:10px;font:inherit;font-size:15px;color:#243247}.cn-dt[hidden]{display:none}
  .cn-note{margin:4px 0 0;font-size:.82rem;color:#66758a}.cn-err{margin:6px 0 0;color:#b42318;font-size:.88rem}.cn-err[hidden]{display:none}
  .cn-row{display:flex;gap:8px;align-items:center;margin-top:16px}.cn-row>span{flex:1}
  .cn-dialog button{box-sizing:border-box;height:42px;padding:0 16px;border:1px solid #a8bdd8;border-radius:11px;background:#fff;color:#2f5f9b;font:inherit;font-size:15px;font-weight:600;cursor:pointer}

@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 18.11.2026 · Version 12.98
+Stand: 18.11.2026 · Version 12.99
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1577,3 +1577,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.96: Lospartner – verdeckt ohne Namen im DOM (rg-hid), Pult-Kacheln per layDesk() (Spalten mit größter Schrift)
 12.97: Live-Notenspiegel (noten/notenspiegel-live.js, classroom-ns-live-v1): Knopf „Neben der Tabelle“ im Notenspiegel, sticky neben der Tabelle, Breite nach freiem Platz, sonst darüber
 12.98: Live-Notenspiegel – Platzrechnung mit Rand/Abständen der Tabellenhülle, Selbstkontrolle (schmaler bzw. darüber), gestapelt max. 640 px
+12.99: Hinweis zur Klasse – nextLessons(): nächste 6 Stunden aufklappbar, Doppelstunden zusammengefasst; „Sofort“ mit Erklärung
