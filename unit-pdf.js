@@ -12,11 +12,15 @@
  const clean=s=>String(s??'').replace(/­/g,'').replace(/[≈]/g,'~').replace(/[✓✔]/g,'+').replace(/[✗✘]/g,'x').replace(/[→]/g,'->').replace(/[←]/g,'<-').replace(/[\u{1F000}-\u{1FFFF}☀-➿️]/gu,'').replace(/[^\u0000-\u00ff\u20ac\u201a\u201e\u2026\u2018\u2019\u201c\u201d\u2022\u2013\u2014\u2122]/gu,ch=>{const b=ch.normalize('NFD')[0];return b&&b.charCodeAt(0)<256?b:'?'});
  const enc=s=>{let o='';for(const ch of clean(s)){const c=ch.codePointAt(0);const b=MAP[ch]??(c<256?c:63);const x=String.fromCharCode(b);o+=x==='('||x===')'||x==='\\'?'\\'+x:x}return o};
  const rgb=h=>{h=(h||'#000').replace('#','');return [0,2,4].map(i=>(parseInt(h.slice(i,i+2),16)/255).toFixed(3)).join(' ')};
- function runs(s){const out=[];String(s??'').split(/(\*\*)/).reduce((b,part)=>{if(part==='**')return !b;part.split(/(\s+)/).forEach(w=>{if(w)out.push({w,b})});return b},false);return out}
+ /* 12.79: Auszeichnungen für Korrekturen – [[x:falsch]] rot durchgestrichen, [[g:Lösung]] grün fett, [[w:Fast]] rot unterstrichelt, [[s:ok|hf|no]] Kästchen ✓ ½ f */
+ function runs(s){const out=[];let b=false;String(s??'').split(/(\[\[[a-z]+:[^\]]*\]\]|\*\*)/).forEach(part=>{if(!part)return;if(part==='**'){b=!b;return}
+   const m=/^\[\[([a-z]+):([^\]]*)\]\]$/.exec(part);if(m&&m[1]==='s'){out.push({w:'',b,badge:m[2]});return}
+   const st=m?m[1]:'';(m?m[2]:part).split(/(\s+)/).forEach(w=>{if(w)out.push({w,b:b||st==='g',st})})});return out}
+ const BW=sz=>sz*1.55;
  function wrap(s,sz,maxW,bold){const lines=[];for(const para of String(s??'').split('\n')){let cur=[],cw=0;let open=false;
    /* **fett** über Zeilenumbrüche hinweg: Zustand je Absatz */
-   for(const r of runs(para)){const b=bold||r.b,isSp=/^\s+$/.test(r.w),w=wid(isSp?' ':r.w,sz,b);if(isSp){if(cur.length){cur.push({w:' ',b});cw+=w}continue}
-    if(cw+w>maxW&&cur.length){while(cur.length&&cur[cur.length-1].w===' ')cur.pop();lines.push(cur);cur=[];cw=0}cur.push({w:r.w,b});cw+=w}
+   for(const r of runs(para)){const b=bold||r.b,isSp=!r.badge&&/^\s+$/.test(r.w),w=r.badge?BW(sz):wid(isSp?' ':r.w,sz,b);if(isSp){if(cur.length){cur.push({w:' ',b,st:r.st});cw+=w}continue}
+    if(cw+w>maxW&&cur.length){while(cur.length&&cur[cur.length-1].w===' ')cur.pop();lines.push(cur);cur=[];cw=0}cur.push({w:r.w,b,st:r.st,badge:r.badge});cw+=w}
    while(cur.length&&cur[cur.length-1].w===' ')cur.pop();lines.push(cur);void open}
   return lines.length?lines:[[]]}
  /* Bild vorbereiten: beliebige Bildquelle → JPEG-Bytes + Maße (async, vorab aufrufen) */
@@ -31,7 +35,13 @@
   const need=h=>{if(y-h<BOT)newPage()};
   /* Ganz lassen: passt der Block auf eine leere Seite, aber nicht mehr auf diese → neue Seite */
   const keep=h=>{if(h<=FULL&&y-h<BOT)newPage()};
-  const line=(parts,x,yy,sz,col)=>{let s='BT '+rgb(col)+' rg';let cx=x,last=null;for(const p of parts){const f=p.b?'/F2':'/F1';if(f!==last){s+=' '+f+' '+sz+' Tf';last=f}s+=' 1 0 0 1 '+cx.toFixed(2)+' '+yy.toFixed(2)+' Tm ('+enc(p.w)+') Tj';cx+=wid(p.w,sz,p.b)}ops.push(s+' ET')};
+  const line=(parts,x,yy,sz,col)=>{let s='BT '+rgb(col)+' rg';let cx=x,last=null,cc=col;const dec=[];for(const p of parts){if(p.badge){dec.push(['s',cx,p.badge]);cx+=BW(sz);continue}
+   const f=p.b?'/F2':'/F1',c=p.st==='x'?'#b42318':p.st==='g'?'#1f8a4c':col;if(c!==cc){s+=' '+rgb(c)+' rg';cc=c}if(f!==last){s+=' '+f+' '+sz+' Tf';last=f}s+=' 1 0 0 1 '+cx.toFixed(2)+' '+yy.toFixed(2)+' Tm ('+enc(p.w)+') Tj';const w=wid(p.w,sz,p.b);if(p.st==='x'||p.st==='w')dec.push([p.st,cx,w]);cx+=w}ops.push(s+' ET');
+   for(const [k,dx,v] of dec){if(k==='x')ops.push(rgb('#b42318')+' RG .9 w '+dx.toFixed(2)+' '+(yy+sz*.3).toFixed(2)+' m '+(dx+v).toFixed(2)+' '+(yy+sz*.3).toFixed(2)+' l S');
+    else if(k==='w'){const y0=yy-sz*.2,st=sz*.18;let d=dx.toFixed(2)+' '+y0.toFixed(2)+' m';for(let t=dx+st,i=1;t<=dx+v+.01;t+=st,i++)d+=' '+t.toFixed(2)+' '+(y0+(i%2?-.8:0)).toFixed(2)+' l';ops.push(rgb('#b42318')+' RG .7 w '+d+' S')}
+    else{const bw=BW(sz)-3,bh=sz*1.2,by=yy-sz*.27,C={ok:['#e5f5ea','#1f8a4c'],hf:['#fff4d6','#8a6a00'],no:['#fdeceb','#b42318']}[v]||['#eef2f7','#5c6b80'];rect(dx,by,bw,bh,null,C[0]);
+     if(v==='ok')ops.push(rgb(C[1])+' RG 1.2 w 1 J 1 j '+(dx+bw*.27).toFixed(2)+' '+(by+bh*.5).toFixed(2)+' m '+(dx+bw*.45).toFixed(2)+' '+(by+bh*.3).toFixed(2)+' l '+(dx+bw*.75).toFixed(2)+' '+(by+bh*.72).toFixed(2)+' l S 0 J 0 j');
+     else{const g=v==='hf'?'\xbd':'f',fs=v==='hf'?sz*.95:sz*1.1,fn=v==='hf'?'/F2':'/F3',gw=v==='hf'?wid('½',fs,true):fs*.3;ops.push('BT '+rgb(C[1])+' rg '+fn+' '+fs.toFixed(2)+' Tf 1 0 0 1 '+(dx+(bw-gw)/2).toFixed(2)+' '+(by+bh*.24).toFixed(2)+' Tm ('+g+') Tj ET')}}}};
   const rect=(x,yy,w,h,stroke,fill,lw=.8)=>ops.push((fill?rgb(fill)+' rg ':'')+(stroke?rgb(stroke)+' RG '+lw+' w ':'')+x.toFixed(2)+' '+yy.toFixed(2)+' '+w.toFixed(2)+' '+h.toFixed(2)+' re '+(fill&&stroke?'B':fill?'f':'S'));
   const P={p:10.5,lh:1.38};
   const tbl=B=>{const ws=B.w.map(f=>f*CW),sz=B.sz||9.5,lh=sz*1.32,pad=4;const hgt=(cells,head)=>{const wr=cells.map((c,i)=>wrap(c,sz,ws[i]-2*pad,head||(i===0&&B.firstBold)));return [wr,Math.max(...wr.map(x=>x.length))*lh+2*pad]};return {ws,sz,lh,pad,hgt}};
@@ -42,7 +52,7 @@
    case 'list':return B.items.reduce((a,it)=>a+wrap(it,10.5,CW-14).length*14.5,0)+4;
    case 'box':return wrap(B.s,11,CW-24).length*15.5+16+10;
    case 'table':{const T=tbl(B);return (B.head?T.hgt(B.head,true)[1]:0)+B.rows.reduce((a,r)=>a+T.hgt(r,false)[1],0)+6}
-   case 'chart':return 206;
+   case 'chart':return 206;case 'grade':return 74;
    case 'img':{const d=imgDim(B);return d?d.h+6+(B.cap?wrap(B.cap,8.5,CW).length*11.5+4:0):0}
    default:return 20}};
   const para=(s,sz,col,bold,x=M,w=CW)=>{for(const l of wrap(s,sz,w,bold)){need(sz*P.lh);y-=sz*P.lh;line(l,x,y+sz*.25,sz,col)}};
@@ -63,6 +73,8 @@
      wr.forEach((ls,i)=>{rect(x,y-h,ws[i],h,'#c9d3e3',head?'#eef3fa':(B.shade&&B.shade[i])||null,.6);ls.forEach((l,k)=>line(l,x+pad,y-pad-(k+1)*lh+sz*.3,sz,(B.col&&B.col[i])||'#111111'));x+=ws[i]});y-=h};
     if(B.head){need(hgt(B.head,true)[1]+(B.rows.length?hgt(B.rows[0],false)[1]:0));row(B.head,true)}B.rows.forEach(r=>row(r,false));y-=6}
    else if(B.t==='img'){const d=imgDim(B);if(!d)return;const h=H(B);keep(h);need(h);const id='/Im'+(xo.length+1);xo.push(B.img);const x=M+(CW-d.w)/2;y-=d.h;ops.push('q '+d.w.toFixed(2)+' 0 0 '+d.h.toFixed(2)+' '+x.toFixed(2)+' '+y.toFixed(2)+' cm '+id+' Do Q');rect(x,y,d.w,d.h,'#c9d3e3',null,.5);y-=4;if(B.cap){for(const l of wrap(B.cap,8.5,CW)){y-=11.5;line(l,M,y+2,8.5,'#5c6b80')}}y-=6}
+   else if(B.t==='grade'){keep(74);need(74);y-=6;const sq=56;rect(M,y-sq,CW,sq+0.01,'#dfe5ee',null,.8);rect(M+8,y-sq+6,sq-12,sq-12,null,B.bg);const fs=B.sign.length>2?17:B.sign.length>1?21:26,sw=wid(B.sign,fs,true);line([{w:B.sign,b:true}],M+8+(sq-12-sw)/2,y-sq/2-fs*.33,fs,B.fg);
+    line([{w:B.s1,b:true}],M+sq+8,y-sq/2+2,12.5,'#1d2b40');for(const [i,l] of wrap(B.s2||'',9,CW-sq-20).slice(0,2).entries())line(l,M+sq+8,y-sq/2-12-i*11,9,'#5c6b80');y-=sq+12}
    else if(B.t==='chart'){const HH=200,W=CW*.82;keep(HH+6);const x0=M+36,y0=y-HH+18,w=W-40,h=HH-34,X=v=>x0+(v-B.xr[0])/(B.xr[1]-B.xr[0])*w,Y=v=>y0+(v-B.yr[0])/(B.yr[1]-B.yr[0])*h;
     for(const v of B.yt){ops.push(rgb('#dde3ec')+' RG .5 w '+x0+' '+Y(v).toFixed(2)+' m '+(x0+w)+' '+Y(v).toFixed(2)+' l S');const s=String(v).replace(/\B(?=(\d{3})+(?!\d))/g,'.');line([{w:s}],x0-6-wid(s,8),Y(v)-2.5,8,'#66758a')}
     for(const v of B.xt)line([{w:String(v)}],X(v)-wid(String(v),8)/2,y0-12,8,'#66758a');
@@ -72,10 +84,10 @@
   newPage();
   const n=pages.length;const PG=pages.map((c,i)=>c+'\nBT '+rgb('#8a97aa')+' rg /F1 8 Tf 1 0 0 1 '+M+' 24 Tm ('+enc((meta.foot||'')+' · Seite '+(i+1)+' von '+n)+') Tj ET');
   const objs=[];const add=s=>{objs.push(s);return objs.length};
-  const cat=add(''),pagesId=add(''),f1=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'),f2=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+  const cat=add(''),pagesId=add(''),f1=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'),f2=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'),f3=add('<< /Type /Font /Subtype /Type1 /BaseFont /Times-BoldItalic /Encoding /WinAnsiEncoding >>');
   const imIds=xo.map(im=>add('<< /Type /XObject /Subtype /Image /Width '+im.w+' /Height '+im.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+im.jpg.length+' >>\nstream\n'+im.jpg+'\nendstream'));
   const xres=imIds.length?' /XObject << '+imIds.map((id,i)=>'/Im'+(i+1)+' '+id+' 0 R').join(' ')+' >>':'';
-  const kids=[];for(const c of PG){const cs=add('<< /Length '+c.length+' >>\nstream\n'+c+'\nendstream');kids.push(add('<< /Type /Page /Parent '+pagesId+' 0 R /MediaBox [0 0 '+PW+' '+PH+'] /Resources << /Font << /F1 '+f1+' 0 R /F2 '+f2+' 0 R >>'+xres+' >> /Contents '+cs+' 0 R >>'))}
+  const kids=[];for(const c of PG){const cs=add('<< /Length '+c.length+' >>\nstream\n'+c+'\nendstream');kids.push(add('<< /Type /Page /Parent '+pagesId+' 0 R /MediaBox [0 0 '+PW+' '+PH+'] /Resources << /Font << /F1 '+f1+' 0 R /F2 '+f2+' 0 R /F3 '+f3+' 0 R >>'+xres+' >> /Contents '+cs+' 0 R >>'))}
   objs[cat-1]='<< /Type /Catalog /Pages '+pagesId+' 0 R >>';objs[pagesId-1]='<< /Type /Pages /Kids ['+kids.map(k=>k+' 0 R').join(' ')+'] /Count '+kids.length+' >>';
   const info=add('<< /Title ('+enc(meta.title||'')+') /Producer (Classroom-Manager) >>');
   let out='%PDF-1.4\n%\xe2\xe3\xcf\xd3\n';const off=[];objs.forEach((o,i)=>{off.push(out.length);out+=(i+1)+' 0 obj\n'+o+'\nendobj\n'});
