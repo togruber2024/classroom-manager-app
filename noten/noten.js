@@ -8766,9 +8766,10 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    +`<div class="nsc-cols ${points?'p':''}" style="grid-template-columns:repeat(${d.rows.length},1fr)">${d.rows.map(r=>`<div class="nsc-col" title="${esc((points?r.lab+' Punkte':grades?'Note '+r.lab:r.lab)+': '+r.cnt)}"><div class="nsc-bar">${r.cnt?`<i class="${esc(r.cls)}" style="height:${Math.max(4,r.cnt/mx*100)}%"></i>`:''}</div><span>${esc(r.lab)}</span><b class="${r.cnt?'':'z'}">${r.cnt||'·'}</b></div>`).join('')}</div>`
    +`<div class="nsc-kpi">${d.avg&&d.avg!=='—'?`<span>${points?'Ø Notenpunkte':d.avgLab==='Mittelwert'?'Mittelwert':'Ø Note'} <b>${esc(d.avg)}</b></span>`:''}<span>korrigiert <b>${d.n}</b>${total?' / '+total:''}</span>${weak!==null?`<span>${points?'unter 5 Punkten':'Note 5/6'} <b>${weak}</b></span>`:''}</div>`;
   box.querySelector('.nsl-x').onclick=()=>{setOn(false);refresh(true)}}
- function layout(p){if(!box?.isConnected)return;const wrap=p.querySelector('.task-table')?.closest('.table-wrap'),tbl=p.querySelector('.task-table');if(!wrap||!tbl)return;
-  const cs=getComputedStyle(p),inner=p.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0),room=inner-tbl.scrollWidth-18,side=room>=320;box.classList.toggle('nsl-stack',!side);box.style.width=side?Math.min(440,room)+'px':'';box.classList.toggle('nsl-narrow',side&&room<410);
-  const prog=p.querySelector('.exam-progress'),pt=prog&&!prog.hidden&&prog.offsetParent?(parseFloat(prog.style.top)||0)+prog.offsetHeight+10:(parseFloat(prog?.style.top)||0)+8;box.style.top=side?pt+'px':''}
+ function layout(p,shrink){if(!box?.isConnected)return;const wrap=p.querySelector('.task-table')?.closest('.table-wrap'),tbl=p.querySelector('.task-table');if(!wrap||!tbl)return;
+  /* 12.98: Rand, Rahmen und Abstände der Tabellenhülle mitrechnen (iPad: sonst rutscht die Tabelle unter den Spiegel) */const cs=getComputedStyle(p),ws=getComputedStyle(wrap),inner=p.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0),extra=(wrap.offsetWidth-wrap.clientWidth)+(parseFloat(ws.paddingLeft)||0)+(parseFloat(ws.paddingRight)||0)+(parseFloat(ws.marginLeft)||0)+(parseFloat(ws.marginRight)||0),room=Math.floor(inner-tbl.scrollWidth-extra-18-12-(shrink||0)),side=room>=320;box.classList.toggle('nsl-stack',!side);box.style.width=side?Math.min(440,room)+'px':'';box.classList.toggle('nsl-narrow',side&&room<410);
+  const prog=p.querySelector('.exam-progress'),pt=prog&&!prog.hidden&&prog.offsetParent?(parseFloat(prog.style.top)||0)+prog.offsetHeight+10:(parseFloat(prog?.style.top)||0)+8;box.style.top=side?pt+'px':'';
+  /* Kontrolle: steht die Tabelle trotzdem unter dem Spiegel, schmaler machen bzw. darüber stellen */if(side)requestAnimationFrame(()=>{if(!box.isConnected||box.classList.contains('nsl-stack'))return;const below=wrap.getBoundingClientRect().top>=box.getBoundingClientRect().bottom-4;if(below){if(!shrink)layout(p,40);else{box.classList.add('nsl-stack');box.style.width='';box.style.top=''}}})}
  function refresh(force){if(force)last='';const p=panel();
   if(!on()||!p){box?.remove();return}
   const wrap=p.querySelector('.task-table')?.closest('.table-wrap');if(!wrap){box?.remove();return}
@@ -8785,7 +8786,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const st=document.createElement('style');st.textContent=`
  .ns-live-btn.is-on{background:#fff4e8!important;border-color:#e8a25a!important;color:#b85d00!important}.ns-live-btn[hidden]{display:none!important}
  .nsl{float:right;position:sticky;top:0;z-index:4;width:420px;max-width:100%;box-sizing:border-box;margin:0 0 12px 18px;padding:12px 14px 12px;border:1px solid #dce3ef;border-radius:14px;background:#fff;box-shadow:0 4px 14px #1c2b4612}
- .nsl.nsl-stack{float:none;position:static;width:auto;margin:0 0 12px}
+ .nsl.nsl-stack{float:none;position:static;width:auto;max-width:640px;margin:0 0 12px}
  .nsl-head{display:flex;align-items:center;gap:8px;margin-bottom:2px}.nsl-head b{font-size:15px}.nsl-sub{color:#66758a;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
  .nsl-dot{flex:none;width:8px;height:8px;border-radius:50%;background:#2c7a4b;box-shadow:0 0 0 3px #2c7a4b33}
  .nsl-x{margin-left:auto;flex:none;width:30px;height:30px;border:1px solid #cbd6e5;border-radius:8px;background:#fff;color:#2f5f9b;font-size:13px;cursor:pointer;padding:0}
