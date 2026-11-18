@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 18.11.2026 · Version 12.91
+Stand: 18.11.2026 · Version 12.92
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1570,3 +1570,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.89: Lerneinheiten „Alle Abgaben löschen …“ + rotes „Abgabe löschen“; Kompaktansicht blendet Fortschritt aus; „1. Pers. Sg.“ (Übungen, Trainer, Lexikon, Tests); Gruppe laut Sitzplan im Test-QR (ng) mit Hinweis/Vermerk; iPhone: Gruppen im Sitzplan über Jamf, beide QR quer bildschirmhoch
 12.90: Ergebnisse und Abgaben = Liste aller iPad-Tests (aktueller orange, Zeile antippbar); iPhone: Lektionsansicht kompakt (Lernkontrolle breit, Lesezeichen, ⋯; Kompetenzen aufklappbar; Karten Ansehen + Hauptaktion + ⋯), Lernkontrolle als Blatt mit Kacheln
 12.91: iPhone – Abgaben-Tab im Raster mit kurzem Hinweis, „Am Smartboard zeigen“ ausgeblendet, Test-Wechsler als Blatt (aktuell orange); Untertitel „1 Aufgabe/Vokabel je Gruppe“
+12.92: iPhone quer – Vollbild (cm-qrfull) folgt der Lage, solange die Ansicht offen ist; QR-Rahmen quadratisch (min(Höhe, halbe Breite))
