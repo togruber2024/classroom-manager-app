@@ -81,7 +81,7 @@ const FN={sub:['Subjekt','#2f5f9b'],obj:['Objekt (Akk./Dat.)','#1f8a4c'],adv:['a
 const VERBS=[['vocāre','vocāt','rufen'],['laudāre','laudāt','loben'],['servāre','servāt','retten'],['līberāre','līberāt','befreien'],['monēre','monit','ermahnen'],['terrēre','territ','erschrecken'],['audīre','audīt','hören'],['pūnīre','pūnīt','bestrafen'],['capere','capt','fangen'],['mittere','miss','schicken'],['dūcere','duct','führen'],['dare','dat','geben'],['relinquere','relict','zurücklassen'],['dēfendere','dēfēns','verteidigen'],['scrībere','scrīpt','schreiben'],['facere','fact','machen'],['accipere','accept','annehmen'],['invenīre','invent','finden']];
 const ESSE={pf:['sum','es','est','sumus','estis','sunt'],pq:['eram','erās','erat','erāmus','erātis','erant']};
 const END={m:['us','ī'],f:['a','ae'],n:['um','a']};
-const PERS=['1. Sg.','2. Sg.','3. Sg.','1. Pl.','2. Pl.','3. Pl.'];
+const PERS=['1. Pers. Sg.','2. Pers. Sg.','3. Pers. Sg.','1. Pers. Pl.','2. Pers. Pl.','3. Pers. Pl.'];
 const TN={pf:'Perfekt',pq:'Plusquamperfekt'},GN={m:'männlich',f:'weiblich',n:'sächlich'};
 const form=(v,p,t,g)=>v[1]+END[g][p>=3?1:0]+' '+ESSE[t][p];
 const KONGS=[
