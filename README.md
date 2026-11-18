@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 18.11.2026 · Version 13.01
+Stand: 18.11.2026 · Version 13.02
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1580,3 +1580,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.99: Hinweis zur Klasse – nextLessons(): nächste 6 Stunden aufklappbar, Doppelstunden zusammengefasst; „Sofort“ mit Erklärung
 13.00: Lerneinheit – Baustein tf „Vom Text in die Karte“ (wTxtFind), Materialkasten unter den Stationen; Hinweis-Klassenwahl mit Pfeil-Knopf
 13.01: Wirkungsgefüge – Kacheln wachsen mit (cqw, gleiche Höhe, Fläche passt sich an); tf Schritt 2 mit großer Karte, Text links ein-/ausfahrbar
+13.02: Live-Notenspiegel – Antippen öffnet showNotenspiegel
