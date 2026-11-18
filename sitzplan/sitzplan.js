@@ -4821,13 +4821,17 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   if(rid&&k){const x=edOf(rid);x.names={...(x.names||{})};const r0=reiheOf(rid),b0=(r0&&eff(r0).find(o=>o.k===k)||{}).t0||base;if(v===b0)delete x.names[k];else x.names[k]=v;edSet(rid,x)}else{const x=edOf('_units');x.names={...(x.names||{})};if(v===base)delete x.names[uid];else x.names[uid]=v;edSet('_units',x)}tRefresh()}
  async function tRemoveUnits(ids){const b=B();for(const uid of ids){for(const r of ordReihen())for(const x of eff(r))if(x.u===uid)ordMove(uid,r.id,x.k,null,null);CHK.u.delete(uid);try{await b.removeUnit(uid)}catch(err){alert('Entfernen nicht möglich: '+err.message)}}if(ids.includes(String(sel).replace(/^u:/,'')))sel=null;data=null;render()}
  function tMenuU(btn,sub){const uid=btn.dataset.tmu,rid=btn.dataset.r||null,k=btn.dataset.k||null,u=ordUnits().find(y=>y.u===uid);if(!u)return;
-  const m=tMenuAt(btn,sub?'<button type="button" data-a="back">‹ zurück</button><hr>'+tReihenList(rid):'<button type="button" data-a="ren">'+ICO.pen+'Umbenennen …</button><button type="button" data-a="mv">'+ICO.mv+'In Reihe verschieben ▸</button><button type="button" data-a="fj">Fach / Jahrgang ändern …</button><button type="button" data-a="exp">'+ICO.up+'Exportieren …</button><hr><button type="button" class="del" data-a="rm">'+ICO.del+'Aus der App entfernen …</button>',sub?300:260);
+  const m=tMenuAt(btn,sub?'<button type="button" data-a="back">‹ zurück</button><hr>'+tReihenList(rid):'<button type="button" data-a="ren">'+ICO.pen+'Umbenennen …</button><button type="button" data-a="mv">'+ICO.mv+'In Reihe verschieben ▸</button><button type="button" data-a="fj">Fach / Jahrgang ändern …</button><button type="button" data-a="exp">'+ICO.up+'Exportieren …</button>'+(DONE.has(uid)?'<button type="button" data-a="undone">Als nicht durchgeführt markieren …</button>':'')+'<hr><button type="button" class="del" data-a="rm">'+ICO.del+'Aus der App entfernen …</button>',sub?300:260);
   m.onclick=async e=>{const t=e.target.closest('button');if(!t||t.disabled)return;e.stopPropagation();const a=t.dataset.a;
    if(a==='mv')return tMenuU(btn,1);if(a==='back')return tMenuU(btn);tClose();
    if(t.dataset.to!=null){ordMove(uid,rid,k,t.dataset.to||null,null);return tRefresh()}
    if(a==='ren')return tRename(uid,rid,k);
    if(a==='fj'){if(await askAssign([u],{title:'Fach und Jahrgang ändern',text:'Wohin gehört „'+esc(u.title)+'“?'})){data=null;render()}return}
    if(a==='exp')return unitExport(uid,null);
+   /* 13.03: Haken „durchgeführt am“ für diese Lerngruppe zurücknehmen */if(a==='undone'){const b=B(),n=b?.subsOf?.(cx.key,uid)||0,cl=cx.label||'diese Lerngruppe';
+    if(n){if(!(await classroomConfirm('„'+u.title+'“ für '+cl+' als nicht durchgeführt markieren?\n\nDazu werden die '+n+' Abgabe'+(n===1?'':'n')+' gelöscht. Bereits in die Noten übernommene Ergebnisse bleiben dort stehen.')))return}
+    else if(!(await classroomConfirm('„'+u.title+'“ für '+cl+' als nicht durchgeführt markieren?\n\nDer Haken mit dem Datum verschwindet.')))return;
+    b?.undone?.(cx.key,uid,!!n);doneLoad();return tRefresh()}
    if(a==='rm'){if(!(await classroomConfirm('„'+u.title+'“ von diesem Gerät entfernen?\n\nDie Einheit verschwindet aus allen Reihen. Noten und Ergebnisse der Schüler bleiben erhalten. Du kannst sie später wieder aus ihrer Datei laden.')))return;return tRemoveUnits([uid])}}}
  function chSet(r,v){const e={...edOf(r.id)},o=r.ch0!==undefined?r.ch0:(r.ch||'');if(v===o)delete e.ch;else e.ch=v;edSet(r.id,e)}
  const chList=()=>[...new Set(reihenOf(cx.subject,cx.jg).map(r=>r.ch||'').filter(Boolean))];
