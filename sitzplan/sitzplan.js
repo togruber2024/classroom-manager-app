@@ -3574,7 +3574,7 @@ document.addEventListener('keydown',event=>{
    „Neu mischen“, „Groß zeigen“ (für Beamer/AirPlay), „Drucken“. Der Button steht neben „Zufallsauswahl“ (Anordnung: plan-actions.js). */
 (()=>{
  const key='classroom-random-groups-v1',colors=['#3b82c4','#e08a1e','#3f9b6b','#9b59b6','#d9534f','#2aa1a8','#c2569b','#6d7f2f','#5b6bd6','#a8642a'];
- let opt={mode:'count',count:4,size:4,absent:true,tabu:true,mix:false,perf:'off',col:'',last:true};try{Object.assign(opt,JSON.parse(localStorage.getItem(key)||'{}'))}catch{}
+ let opt={mode:'count',count:4,size:4,absent:true,tabu:true,mix:false,perf:'off',col:'',last:true,kind:'groups',lart:'ring',lsex:'off',lperf:'off',nb:true};try{Object.assign(opt,JSON.parse(localStorage.getItem(key)||'{}'))}catch{}
  /* 12.13: Geschlecht als Dreierschalter (zufällig | gemischt | getrennt), Nachnamen ein-/ausblendbar */
  if(!opt.sex)opt.sex=opt.mix?'mix':'off';
  const save=()=>{try{localStorage.setItem(key,JSON.stringify(opt))}catch{}};
@@ -3584,14 +3584,18 @@ document.addEventListener('keydown',event=>{
  button.title='Die anwesenden Schüler:innen zufällig in Gruppen einteilen – die Sitzordnung bleibt unverändert.';
  window.classroomRandomGroupsButton=button;
  const dlg=document.createElement('dialog');dlg.className='rg-dialog';dlg.setAttribute('aria-label','Gruppen bilden');
- dlg.innerHTML='<div class="rg-head"><div><h2></h2><p class="rg-sub"></p></div><span class="rg-hb"><button type="button" class="rg-small" data-rg-small>Normale Ansicht</button><button type="button" class="rg-x" data-rg-close aria-label="Schließen">×</button></span></div>'
+ dlg.innerHTML='<div class="rg-head"><div><h2></h2><p class="rg-sub"></p></div><span class="rg-seg rg-kind" role="group"><button type="button" data-kind="groups">Gruppen</button><button type="button" data-kind="lots">Lospartner</button></span><span class="rg-hb"><button type="button" class="rg-small" data-rg-small>Normale Ansicht</button><button type="button" class="rg-x" data-rg-close aria-label="Schließen">×</button></span></div>'
   +'<div class="rg-opts"><span>Einteilen nach</span><span class="rg-seg" role="group"><button type="button" data-mode="count">Anzahl Gruppen</button><button type="button" data-mode="size">Gruppengröße</button></span>'
   +'<span class="rg-num"><button type="button" data-step="-1" aria-label="weniger">−</button><output></output><button type="button" data-step="1" aria-label="mehr">+</button></span>'
   
   +'<span class="rg-perf"><span>Geschlecht</span><span class="rg-seg" role="group"><button type="button" data-sex="off">zufällig</button><button type="button" data-sex="mix">gemischt</button><button type="button" data-sex="sep">getrennt</button></span></span>'
   +'<span class="rg-br"></span><span class="rg-perf"><span>Leistung</span><span class="rg-seg" role="group"><button type="button" data-perf="off">zufällig</button><button type="button" data-perf="mix" title="leistungsgemischt">gemischt</button><button type="button" data-perf="same" title="leistungsgleich">gleich</button></span><select data-col aria-label="Notenspalte"></select></span>'
   +'<label><input type="checkbox" data-opt="absent"> Abwesende auslassen</label><label title="Tabu-Paare trennen"><input type="checkbox" data-opt="tabu"> Tabu trennen</label>'+'</div>'
-  +'<p class="rg-note" role="status"></p><p class="rg-gn"></p><div class="rg-grid"></div>'
+  +'<div class="rg-lopts"><span>Art</span><span class="rg-seg" role="group"><button type="button" data-lart="ring" title="Jede:r zieht eine:n andere:n – wie beim Wichteln">reihum</button><button type="button" data-lart="pair" title="Feste Paare, bei ungerader Zahl ein Dreierteam">gegenseitig</button></span>'
+  +'<span class="rg-perf"><span>Geschlecht</span><span class="rg-seg" role="group"><button type="button" data-lsex="off">zufällig</button><button type="button" data-lsex="mix">gemischt</button><button type="button" data-lsex="same">gleich</button></span></span>'
+  +'<span class="rg-br"></span><span class="rg-perf"><span>Leistung</span><span class="rg-seg" role="group"><button type="button" data-lperf="off">zufällig</button><button type="button" data-lperf="mix" title="stärkere und schwächere zusammen">gemischt</button><button type="button" data-lperf="same" title="ähnliche Noten zusammen">gleich</button></span><select data-col data-lcol aria-label="Notenspalte"></select></span>'
+  +'<label><input type="checkbox" data-opt="absent"> Abwesende auslassen</label><label><input type="checkbox" data-opt="tabu"> Tabu beachten</label><label><input type="checkbox" data-opt="nb"> nicht der Sitznachbar</label></div>'
+  +'<p class="rg-note" role="status"></p><p class="rg-gn"></p><div class="rg-grid"></div><div class="rg-lcover"><span>Lospartner sind verdeckt – sicher auch beim Spiegeln aufs Smartboard.</span><button type="button" data-rg-reveal>Liste aufdecken</button></div><div class="rg-lots"></div><div class="rg-desk" hidden></div>'
   +'<div class="rg-actions"><label class="rg-ln"><input type="checkbox" data-opt="last"> Nachnamen</label><button type="button" data-rg-print>Drucken</button><button type="button" data-rg-big>Groß zeigen</button><button type="button" data-rg-shuffle>Neu mischen</button><button type="button" class="rg-primary" data-rg-close>Schließen</button></div>';
  document.body.append(dlg);
  const grid=dlg.querySelector('.rg-grid'),out=dlg.querySelector('output'),note=dlg.querySelector('.rg-note');
@@ -3606,8 +3610,8 @@ document.addEventListener('keydown',event=>{
  function gradeCols(){GC={half:'',cols:[]};try{const nw=parent.document.getElementById('view-noten')?.contentWindow;if(!nw?.classroomGradeColumns)return;
   const g=typeof classroomCurrentGroup==='function'&&classroomCurrentGroup(),src=(typeof classroomLinkedModel!=='undefined'&&classroomLinkedModel?.sourceClasses)||{},refs=g?Object.keys(src).filter(k=>src[k]===g.id):[];
   const sel=nw.classroomCurrentSelection?.()||{},cur=sel.subject+'::'+sel.classId,key=refs.includes(cur)?cur:refs[0]||cur,[su,ci]=key.split('::');if(su&&ci)GC=nw.classroomGradeColumns(su,ci)||GC}catch(e){console.warn(e)}
-  const sel=dlg.querySelector('[data-col]');if(!GC.cols.some(c=>c.id===opt.col)){const q=[...GC.cols].reverse().find(c=>/^Quartalsnote|^Klassenarbeit|^Halbjahresnote/.test(c.label))||GC.cols.at(-1);opt.col=q?q.id:''}
-  sel.innerHTML=GC.cols.length?GC.cols.map(c=>'<option value="'+esc(c.id)+'"'+(c.id===opt.col?' selected':'')+'>'+esc(c.label)+'</option>').join(''):'<option value="">keine Noten gefunden</option>';sel.disabled=!GC.cols.length}
+  const sels=[...dlg.querySelectorAll('[data-col]')];if(!GC.cols.some(c=>c.id===opt.col)){const q=[...GC.cols].reverse().find(c=>/^Quartalsnote|^Klassenarbeit|^Halbjahresnote/.test(c.label))||GC.cols.at(-1);opt.col=q?q.id:''}
+  for(const sel of sels){sel.innerHTML=GC.cols.length?GC.cols.map(c=>'<option value="'+esc(c.id)+'"'+(c.id===opt.col?' selected':'')+'>'+esc(c.label)+'</option>').join(''):'<option value="">keine Noten gefunden</option>';sel.disabled=!GC.cols.length}}
  function gradeOf(name){const c=GC.cols.find(x=>x.id===opt.col);if(!c)return null;const V=c.vals||(c.vals=Object.fromEntries(Object.entries(c.values).flatMap(([n,v])=>[[norm(n),v],[norm(display(n)),v]])));const v=V[norm(name)]??V[norm(display(name))];return typeof v==='number'?v:null}
  const fmt=v=>v==null?'':(Math.round(v*10)/10).toLocaleString('de-DE');
  function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -3660,7 +3664,7 @@ document.addEventListener('keydown',event=>{
   out.textContent=String(opt.mode==='count'?opt.count:opt.size);
   for(const b of dlg.querySelectorAll('[data-mode]'))b.setAttribute('aria-pressed',String(b.dataset.mode===opt.mode));
   for(const c of dlg.querySelectorAll('[data-opt]'))c.checked=!!opt[c.dataset.opt];
-  for(const b of dlg.querySelectorAll('[data-perf]'))b.setAttribute('aria-pressed',String(b.dataset.perf===opt.perf));dlg.querySelector('[data-col]').hidden=opt.perf==='off';
+  for(const b of dlg.querySelectorAll('[data-perf]'))b.setAttribute('aria-pressed',String(b.dataset.perf===opt.perf));dlg.querySelector('[data-col]:not([data-lcol])').hidden=opt.perf==='off';
   for(const b of dlg.querySelectorAll('[data-sex]'))b.setAttribute('aria-pressed',String(b.dataset.sex===opt.sex));
   const allP=people(),unk=allP.filter(p=>p.gender!=='m'&&p.gender!=='w').length;dlg.querySelector('.rg-gn').textContent=opt.sex!=='off'&&unk?'Bei '+unk+' Schüler:innen fehlt das Geschlecht (Klasse bearbeiten).':'';
   const first=n=>display(n).split(/\s+/)[0]||display(n),lastOf=n=>{const d=display(n).split(/\s+/);return d.length>1?d[d.length-1]:''},fc={};for(const p of allP){const f=first(p.name);fc[f]=(fc[f]||0)+1}
@@ -3671,13 +3675,91 @@ document.addEventListener('keydown',event=>{
  }
  function open(){
   let label='';try{const g=typeof classroomCurrentGroup==='function'?classroomCurrentGroup():null;label=g?.name||aktuelleKlasse||''}catch{}
-  dlg.querySelector('h2').textContent='Gruppen'+(label?' · '+label.replace(/^NM:.*/,''):'');
-  dlg.classList.remove('rg-big');dlg.querySelector('[data-rg-big]').textContent='Groß zeigen';
-  gradeCols();build();if(!dlg.open)dlg.showModal();
+  LBL=label.replace(/^NM:.*/,'');dlg.classList.remove('rg-big');dlg.querySelector('[data-rg-big]').textContent='Groß zeigen';closeDesk();
+  gradeCols();rebuild();if(!dlg.open)dlg.showModal();
  }
+
+ /* 12.95: Lospartner – reihum (jede:r zieht eine:n andere:n, keine gegenseitigen Paare) oder gegenseitig (Paare, bei ungerader Zahl ein Dreierteam).
+    Vorgaben: Geschlecht, Leistung, Abwesende, Tabu, nicht der Sitznachbar. Die Liste ist verdeckt; „Groß zeigen“ = Ziehen am Pult:
+    jede:r tippt den eigenen Namen, sieht nur den eigenen Lospartner, „Fertig – verdecken“ graut den Namen aus. */
+ let LBL='',lots=null,revealed=false,pick=null;const desk=dlg.querySelector('.rg-desk'),lotsEl=dlg.querySelector('.rg-lots');
+ const SEP='\u0001';
+ function neighbors(){const S=new Set();try{const G=typeof gridData!=='undefined'?gridData:[];const nm=v=>typeof v==='string'?v.trim():String(v?.name||'').trim();
+  for(let r=0;r<G.length;r++)for(let c=0;c<(G[r]||[]).length;c++){const a=nm(G[r][c]);if(!a)continue;for(const [dr,dc] of [[0,1],[1,0]]){const b=nm(G[r+dr]?.[c+dc]);if(b){S.add(a+SEP+b);S.add(b+SEP+a)}}}}catch{}return S}
+ function buildLots(){
+  const all=people(),present=opt.absent?all.filter(p=>!p.absent):all,n=present.length,perf=opt.lperf!=='off'&&GC.cols.length?opt.lperf:'';
+  for(const p of all)p.g=perf?gradeOf(p.name):null;
+  const tabu=new Set();if(opt.tabu)for(const t of (typeof tabuPaare!=='undefined'?tabuPaare:[])){const a=String(t.s1||'').trim(),b=String(t.s2||'').trim();if(a&&b){tabu.add(a+SEP+b);tabu.add(b+SEP+a)}}
+  const NB=opt.nb?neighbors():new Set();
+  const ec=(a,b)=>{let c=0;const k=a.name+SEP+b.name;if(tabu.has(k))c+=1000;if(NB.has(k))c+=100;
+   const ga=a.gender,gb=b.gender,known=(ga==='m'||ga==='w')&&(gb==='m'||gb==='w');if(known&&opt.lsex==='mix'&&ga===gb)c+=10;if(known&&opt.lsex==='same'&&ga!==gb)c+=10;
+   if(perf&&a.g!=null&&b.g!=null){const d=Math.abs(a.g-b.g);c+=perf==='same'?d*3:Math.max(0,3-d)*3}return c};
+  const bad={tabu:0,nb:0},missing=all.filter(p=>opt.absent&&p.absent).length;let res=[];
+  if(n<2){lots={list:[],n,bad,missing,done:new Set()};revealed=false;return}
+  const count=k=>{if(tabu.has(k))bad.tabu++;if(NB.has(k))bad.nb++};
+  if(opt.lart==='ring'){/* Permutation ohne Fixpunkt; ab 3 Personen zieht niemand die Person, die ihn/sie gezogen hat */
+   const P=shuffle([...present]),T=P.map((_,i)=>(i+1)%n),cost=i=>ec(P[i],P[T[i]]);
+   const valid=()=>T.every((t,i)=>t!==i&&(n<3||T[t]!==i));
+   for(let it=0;it<6000;it++){const i=Math.floor(Math.random()*n);let j=Math.floor(Math.random()*(n-1));if(j>=i)j++;const before=cost(i)+cost(j);[T[i],T[j]]=[T[j],T[i]];
+    const bad2=T[i]===i||T[j]===j||(n>=3&&(T[T[i]]===i||T[T[j]]===j));if(bad2){[T[i],T[j]]=[T[j],T[i]];continue}
+    const after=cost(i)+cost(j);if(after>before+1e-9||(after===before&&Math.random()<.5))[T[i],T[j]]=[T[j],T[i]]}
+   if(!valid())for(let i=0;i<n;i++)T[i]=(i+1)%n;
+   res=P.map((p,i)=>({from:p,to:[P[T[i]]]}));P.forEach((p,i)=>count(p.name+SEP+P[T[i]].name));
+  }else{/* Paare; bei ungerader Zahl ein Dreierteam */
+   const P=shuffle([...present]),G=[];for(let i=0;i+1<n;i+=2)G.push([i,i+1]);if(n%2)G[G.length-1].push(n-1);
+   const gcost=g=>{let c=0;for(let a=0;a<g.length;a++)for(let b=a+1;b<g.length;b++)c+=ec(P[g[a]],P[g[b]])+ec(P[g[b]],P[g[a]]);return c};
+   for(let it=0;it<5000&&G.length>1;it++){const x=Math.floor(Math.random()*G.length);let y=Math.floor(Math.random()*(G.length-1));if(y>=x)y++;const A=G[x],B=G[y],i=Math.floor(Math.random()*A.length),j=Math.floor(Math.random()*B.length);const before=gcost(A)+gcost(B);[A[i],B[j]]=[B[j],A[i]];const after=gcost(A)+gcost(B);if(after>before+1e-9||(after===before&&Math.random()<.5))[A[i],B[j]]=[B[j],A[i]]}
+   for(const g of G){for(const i of g)res.push({from:P[i],to:g.filter(j=>j!==i).map(j=>P[j])});for(let a=0;a<g.length;a++)for(let b=a+1;b<g.length;b++)count(P[g[a]].name+SEP+P[g[b]].name)}
+  }
+  res.sort((a,b)=>display(a.from.name).localeCompare(display(b.from.name),'de'));lots={list:res,n,bad,missing,done:new Set()};revealed=false}
+ const nmL=n=>{const allP=people(),first=x=>display(x).split(/\s+/)[0]||display(x),lastOf=x=>{const d=display(x).split(/\s+/);return d.length>1?d[d.length-1]:''},fc={};for(const p of allP){const f=first(p.name);fc[f]=(fc[f]||0)+1}return opt.last?display(n):(fc[first(n)]>1&&lastOf(n)?first(n)+' '+lastOf(n)[0]+'.':first(n))};
+ function renderLots(){
+  for(const b of dlg.querySelectorAll('[data-lart]'))b.setAttribute('aria-pressed',String(b.dataset.lart===opt.lart));
+  for(const b of dlg.querySelectorAll('[data-lsex]'))b.setAttribute('aria-pressed',String(b.dataset.lsex===opt.lsex));
+  for(const b of dlg.querySelectorAll('[data-lperf]'))b.setAttribute('aria-pressed',String(b.dataset.lperf===opt.lperf));dlg.querySelector('[data-lcol]').hidden=opt.lperf==='off';
+  for(const c of dlg.querySelectorAll('[data-opt]'))c.checked=!!opt[c.dataset.opt];
+  const L=lots||{list:[],n:0,bad:{}};
+  dlg.querySelector('.rg-sub').textContent=`${L.n} ${opt.absent?'anwesend':'Schüler:innen'}${L.missing?` · ${L.missing} abwesend (nicht gelost)`:''} · ${opt.lart==='ring'?'jede:r zieht eine:n andere:n':'Paare, die sich gegenseitig haben'}`;
+  const parts=[];if(L.bad.tabu)parts.push(`${L.bad.tabu} Tabu-Paar${L.bad.tabu===1?'':'e'}`);if(L.bad.nb)parts.push(`${L.bad.nb}× Sitznachbar`);
+  note.textContent=L.n<2?'Für Lospartner sind mindestens zwei Schüler:innen nötig.':parts.length?'Hinweis: '+parts.join(' und ')+' ließ sich nicht vermeiden.':'';
+  dlg.querySelector('.rg-gn').textContent=opt.lsex!=='off'&&people().some(p=>p.gender!=='m'&&p.gender!=='w')?'Bei einigen Schüler:innen fehlt das Geschlecht (Klasse bearbeiten).':'';
+  dlg.classList.toggle('rg-revealed',revealed);dlg.querySelector('[data-rg-reveal]').textContent=revealed?'Liste verdecken':'Liste aufdecken';
+  const arrow=opt.lart==='ring'?'→':'↔';
+  lotsEl.innerHTML=L.list.map(x=>`<div class="rg-pr"><span class="rg-pa">${esc(nmL(x.from.name))}</span><span class="rg-par">${arrow}</span><span class="rg-pb">${esc(x.to.map(t=>nmL(t.name)).join(' & '))}</span></div>`).join('');
+  if(!desk.hidden)renderDesk()}
+ function rebuild(){const lm=opt.kind==='lots';dlg.classList.toggle('rg-lotsmode',lm);for(const b of dlg.querySelectorAll('[data-kind]'))b.setAttribute('aria-pressed',String(b.dataset.kind===opt.kind));
+  dlg.querySelector('h2').textContent=(lm?'Lospartner':'Gruppen')+(LBL?' · '+LBL:'');
+  if(lm){note.textContent='';buildLots();renderLots()}else{dlg.querySelector('.rg-gn').textContent='';build()}}
+ function renderDesk(){const L=lots||{list:[],done:new Set()};const left=L.list.filter(x=>!L.done.has(x.from.name)).length;
+  desk.innerHTML=`<div class="rg-dh"><b>Lospartner ziehen${LBL?' · '+esc(LBL):''}</b><span>${L.list.length-left} von ${L.list.length} gezogen</span><button type="button" class="rg-dx" data-desk-close aria-label="Beenden" title="Beenden">×</button></div><p class="rg-dsub">${left?'Tippe auf deinen Namen.':'Alle haben gezogen.'}</p>`
+   +`<div class="rg-dgrid">${L.list.map((x,i)=>`<button type="button" class="rg-dn${L.done.has(x.from.name)?' is-done':''}" data-desk-i="${i}"${L.done.has(x.from.name)?' disabled':''}>${esc(nmL(x.from.name))}</button>`).join('')}</div>`
+   +`<p class="rg-dfoot">Bereits gezogene Namen sind ausgegraut – ihre Lospartner bleiben verborgen.</p>`
+   +(pick!=null&&L.list[pick]?`<div class="rg-dov"><div class="rg-dcard"><div class="rg-dw">${esc(nmL(L.list[pick].from.name))}</div><div class="rg-dz">${opt.lart==='ring'?'du hast gezogen':'dein Lospartner'+(L.list[pick].to.length>1?' (Dreierteam)':'')}</div><div class="rg-dp">${L.list[pick].to.map(t=>esc(nmL(t.name))).join('<br>')}</div><button type="button" class="rg-dok" data-desk-ok>Fertig – verdecken</button></div></div>`:'')}
+ /* Pult-Ansicht über den ganzen Bildschirm: Kopfzeile, Navigation und Tab-Leiste der App ausblenden (iPad: kein echtes Vollbild in der Home-Bildschirm-App) */
+ const PD=(()=>{try{return parent.document!==document?parent.document:null}catch{return null}})();
+ function full(on){if(!PD)return;if(on&&!PD.getElementById('cmDeskFullSt')){const st=PD.createElement('style');st.id='cmDeskFullSt';st.textContent='html.cm-deskfull .app-header,html.cm-deskfull .compact-navigation,html.cm-deskfull .compact-navigation-backdrop,html.cm-deskfull .phone-tabbar{display:none!important}html.cm-deskfull #view-sitzplan{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;border:0!important;z-index:99999!important}';PD.head.append(st)}PD.documentElement.classList.toggle('cm-deskfull',!!on)}
+ function openDesk(){if(!lots?.list.length)return;pick=null;desk.hidden=false;dlg.classList.add('rg-deskon');full(true);renderDesk()}
+ function closeDesk(){pick=null;desk.hidden=true;desk.innerHTML='';dlg.classList.remove('rg-deskon');full(false)}
+ dlg.addEventListener('close',()=>{if(!desk.hidden)closeDesk()});
+ function lotsClick(t){
+  if(t.dataset.kind){opt.kind=t.dataset.kind;save();closeDesk();dlg.classList.remove('rg-big');dlg.querySelector('[data-rg-big]').textContent='Groß zeigen';rebuild();return true}
+  if(t.hasAttribute('data-desk-close')){closeDesk();return true}
+  if(t.dataset.deskI!=null){if(!t.disabled){pick=+t.dataset.deskI;renderDesk()}return true}
+  if(t.hasAttribute('data-desk-ok')){if(pick!=null&&lots?.list[pick])lots.done.add(lots.list[pick].from.name);pick=null;renderDesk();return true}
+  if(opt.kind!=='lots')return false;
+  if(t.dataset.lart){opt.lart=t.dataset.lart;save();rebuild();return true}
+  if(t.dataset.lsex){opt.lsex=t.dataset.lsex;save();rebuild();return true}
+  if(t.dataset.lperf){opt.lperf=t.dataset.lperf;save();rebuild();if(opt.lperf!=='off'&&!GC.cols.length)note.textContent='Für diese Lerngruppe sind im aktuellen Halbjahr noch keine Noten eingetragen – die Lospartner werden zufällig gezogen.';return true}
+  if(t.hasAttribute('data-rg-reveal')){revealed=!revealed;renderLots();return true}
+  if(t.hasAttribute('data-rg-shuffle')){rebuild();return true}
+  if(t.hasAttribute('data-rg-big')){openDesk();return true}
+  if(t.hasAttribute('data-rg-print')){const w=window.open('','_blank');if(!w){alert('Bitte Pop-ups für den Druck erlauben.');return true}const arrow=opt.lart==='ring'?'→':'↔';
+   w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${esc(dlg.querySelector('h2').textContent)}</title><style>body{font:14px/1.4 -apple-system,system-ui,sans-serif;margin:14mm;color:#24334b}h1{font-size:18px;margin:0 0 12px}.g{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 18px}.r{display:flex;gap:8px;border-bottom:1px solid #e1e7f0;padding:4px 0;break-inside:avoid}.r span:first-child{flex:1}.r b{flex:1;color:#2f5f9b}</style></head><body><h1>${esc(dlg.querySelector('h2').textContent)} · ${new Date().toLocaleDateString('de-DE')}</h1><div class="g">${(lots?.list||[]).map(x=>`<div class="r"><span>${esc(nmL(x.from.name))}</span><span>${arrow}</span><b>${esc(x.to.map(t=>nmL(t.name)).join(' & '))}</b></div>`).join('')}</div></body></html>`);w.document.close();setTimeout(()=>{w.focus();w.print()},250);return true}
+  return false}
  button.onclick=open;
  dlg.addEventListener('click',e=>{
   const t=e.target.closest('button');if(!t)return;
+  if(lotsClick(t))return;
   if(t.dataset.sex){opt.sex=t.dataset.sex;opt.mix=opt.sex==='mix';save();build()}
   else if(t.dataset.perf){opt.perf=t.dataset.perf;save();if(opt.perf!=='off'&&!GC.cols.length)note.textContent='';build();if(opt.perf!=='off'&&!GC.cols.length)note.textContent='Für diese Lerngruppe sind im aktuellen Halbjahr noch keine Noten eingetragen – die Gruppen werden zufällig gebildet.'}
   else if(t.dataset.mode){opt.mode=t.dataset.mode;save();build()}
@@ -3688,7 +3770,8 @@ document.addEventListener('keydown',event=>{
   else if(t.hasAttribute('data-rg-big')){const big=dlg.classList.toggle('rg-big');t.textContent=big?'Normale Ansicht':'Groß zeigen'}
   else if(t.hasAttribute('data-rg-print')){const w=window.open('','_blank');if(!w){alert('Bitte Pop-ups für den Druck erlauben.');return}w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${esc(dlg.querySelector('h2').textContent)}</title><style>body{font:14px/1.4 -apple-system,system-ui,sans-serif;margin:14mm;color:#24334b}h1{font-size:18px;margin:0 0 12px}.rg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.rg-card{border:1px solid #cfd8e6;border-radius:10px;overflow:hidden;break-inside:avoid}.rg-card h4{margin:0;padding:6px 10px;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.rg-card ul{margin:0;padding:6px 10px 8px;list-style:none}</style></head><body><h1>${esc(dlg.querySelector('h2').textContent)} · ${new Date().toLocaleDateString('de-DE')}</h1><div class="rg-grid">${grid.innerHTML.replace(/<span class="rg-v[^"]*">[^<]*<\/span>/g,'')}</div></body></html>`);w.document.close();setTimeout(()=>{w.focus();w.print()},250)}
  });
- dlg.addEventListener('change',e=>{if(e.target.matches('[data-col]')){opt.col=e.target.value;save();build();return}const c=e.target.closest('[data-opt]');if(c){opt[c.dataset.opt]=c.checked;save();if(c.dataset.opt==='last')render();else build()}});
+ dlg.addEventListener('change',e=>{if(e.target.matches('[data-col]')){opt.col=e.target.value;for(const x of dlg.querySelectorAll('[data-col]'))x.value=opt.col;save();rebuild();return}const c=e.target.closest('[data-opt]');if(c){opt[c.dataset.opt]=c.checked;save();for(const x of dlg.querySelectorAll('[data-opt="'+c.dataset.opt+'"]'))x.checked=c.checked;if(c.dataset.opt==='last'){render();if(opt.kind==='lots')renderLots()}else rebuild()}});
+ dlg.addEventListener('cancel',e=>{if(!desk.hidden){e.preventDefault();closeDesk()}});
  const style=document.createElement('style');style.textContent=
   '.rg-dialog{width:min(900px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;padding:20px 22px;border:1px solid #dce3ef;border-radius:18px;background:#fff;color:#24334b;box-shadow:0 18px 60px #1c2b4630;font:15px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}'
   +'.rg-dialog::backdrop{background:#1c2b4638}.rg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.rg-head h2{margin:0;font-size:1.2rem}.rg-sub{margin:2px 0 12px;color:#66758a;font-size:.88rem}'
@@ -3701,7 +3784,15 @@ document.addEventListener('keydown',event=>{
   +'.rg-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:16px}.rg-actions button{min-height:38px;padding:7px 16px;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:var(--primary,#2f5f9b);font:inherit;font-weight:600;cursor:pointer}.rg-actions .rg-primary{background:var(--primary,#2f5f9b);border-color:var(--primary,#2f5f9b);color:#fff}'
   +'.rg-dialog.rg-big{box-sizing:border-box;width:calc(100vw - 16px);max-width:none;height:calc(100dvh - 16px);max-height:none}.rg-big .rg-opts,.rg-big .rg-note,.rg-big .rg-sub,.rg-big [data-rg-print],.rg-big [data-rg-shuffle]{display:none}.rg-big .rg-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-top:14px}.rg-big .rg-actions{display:none}.rg-hb{display:flex;align-items:center;gap:10px}.rg-small{display:none}.rg-big .rg-small{display:inline-flex;align-items:center;height:40px;padding:0 16px;border:1px solid #cfd8e6;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:15px;cursor:pointer}.rg-big .rg-x{width:42px;height:40px;border:1px solid #cfd8e6;border-radius:10px;background:#fff;font-size:22px;display:inline-flex;align-items:center;justify-content:center}.rg-big .rg-head{align-items:center}.rg-big .rg-card h4{font-size:1.4rem;padding:10px 16px}.rg-big .rg-card li{font-size:1.45rem;padding:4px 0}.rg-big .rg-card ul{padding:10px 16px 14px}.rg-big h2{font-size:1.6rem}'
   +'.rg-ln{display:inline-flex;gap:6px;align-items:center;margin-right:auto;font-size:.9rem;cursor:pointer}.rg-big .rg-ln{display:none}.rg-gn{color:#b45309;font-size:.85rem;margin:6px 2px 0}.rg-gn:empty{display:none}.rg-sx{margin-left:auto;font-size:.8em;font-weight:600;opacity:.92}.rg-sx+.rg-avg{margin-left:10px}.rg-perf{display:inline-flex;flex-wrap:wrap;align-items:center;gap:8px}.rg-opts .rg-br{flex-basis:100%;height:0}.rg-perf select{height:32px;border:1px solid #cbd6e5;border-radius:8px;background:#fff;font:inherit;padding:0 6px;max-width:180px}.rg-perf select[hidden]{display:none}'
-  +'.rg-card h4{display:flex;justify-content:space-between;gap:8px}.rg-avg{font-weight:600;background:#ffffff33;border-radius:6px;padding:0 6px}.rg-card li{display:flex;justify-content:space-between;gap:8px}.rg-g{font-size:.8rem;color:#475569;background:#eef2f7;border-radius:6px;padding:0 6px;font-variant-numeric:tabular-nums}.rg-big .rg-v{display:none}';
+  +'.rg-card h4{display:flex;justify-content:space-between;gap:8px}.rg-avg{font-weight:600;background:#ffffff33;border-radius:6px;padding:0 6px}.rg-card li{display:flex;justify-content:space-between;gap:8px}.rg-g{font-size:.8rem;color:#475569;background:#eef2f7;border-radius:6px;padding:0 6px;font-variant-numeric:tabular-nums}.rg-big .rg-v{display:none}'
+  +'.rg-head .rg-kind{margin:0 auto 0 18px;align-self:center}.rg-kind button{font-size:.98rem;padding:5px 16px}.rg-lopts,.rg-lcover,.rg-lots{display:none}.rg-lotsmode .rg-opts,.rg-lotsmode .rg-grid{display:none}.rg-lotsmode .rg-lopts{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:10px 14px;border:1px solid #dce3ef;border-radius:12px;background:#f8fafd;font-size:.9rem}.rg-lopts label{display:inline-flex;gap:6px;align-items:center;cursor:pointer}.rg-lopts .rg-br{flex-basis:100%;height:0}.rg-lopts select{height:32px;border:1px solid #cbd6e5;border-radius:8px;background:#fff;font:inherit;padding:0 6px;max-width:180px}.rg-lopts select[hidden]{display:none}'
+  +'.rg-lotsmode .rg-lcover{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:12px;padding:8px 12px;border:1px dashed #e8a25a;border-radius:10px;background:#fff8ef;color:#8a4b08;font-size:.88rem}.rg-lcover button{height:34px;padding:0 14px;border:1px solid #cbd6e5;border-radius:9px;background:#fff;color:#2f5f9b;font:inherit;font-weight:600;cursor:pointer}'
+  +'.rg-lotsmode .rg-lots{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;margin-top:12px}.rg-pr{display:flex;align-items:center;gap:8px;border:1px solid #dce3ef;border-radius:11px;padding:7px 11px}.rg-pa,.rg-pb{flex:1;min-width:0}.rg-par{color:#e8790c;font-weight:800}.rg-pb{font-weight:600;color:#2f5f9b;filter:blur(7px);user-select:none;transition:filter .15s}.rg-revealed .rg-pb{filter:none;user-select:auto}'
+  +'.rg-desk{position:fixed;inset:0;z-index:20;background:#fff;padding:max(20px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) 20px max(24px,env(safe-area-inset-left));overflow:auto;display:flex;flex-direction:column;box-sizing:border-box}.rg-desk[hidden]{display:none}.rg-dh{display:flex;align-items:center;gap:14px}.rg-dh b{font-size:1.4rem}.rg-dh span{margin-left:auto;color:#66758a}.rg-dx{width:44px;height:42px;border:1px solid #cfd8e6;border-radius:10px;background:#fff;color:#2f5f9b;font-size:24px;cursor:pointer}'
+  +'.rg-dsub{margin:4px 0 16px;color:#66758a;font-size:1.1rem}.rg-dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}.rg-dn{min-height:62px;border:1.5px solid #a8bdd8;border-radius:14px;background:#fff;color:#2f5f9b;font:inherit;font-size:1.15rem;font-weight:600;cursor:pointer;padding:6px 10px}.rg-dn.is-done{background:#f1f4f8;border-color:#e1e7f0;color:#9aa6b6;font-weight:500;cursor:default}.rg-dn.is-done::before{content:"✓ ";color:#2c7a4b}'
+  +'.rg-dfoot{margin-top:auto;padding-top:16px;color:#66758a;font-size:.9rem}.rg-dov{position:fixed;inset:0;background:rgba(28,43,70,.5);display:grid;place-items:center;padding:16px}.rg-dcard{background:#fff;border-radius:22px;padding:30px 36px;text-align:center;width:min(600px,100%);box-sizing:border-box;box-shadow:0 20px 50px #0004}.rg-dw{font-size:1.9rem;font-weight:700}.rg-dz{color:#66758a;font-size:1.1rem;margin:6px 0}.rg-dp{font-size:clamp(2rem,6vw,3rem);font-weight:800;color:#fff;background:#2f5f9b;border-radius:18px;padding:14px 20px;margin:8px 0 20px;line-height:1.2}.rg-dok{height:50px;padding:0 28px;border:0;border-radius:12px;background:#2f5f9b;color:#fff;font:inherit;font-size:1.1rem;font-weight:600;cursor:pointer}'
+  +'.rg-dialog.rg-deskon{box-sizing:border-box;width:100vw;max-width:none;height:100dvh;max-height:none;margin:0;border-radius:0}'
+  +'@media (max-width:600px){.rg-head{flex-wrap:wrap}.rg-head .rg-kind{order:3;margin:6px 0 0}}';
  document.head.append(style);
 })();
 ;

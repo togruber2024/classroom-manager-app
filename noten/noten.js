@@ -8117,13 +8117,14 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  /* ---------- Schreiben / bearbeiten ---------- */
  const dlg=TOP.getElementById('cnDialog')||(()=>{const d=TOP.createElement('dialog');d.id='cnDialog';d.className='cn-dialog';TOP.body.append(d);return d})();
  const localInput=ms=>{const d=new Date(ms);return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+'T'+p2(d.getHours())+':'+p2(d.getMinutes())};
- function editor(subject,classId,note){
+ function editor(subject,classId,note,draft){
   const lbl=labelOf(subject,classId)||note?.label||'',nx=nextLesson(subject,classId),mode=note?(note.mode==='next'&&nx?'next':note.mode==='date'?'date':note.mode==='next'?'date':'now'):(nx?'next':'now');
   const others=openOf(subject,classId).filter(n=>n.id!==note?.id);
   const opt=(v,t,s)=>`<label class="cn-opt"><input type="radio" name="cnWhen" value="${v}"${mode===v?' checked':''}><span class="cn-r"></span><span>${t}${s?`<small>${s}</small>`:''}</span></label>`;
-  dlg.innerHTML=`<form method="dialog" class="cn-form"><div class="cn-grip"></div><h2>Hinweis zur ${esc(/^klasse\b/i.test(lbl)?lbl:'Klasse '+lbl)}</h2>
+  dlg.innerHTML=`<form method="dialog" class="cn-form"><div class="cn-grip"></div><h2>${note?'Hinweis bearbeiten':'Neuer Hinweis'}</h2>
+   <div class="cn-lbl">KLASSE</div><select class="cn-sel">${(()=>{let h='';try{for(const [sk,list] of Object.entries(classesBySubject||{}))for(const c of list||[]){const v=sk+'|'+c.id,l=c.label||'';h+=`<option value="${esc(v)}"${sk===subject&&c.id===classId?' selected':''}>${esc(subjLabel(sk))} · ${esc(/^klasse\b/i.test(l)?l:'Klasse '+l)}</option>`}}catch{}return h})()}</select>
    ${others.length?`<div class="cn-list"><div class="cn-lbl">OFFEN</div>${others.map(n=>`<div class="cn-li"><div><b>${esc(n.text)}</b><small>${(n.due||0)<=Date.now()?'fällig seit '+esc(when(n.due||n.created)):'ab '+esc(when(n.due))}</small></div><button type="button" data-cn-ed="${esc(n.id)}">Bearbeiten</button><button type="button" data-cn-ok="${esc(n.id)}">Erledigt</button></div>`).join('')}</div>`:''}
-   <div class="cn-lbl">${note?'HINWEIS BEARBEITEN':others.length?'NEUER HINWEIS':'HINWEIS'}</div><textarea class="cn-ta" rows="3" maxlength="600" placeholder="z. B. Backup vom Mac holen und Vokabeltest einscannen">${esc(note?.text||'')}</textarea>
+   <div class="cn-lbl">${note?'HINWEIS BEARBEITEN':others.length?'NEUER HINWEIS':'HINWEIS'}</div><textarea class="cn-ta" rows="3" maxlength="600" placeholder="z. B. Backup vom Mac holen und Vokabeltest einscannen">${esc(draft??note?.text??'')}</textarea>
    <div class="cn-lbl">ANZEIGEN AB</div>
    ${nx?opt('next','Nächste Stunde',esc(when(nx.at))+' ('+nx.slot+'. Stunde)'):''}${opt('now','Sofort')}${opt('date','Datum wählen …','Tag und Uhrzeit')}
    <input type="datetime-local" class="cn-dt" value="${localInput(note?.due&&note.due>Date.now()?note.due:nx?.at||Date.now()+864e5)}"${mode==='date'?'':' hidden'}>
@@ -8132,6 +8133,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    <div class="cn-row">${note?'<button type="button" class="cn-del" data-cn-del>Löschen</button>':''}<span></span><button type="button" data-cn-cancel>Abbrechen</button><button type="button" class="cn-pri" data-cn-save>Speichern</button></div></form>`;
   const ta=dlg.querySelector('.cn-ta'),dt=dlg.querySelector('.cn-dt'),err=dlg.querySelector('.cn-err');
   dlg.querySelectorAll('[name=cnWhen]').forEach(r=>r.onchange=()=>{dt.hidden=r.value!=='date'||!r.checked;if(!dt.hidden)dt.focus()});
+  dlg.querySelector('.cn-sel').onchange=e=>{const [ns,nc]=e.target.value.split('|');editor(ns,nc,note,ta.value)};
   dlg.querySelector('[data-cn-cancel]').onclick=()=>dlg.close();
   dlg.querySelectorAll('[data-cn-ok]').forEach(b=>b.onclick=()=>{done(b.dataset.cnOk);editor(subject,classId,note)});
   dlg.querySelectorAll('[data-cn-ed]').forEach(b=>b.onclick=()=>editor(subject,classId,load()[b.dataset.cnEd]));
@@ -8144,7 +8146,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    /* alte erledigte Hinweise (über 60 Tage) aufräumen */for(const [k,v] of Object.entries(o))if(v?.done&&Date.now()-v.done>60*864e5)delete o[k];
    save(o);later.delete(id);dlg.close();try{TW.classroomReminders?.refresh?.()}catch{}refreshBtn();setTimeout(check,300)};
   if(!dlg.open)dlg.showModal();if(!note)setTimeout(()=>ta.focus({preventScroll:true}),60)}
- window.classroomClassNoteEditor=()=>{const c=cur();if(c)editor(c.subject,c.classId)};
+ window.classroomClassNoteEditor=()=>{let c=cur();if(!c)try{for(const [sk,l] of Object.entries(classesBySubject||{}))if(l?.[0]){c={subject:sk,classId:l[0].id};break}}catch{}if(c)editor(c.subject,c.classId)};
 
  /* ---------- Aufploppen ---------- */
  const pop=TOP.getElementById('cnPop')||(()=>{const d=TOP.createElement('dialog');d.id='cnPop';d.className='cn-dialog cn-pop';TOP.body.append(d);return d})();
@@ -8164,20 +8166,13 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  addEventListener('storage',e=>{if(e.key===KEY){refreshBtn();setTimeout(check,500)}});
 
  /* ---------- Knopf im Auswahlmenü (Mac/iPad: aufgeklappte Leiste, iPhone: Blatt „Fach und Klasse“) ---------- */
- function refreshBtn(){const fly=TOP.querySelector('.compact-navigation-flyout');if(!fly)return;const c=cur();let b=fly.querySelector('.cn-navrow');
-  if(!c){b?.remove();return}
-  const n=openOf(c.subject,c.classId).length,lbl=labelOf(c.subject,c.classId),txt='Hinweis zur '+(/^klasse\b/i.test(lbl)?lbl:'Klasse '+lbl)+' …'+(n?' ('+n+')':'');
-  if(!b){b=TOP.createElement('div');b.className='cn-navrow';b.innerHTML='<button type="button" class="cn-navbtn">'+ICON+'<span></span></button>';b.querySelector('button').onclick=e=>{e.stopPropagation();try{TOP.querySelector('.compact-navigation-backdrop')?.click()}catch{}const cc=cur();if(cc)setTimeout(()=>editor(cc.subject,cc.classId),60)}}
-  const sp=b.querySelector('span');if(sp.textContent!==txt)sp.textContent=txt;b.querySelector('button').classList.toggle('has-n',!!n);
-  const clsBtn=[...fly.querySelectorAll('button[data-class-id]')].find(x=>x.dataset.classId===c.classId),row=clsBtn?.closest('.compact-navigation-row');
-  const want=row||null;if(want){if(want.nextElementSibling!==b)want.after(b)}else if(b.parentElement!==fly||fly.lastElementChild!==b)fly.append(b)}
- (()=>{const fly=TOP.querySelector('.compact-navigation-flyout');if(!fly)return;let t=0;new MutationObserver(()=>{if(t)return;t=setTimeout(()=>{t=0;refreshBtn()},30)}).observe(fly,{childList:true})})();
-
+ /* 12.95: kein Knopf mehr im Auswahlmenü – neue Hinweise über „＋“ in den Erinnerungen (Glocke) */
+ function refreshBtn(){TOP.querySelector('.compact-navigation-flyout .cn-navrow')?.remove()}
  if(!TOP.getElementById('cnStyle')){const st=TOP.createElement('style');st.id='cnStyle';st.textContent=`
- .cn-navrow{display:flex;padding:2px 0 4px 44px}@media (max-width:600px),(max-height:500px) and (pointer:coarse){.cn-navrow{padding:4px 0 6px}.cn-navbtn{height:44px;font-size:16px}}.cn-navbtn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border:1px dashed #a8bdd8;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:.92rem;cursor:pointer}.cn-navbtn svg{width:18px;height:18px;flex:none}.cn-navbtn.has-n{border-style:solid;font-weight:600}
+
  .cn-dialog{width:min(480px,calc(100vw - 24px));max-height:calc(100dvh - 40px);box-sizing:border-box;padding:18px 20px;border:1px solid #dbe3ef;border-radius:18px;color:#243247;font:16px/1.45 ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;overflow:auto}
  .cn-dialog::backdrop{background:rgba(28,43,70,.38)}
- .cn-dialog h2{margin:0 0 4px;font-size:1.2rem}.cn-grip{display:none}
+ .cn-dialog h2{margin:0 0 4px;font-size:1.2rem}.cn-sel{display:block;box-sizing:border-box;width:100%;height:44px;padding:0 12px;border:1.5px solid #9bb6dc;border-radius:12px;font:inherit;font-size:15px;color:#243247;background:#fff}.cn-grip{display:none}
  .cn-lbl{font-size:.74rem;font-weight:700;letter-spacing:.04em;color:#66758a;margin:14px 0 6px}
  .cn-ta{display:block;box-sizing:border-box;width:100%;min-height:84px;padding:10px 12px;border:1.5px solid #9bb6dc;border-radius:12px;font:inherit;font-size:15px;line-height:1.4;color:#243247;background:#fbfcfe;resize:vertical}
  .cn-opt{display:flex;align-items:center;gap:10px;border:1.5px solid #dce3ef;border-radius:12px;padding:9px 12px;margin-bottom:7px;font-size:15px;cursor:pointer}.cn-opt small{display:block;color:#66758a;font-size:12.5px}
@@ -8295,8 +8290,8 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const vtHtml=vtn.map((v,i)=>`<div class="cr-it cr-vt"><div class="cr-top"><b>${v.isNew?'Neuer '+vtK(v):vtK(v)+' ergänzt'}</b><span>aus dem Backup${v.cls?' · '+esc(v.cls):''}</span></div><div class="cr-why">${esc(v.title)} · ${v.isNew?v.subs+' Abgabe'+(v.subs===1?'':'n'):v.add+' neue Abgabe'+(v.add===1?'':'n')+' ('+v.subs+' insgesamt)'}</div><div class="cr-act"><button type="button" class="cr-pri" data-vt-open="${i}">Zu den Abgaben ›</button><button type="button" data-vt-done="${i}">Erledigt</button></div></div>`).join('');
   /* 12.94: Hinweise zur Klasse – fällige zuerst, künftige mit „ab …“ */const cnl=(()=>{try{return window.classroomClassNotes?.open()||[]}catch{return []}})();
   const cnHtml=cnl.map((n,i)=>`<div class="cr-it cr-cn"><div class="cr-top"><b>Hinweis zur Klasse</b><span>${esc(subjects[n.subject]?.label||'')}${n.label?' · '+esc(n.label):''}</span></div><div class="cr-why">${esc(n.text)}<span class="cr-ago">${n.isDue?'fällig seit '+esc(window.classroomClassNotes.when(n.due||n.created)):'erscheint ab '+esc(window.classroomClassNotes.when(n.due))}</span></div><div class="cr-act">${n.isDue?`<button type="button" class="cr-pri" data-cn-done="${i}">Erledigt</button>`:''}<button type="button" data-cn-edit="${i}">Bearbeiten</button>${n.isDue?'':`<button type="button" data-cn-done="${i}">Erledigt</button>`}</div></div>`).join('');
-  dlg.innerHTML=`<div class="cr-head"><div><h2>Erinnerungen</h2><p>Fehlende Hausaufgaben bzw. Material im laufenden Halbjahr – Erinnerung beim 3. und 5. Mal.</p></div><span class="cr-head-btns"><button type="button" data-cr-tpl>Vorlagen …</button><button type="button" class="cr-close" data-cr-close>Schließen</button></span></div><div class="cr-body">${cnHtml}${vtHtml}${orgaHtml}${open.length?open.map(item).join(''):orga.length||vtn.length||cnl.length?'':'<p class="cr-empty">Keine offenen Erinnerungen.</p>'}${done.length?`<details class="cr-done"${doneOpen()?' open':''}><summary>Erledigt <span class="cr-n">${done.length}</span></summary>${done.map(doneItem).join('')}</details>`:''}</div>`;
-  dlg.querySelector('[data-cr-close]').onclick=()=>dlg.close();dlg.querySelector('[data-cr-tpl]').onclick=editTemplates;
+  dlg.innerHTML=`<div class="cr-head"><div><h2>Erinnerungen</h2><p>Hinweise zur Klasse sowie fehlende Hausaufgaben bzw. Material (Erinnerung beim 3. und 5. Mal).</p></div><span class="cr-head-btns"><button type="button" data-cr-tpl>Vorlagen …</button><button type="button" class="cr-plus" data-cr-add title="Hinweis zur Klasse hinzufügen" aria-label="Hinweis zur Klasse hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><button type="button" class="cr-close" data-cr-close>Schließen</button></span></div><div class="cr-body">${cnHtml}${vtHtml}${orgaHtml}${open.length?open.map(item).join(''):orga.length||vtn.length||cnl.length?'':'<p class="cr-empty">Keine offenen Erinnerungen.</p>'}${done.length?`<details class="cr-done"${doneOpen()?' open':''}><summary>Erledigt <span class="cr-n">${done.length}</span></summary>${done.map(doneItem).join('')}</details>`:''}</div>`;
+  dlg.querySelector('[data-cr-close]').onclick=()=>dlg.close();dlg.querySelector('[data-cr-tpl]').onclick=editTemplates;dlg.querySelector('[data-cr-add]').onclick=()=>{dlg.close();window.classroomClassNoteEditor?.()};
   dlg.querySelector('.cr-done')?.addEventListener('toggle',e=>{try{localStorage.setItem('notenrechner-erinnerungen-erledigt-offen-v1',e.target.open?'1':'0')}catch{}});
   dlg.querySelectorAll('[data-cr-done]').forEach(b=>b.onclick=()=>{ack(open[+b.dataset.crDone]);list()});
   dlg.querySelectorAll('[data-cr-skip]').forEach(b=>b.onclick=()=>{skip(open[+b.dataset.crSkip]);list()});
@@ -8329,7 +8324,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .cr-bell{position:relative;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:42px;height:42px;padding:0;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:#2f5f9b;cursor:pointer}
  .cr-bell svg{width:20px;height:20px}.cr-dot{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 4px;box-sizing:border-box;border:2px solid #fff;border-radius:999px;background:#d64545;color:#fff;font:700 11.5px/16px system-ui,sans-serif;text-align:center}.cr-dot[hidden]{display:none}
  html body .app-header .classroom-global-actions>.cr-bell:not(#_):not(#__):not(#___){display:inline-flex!important}
- @media (max-width:540px),(max-height:500px) and (pointer:coarse){html body .app-header .classroom-global-actions>.cr-bell:not(.has-open):not(#_):not(#__):not(#___){display:none!important}html body .app-header .classroom-global-actions>.cr-bell:not(#_){width:40px;height:40px;border-radius:999px}.app-header .cr-bell svg{width:24px;height:24px}}
+ @media (max-width:540px),(max-height:500px) and (pointer:coarse){html body .app-header .classroom-global-actions>.cr-bell:not(#_){width:40px;height:40px;border-radius:999px}.app-header .cr-bell svg{width:24px;height:24px}}
  .cr-dialog{width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 40px);box-sizing:border-box;padding:0;border:1px solid #dbe3ef;border-radius:16px;color:#243247;font:16px/1.45 ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;overflow:auto}
  .cr-dialog::backdrop{background:rgba(28,43,70,.38)}
  .cr-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 18px 6px}.cr-head h2{margin:0;font-size:1.2rem}.cr-head p{margin:2px 0 0;color:#66758a;font-size:.86rem}
@@ -8342,7 +8337,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .cr-dialog button{box-sizing:border-box;height:38px;padding:0 14px;border:1px solid #cbd6e5;border-radius:10px;background:#fff;color:#2f5f9b;font:inherit;font-size:.92rem;cursor:pointer}
  .cr-dialog button.cr-pri{background:#2f5f9b;border-color:#2f5f9b;color:#fff;font-weight:600}
  .cr-to{display:flex;align-items:center;gap:8px;margin:8px 18px 0;font-size:.9rem;color:#66758a}.cr-to input{flex:1;height:36px;border:1px solid #dbe3ef;border-radius:9px;padding:0 10px;font:inherit;font-size:.92rem;color:#243247}.cr-mailpat,.cr-mailkid{display:block;margin-top:8px}.cr-cc{display:flex;align-items:center;gap:6px;margin:6px 18px 0;font-size:.86rem;color:#66758a}.cr-cc span{color:#243247}.cr-text{display:block;box-sizing:border-box;width:calc(100% - 36px);margin:8px 18px 4px;padding:10px 12px;border:1px solid #dbe3ef;border-radius:10px;font:inherit;font-size:.92rem;line-height:1.45;color:#243247;resize:vertical}
- .cr-head-btns{display:flex;gap:8px;flex:none}.cr-tabs{display:inline-flex;flex-wrap:wrap;gap:3px;padding:3px;border-radius:12px;background:#e7edf6;margin:4px 0 10px}.cr-dialog .cr-tabs button{height:34px;border:0;border-radius:9px;background:transparent;color:#66778f}.cr-dialog .cr-tabs button[aria-selected=true]{background:#fff;color:#243247;font-weight:650;box-shadow:0 1px 3px #25334914}.cr-mod{margin-left:6px;font-size:.7rem;font-weight:600;color:#9a6212;background:#fff4e2;border-radius:6px;padding:1px 5px}.cr-mod[hidden]{display:none}
+ .cr-head-btns{display:flex;gap:8px;flex:none}.cr-dialog button.cr-plus{width:38px;padding:0;display:inline-flex;align-items:center;justify-content:center}.cr-plus svg{width:20px;height:20px}.cr-tabs{display:inline-flex;flex-wrap:wrap;gap:3px;padding:3px;border-radius:12px;background:#e7edf6;margin:4px 0 10px}.cr-dialog .cr-tabs button{height:34px;border:0;border-radius:9px;background:transparent;color:#66778f}.cr-dialog .cr-tabs button[aria-selected=true]{background:#fff;color:#243247;font-weight:650;box-shadow:0 1px 3px #25334914}.cr-mod{margin-left:6px;font-size:.7rem;font-weight:600;color:#9a6212;background:#fff4e2;border-radius:6px;padding:1px 5px}.cr-mod[hidden]{display:none}
  .cr-ph{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px;font-size:.84rem;color:#66758a}.cr-dialog .cr-ph button{height:26px;padding:0 8px;border-color:#c9daf0;background:#eaf1fb;color:#1f4f8c;font-size:.8rem;border-radius:7px}
  .cr-body .cr-text{width:100%;margin:0}.cr-sig{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:.92rem}.cr-sig input{width:260px;max-width:60%;height:38px;box-sizing:border-box;padding:0 12px;border:1px solid #dbe3ef;border-radius:10px;font:inherit}
  @media (max-width:540px){.cr-head{flex-wrap:wrap}.cr-head>div{flex:1 1 100%}.cr-head-btns{width:100%;justify-content:flex-end}.cr-top{flex-wrap:wrap}}

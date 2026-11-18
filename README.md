@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 18.11.2026 · Version 12.94
+Stand: 18.11.2026 · Version 12.95
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1573,3 +1573,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.92: iPhone quer – Vollbild (cm-qrfull) folgt der Lage, solange die Ansicht offen ist; QR-Rahmen quadratisch (min(Höhe, halbe Breite))
 12.93: „Beide QR-Codes groß zeigen“ – Anordnung je nach Seitenverhältnis (row-side/row-top/col-side/col-top, größter QR gewinnt), Titel nur bei freiem Platz, cm-qrfull auf allen Geräten
 12.94: Hinweise zur Klasse (noten/class-notes.js, notenrechner-klassenhinweise-v1): Knopf im Auswahlmenü, Standard nächste Stunde laut Stundenplan, Aufploppen beim Öffnen der Klasse, Später/Erledigt, Glocke
+12.95: Lospartner in random-groups.js (reihum ohne Gegenseitigkeit / Paare, Tabu, Sitznachbar, Geschlecht, Leistung; verdeckte Liste; Pult-Ziehen mit cm-deskfull); Hinweis zur Klasse über ＋ in der Glocke mit Klassenwahl, Glocke am iPhone immer sichtbar
