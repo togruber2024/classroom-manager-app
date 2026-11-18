@@ -8728,6 +8728,75 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
 })();
 ;
 
+/* ==== noten/notenspiegel-live.js ==== */
+/* 12.97: Live-Notenspiegel – rechts neben der Ergebnistabelle (unter dem Fortschrittsbalken), aktualisiert sich beim Eintragen.
+   Eingeschaltet im Notenspiegel-Fenster mit „Neben der Tabelle“, ausgeschaltet dort oder mit ✕. Je Gerät gemerkt (classroom-ns-live-v1).
+   Berechnung wie im Notenspiegel: renderNotenspiegelTable füllt die (versteckte) Tabelle, die Säulen lesen deren Werte.
+   Ist zu wenig Platz neben der Tabelle, steht der Spiegel darüber. */
+(()=>{
+ const KEY='classroom-ns-live-v1',$=id=>document.getElementById(id);
+ const table=$('notenspiegelTable'),dialog=$('notenspiegelDialog');if(!table||!dialog||typeof renderNotenspiegelTable!=='function')return;
+ const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const on=()=>{try{return localStorage.getItem(KEY)==='1'}catch{return false}};
+ const setOn=v=>{try{localStorage.setItem(KEY,v?'1':'0')}catch{}};
+ /* Knopf im Notenspiegel-Fenster, links neben „Vergleichen“ */
+ const btn=document.createElement('button');btn.type='button';btn.id='nsLiveButton';btn.className='ns-live-btn';btn.textContent='Neben der Tabelle';btn.title='Den Notenspiegel live rechts neben der Ergebnistabelle zeigen – er aktualisiert sich beim Eintragen.';
+ const place=()=>{const cmp=$('compareNotenspiegel');if(cmp&&btn.nextElementSibling!==cmp)cmp.before(btn)};
+ const ctx=()=>{try{return typeof notenspiegelContext!=='undefined'?notenspiegelContext:null}catch{return null}};
+ function syncBtn(){place();const c=ctx(),p=panel();btn.hidden=!(c&&p&&p.dataset.customPanel===c.pageKey&&!window.classroomNsTask);btn.classList.toggle('is-on',on());btn.setAttribute('aria-pressed',String(on()))}
+ new MutationObserver(()=>{if(dialog.open)syncBtn()}).observe(dialog,{attributes:true,attributeFilter:['open']});
+ btn.onclick=()=>{const v=!on();setOn(v);syncBtn();if(v){dialog.close()}refresh(true)};
+ /* sichtbare Seite mit Ergebnistabelle */
+ function panel(){return [...document.querySelectorAll('[data-custom-panel]')].find(p=>p.offsetParent&&p.querySelector('.task-table'))||null}
+ let box=null,last='';
+ function compute(subject,key){if(dialog.open)return null;const keepTask=window.classroomNsTask,keepCtx=ctx();window.classroomNsTask=undefined;
+  try{renderNotenspiegelTable(subject,key)}catch(e){console.warn('Live-Notenspiegel',e);return null}finally{window.classroomNsTask=keepTask}
+  return null}
+ function read(){const rows=[...(table.tBodies[0]?.rows||[])].map(r=>{const chip=r.querySelector('th span')||r.querySelector('th');const lab=(chip?.textContent||'').replace(/^Note\s+/i,'').trim();
+   const cls=[...(chip?.classList||[])].filter(c=>(/^notenspiegel-/.test(c)&&c!=='notenspiegel-chip')||c==='grade-four-fail').join(' ');
+   const cnt=Number((r.querySelector('.notenspiegel-count span')?.textContent||'0').replace(/\D+/g,''))||0;return {lab,cls,cnt}}).filter(r=>r.lab);
+  const head=table.tHead?.rows[0],kind=(head?.cells[0]?.textContent||'').trim(),n=Number((head?.cells[1]?.textContent.match(/n\s*=\s*(\d+)/)||[])[1]||rows.reduce((a,r)=>a+r.cnt,0));
+  const foot=table.tFoot?.rows[0],avgLab=(foot?.cells[0]?.textContent||'').trim(),avg=(foot?.cells[1]?.textContent||'').replace(/\s*Punkte$/,'').trim();return {rows,kind,n,avg,avgLab}}
+ function render(p,d){const key=p.dataset.customPanel;let total=0;try{total=(taskPageData(currentSubject,key).students||[]).filter(s=>(s.name||'').trim()).length}catch{}
+  const points=/punkte/i.test(d.kind),grades=!points&&d.rows.every(r=>/^[1-6]$/.test(r.lab));
+  const weak=points?d.rows.filter(r=>Number(r.lab)<5).reduce((a,r)=>a+r.cnt,0):grades?d.rows.filter(r=>Number(r.lab)>=5).reduce((a,r)=>a+r.cnt,0):null;
+  const mx=Math.max(1,...d.rows.map(r=>r.cnt));
+  const sig=JSON.stringify([key,d,total]);if(sig===last&&box.isConnected)return;last=sig;
+  box.innerHTML=`<div class="nsl-head"><span class="nsl-dot" aria-hidden="true"></span><b>Live-Notenspiegel</b><span class="nsl-sub">aktualisiert sich beim Eintragen</span><button type="button" class="nsl-x" aria-label="Ausblenden" title="Ausblenden">✕</button></div>`
+   +`<div class="nsc-cols ${points?'p':''}" style="grid-template-columns:repeat(${d.rows.length},1fr)">${d.rows.map(r=>`<div class="nsc-col" title="${esc((points?r.lab+' Punkte':grades?'Note '+r.lab:r.lab)+': '+r.cnt)}"><div class="nsc-bar">${r.cnt?`<i class="${esc(r.cls)}" style="height:${Math.max(4,r.cnt/mx*100)}%"></i>`:''}</div><span>${esc(r.lab)}</span><b class="${r.cnt?'':'z'}">${r.cnt||'·'}</b></div>`).join('')}</div>`
+   +`<div class="nsc-kpi">${d.avg&&d.avg!=='—'?`<span>${points?'Ø Notenpunkte':d.avgLab==='Mittelwert'?'Mittelwert':'Ø Note'} <b>${esc(d.avg)}</b></span>`:''}<span>korrigiert <b>${d.n}</b>${total?' / '+total:''}</span>${weak!==null?`<span>${points?'unter 5 Punkten':'Note 5/6'} <b>${weak}</b></span>`:''}</div>`;
+  box.querySelector('.nsl-x').onclick=()=>{setOn(false);refresh(true)}}
+ function layout(p){if(!box?.isConnected)return;const wrap=p.querySelector('.task-table')?.closest('.table-wrap'),tbl=p.querySelector('.task-table');if(!wrap||!tbl)return;
+  const cs=getComputedStyle(p),inner=p.clientWidth-(parseFloat(cs.paddingLeft)||0)-(parseFloat(cs.paddingRight)||0),room=inner-tbl.scrollWidth-18,side=room>=320;box.classList.toggle('nsl-stack',!side);box.style.width=side?Math.min(440,room)+'px':'';box.classList.toggle('nsl-narrow',side&&room<410);
+  const prog=p.querySelector('.exam-progress'),pt=prog&&!prog.hidden&&prog.offsetParent?(parseFloat(prog.style.top)||0)+prog.offsetHeight+10:(parseFloat(prog?.style.top)||0)+8;box.style.top=side?pt+'px':''}
+ function refresh(force){if(force)last='';const p=panel();
+  if(!on()||!p){box?.remove();return}
+  const wrap=p.querySelector('.task-table')?.closest('.table-wrap');if(!wrap){box?.remove();return}
+  if(!box){box=document.createElement('aside');box.className='nsl';box.setAttribute('aria-label','Live-Notenspiegel')}
+  if(box.nextElementSibling!==wrap||box.parentElement!==wrap.parentElement){wrap.before(box);last=''}
+  compute(currentSubject,p.dataset.customPanel);render(p,read());layout(p)}
+ let t=0;const soon=(ms=250)=>{clearTimeout(t);t=setTimeout(()=>refresh(),ms)};
+ document.addEventListener('input',e=>{if(on()&&e.target.closest?.('.task-table'))soon(300)});
+ document.addEventListener('change',e=>{if(on()&&e.target.closest?.('[data-custom-panel]'))soon(60)});
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(()=>{if(on())soon(400)});
+ addEventListener('resize',()=>{const p=panel();if(p&&box?.isConnected)layout(p)});
+ dialog.addEventListener('close',()=>{if(on())soon(50)});
+ setInterval(()=>{if(on()&&(!box||!box.isConnected||box.parentElement!==panel()?.querySelector('.task-table')?.closest('.table-wrap')?.parentElement))refresh()},1500);
+ const st=document.createElement('style');st.textContent=`
+ .ns-live-btn.is-on{background:#fff4e8!important;border-color:#e8a25a!important;color:#b85d00!important}.ns-live-btn[hidden]{display:none!important}
+ .nsl{float:right;position:sticky;top:0;z-index:4;width:420px;max-width:100%;box-sizing:border-box;margin:0 0 12px 18px;padding:12px 14px 12px;border:1px solid #dce3ef;border-radius:14px;background:#fff;box-shadow:0 4px 14px #1c2b4612}
+ .nsl.nsl-stack{float:none;position:static;width:auto;margin:0 0 12px}
+ .nsl-head{display:flex;align-items:center;gap:8px;margin-bottom:2px}.nsl-head b{font-size:15px}.nsl-sub{color:#66758a;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+ .nsl-dot{flex:none;width:8px;height:8px;border-radius:50%;background:#2c7a4b;box-shadow:0 0 0 3px #2c7a4b33}
+ .nsl-x{margin-left:auto;flex:none;width:30px;height:30px;border:1px solid #cbd6e5;border-radius:8px;background:#fff;color:#2f5f9b;font-size:13px;cursor:pointer;padding:0}
+ .nsl .nsc-cols{border:0;padding:6px 2px 2px}.nsl .nsc-bar{height:120px}.nsl .nsc-kpi{margin:8px 0 0}.nsl .nsc-kpi span{font-size:13px;padding:4px 9px}.nsl .nsc-kpi b{font-size:14px}
+ .nsl-narrow .nsl-sub{display:none}.nsl-narrow .nsc-kpi span{font-size:12.5px;padding:3px 8px}
+ .is-compact-view .nsl{display:none}`;
+ document.head.append(st);
+ refresh(true);
+})();
+;
+
 /* ==== noten/phone-notenspiegel.js ==== */
 /* 9.98: iPhone (Kartenansicht) – runder Knopf „Notenspiegel“ neben „11 | 10,6“.
    Öffnet alle Notenspiegel der Klasse untereinander (Klassenarbeiten bzw. Klausuren, darunter Tests), nach Datum (alt zuerst),
