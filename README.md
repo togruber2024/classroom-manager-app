@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 18.11.2026 · Version 12.85
+Stand: 18.11.2026 · Version 12.86
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1564,3 +1564,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.83: Lernordner mit Datum vorn; Safari-Hinweis nimmt den Arbeitsstand in den Lernordner mit; kein „Noten verdeckt“ bei Test-Fenstern aus Unterricht (iPhone).
 12.84: Rubrik „Unterricht“ in der Hilfe (App einrichten) abschaltbar; Latein: quadratisches „+ Test“ mit Lernkontrolle.
 12.85: Sitzplan abschaltbar (nur Noten ohne Umschalter), Frage im Einrichtungs-Assistenten; Übersetzungs-Trainer: Musterübersetzung erst nach Freigabe per QR, verschlüsselt im Link.
+12.86: Zusammenführen übernimmt neuere Sitzplan-Auswahl; Übersetzungs-Trainer: Ablative je Nebensatz nach Objekt, Fußnoten-Vokabeln (S.f), automatischer Rubrik-Wechsel nach Formen-Jäger/Zeitstrahl; iPhone: QR-Fenster quer, laufender Test bleibt nach Pause/Neustart offen
