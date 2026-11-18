@@ -5024,8 +5024,8 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   if(d==='uv'||d==='uw'||d==='ug')return practice(d.slice(1),k,el);
   /* Dialoge des Noten-Managers: kurz zu „Noten“ wechseln, nach dem Schließen zurück */
   const T=top()?.document;const back0=[...(T?.querySelectorAll('[data-view][aria-selected="true"]')||[])][0];
-  T?.getElementById('tab-noten')?.click();await new Promise(r=>setTimeout(r,60));let dl=null;try{dl=b.act(d,k)}catch(e){alert(e.message);return}
-  if(dl&&back0){const back=()=>{setTimeout(()=>{/* 12.74: „Zur Notentabelle“ – in Noten bleiben */if(NF().cmStayNoten){NF().cmStayNoten=false;return}const W=NF().document;if([...W.querySelectorAll('dialog')].some(x=>x.open)){W.addEventListener('close',back,{capture:true,once:true});return}back0.click()},0)};dl.addEventListener('close',back,{once:true})}}
+  const skip=v=>{try{top().classroomCoverSkip=v;top().classroomCoverUpdate?.()}catch{}};skip(true);T?.getElementById('tab-noten')?.click();await new Promise(r=>setTimeout(r,60));let dl=null;try{dl=b.act(d,k)}catch(e){skip(false);alert(e.message);return}if(!dl||!back0)skip(false);
+  if(dl&&back0){const back=()=>{setTimeout(()=>{/* 12.74: „Zur Notentabelle“ – in Noten bleiben */if(NF().cmStayNoten){NF().cmStayNoten=false;skip(false);return}const W=NF().document;if([...W.querySelectorAll('dialog')].some(x=>x.open)){W.addEventListener('close',back,{capture:true,once:true});return}back0.click();skip(false)},0)};dl.addEventListener('close',back,{once:true})}}
  /* Üben: QR-Code (ohne Note, ohne Abgabe) */
  async function practice(kind,k,el){const b=B();let r=null;if(el){el.disabled=true}try{r=await b.practice(kind,k)}catch(e){alert('Üben nicht möglich: '+e.message)}finally{if(el)el.disabled=false}
   if(!r){alert('Dafür fehlen noch Inhalte.');return}

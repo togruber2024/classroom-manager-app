@@ -103,7 +103,7 @@ const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(
 const pick=a=>a[Math.random()*a.length|0];
 const clean=s=>s.replace(/[.,;:?!]/g,'');
 const beep=()=>{};/* keine Töne: im Klassenraum mit 30 iPads störend */
-const KEY='cm-uebungen-v1';const best=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}};
+const KEY='cm-uebungen-v1';window.cmStateKeys=[KEY,'cm-uebungen-who','cm-uebungen-first-v1'];/* 12.83 */const best=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return {}}};
 /* 11.45: Abgabe-QR – je Übung zählt das Ergebnis des ersten Durchgangs; die Klassenliste kommt mit dem Link (#k1.…) */
 const FKEY='cm-uebungen-first-v1';const firsts=()=>{try{return JSON.parse(localStorage.getItem(FKEY)||'{}')||{}}catch{return {}}};
 let AB=null;(()=>{const h=location.hash;if(!/^#k1\./.test(h))return;try{let x=h.slice(4).replace(/-/g,'+').replace(/_/g,'/');while(x.length%4)x+='=';const b=atob(x),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);const j=JSON.parse(new TextDecoder().decode(u));localStorage.setItem('cm-uebungen-who',JSON.stringify(j))}catch{}})();

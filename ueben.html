@@ -58,7 +58,7 @@ table.gt td small{display:block;color:var(--ok);font-weight:600}
  catch(e){fail(e.message||String(e));return}
  document.title=(P.t||'Üben');
  let SOL=false;
- const KEY='cm-ueben-'+(P.t||'')+'-'+(P.k==='v'?P.w.length:P.q.length);
+ const KEY='cm-ueben-'+(P.t||'')+'-'+(P.k==='v'?P.w.length:P.q.length);window.cmStateKeys=[KEY];/* 12.83 */
  const ls={get:()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch{return null}},set:v=>{try{localStorage.setItem(KEY,JSON.stringify(v))}catch{}}};
  const plain=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/j/g,'i');
  const head=sub=>'<h1>'+esc(P.t||'Üben')+'</h1><div class="muted">'+esc(sub)+(P.c?' · '+esc(P.c):'')+''+(P.u?' · üben so oft du willst – gewertet wird '+(P.k==='v'?'die Abfrage':'jede Aufgabe')+' beim ersten Versuch':' · ohne Note – so oft du willst')+'</div>';

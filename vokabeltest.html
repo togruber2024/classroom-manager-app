@@ -208,7 +208,7 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
  catch(e){fail(e.message||String(e));return}
  document.title=(test.t||'Vokabeltest')+' · Gruppe '+test.g;
  if(test.k==='gr'){grammarPage();return}
- const KEY='vt-draft-'+test.i+'-'+test.g;let draft={name:'',a:test.r.map(()=>({l:'',ge:'',m:''})),sent:false};
+ const KEY='vt-draft-'+test.i+'-'+test.g;window.cmStateKeys=[KEY];let draft={name:'',a:test.r.map(()=>({l:'',ge:'',m:''})),sent:false};
  try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&Array.isArray(d.a)&&d.a.length===test.r.length)draft=d}catch{}
  const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(draft))}catch{}};
  const hint='Grundform: bei Substantiven Nom. Sg. und Genus (bei Pluralwörtern Nom. Pl.) · bei Verben Infinitiv und 1. Pers. Sg. Präs. · bei Adjektiven und Pronomen Nom. Sg. m. — Längenzeichen sind nicht nötig.';
@@ -220,7 +220,7 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
  /* 12.28: Kombitest – Teil A Vokabeln (wie der Vokabeltest), Teil B Grammatik (wie der Grammatiktest), eine Abgabe */
  function comboPage(){
   document.title=(test.t||'Kombitest')+' · Gruppe '+test.g;const nV=test.r.length,N=nV+test.q.length;
-  const KEY='vt-draft-'+test.i+'-'+test.g;const blank=it=>it.k==='tab'?{c:it.rw.map(()=>it.cl.map(()=>''))}:it.k==='det'?{d:it.d.map(()=>'')}:{v:it.sub.map(()=>'')};
+  const KEY='vt-draft-'+test.i+'-'+test.g;window.cmStateKeys=[KEY];const blank=it=>it.k==='tab'?{c:it.rw.map(()=>it.cl.map(()=>''))}:it.k==='det'?{d:it.d.map(()=>'')}:{v:it.sub.map(()=>'')};
   let draft={name:'',a:[...test.r.map(()=>({l:'',ge:'',m:''})),...test.q.map(blank)],sent:false};try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&Array.isArray(d.a)&&d.a.length===N)draft=d}catch{}draft.kb={q:test.q,s:test.s||''};/* 12.28: für „Mein Ergebnis ansehen“ */
   const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(draft))}catch{}};
   const off='autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"';
@@ -262,7 +262,7 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
  /* 10.72: Grammatiktest – Tabellen, Formen bestimmen (antippen), Formen bilden */
  function grammarPage(){
   document.title=(test.t||'Grammatiktest')+' · Gruppe '+test.g;
-  const KEY='vt-draft-'+test.i+'-'+test.g;const blank=it=>it.k==='tab'?{c:it.rw.map(()=>it.cl.map(()=>''))}:it.k==='det'?{d:it.d.map(()=>'')}:{v:it.sub.map(()=>'')};
+  const KEY='vt-draft-'+test.i+'-'+test.g;window.cmStateKeys=[KEY];const blank=it=>it.k==='tab'?{c:it.rw.map(()=>it.cl.map(()=>''))}:it.k==='det'?{d:it.d.map(()=>'')}:{v:it.sub.map(()=>'')};
   let draft={name:'',a:test.q.map(blank),sent:false};try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&Array.isArray(d.a)&&d.a.length===test.q.length)draft=d}catch{}draft.kb={q:test.q,s:test.s||''};
   const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(draft))}catch{}};
   const off='autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"';

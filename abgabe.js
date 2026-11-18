@@ -42,7 +42,7 @@ window.cmAbgabeHash=async d=>{const {h,...r}=d||{};const txt='cm-abgabe-v1|'+JSO
    draw();document.body.append(ov)}
   /* 11.73: lange Abgaben (z. B. Übersetzungen) gehen komprimiert auf mehrere QR-Codes (CMLE2/id/k/n/…), die Lehrkraft scannt sie nacheinander */
   /* 11.90: mit o.restore (z. B. Übersetzungs-Trainer) geht der vollständige Arbeitsstand mit – die Lehrkraft kann ihn später als Wiederherstellen-QR zurückgeben */
-  const rest=()=>{if(!o.restore)return {};try{const it=o.restore()||[];return {r:[...it,['cm-abgabe-'+o.u,S]],rp:location.pathname.split('/').pop()+location.search}}catch{return {}}};
+  try{if(o.restore)window.cmStateItems=()=>o.restore()||[]}catch{}/* 12.83: „Mit meinem Stand“ */const rest=()=>{if(!o.restore)return {};try{const it=o.restore()||[];return {r:[...it,['cm-abgabe-'+o.u,S]],rp:location.pathname.split('/').pop()+location.search}}catch{return {}}};
   async function codes(){const r=sc(),R=rest(),C=!!(R.r&&r.wt&&window.classroomTtExpand),w=C?r.wc:r.w;/* 11.91: kompakt – Übersetzungen stecken schon im Arbeitsstand */return classroomQrPack({u:o.u,v:2,c:S.cls||'',n:S.me,dv:S.dv,ts:Date.now(),b:0,s:r.s||{},x:r.x||{},...(w&&Object.keys(w).length?{w}:{}),...(C?{wt:r.wt}:{}),...R})}
   /* 12.29: cb – wird nach dem Zeigen (Schließen) oder dem Sichern als Datei aufgerufen, z. B. „jetzt vergleichen“ im Übersetzungs-Trainer */
   async function showQr(cb){if(typeof cb!=='function')cb=null;if(!S.me){who(cb);return}const ov=document.createElement('div');ov.className='cmab-o';document.body.append(ov);ov.innerHTML='<div style="color:#66758a">QR-Code wird erstellt …</div>';

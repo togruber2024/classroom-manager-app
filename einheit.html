@@ -160,7 +160,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const md=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
 const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 /* 11.33: neue Fassung (nur AFB I) – eigener Speicher; Name, Klasse und Gerät werden übernommen */
-const KEY='cm-'+CM_U+'-v1';let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)||'null')||null}catch{}
+const KEY='cm-'+CM_U+'-v1';window.cmStateKeys=[KEY];/* 12.83: „Mit meinem Stand“ */let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)||'null')||null}catch{}
 if(!ST)ST={};
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(ST))}catch{}try{updWho()}catch{}try{loNote()}catch{}};
 /* 11.91: Eintrag im Lernordner (Titel, Fach, Fortschritt) */function loNote(){if(!window.cmLoNote)return;const M=BOOK.def.meta||{},st=(BOOK.def.steps||[]).filter(x=>x.k);window.cmLoNote({title:M.title||document.title,sub:M.kicker||'',subject:M.subject||'',p:st.filter(x=>ST[x.key||x.k]).length+'/'+st.length,me:ST.me||'',cls:ST.cls||''})}
