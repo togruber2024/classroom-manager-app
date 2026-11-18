@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 18.11.2026 · Version 12.83
+Stand: 18.11.2026 · Version 12.84
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1562,3 +1562,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 12.81: iPad-Tests am iPhone: Abgabe-Knöpfe nebeneinander, QR-Codes zuerst, Aufklappen, ⋯-Menü, Zahlenleiste, Karten je Vokabel, Formen als Chips.
 12.82: Backup-Fenster per langem Druck auf die Backup-Pfeile (iPhone als Blatt von unten); Inhalt des Backups vor dem Wiederherstellen; neue/ergänzte iPad-Tests als Erinnerung unter der Glocke.
 12.83: Lernordner mit Datum vorn; Safari-Hinweis nimmt den Arbeitsstand in den Lernordner mit; kein „Noten verdeckt“ bei Test-Fenstern aus Unterricht (iPhone).
+12.84: Rubrik „Unterricht“ in der Hilfe (App einrichten) abschaltbar; Latein: quadratisches „+ Test“ mit Lernkontrolle.
