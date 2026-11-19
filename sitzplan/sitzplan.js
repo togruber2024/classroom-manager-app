@@ -4352,6 +4352,19 @@ st.textContent='@media (max-height:500px) and (orientation:landscape) and (point
  const nb=document.createElement('button');nb.type='button';nb.className='cq-note';nb.textContent='Notiz';nb.setAttribute('aria-expanded','false');
  const ta=document.createElement('textarea');ta.className='cq-note-text';ta.rows=3;ta.maxLength=500;ta.placeholder='z. B. Elterngespräch, Nachschreibtermin …';ta.hidden=true;
  row.append(ab,nb);label.after(row,ta);label.hidden=true;
+ /* 13.18: iPhone – statt „Notiz“ ein Dreifachschalter ‹ zurück · › weiter · ⇅ Perspektive; die Leiste „Zurück / Weiter“ entfällt dort (iPad und Mac unverändert) */
+ {const sv=d=>'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+d+'"/></svg>';
+  const seg=document.createElement('div');seg.className='cq-seg';seg.setAttribute('role','group');seg.setAttribute('aria-label','Platz wechseln');
+  seg.innerHTML='<button type="button" data-sg="-1" aria-label="Voriger Platz">'+sv('M15 6l-6 6 6 6')+'</button><button type="button" data-sg="1" class="cq-sg-next" aria-label="Nächster Platz">'+sv('M9 6l6 6-6 6')+'</button><button type="button" data-sg="r" aria-label="Perspektive drehen">'+sv('M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4')+'</button>';
+  row.append(seg);const navB=k=>document.querySelector('.cq-nav [data-step="'+k+'"]');
+  seg.onclick=e=>{const b=e.target.closest('[data-sg]');if(!b||b.disabled)return;e.stopPropagation();if(b.dataset.sg==='r'){document.querySelector('.pl-rotate')?.click();return}navB(b.dataset.sg)?.click()};
+  const sync=()=>{for(const k of ['-1','1']){const o=navB(k),m=seg.querySelector('[data-sg="'+k+'"]');if(o&&m&&m.disabled!==o.disabled)m.disabled=o.disabled}};
+  const nav=document.querySelector('.cq-nav');if(nav)new MutationObserver(sync).observe(nav,{subtree:true,attributes:true,attributeFilter:['disabled']});sync();
+  const st=document.createElement('style');st.textContent='.cq-seg{display:none}html.ph-lite .classroom-quick .cq-note:not(#_):not(#__),html.ph-lite .classroom-quick .cq-note-text:not(#_):not(#__),html.ph-lite .classroom-quick .cq-nav:not(#_):not(#__):not(#___){display:none!important}'
+   +'html.ph-lite .classroom-quick .cq-seg:not(#_){display:flex;flex:1 1 0;min-width:0;border:1px solid #c9d5e6;border-radius:18px;overflow:hidden;background:#fff}'
+   +'html.ph-lite .classroom-quick .cq-seg>button:not(#_):not(#__){flex:1 1 0;min-width:0;height:auto;min-height:40px;margin:0;padding:0;border:0;border-radius:0;background:#fff;color:#2f5f9b;display:grid;place-items:center;box-shadow:none}'
+   +'html.ph-lite .classroom-quick .cq-seg>button+button:not(#_):not(#__){border-left:1px solid #dce3ef}html.ph-lite .classroom-quick .cq-seg>.cq-sg-next:not(#_):not(#__){background:#2f5f9b;color:#fff}'
+   +'html.ph-lite .classroom-quick .cq-seg>button:disabled:not(#_):not(#__){opacity:.4}';document.head.append(st)}
  const person=()=>box.title||document.getElementById('classroomQuickName')?.textContent||'';
  let shownFor=null;
  const syncAbs=()=>ab.setAttribute('aria-pressed',String(absent.checked));
