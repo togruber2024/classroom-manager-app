@@ -3992,7 +3992,8 @@ document.addEventListener('keydown',event=>{
  let planned=false,lastKey='',open=false,observed=null;
  const label=el=>(el?.textContent||'').replace(/\s+/g,' ').trim();
  const style=document.createElement('style');style.textContent=
-  'body[data-module=sitzplan] .classroom-plan-zoom.zoom-fit-row{flex-wrap:nowrap}body[data-module=sitzplan] .classroom-plan-zoom.zoom-fit-wrap{flex-wrap:wrap}'
+  'html body[data-module=sitzplan] .classroom-plan-zoom .zoom-collapsed:not(#_):not(#__):not(#___):not(#____){display:none!important}'
+  +'body[data-module=sitzplan] .classroom-plan-zoom.zoom-fit-row{flex-wrap:nowrap}body[data-module=sitzplan] .classroom-plan-zoom.zoom-fit-wrap{flex-wrap:wrap}'
   +'.classroom-plan-zoom>.zoom-collapsed,html body[data-module=sitzplan] .classroom-plan-zoom>.zoom-collapsed:not(#_):not(#__):not(#___){display:none!important}'/* 9.09: „Bewertungen“ wurde trotz Platz im Menü „Mehr“ zusätzlich angezeigt (iPad) */
   +'.zoom-more{flex:none;position:relative}/* 9.05: direkt nach „Bewertungen“ statt isoliert rechts */.zoom-more[hidden]{display:none!important}'
   +'.classroom-plan-zoom .zoom-more-toggle{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.zoom-more-toggle span{font-size:.75em}'
@@ -4020,6 +4021,15 @@ document.addEventListener('keydown',event=>{
   if(bar.lastElementChild!==more)bar.append(more);
   return more;
  }
+ /* 13.13: Die obere Leiste bleibt immer eine Zeile. Was links von „…“ nicht passt, wandert der Reihe nach ins Menü „…“:
+    1:1 · Einpassen · Vollbild · Trend · Lerneinheit · Anzahl · Bewertungen · Zoom-Regler · −/+. Rechts von „…“ (ⓘ) und der Schalter ⇄ ☰ ☑ bleiben immer sichtbar;
+    reicht es trotzdem nicht, wird die Seite nicht schmaler. */
+ function units(bar){const q=s=>bar.querySelector(':scope > '+s),vis=e=>!!e&&e.getClientRects().length>0,pill=q('.si-pill'),U=[];
+  const add=(els,px)=>{els=els.filter(vis);if(els.length)U.push({els,px:px||els})};
+  add([q('.classroom-beamer-button')]);add([q('[data-zoom-reset]')]);add([q('[data-zoom-fit]')]);add([q('.sp-fs-btn')]);
+  if(pill)for(const b of [...pill.querySelectorAll(':scope>button')].reverse())add([b]);
+  add([q('.plan-assess-switch')]);add([q('input[type=range]'),q('output')],[]);add([q('[data-zoom-minus]'),q('[data-zoom-plus]')]);
+  return U}
  /* 9.09: „Bewertungen“ wandert als Letztes ins Menü – es ist der wichtigste Schalter */function items(bar){return [bar.querySelector(':scope > .classroom-beamer-button'),bar.querySelector(':scope > [data-zoom-reset]'),bar.querySelector(':scope > [data-zoom-fit]'),bar.querySelector(':scope > .plan-assess-switch')].filter(Boolean)}
  function proxyFor(el){
   const b=document.createElement('button');b.type='button';b.setAttribute('role','menuitem');b._target=el;
@@ -4037,12 +4047,13 @@ document.addEventListener('keydown',event=>{
   const more=ensureMore(bar),menu=more._menu||more.querySelector('.zoom-more-menu'),list=items(bar),beamer=document.documentElement.classList.contains('classroom-beamer');
   const sig=[bar.clientWidth,innerWidth,document.documentElement.className,...[...bar.children].map(c=>String(c.className).replace(/\s*zoom-collapsed/g,'')+':'+c.textContent.length+':'+(c.disabled?1:0))].join('#');
   if(sig===zoomSig){sync(menu);return}
-  for(const el of list)el.classList.remove('zoom-collapsed');more.hidden=false;bar.classList.add('zoom-fit-row');bar.classList.remove('zoom-fit-wrap');
-  const over=()=>bar.scrollWidth>bar.clientWidth+1,hidden=[];
-  if(!beamer&&bar.clientWidth>0)for(const el of list){if(!over())break;el.classList.add('zoom-collapsed');hidden.push(el)}
+  for(const el of bar.querySelectorAll('.zoom-collapsed'))el.classList.remove('zoom-collapsed');more.hidden=false;bar.classList.add('zoom-fit-row');bar.classList.remove('zoom-fit-wrap');bar.style.removeProperty('min-width');
+  const over=()=>bar.scrollWidth>bar.clientWidth+1,hidden=[],pill=bar.querySelector(':scope>.si-pill');
+  if(!beamer&&bar.clientWidth>0)for(const u of units(bar)){if(!over())break;for(const el of u.els)el.classList.add('zoom-collapsed');hidden.push(...u.px);
+   if(pill&&[...pill.querySelectorAll(':scope>button')].every(b=>b.classList.contains('zoom-collapsed')||!b.getClientRects().length))pill.classList.add('zoom-collapsed')}
   more.hidden=!hidden.length;if(!hidden.length)close();
-  if(bar.clientWidth>0&&over())bar.classList.add('zoom-fit-wrap');
-  const kids=[...bar.children];hidden.sort((a,b)=>kids.indexOf(a)-kids.indexOf(b));
+  if(bar.clientWidth>0&&over())bar.style.setProperty('min-width','max-content');
+  hidden.sort((a,b)=>a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING?-1:1);
   const key=hidden.map(label).join('|');
   if(key!==lastKey){lastKey=key;menu.replaceChildren(...hidden.map(proxyFor))}
   sync(menu);zoomSig=sig;
