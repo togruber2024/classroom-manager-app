@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 19.11.2026 · Version 13.09
+Stand: 19.11.2026 · Version 13.10
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1588,3 +1588,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.07: Vom Text in die Karte (tf) – Aufgabe als Kasten über dem Text, Karte beim Markieren nicht mehr blass, Knopf „Legende“
 13.08: Sitzplan-Legende oben – Abschnitt „Am Platz“ mit Anzeigen und Markierungen (2/3, M, roter Rahmen)
 13.09: iPhone öffnet dort, wo man es verlassen hat – kein Stundenplan beim Start, kein automatischer Klassenwechsel auf dem iPhone
+13.10: Sitzplan – Vollbild-Knopf neben 1:1 (echtes Vollbild, sonst Überlagerung); Legende: Trennlinie, kleinere Am-Platz-Symbole, Texte bündig

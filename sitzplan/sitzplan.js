@@ -2835,6 +2835,50 @@ document.addEventListener('keydown',event=>{
  // Beim Drehen des iPads wieder automatisch (quer 100 %, hochkant ggf. eingepasst).
  matchMedia('(orientation: portrait)').addEventListener('change',()=>{auto=true;fit=false;update()});PH.addEventListener?.('change',()=>update());{let was=null;new MutationObserver(()=>{const c=document.documentElement.classList,now=c.contains('ph-lite')+'|'+c.contains('classroom-beamer');if(now!==was){was=now;update()}}).observe(document.documentElement,{attributes:true,attributeFilter:['class']})}
 })();
+/* 13.10: Vollbild-Knopf auch im Sitzplan – rechts neben „1:1“, wie im Noten-Manager.
+   Echtes Vollbild für den Sitzplan-Bereich; wo der Browser das nicht erlaubt (iPad-App), legt sich der Bereich über die ganze App. */
+(()=>{
+ const root=document.documentElement;
+ const IN='<path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/>';
+ const OUT='<path d="M9 4v4a1 1 0 0 1-1 1H4M20 9h-4a1 1 0 0 1-1-1V4M15 20v-4a1 1 0 0 1 1-1h4M4 15h4a1 1 0 0 1 1 1v4"/>';
+ const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement||null;
+ const canReal=()=>!!(document.fullscreenEnabled||document.webkitFullscreenEnabled)&&!!(root.requestFullscreen||root.webkitRequestFullscreen);
+ const pdoc=()=>{try{return frameElement&&parent.document}catch{return null}};
+ let pseudo=false;
+ function setPseudo(on){const d=pdoc();if(!d)return;pseudo=on;
+  if(!d.getElementById('sitzplan-fs-style')){const st=d.createElement('style');st.id='sitzplan-fs-style';st.textContent='body.sitzplan-fs .workspace{position:fixed!important;inset:0!important;z-index:9800!important;background:#f6f8fc;padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);box-sizing:border-box}body.sitzplan-fs .workspace>iframe:not(#view-sitzplan){visibility:hidden}';d.head.append(st)}
+  d.body.classList.toggle('sitzplan-fs',on);changed()}
+ const isOn=()=>!!fsEl()||pseudo;
+ function toggle(){try{
+  if(pseudo){setPseudo(false);return}
+  if(fsEl()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);return}
+  if(!canReal()){setPseudo(true);return}
+  const r=(root.requestFullscreen||root.webkitRequestFullscreen).call(root);r?.catch?.(()=>setPseudo(true));
+  if(!r||!r.then)setTimeout(()=>{if(!fsEl()&&!pseudo)setPseudo(true)},400)}catch{setPseudo(true)}}
+ function paint(b){const on=isOn(),k=on?'on':'off';if(b.dataset.fs===k)return;b.dataset.fs=k;
+  b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+(on?OUT:IN)+'</svg>';
+  b.title=on?'Vollbild beenden (Esc)':'Vollbild: Sitzplan über den ganzen Bildschirm';b.setAttribute('aria-label',on?'Vollbild beenden':'Vollbild');b.setAttribute('aria-pressed',on?'true':'false')}
+ function place(){const bar=document.querySelector('.classroom-plan-zoom');if(!bar)return;
+  const show=(canReal()||!!pdoc())&&!root.classList.contains('ph-lite');let b=bar.querySelector(':scope>.sp-fs-btn');
+  if(!show){b?.remove();return}
+  if(!b){b=document.createElement('button');b.type='button';b.className='sp-fs-btn';b.addEventListener('click',e=>{e.stopPropagation();toggle()})}
+  const ref=bar.querySelector(':scope>[data-zoom-reset]');if(ref&&b.previousElementSibling!==ref)ref.after(b);else if(!ref&&!b.parentElement)bar.append(b);
+  paint(b)}
+ function changed(){root.classList.toggle('sp-fs-view',isOn());place();setTimeout(()=>dispatchEvent(new Event('resize')),60)}
+ addEventListener('keydown',e=>{if(e.key==='Escape'&&pseudo&&!document.querySelector('dialog[open]')){e.preventDefault();setPseudo(false)}});
+ document.addEventListener('fullscreenchange',changed);document.addEventListener('webkitfullscreenchange',changed);
+ addEventListener('resize',place);setTimeout(place,0);setTimeout(place,800);
+ try{classroomHooks.add('initGrid','plan-zoom: Vollbild',{after(){setTimeout(place,0)}})}catch{}
+ window.classroomPlanFullscreen={toggle,isOn};
+ const st=document.createElement('style');st.textContent=
+  'html body .classroom-plan-zoom>.sp-fs-btn:not(#_):not(#__):not(#___){flex:none;width:40px!important;min-width:40px!important;height:40px!important;min-height:0!important;padding:0!important;margin:0 0 0 6px!important;border:0!important;border-radius:999px!important;background:#e7edf6!important;color:#66778f!important;display:inline-grid!important;place-items:center;box-shadow:none!important;cursor:pointer;align-self:center}'
+  +'html body .classroom-plan-zoom>.sp-fs-btn[aria-pressed=true]:not(#_):not(#__):not(#___){background:#2f5f9b!important;border-color:#2f5f9b!important;color:#fff!important}'
+  +'html body .classroom-plan-zoom>.sp-fs-btn:not([aria-pressed=true]):hover:not(#_):not(#__):not(#___){color:#243247!important}'
+  +'.sp-fs-btn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}'
+  +'html.ph-lite .sp-fs-btn,html.classroom-beamer .sp-fs-btn{display:none!important}@media print{.sp-fs-btn{display:none!important}}'
+  +'html.sp-fs-view,html.sp-fs-view body{background:#f6f8fc}';
+ document.head.append(st);
+})();
 ;
 
 /* ==== sitzplan/rooms.js ==== */
@@ -5862,9 +5906,9 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   +'.sp-lg .ic{flex:none;min-width:28px;height:28px;padding:0 5px;box-sizing:border-box;border:1px solid #cfd8e6;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;gap:1px;color:#2f5f9b;font-size:12px;font-weight:700;background:#fff}'
   +'.sp-lg .ic.rd{border-radius:999px;background:#e7edf6;border-color:#e7edf6}.sp-lg .ic svg{width:17px;height:17px}.sp-lg .ic.dg{color:#b42318}.sp-lg .ic.pri{background:#2f5f9b;border-color:#2f5f9b;color:#fff;font-weight:600;font-size:11px}'
   +'.sp-lg .ic.as:before{content:"";width:16px;height:11px;border-radius:3px;background:#c8e6b0;border:2px solid #d9534f}'
-  +'.sp-lg .r small{color:#66758a}.sp-lg h5{margin:8px 0 3px;padding-top:7px;border-top:1px solid #e3e9f2;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#66758a}'
-  +'.sp-lg .ic.seat{position:relative;width:28px;min-width:28px;height:22px;margin:3px 0 0;border-radius:6px;background:#eaf0fa;border-color:#8fb0dc}.sp-lg .ic.seat.wh{background:#fff;border-color:#cfd8e6}.sp-lg .ic.seat.hw{background:#fff;border:3px solid #c52f2f}.sp-lg .r:has(.seat){padding:5px 0}'
-  +'.sp-lg .pl{position:absolute;top:-7px;right:-7px;padding:0 5px;border-radius:999px;background:#2f5f9b;color:#fff;font:700 10px/1.4 inherit;font-style:normal}.sp-lg .pl.or{top:auto;right:auto;bottom:-7px;left:-7px;background:#e39a3b;min-width:16px;text-align:center}';
+  +'.sp-lg hr.lgsep{border:0;border-top:1px solid #e3e9f2;margin:6px 0}.sp-lg .ic.rd{width:29px;min-width:29px;padding:0}.sp-lg .r small{color:#66758a}.sp-lg h5{margin:8px 0 3px;padding-top:7px;border-top:1px solid #e3e9f2;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#66758a}'
+  +'.sp-lg .ic.seat{position:relative;width:29px;min-width:29px;height:28px;padding:0;border:0;background:none}.sp-lg .ic.seat .tl{position:absolute;left:1px;right:3px;top:7px;bottom:4px;border-radius:5px;background:#eaf0fa;border:1px solid #8fb0dc}.sp-lg .ic.seat.wh .tl{background:#fff;border-color:#cfd8e6}.sp-lg .ic.seat.hw .tl{left:2px;right:2px;top:6px;bottom:5px;background:#fff;border:2.5px solid #c52f2f}'
+  +'.sp-lg .pl{position:absolute;top:1px;right:-1px;padding:0 3px;border-radius:999px;background:#2f5f9b;color:#fff;font:700 8.5px/1.35 inherit;font-style:normal}.sp-lg .pl.or{top:auto;right:auto;bottom:0;left:-1px;background:#e39a3b;min-width:12px;text-align:center}';
  document.head.append(st);
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
  const svg=el=>{const s=el?.querySelector?.('svg');if(!s)return '';const c=s.cloneNode(true);c.removeAttribute('class');c.removeAttribute('style');return c.outerHTML};
@@ -5872,7 +5916,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  const off=el=>el.classList.contains('plan-actions-collapsed')||el.classList.contains('zoom-collapsed')||!!el.closest('.plan-actions-collapsed,.zoom-collapsed');
  const row=(icon,cls,text,isOff)=>'<div class="r'+(isOff?' off':'')+'"><span class="ic '+(cls||'')+'">'+icon+'</span><span>'+text+'</span></div>';
  function topRows(bar){const out=[],pl=[];for(const c of bar.children){if(!shown(c)||c.matches('.vp-zoom-bg,.zoom-more,.sp-lg-btn,input,output'))continue;
-   if(c.matches('.plan-col-pair')){const T=['Einstellungen ein-/ausblenden','Noten der Klasse ein-/ausblenden','Spalte links/rechts tauschen'];[...c.querySelectorAll('button')].forEach((b,i)=>out.push(row(svg(b),'rd',esc(T[i]||b.getAttribute('aria-label')||''))));continue}
+   if(c.matches('.plan-col-pair')){const T=['Einstellungen ein-/ausblenden','Noten der Klasse ein-/ausblenden','Spalte links/rechts tauschen'];[...c.querySelectorAll('button')].forEach((b,i)=>out.push(row(svg(b),'rd',esc(T[i]||b.getAttribute('aria-label')||''))));out.push('<hr class="lgsep">');continue}
    if(c.matches('[data-zoom-minus]')){out.push(row('−&thinsp;+','rd','Zoom: kleiner / größer'));continue}if(c.matches('[data-zoom-plus]'))continue;
    if(c.matches('[data-zoom-fit]')){out.push(row(svg(c),'rd','Einpassen',off(c)));continue}
    if(c.matches('[data-zoom-reset]')){out.push(row(svg(c),'rd','Originalgröße 100 %',off(c)));continue}
@@ -5880,8 +5924,8 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    if(c.matches('.si-pill')){{const I=window.classroomSiIcons||{};pl.push(row(I.count||'123','rd','Anzahl der mündlichen Noten'),row(I.le||'LE','rd','Stand der Lerneinheit (Abgabe-QR)'),row(I.trend||'↗','rd','Trend der mündlichen Mitarbeit'))};continue}
    const t=c.getAttribute('aria-label')||c.textContent.trim();if(t)out.push(row(svg(c)||esc(t.slice(0,3)),'rd',esc(t),off(c)))}
   /* 13.08: Markierungen an den Plätzen erklären */
-  out.push('<h5>Am Platz</h5>',...pl,row('<i class="pl">2/3</i>','seat','Erst 2 von 3 mündlichen Noten'),
-   row('<i class="pl or">M</i>','seat wh','Material fehlt'),row('','seat hw','Hausaufgabe fehlt'));
+  out.push('<h5>Am Platz</h5>',...pl,row('<i class="tl"></i><i class="pl">2/3</i>','seat','Erst 2 von 3 mündlichen Noten'),
+   row('<i class="tl"></i><i class="pl or">M</i>','seat wh','Material fehlt'),row('<i class="tl"></i>','seat hw','Hausaufgabe fehlt'));
   return out}
  function botRows(bar){const out=[];const lab=b=>b.getAttribute('aria-label')||b.textContent.trim();
   for(const c of bar.children){if(!shown(c)||c.matches('.plan-actions-more,.sp-lg-btn,#studentSearchInput,.plan-actions-sep'))continue;const o=off(c);
