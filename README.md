@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 19.11.2026 · Version 13.13
+Stand: 19.11.2026 · Version 13.14
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1592,3 +1592,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.11: Sitzplan-Vollbild klappt die Seitenleiste ein und stellt sie danach wieder her; ⓘ oben im Stil der Leiste
 13.12: Obere Sitzplan-Leiste am iPad einzeilig (Platzhalter gegenüber dem Dreifachschalter schrumpft), „Mehr“-Knopf im Stil der Leiste
 13.13: Obere Sitzplan-Leiste immer einzeilig (1:1, Einpassen, Vollbild, Trend/LE/Anzahl, Bewertungen, Regler, −/+ der Reihe nach ins Menü); tf-Ziele mit eigenem Trefferradius g.r
+13.14: Glossar-„?“ an Antwort-Kacheln (chip, lchip, opt), die ein Glossarbegriff oder Alias sind
