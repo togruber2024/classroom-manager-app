@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 19.11.2026 · Version 13.19
+Stand: 19.11.2026 · Version 13.20
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1598,3 +1598,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.17: feat-Station (Karten-Merkmale) in zufälliger Reihenfolge (shuffleOnce je Karte)
 13.18: iPhone-Bewertungsblatt: Dreifachschalter (cq-seg) statt Notiz und cq-nav; Klassen-Knopf nur sichtbar, wenn nichts darüber liegt
 13.19: Materialsammlung (bookReader): Bilder max. 62vh, antippen = imgFull
+13.20: iPhone: Bedienkarte unten (13.16) entfernt, Leisten wieder oben; Dreifachschalter bleibt
