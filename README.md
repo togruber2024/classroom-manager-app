@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 18.11.2026 · Version 13.03
+Stand: 19.11.2026 · Version 13.04
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1582,3 +1582,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.01: Wirkungsgefüge – Kacheln wachsen mit (cqw, gleiche Höhe, Fläche passt sich an); tf Schritt 2 mit großer Karte, Text links ein-/ausfahrbar
 13.02: Live-Notenspiegel – Antippen öffnet showNotenspiegel
 13.03: Einheiten – „Als nicht durchgeführt markieren“ (st/Abgaben je Lerngruppe zurücknehmen), Alle Abgaben löschen entfernt st; Tabelle füllen – schmaler Zeilenkopf, Umbruch, iPhone
+13.04: Unterrichtsmaterial sichern – je Reihe/Einheit/Latein-Lektionen eine HTML-Datei (cmWrapHtml, CM_EMBED_FILE) mit sprechendem Namen, Ordner je Fach; zipStore mit echtem Datum
