@@ -116,7 +116,9 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
  function open(kind,text,opts={}){
   const run=()=>new Promise(resolve=>{
    const d=document.createElement('dialog');d.className='ui-dialog';d.setAttribute('aria-modal','true');
-   const p=document.createElement('p');p.className='ui-dialog-text';p.textContent=String(text??'');d.append(p);
+   /* 13.16: erster Absatz = Überschrift, der Rest = Erklärung (einheitlicher Dialog-Stil) */
+   {const T=String(text??'').trim(),i=T.indexOf('\n\n');let h='',b=T;if(i>0&&i<=160){h=T.slice(0,i).trim();b=T.slice(i+2).trim()}else if(kind!=='alert'&&T.length<=110&&!T.includes('\n')){h=T;b=''}else if(kind==='alert'){h='Hinweis'}
+    if(h){const h2=document.createElement('h2');h2.textContent=h;d.append(h2)}if(b){const p=document.createElement('p');p.className='ui-dialog-text';p.textContent=b;d.append(p)}}
    let input=null;if(kind==='prompt'){input=document.createElement('input');input.type='text';input.autocomplete='off';input.value=opts.value??'';input.setAttribute('aria-label',String(text||'Eingabe'));d.append(input)}
    const actions=document.createElement('div');actions.className='ui-dialog-actions';d.append(actions);
    const [defOk,defDanger]=kind==='confirm'?okLabel(text):kind==='prompt'?['Speichern',false]:['OK',false];
@@ -242,6 +244,35 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
   +'@media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){.classroom-privacy-banner{top:auto;bottom:calc(84px + env(safe-area-inset-bottom));font-size:11px;white-space:nowrap;padding:5px 12px}}'
   /* 11.25: iPhone quer – die Leiste ist links, der Hinweis gehört ganz nach unten (nicht über den Inhalt) */+'@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){.classroom-privacy-banner{bottom:calc(6px + env(safe-area-inset-bottom))}}'
   +'@media print{.classroom-privacy-banner{display:none}}';(document.head||document.documentElement).append(st)}
+})();
+/* 13.16: Ein Dialog-Stil für alle Fenster – Kopf mit Titel (Teil nach dem ersten „ · “ als Unterzeile) und ×,
+   Fußleiste mit Trennlinie über die ganze Breite: links Neben-Aktionen, rechts Abbrechen + Hauptaktion (dunkelblau, Löschen rot). */
+(()=>{
+ if(window.__cmDlgStyle)return;window.__cmDlgStyle=1;const P=window.HTMLDialogElement&&HTMLDialogElement.prototype;if(!P||!P.showModal)return;
+ const SKIP='.settings-dialog,.cn-dialog,.ew-dialog,#einOrd,.rdr,.vt-full,.vt-big-dlg,[data-nocmd]';
+ const css=document.createElement('style');css.textContent=
+  'dialog.cmd{position:fixed;overflow:auto}dialog.cmd .cmd-x{position:absolute;top:14px;right:14px;width:34px;height:34px;min-height:0;padding:0;border:0;border-radius:999px;background:#eef2f8;color:#66758a;display:grid;place-items:center;cursor:pointer;z-index:3;box-shadow:none}'
+  +'dialog.cmd .cmd-x:hover{background:#e2e8f2;color:#243247}dialog.cmd .cmd-x svg{width:16px;height:16px}'
+  +'dialog.cmd .cmd-t{padding-right:44px!important;font-size:1.15rem!important;font-weight:750!important;line-height:1.3!important;color:#243247}dialog.cmd .cmd-t small{display:block;font-size:.86rem;font-weight:500;color:#66758a;margin-top:3px}'
+  +'dialog.cmd .cmd-f{display:flex!important;flex-wrap:wrap;align-items:center;gap:8px;border-top:1px solid #e6ebf3;background:#fafbfd;box-sizing:border-box}'
+  +'dialog.cmd .cmd-f>button,dialog.cmd .cmd-f>a{min-height:40px}dialog.cmd .cmd-f .cmd-pri{background:#2f5f9b!important;border-color:#2f5f9b!important;color:#fff!important}';
+ (document.head||document.documentElement).append(css);
+ const X='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+ const PRI=/(^|\s)(pri|ui-primary|ui-danger|primary|vt-pri|btn-primary|danger|del|vt-danger)(\s|$)/;
+ function deco(d){if(!d||d.matches(SKIP)||d.closest(SKIP))return;const root=d.querySelector(':scope>form')||d;
+  const head=[...root.children].find(e=>/^H[23]$/.test(e.tagName));const foot=root.lastElementChild;
+  const isFoot=foot&&foot!==head&&(foot.matches('.dialog-actions,.acts,.ui-dialog-actions,.vt-actions,.row')||(foot.querySelectorAll(':scope>button').length>=1&&foot.children.length===foot.querySelectorAll(':scope>button,:scope>span,:scope>a').length));
+  if(!head)return;d.__cmdBusy=1;d.classList.add('cmd');
+  if(!head.classList.contains('cmd-t')){head.classList.add('cmd-t');const t=head.textContent,i=t.indexOf(' · ');if(i>0&&!head.querySelector('*')){head.textContent=t.slice(0,i);const sm=document.createElement('small');sm.textContent=t.slice(i+3);head.append(sm)}}
+  if(!d.querySelector(':scope>.cmd-x')){const b=document.createElement('button');b.type='button';b.className='cmd-x';b.setAttribute('aria-label','Schließen');b.title='Schließen (Esc)';b.innerHTML=X;
+   b.onclick=e=>{e.preventDefault();e.stopPropagation();const ev=new Event('cancel',{cancelable:true});d.dispatchEvent(ev);if(!ev.defaultPrevented&&d.open)d.close()};d.prepend(b)}
+  if(isFoot&&getComputedStyle(foot).position!=='sticky'){const cs=getComputedStyle(d),fs=getComputedStyle(root),pl=(parseFloat(cs.paddingLeft)||0)+(root!==d?parseFloat(fs.paddingLeft)||0:0),pr=(parseFloat(cs.paddingRight)||0)+(root!==d?parseFloat(fs.paddingRight)||0:0),pb=(parseFloat(cs.paddingBottom)||0)+(root!==d?parseFloat(fs.paddingBottom)||0:0);
+   foot.classList.add('cmd-f');Object.assign(foot.style,{marginLeft:-pl+'px',marginRight:-pr+'px',marginBottom:-pb+'px',paddingLeft:Math.max(pl,18)+'px',paddingRight:Math.max(pr,18)+'px',paddingTop:'14px',paddingBottom:Math.max(14,pb>0?14:14)+'px',marginTop:foot.style.marginTop||'18px'});
+   const bs=[...foot.querySelectorAll(':scope>button')];if(bs.length&&!bs.some(b=>PRI.test(b.className))){const last=bs[bs.length-1];if(/^(Schließen|Fertig|OK|Übernehmen|Speichern)$/.test(last.textContent.trim()))last.classList.add('cmd-pri')}}
+  setTimeout(()=>{d.__cmdBusy=0},0)}
+ const watch=d=>{if(d.__cmdObs)return;d.__cmdObs=new MutationObserver(()=>{if(d.__cmdBusy||!d.open)return;clearTimeout(d.__cmdT);d.__cmdT=setTimeout(()=>deco(d),0)});d.__cmdObs.observe(d,{childList:true,subtree:false});const f=d.querySelector(':scope>form');if(f)d.__cmdObs.observe(f,{childList:true})};
+ const sm=P.showModal;P.showModal=function(){const r=sm.apply(this,arguments);try{deco(this);watch(this)}catch(e){}return r};
+ window.classroomDialogStyle=deco;
 })();
 ;
 

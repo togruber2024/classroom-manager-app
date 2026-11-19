@@ -116,7 +116,9 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
  function open(kind,text,opts={}){
   const run=()=>new Promise(resolve=>{
    const d=document.createElement('dialog');d.className='ui-dialog';d.setAttribute('aria-modal','true');
-   const p=document.createElement('p');p.className='ui-dialog-text';p.textContent=String(text??'');d.append(p);
+   /* 13.16: erster Absatz = Überschrift, der Rest = Erklärung (einheitlicher Dialog-Stil) */
+   {const T=String(text??'').trim(),i=T.indexOf('\n\n');let h='',b=T;if(i>0&&i<=160){h=T.slice(0,i).trim();b=T.slice(i+2).trim()}else if(kind!=='alert'&&T.length<=110&&!T.includes('\n')){h=T;b=''}else if(kind==='alert'){h='Hinweis'}
+    if(h){const h2=document.createElement('h2');h2.textContent=h;d.append(h2)}if(b){const p=document.createElement('p');p.className='ui-dialog-text';p.textContent=b;d.append(p)}}
    let input=null;if(kind==='prompt'){input=document.createElement('input');input.type='text';input.autocomplete='off';input.value=opts.value??'';input.setAttribute('aria-label',String(text||'Eingabe'));d.append(input)}
    const actions=document.createElement('div');actions.className='ui-dialog-actions';d.append(actions);
    const [defOk,defDanger]=kind==='confirm'?okLabel(text):kind==='prompt'?['Speichern',false]:['OK',false];
@@ -242,6 +244,35 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
   +'@media (max-width:540px) and (orientation:portrait) and (pointer:coarse),(max-height:500px) and (orientation:landscape) and (pointer:coarse){.classroom-privacy-banner{top:auto;bottom:calc(84px + env(safe-area-inset-bottom));font-size:11px;white-space:nowrap;padding:5px 12px}}'
   /* 11.25: iPhone quer – die Leiste ist links, der Hinweis gehört ganz nach unten (nicht über den Inhalt) */+'@media (max-height:500px) and (orientation:landscape) and (pointer:coarse){.classroom-privacy-banner{bottom:calc(6px + env(safe-area-inset-bottom))}}'
   +'@media print{.classroom-privacy-banner{display:none}}';(document.head||document.documentElement).append(st)}
+})();
+/* 13.16: Ein Dialog-Stil für alle Fenster – Kopf mit Titel (Teil nach dem ersten „ · “ als Unterzeile) und ×,
+   Fußleiste mit Trennlinie über die ganze Breite: links Neben-Aktionen, rechts Abbrechen + Hauptaktion (dunkelblau, Löschen rot). */
+(()=>{
+ if(window.__cmDlgStyle)return;window.__cmDlgStyle=1;const P=window.HTMLDialogElement&&HTMLDialogElement.prototype;if(!P||!P.showModal)return;
+ const SKIP='.settings-dialog,.cn-dialog,.ew-dialog,#einOrd,.rdr,.vt-full,.vt-big-dlg,[data-nocmd]';
+ const css=document.createElement('style');css.textContent=
+  'dialog.cmd{position:fixed;overflow:auto}dialog.cmd .cmd-x{position:absolute;top:14px;right:14px;width:34px;height:34px;min-height:0;padding:0;border:0;border-radius:999px;background:#eef2f8;color:#66758a;display:grid;place-items:center;cursor:pointer;z-index:3;box-shadow:none}'
+  +'dialog.cmd .cmd-x:hover{background:#e2e8f2;color:#243247}dialog.cmd .cmd-x svg{width:16px;height:16px}'
+  +'dialog.cmd .cmd-t{padding-right:44px!important;font-size:1.15rem!important;font-weight:750!important;line-height:1.3!important;color:#243247}dialog.cmd .cmd-t small{display:block;font-size:.86rem;font-weight:500;color:#66758a;margin-top:3px}'
+  +'dialog.cmd .cmd-f{display:flex!important;flex-wrap:wrap;align-items:center;gap:8px;border-top:1px solid #e6ebf3;background:#fafbfd;box-sizing:border-box}'
+  +'dialog.cmd .cmd-f>button,dialog.cmd .cmd-f>a{min-height:40px}dialog.cmd .cmd-f .cmd-pri{background:#2f5f9b!important;border-color:#2f5f9b!important;color:#fff!important}';
+ (document.head||document.documentElement).append(css);
+ const X='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+ const PRI=/(^|\s)(pri|ui-primary|ui-danger|primary|vt-pri|btn-primary|danger|del|vt-danger)(\s|$)/;
+ function deco(d){if(!d||d.matches(SKIP)||d.closest(SKIP))return;const root=d.querySelector(':scope>form')||d;
+  const head=[...root.children].find(e=>/^H[23]$/.test(e.tagName));const foot=root.lastElementChild;
+  const isFoot=foot&&foot!==head&&(foot.matches('.dialog-actions,.acts,.ui-dialog-actions,.vt-actions,.row')||(foot.querySelectorAll(':scope>button').length>=1&&foot.children.length===foot.querySelectorAll(':scope>button,:scope>span,:scope>a').length));
+  if(!head)return;d.__cmdBusy=1;d.classList.add('cmd');
+  if(!head.classList.contains('cmd-t')){head.classList.add('cmd-t');const t=head.textContent,i=t.indexOf(' · ');if(i>0&&!head.querySelector('*')){head.textContent=t.slice(0,i);const sm=document.createElement('small');sm.textContent=t.slice(i+3);head.append(sm)}}
+  if(!d.querySelector(':scope>.cmd-x')){const b=document.createElement('button');b.type='button';b.className='cmd-x';b.setAttribute('aria-label','Schließen');b.title='Schließen (Esc)';b.innerHTML=X;
+   b.onclick=e=>{e.preventDefault();e.stopPropagation();const ev=new Event('cancel',{cancelable:true});d.dispatchEvent(ev);if(!ev.defaultPrevented&&d.open)d.close()};d.prepend(b)}
+  if(isFoot&&getComputedStyle(foot).position!=='sticky'){const cs=getComputedStyle(d),fs=getComputedStyle(root),pl=(parseFloat(cs.paddingLeft)||0)+(root!==d?parseFloat(fs.paddingLeft)||0:0),pr=(parseFloat(cs.paddingRight)||0)+(root!==d?parseFloat(fs.paddingRight)||0:0),pb=(parseFloat(cs.paddingBottom)||0)+(root!==d?parseFloat(fs.paddingBottom)||0:0);
+   foot.classList.add('cmd-f');Object.assign(foot.style,{marginLeft:-pl+'px',marginRight:-pr+'px',marginBottom:-pb+'px',paddingLeft:Math.max(pl,18)+'px',paddingRight:Math.max(pr,18)+'px',paddingTop:'14px',paddingBottom:Math.max(14,pb>0?14:14)+'px',marginTop:foot.style.marginTop||'18px'});
+   const bs=[...foot.querySelectorAll(':scope>button')];if(bs.length&&!bs.some(b=>PRI.test(b.className))){const last=bs[bs.length-1];if(/^(Schließen|Fertig|OK|Übernehmen|Speichern)$/.test(last.textContent.trim()))last.classList.add('cmd-pri')}}
+  setTimeout(()=>{d.__cmdBusy=0},0)}
+ const watch=d=>{if(d.__cmdObs)return;d.__cmdObs=new MutationObserver(()=>{if(d.__cmdBusy||!d.open)return;clearTimeout(d.__cmdT);d.__cmdT=setTimeout(()=>deco(d),0)});d.__cmdObs.observe(d,{childList:true,subtree:false});const f=d.querySelector(':scope>form');if(f)d.__cmdObs.observe(f,{childList:true})};
+ const sm=P.showModal;P.showModal=function(){const r=sm.apply(this,arguments);try{deco(this);watch(this)}catch(e){}return r};
+ window.classroomDialogStyle=deco;
 })();
 ;
 
@@ -2473,7 +2504,7 @@ h3.t{font-size:14px;margin:18px 0 8px;color:#2f5f9b}.pw{max-width:380px;margin:1
 (()=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
-  {id:'neu',title:'Neu',cards:true,news:true,items:[['Neu in 13.15','Start-QR und Ergebnis-QR einer Lerneinheit antippen: Der Code füllt den ganzen Bildschirm (antippen oder Esc schließt). Inhalte organisieren: Platzhalter ohne Material lassen sich über ⋯ aus der Reihe entfernen.','Noten › Lerneinheit › Start-QR','13.15'],['Neu in 13.14','Lerneinheiten: Antwort-Kacheln, die selbst ein Fachbegriff aus dem Glossar sind (z. B. „Furt“), tragen ein kleines „?“ – antippen zeigt die Erklärung, ohne die Kachel zu bewegen.','Lerneinheit › Glossar','13.14'],['Neu in 13.13','Sitzplan: Die obere Leiste bleibt immer einzeilig – was links von „…“ nicht passt, wandert der Reihe nach ins Menü „…“; ⓘ und ⇄ ☰ ☑ bleiben sichtbar. Lerneinheiten: „Vom Text in die Karte“ kann Trefferflächen genauer zuschneiden (z. B. ganze Industrie- oder Fußgängerzonen).','Sitzplan › obere Leiste','13.13'],['Neu in 13.12','Sitzplan am iPad: Die obere Leiste bleibt einzeilig – der Schalter ⇄ ☰ ☑ rutscht nicht mehr in eine zweite Zeile. Der Knopf „…“ passt farblich zur Leiste.','Sitzplan › obere Leiste','13.12'],['Neu in 13.11','Sitzplan: Im Vollbild ist die Seitenleiste eingeklappt (mit ☰ jederzeit einblendbar); danach erscheint sie wieder wie vorher. Das ⓘ in der oberen Leiste passt farblich zu den anderen Knöpfen.','Sitzplan › Vollbild','13.11'],['Neu in 13.10','Sitzplan: Neuer Vollbild-Knopf in der oberen Leiste rechts neben „1:1“ (beenden mit demselben Knopf oder Esc). Die Legende (ⓘ) ist übersichtlicher: Trennlinie nach den Ansicht-Schaltern, kleinere Symbole bei „Am Platz“, alle Texte bündig.','Sitzplan › obere Leiste','13.10'],['Neu in 13.09','iPhone: Die App öffnet dort, wo du sie verlassen hast – gleicher Bereich, gleiche Klasse. Der Stundenplan erscheint nicht mehr automatisch, und auf dem iPhone wechselt die Klasse nicht mehr von selbst nach dem Stundenplan.','iPhone','13.09'],['Neu in 13.08','Sitzplan: Die Legende (ⓘ oben) erklärt jetzt im Abschnitt „Am Platz“ auch die Markierungen an den Tischen – „2/3“ (erst 2 von 3 mündlichen Noten), „M“ (Material fehlt) und den roten Rahmen (Hausaufgabe fehlt).','Sitzplan › ⓘ oben','13.08'],['Neu in 13.07','Lerneinheiten, Station „Vom Text in die Karte“: Die Aufgabe steht als Kasten direkt über dem Text. Die Karte ist beim Markieren voll sichtbar (antippen erst nach dem Prüfen). Unter der Karte gibt es den Knopf „Legende“.','Lerneinheit › Vom Text in die Karte','13.07'],['Neu in 13.06','Für Schüler verteilen: Im ⋯-Menü einer Lerneinheit oder Reihe. Die Schülerdatei enthält keine Musterlösungen, kein Lösungsblatt und keine Aufgabensammlung. Eine einzelne Einheit ist sofort offen; eine ganze Reihe liegt im Lernordner gesperrt, bis der Start-QR-Code die Einheit in ihrer Stunde freischaltet. Hat sich eine Einheit geändert, meldet das iPad beim Start „Es gibt eine neue Fassung“ – nach dem Laden der neuen Datei bleiben unveränderte Stationen erhalten. Der Lernordner öffnet jetzt auch .cmpaket- und HTML-Dateien.','Unterricht › Inhalte organisieren › ⋯','13.06']]},
+  {id:'neu',title:'Neu',cards:true,news:true,items:[['Neu in 13.16','Einheitlicher Dialog-Stil (Titel, ×, Fußleiste) · ⋯-Menüs mit Symbolen und Gruppen · Lerneinheiten: Text und Karte 40 : 60, ruhigere Stationskacheln, Karten und Bilder im Vollbild mit Zoom · iPhone: Bedienkarte unten (Klasse, Datum bzw. Q1 · Q2 · Halbjahr), oben ⋯ mit Rückgängig und Backup.','Überall','13.16'],['Neu in 13.15','Start-QR und Ergebnis-QR einer Lerneinheit antippen: Der Code füllt den ganzen Bildschirm (antippen oder Esc schließt). Inhalte organisieren: Platzhalter ohne Material lassen sich über ⋯ aus der Reihe entfernen.','Noten › Lerneinheit › Start-QR','13.15'],['Neu in 13.14','Lerneinheiten: Antwort-Kacheln, die selbst ein Fachbegriff aus dem Glossar sind (z. B. „Furt“), tragen ein kleines „?“ – antippen zeigt die Erklärung, ohne die Kachel zu bewegen.','Lerneinheit › Glossar','13.14'],['Neu in 13.13','Sitzplan: Die obere Leiste bleibt immer einzeilig – was links von „…“ nicht passt, wandert der Reihe nach ins Menü „…“; ⓘ und ⇄ ☰ ☑ bleiben sichtbar. Lerneinheiten: „Vom Text in die Karte“ kann Trefferflächen genauer zuschneiden (z. B. ganze Industrie- oder Fußgängerzonen).','Sitzplan › obere Leiste','13.13'],['Neu in 13.12','Sitzplan am iPad: Die obere Leiste bleibt einzeilig – der Schalter ⇄ ☰ ☑ rutscht nicht mehr in eine zweite Zeile. Der Knopf „…“ passt farblich zur Leiste.','Sitzplan › obere Leiste','13.12'],['Neu in 13.11','Sitzplan: Im Vollbild ist die Seitenleiste eingeklappt (mit ☰ jederzeit einblendbar); danach erscheint sie wieder wie vorher. Das ⓘ in der oberen Leiste passt farblich zu den anderen Knöpfen.','Sitzplan › Vollbild','13.11'],['Neu in 13.10','Sitzplan: Neuer Vollbild-Knopf in der oberen Leiste rechts neben „1:1“ (beenden mit demselben Knopf oder Esc). Die Legende (ⓘ) ist übersichtlicher: Trennlinie nach den Ansicht-Schaltern, kleinere Symbole bei „Am Platz“, alle Texte bündig.','Sitzplan › obere Leiste','13.10'],['Neu in 13.09','iPhone: Die App öffnet dort, wo du sie verlassen hast – gleicher Bereich, gleiche Klasse. Der Stundenplan erscheint nicht mehr automatisch, und auf dem iPhone wechselt die Klasse nicht mehr von selbst nach dem Stundenplan.','iPhone','13.09'],['Neu in 13.08','Sitzplan: Die Legende (ⓘ oben) erklärt jetzt im Abschnitt „Am Platz“ auch die Markierungen an den Tischen – „2/3“ (erst 2 von 3 mündlichen Noten), „M“ (Material fehlt) und den roten Rahmen (Hausaufgabe fehlt).','Sitzplan › ⓘ oben','13.08'],['Neu in 13.07','Lerneinheiten, Station „Vom Text in die Karte“: Die Aufgabe steht als Kasten direkt über dem Text. Die Karte ist beim Markieren voll sichtbar (antippen erst nach dem Prüfen). Unter der Karte gibt es den Knopf „Legende“.','Lerneinheit › Vom Text in die Karte','13.07']]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
    ['Drei Bereiche','Oben wechselst du zwischen Sitzplan-Manager (Sitzplan, Bewerten in der Stunde, Mitarbeit, Hausaufgaben und Material), Unterrichts-Manager (Reihen, Lektionen, Lerneinheiten für das iPad, Lernkontrollen) und Noten-Manager (Bewertungen, Tests, Klassenarbeiten und Klausuren, Zeugnisnoten). Alle drei nutzen dieselben Klassen und Schülerlisten.'],
@@ -2983,6 +3014,54 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWo
   +'.ph-cs-row i::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .15s}'
   +'.ph-cs-row input:checked+i{background:#e8a23a}.ph-cs-row input:checked+i::after{left:23px}';
  document.head.append(st);
+})();
+/* 13.16: iPhone – Wichtiges in die Daumenzone. Unten über der Tab-Leiste eine Bedienkarte: Klasse wechseln (öffnet die Auswahl)
+   und im Sitzplan Datum ‹ Heute › + Perspektive, in den Noten Q1 · Q2 · Halbjahr. Oben nur Titel, Datenschutzmodus, Erinnerungen und ⋯ (Rückgängig, Backup).
+   Nur im Hochformat. Fremde Elemente werden nicht verändert: die Leisten in den Rahmen rücken per CSS nach unten,
+   Klassen-Knopf und ⋯ sind eigene Elemente der App-Seite (so bleibt die Seite ruhig). */
+(()=>{
+ const R=document.documentElement,X=':not(#_):not(#__):not(#___):not(#____)',PQ=matchMedia('(orientation:portrait)'),on=()=>R.classList.contains('is-phone')&&PQ.matches;
+ const MORE='<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><circle cx="5.5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.5" cy="12" r="1.7"/></svg>';
+ const CHEV='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+ const st=document.createElement('style');st.textContent=
+  '@media (orientation:portrait){html.is-phone .app-header #classroomUndoButton'+X+'{display:none!important}html.is-phone .app-header .cb-split'+X+'{visibility:hidden!important;pointer-events:none!important;width:40px!important;min-width:40px!important;max-width:40px!important;overflow:hidden!important;flex:none!important}}'
+  +'#phMore,#phCls{display:none}html.ph-dock-on #phMore{display:grid;place-items:center;position:fixed;z-index:9500;width:40px;height:40px;border:1px solid #cfd8e6;border-radius:12px;background:#fff;color:#2f5f9b;padding:0}'
+  +'html.ph-dock-on #phMore.due::after{content:"";position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#e39a3b;border:2px solid #fff}'
+  +'html.ph-dock-on #phCls{display:flex;position:fixed;z-index:9400;height:48px;border:0;border-radius:14px;background:#e7edf6;color:#243247;font-family:inherit;font-weight:800;font-size:18px;line-height:1;align-items:center;justify-content:center;gap:8px;padding:0 12px}'
+  +'#phCls i{font-style:normal;font-size:14px;font-weight:700;background:#fff;color:#2f5f9b;border-radius:999px;padding:3px 9px}#phCls svg{color:#2f5f9b}'
+  +'.ph-more-m{position:fixed;z-index:9700;background:#fff;border:1px solid #dce3ef;border-radius:14px;box-shadow:0 14px 40px #1d2b4033;padding:6px;min-width:250px}'
+  +'.ph-more-m button{display:flex;align-items:center;gap:11px;width:100%;min-height:46px;padding:0 12px;border:0;border-radius:9px;background:none;font:inherit;font-size:16px;color:#243247;text-align:left}'
+  +'.ph-more-m button:disabled{color:#9aa6b8}.ph-more-m button svg{width:20px;height:20px;color:#2f5f9b;flex:none}.ph-more-m hr{border:0;border-top:1px solid #e6ebf3;margin:4px}';
+ document.head.append(st);
+ const IC={undo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-5-5 5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>',
+  down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></svg>',
+  up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V8M7 13l5-5 5 5M5 4h14"/></svg>',
+  bk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 4v5h8V4M8 20v-6h8v6"/></svg>'};
+ const ID={u:'classroomUndoButton',q:'classroomQuickBackup',r:'classroomQuickRestore',b:'classroomBackupButton'};
+ let menu=null;const closeM=()=>{menu?.remove();menu=null};
+ const mb=document.createElement('button');mb.type='button';mb.id='phMore';mb.setAttribute('aria-label','Weitere: Rückgängig, Backup');mb.innerHTML=MORE;
+ mb.onclick=e=>{e.stopPropagation();if(menu)return closeM();const u=document.getElementById(ID.u);menu=document.createElement('div');menu.className='ph-more-m';
+  menu.innerHTML='<button type="button" data-k="u"'+(u&&u.disabled?' disabled':'')+'>'+IC.undo+'Rückgängig</button><hr><button type="button" data-k="q">'+IC.down+'Backup speichern</button><button type="button" data-k="r">'+IC.up+'Neuestes Backup wiederherstellen …</button><button type="button" data-k="b">'+IC.bk+'Backup und Wiederherstellen …</button>';
+  document.body.append(menu);const r=mb.getBoundingClientRect();menu.style.top=(r.bottom+6)+'px';menu.style.right=Math.max(8,innerWidth-r.right)+'px';
+  menu.onclick=ev=>{const t=ev.target.closest('button');if(!t||t.disabled)return;closeM();document.getElementById(ID[t.dataset.k])?.click()}};
+ const cb=document.createElement('button');cb.type='button';cb.id='phCls';cb.setAttribute('aria-label','Klasse wechseln');
+ cb.onclick=e=>{e.stopPropagation();document.querySelector('.compact-navigation-bar')?.click()};
+ document.addEventListener('click',e=>{if(menu&&!e.target.closest('.ph-more-m,#phMore'))closeM()},true);
+ const DCSS='@media (orientation:portrait){html.is-phone body'+X+'{padding-bottom:calc(160px + env(safe-area-inset-bottom))!important}'
+  +'html.is-phone body .pl-seatbar'+X+',html.is-phone body .pl-bar>.pl-row.plx1'+X+'{position:fixed!important;left:8px!important;right:8px!important;bottom:8px!important;top:auto!important;z-index:60!important;margin:0!important;width:auto!important;max-width:none!important;background:#fff!important;border:1px solid #dce3ef!important;border-radius:18px!important;box-shadow:0 6px 22px rgba(28,43,70,.16)!important;padding:68px 10px 10px!important;box-sizing:border-box!important}}';
+ const esc2=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const css1=(f)=>{let d;try{d=f&&f.contentDocument}catch{return}if(d&&d.head&&!d.getElementById('ph-dock-css')){const s=d.createElement('style');s.id='ph-dock-css';s.textContent=DCSS;d.head.append(s)}};
+ const set=(el,k,v)=>{if(el.style[k]!==v)el.style[k]=v};
+ function run(){const ok=on();if(R.classList.contains('ph-dock-on')!==ok)R.classList.toggle('ph-dock-on',ok);if(!ok){closeM();return}
+  if(!mb.isConnected)document.body.append(mb);if(!cb.isConnected)document.body.append(cb);
+  const anchor=document.querySelector('.app-header .cb-split')||document.getElementById('classroomUndoButton');if(anchor){const r=anchor.getBoundingClientRect();set(mb,'top',Math.round(r.top+(r.height-40)/2)+'px');set(mb,'left',Math.round(r.right-40)+'px')}
+  const due=!!document.getElementById(ID.b)?.classList.contains('backup-due');if(mb.classList.contains('due')!==due)mb.classList.toggle('due',due);
+  /* sichtbare Ansicht: Sitzplan oder Noten */let tgt=null;for(const [id,sel] of [['view-sitzplan','.pl-seatbar'],['view-noten','.pl-bar>.pl-row.plx1']]){const f=document.getElementById(id);if(!f)continue;css1(f);if(f.hidden||!f.getClientRects().length)continue;
+   let el=null;try{el=f.contentDocument.querySelector(sel)}catch{}if(el&&el.getClientRects().length){const fr=f.getBoundingClientRect(),r=el.getBoundingClientRect();tgt={l:fr.left+r.left+10,t:fr.top+r.top+10,w:r.width-20}}}
+  if(!tgt){if(cb.style.display!=='none')cb.style.display='none';return}if(cb.style.display)cb.style.display='';
+  set(cb,'left',Math.round(tgt.l)+'px');set(cb,'top',Math.round(tgt.t)+'px');set(cb,'width',Math.round(tgt.w)+'px');
+  const chip=document.querySelector('.compact-navigation-chip[data-fach]'),h=esc2(chip?chip.textContent.trim():'Klasse')+(chip?.dataset.fach?' <i>'+esc2(chip.dataset.fach)+'</i>':'')+CHEV;if(cb._h!==h){cb._h=h;cb.innerHTML=h}}
+ setInterval(()=>{if(!document.hidden)run()},600);addEventListener('resize',run);PQ.addEventListener?.('change',run);setTimeout(run,300);
 })();
 ;
 

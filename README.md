@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 19.11.2026 · Version 13.15
+Stand: 19.11.2026 · Version 13.16
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1594,3 +1594,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.13: Obere Sitzplan-Leiste immer einzeilig (1:1, Einpassen, Vollbild, Trend/LE/Anzahl, Bewertungen, Regler, −/+ der Reihe nach ins Menü); tf-Ziele mit eigenem Trefferradius g.r
 13.14: Glossar-„?“ an Antwort-Kacheln (chip, lchip, opt), die ein Glossarbegriff oder Alias sind
 13.15: QR-Codes (le-qr, vt-relqr, vt-exqr) antippen = bildschirmfüllend über die ganze App; Platzhalter ohne Material per ⋯ aus der Reihe entfernen
+13.16: Dialog-Stil (ui-dialogs.js, showModal-Dekoration cmd), ⋯-Menüs mit Symbolen (unitMenuHtml/reiheMenuHtml), tf 40:60 + Silbentrennung, Stationskacheln einzeilig (stepSub), Vollbild für Karten/Bilder (imgFull), iPhone-Bedienkarte (phone.js ph-dock, ph-more)
