@@ -2864,7 +2864,11 @@ document.addEventListener('keydown',event=>{
   if(!b){b=document.createElement('button');b.type='button';b.className='sp-fs-btn';b.addEventListener('click',e=>{e.stopPropagation();toggle()})}
   const ref=bar.querySelector(':scope>[data-zoom-reset]');if(ref&&b.previousElementSibling!==ref)ref.after(b);else if(!ref&&!b.parentElement)bar.append(b);
   paint(b)}
- function changed(){root.classList.toggle('sp-fs-view',isOn());place();setTimeout(()=>dispatchEvent(new Event('resize')),60)}
+ /* 13.11: im Vollbild die Seitenleiste (Einstellungen) einklappen und danach den vorigen Zustand wiederherstellen */
+ let sideWas=null;
+ function side(on){const b=document.querySelector('.classroom-sidebar-toggle');if(!b)return;const open=b.getAttribute('aria-expanded')==='true';
+  if(on){if(sideWas===null){sideWas=open;if(open)b.click()}}else if(sideWas!==null){const w=sideWas;sideWas=null;if(w&&!open)b.click()}}
+ function changed(){const on=isOn();root.classList.toggle('sp-fs-view',on);side(on);place();setTimeout(()=>dispatchEvent(new Event('resize')),60)}
  addEventListener('keydown',e=>{if(e.key==='Escape'&&pseudo&&!document.querySelector('dialog[open]')){e.preventDefault();setPseudo(false)}});
  document.addEventListener('fullscreenchange',changed);document.addEventListener('webkitfullscreenchange',changed);
  addEventListener('resize',place);setTimeout(place,0);setTimeout(place,800);
@@ -5896,6 +5900,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  const INFO='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.6" r=".6" fill="currentColor"/></svg>';
  const st=document.createElement('style');st.textContent=
   'html body .classroom-plan-actions>.student-finder:not(#_):not(#__):not(#___){width:40px!important;min-width:40px!important;height:40px!important;border-radius:10px!important}html body .sp-lg-btn:not(#_):not(#__):not(#___){order:100;flex:none;width:32px!important;min-width:32px!important;height:32px!important;min-height:0!important;padding:0!important;margin:0 0 0 2px!important;border-radius:999px!important;border:1px solid #cfd8e6!important;background:#fff!important;color:#2f5f9b!important;display:inline-grid!important;place-items:center;box-shadow:none!important;cursor:pointer;align-self:center}'
+  +'html body .classroom-plan-zoom>.sp-lg-btn:not(#_):not(#__):not(#___){width:40px!important;min-width:40px!important;height:40px!important;border:0!important;background:#e7edf6!important;margin-left:6px!important}'
   +'html body .sp-lg-btn[aria-expanded=true]:not(#_):not(#__):not(#___){background:#2f5f9b!important;border-color:#2f5f9b!important;color:#fff!important}.sp-lg-btn svg{width:19px;height:19px}'
   +'html.ph-lite .sp-lg-btn,html.classroom-beamer .sp-lg-btn{display:none!important}@media print{.sp-lg-btn,.sp-lg{display:none!important}}'
   +'.sp-lg{position:fixed;z-index:20000;transform:translateZ(0);background:#fff;border:1px solid #dce3ef;border-radius:14px;box-shadow:0 12px 32px rgba(35,61,96,.18);padding:9px 12px 8px;font:13px/1.3 inherit;color:#243247;min-width:230px;max-width:min(380px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto;animation:spLgIn .12s ease-out}'
