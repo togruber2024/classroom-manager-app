@@ -144,12 +144,30 @@ details summary{cursor:pointer;color:var(--blue);font-weight:600;min-height:40px
  const IDB=(mode,fn)=>new Promise((res,rej)=>{try{const r=indexedDB.open('cm-lerneinheiten',1);r.onupgradeneeded=()=>r.result.createObjectStore('u');r.onerror=()=>rej(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('u',mode),x=fn(tx.objectStore('u'));tx.oncomplete=()=>{res(x&&x.result);db.close()};tx.onerror=()=>rej(tx.error)}}catch(e){rej(e)}});
  const ok=u=>!!(u&&u.type==='classroom-lerneinheit'&&u.def&&Array.isArray(u.def.steps)&&(!U||u.id===U));
  const start=u=>{window.CM_UNIT=u;window.CM_U=u.id;const s=document.createElement('script');s.textContent=document.getElementById('cm-main').textContent;document.body.append(s)};
- const ask=msg=>{const app=document.getElementById('app');app.innerHTML='<div class="card hero" style="display:block"><div class="muted">Lerneinheit</div><h1>Datei laden</h1><p>'+esc(msg)+'</p><div class="row"><button class="pri" id="cmLd">Datei laden …</button></div></div>';
+ /* 13.06: Stand und Freischaltung – der Start-QR-Code bringt den aktuellen Stand (st) und den Schlüssel für gesperrte Einheiten (k) mit */
+ const SP=q.get('st')||'',KP=(q.get('k')||'').replace(/[^A-Za-z0-9_-]/g,''),SH=SP.split('.')[0].replace(/[^0-9a-f]/g,''),SD=(SP.split('.')[1]||'').replace(/\D/g,''),SDI=SD.length===6?'20'+SD.slice(0,2)+'-'+SD.slice(2,4)+'-'+SD.slice(4):'';
+ const loEnt=f=>{try{const a=JSON.parse(localStorage.getItem('cm-lernordner-v1')||'{}')||{},e=a['einheit.html?u='+U];if(e){f(e);localStorage.setItem('cm-lernordner-v1',JSON.stringify(a))}}catch{}};
+ const pickU=d=>!d?null:d.type==='classroom-reihe'?(U&&d.units&&!Array.isArray(d.units)?d.units[U]||null:null):d.type==='classroom-paket'?(Array.isArray(d.units)?d.units.find(x=>x&&x.id===U)||null:null):d;
+ const sDate=d=>window.cmStuDate?cmStuDate(d):'';
+ const card=(kick,h,body,btn,warm)=>'<div class="card" style="display:block;'+(warm?'background:#fff7ed;border:2px solid #e8a35a;':'')+'"><div style="color:#66758a;font-size:.95rem">'+esc(kick)+'</div><h1 style="margin:8px 0 10px">'+esc(h)+'</h1>'+body+(btn?'<div class="row" style="margin-top:14px"><button class="pri" id="cmLd">Datei laden …</button></div>':'')+'</div>';
+ const app=()=>document.getElementById('app');
+ const ask=(msg,o={})=>{app().innerHTML=o.html||card('Lerneinheit','Datei laden','<p>'+esc(msg)+'</p>',1);
   document.getElementById('cmLd').onclick=()=>{const i=document.createElement('input');i.type='file';i.style.display='none';document.body.append(i);
-   i.onchange=async()=>{const f=i.files[0];i.remove();if(!f)return;let u=null;try{const d=JSON.parse(window.cmFileText?await cmFileText(f):await f.text());u=d&&d.type==='classroom-reihe'?(U?d.units&&d.units[U]:null):d}catch{}
-    if(!ok(u)){alert('Diese Datei passt nicht zu dieser Lerneinheit.');return}try{await IDB('readwrite',st=>st.put(u,u.id))}catch{}start(u)};i.click()}};
+   i.onchange=async()=>{const f=i.files[0];i.remove();if(!f)return;let u=null;try{u=pickU(JSON.parse(window.cmFileText?await cmFileText(f):await f.text()))}catch{}
+    const NEU='Diese Datei ist nicht die aktuelle Fassung. Hol dir die neue Datei bei deiner Lehrkraft.';
+    if(window.cmStuLocked&&cmStuLocked(u)&&(!U||u.id===U)){if(!KP){try{await IDB('readwrite',st=>st.put(u,u.id))}catch{}loEnt(e=>{e.lock=1});return locked(u)}
+     const p=await cmStuUnlock(u,KP);if(!p){alert(NEU);return}u=p}
+    if(!ok(u)){alert('Diese Datei passt nicht zu dieser Lerneinheit.');return}
+    if(SH&&window.cmStuStand){try{if((await cmStuStand(u)).h!==SH){alert(NEU);return}}catch{}}
+    if(o.old)try{cmStuReset(u.id,o.old,u)}catch{}
+    try{await IDB('readwrite',st=>st.put(u,u.id))}catch{}loEnt(e=>{delete e.lock;delete e.upd});start(u)};i.click()}};
+ const locked=L=>{app().innerHTML=card('Lerneinheit · '+(L.title||''),'Noch gesperrt','<p>Diese Einheit wird in der Stunde mit dem Start-QR-Code freigeschaltet. Scanne dann den Code an der Tafel.</p>',0)};
+ const outdated=(s,old,title)=>ask('',{old,html:card('Lerneinheit · '+(title||''),'Es gibt eine neue Fassung','<p>Deine Lehrkraft hat diese Einheit überarbeitet. Auf deinem iPad ist noch die alte Fassung.</p><p style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><span style="border:1px solid #e3c79f;background:#fff;border-radius:999px;padding:4px 12px">auf deinem iPad: '+(s&&s.d?'Stand '+esc(sDate(s.d)):'ältere Fassung')+'</span>'+(SDI?'<span style="border:1px solid #b7e0c4;background:#e7f6ec;color:#1f6b3a;font-weight:700;border-radius:999px;padding:4px 12px">aktuell: Stand '+esc(sDate(SDI))+'</span>':'')+'</p><p><b>So geht es weiter:</b> Hol dir die neue Datei bei deiner Lehrkraft (AirDrop) und öffne sie. Was du in unveränderten Stationen schon geschafft hast, bleibt erhalten.</p>',1,1)});
  window.addEventListener('DOMContentLoaded',async()=>{let u=window.CM_EMBED_BOOK;if(!ok(u)){u=null;if(U)try{u=await IDB('readonly',st=>st.get(U))}catch{}}
-  if(ok(u))start(u);else ask(U?'Diese Lerneinheit ist noch nicht auf deinem Gerät. Lade die Datei, die du von deiner Lehrkraft bekommen hast (z. B. per AirDrop). Danach bleibt sie auf dem Gerät.':'Welche Lerneinheit? Öffne den Start-QR deiner Lehrkraft oder lade die Datei.')})})();
+  if(window.cmStuLocked&&cmStuLocked(u)){if(!KP)return locked(u);const p=await cmStuUnlock(u,KP);if(!p||!ok(p))return outdated(u.stand,null,u.title);
+   try{await IDB('readwrite',st=>st.put(p,p.id))}catch{}loEnt(e=>{delete e.lock});u=p}
+  if(ok(u)&&SH&&!window.CM_EMBED_BOOK&&window.cmStuStand){let s=null;try{s=await cmStuStand(u)}catch{}if(s&&s.h!==SH)return outdated(s,u,u.def?.meta?.title||u.title)}
+  if(ok(u)){loEnt(e=>{delete e.upd});start(u)}else ask(U?'Diese Lerneinheit ist noch nicht auf deinem Gerät. Lade die Datei, die du von deiner Lehrkraft bekommen hast (z. B. per AirDrop). Danach bleibt sie auf dem Gerät.':'Welche Lerneinheit? Öffne den Start-QR deiner Lehrkraft oder lade die Datei.')})})();
 </script>
 <script type="text/plain" id="cm-main">
 'use strict';

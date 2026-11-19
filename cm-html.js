@@ -40,3 +40,35 @@
   return html.replace(/<body[^>]*>/i,m=>m+blk)};
 
 })();
+
+/* 13.06: Schülerfassung einer Lerneinheit – ohne Lehrkraft-Teile, mit Stand (Prüfsumme + Datum).
+   Gesperrte Einheiten (ganze Reihe verteilt) sind verschlüsselt; den Schlüssel bringt erst der Start-QR-Code mit.
+   Der Schlüssel ergibt sich aus dem Inhalt – ändert sich die Einheit, passt der alte Schlüssel nicht mehr. */
+(()=>{
+ const te=new TextEncoder(),hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+ const b64u=b=>{const a=new Uint8Array(b);let s='';for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+ const ub64=s=>{s=String(s).replace(/-/g,'+').replace(/_/g,'/');s+='='.repeat((4-s.length%4)%4);const t=atob(s),a=new Uint8Array(t.length);for(let i=0;i<t.length;i++)a[i]=t.charCodeAt(i);return a};
+ const sha=t=>crypto.subtle.digest('SHA-256',te.encode(t));
+ const strip=u=>{const x=JSON.parse(JSON.stringify(u));if(x.def){delete x.def.vt;delete x.def.vtRec}delete x.stand;return x};
+ const day=()=>{const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')};
+ window.cmStuStrip=strip;
+ window.cmStuHash=async u=>hex(await sha('cm-stand|'+JSON.stringify(strip(u).def))).slice(0,12);
+ window.cmStuKey=async u=>{const x=strip(u);return b64u((await sha('cm-key|'+x.id+'|'+JSON.stringify(x.def))).slice(0,16))};
+ window.cmStuPlain=(u,stand)=>{const x=strip(u);x.stand={d:stand?.d||day(),h:stand.h};return x};
+ window.cmStuLock=async(u,stand,k)=>{const x=cmStuPlain(u,stand),M=x.def.meta||{},key=await crypto.subtle.importKey('raw',ub64(k),'AES-GCM',false,['encrypt']),iv=crypto.getRandomValues(new Uint8Array(12));
+  const data=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,te.encode(JSON.stringify(x)));
+  return {type:'classroom-lerneinheit-locked',id:x.id,title:M.title||x.title||'Lerneinheit',meta:{subject:M.subject||'',jg:M.jg||0,reihe:M.reihe||'',n:x.def.steps.filter(s=>s&&s.k).length},stand:x.stand,enc:{iv:b64u(iv),data:b64u(data)}}};
+ window.cmStuLocked=L=>!!(L&&L.type==='classroom-lerneinheit-locked'&&L.id&&/^[a-z0-9_-]+$/i.test(L.id)&&L.enc&&L.enc.data);
+ window.cmStuUnlock=async(L,k)=>{try{const key=await crypto.subtle.importKey('raw',ub64(k),'AES-GCM',false,['decrypt']);const p=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(L.enc.iv)},key,ub64(L.enc.data));const u=JSON.parse(new TextDecoder().decode(p));return u&&u.id===L.id?u:null}catch{return null}};
+ /* Stand einer Einheit auf dem iPad – die Prüfsumme immer aus dem Inhalt (auch ältere Dateien ohne Stand) */
+ window.cmStuStand=async u=>({h:await cmStuHash(u),d:u?.stand?.d||''});
+ /* Neue Fassung geladen: nur die geänderten Stationen zurücksetzen – der Rest bleibt erhalten */
+ window.cmStuReset=(id,oldU,newU)=>{if(!oldU||!oldU.def||!newU||!newU.def)return [];const sk=u=>{const o={};for(const s of u.def.steps||[])if(s&&s.k)o[s.k]=JSON.stringify(s);return o};const a=sk(oldU),b=sk(newU),ch=Object.keys(a).filter(k=>a[k]!==b[k]);
+  if(!ch.length)return ch;const K='cm-'+id+'-v1';let ST=null;try{ST=JSON.parse(localStorage.getItem(K)||'null')}catch{}if(!ST)return ch;
+  for(const k of ch){const re=new RegExp('^'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:[A-Z][A-Za-z0-9]*)?$');for(const s of Object.keys(ST))if(re.test(s))delete ST[s]}
+  try{localStorage.setItem(K,JSON.stringify(ST))}catch{}return ch};
+ /* alle Einheiten aus einer Datei: Einheit, gesperrte Einheit, Reihe (auch gesperrt), Paket */
+ window.cmStuUnits=d=>{if(!d)return [];const okU=u=>u&&((u.type==='classroom-lerneinheit'&&u.id&&/^[a-z0-9_-]+$/i.test(u.id)&&u.def&&Array.isArray(u.def.steps))||cmStuLocked(u));
+  if(okU(d))return [d];const L=d.type==='classroom-reihe'&&d.units?Object.values(d.units):d.type==='classroom-paket'&&Array.isArray(d.units)?d.units:[];return L.filter(okU)};
+ window.cmStuDate=d=>{const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(d||'');return m?m[3]+'.'+m[2]+'.':''};
+})();
