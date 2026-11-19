@@ -5862,21 +5862,26 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   +'.sp-lg .ic{flex:none;min-width:28px;height:28px;padding:0 5px;box-sizing:border-box;border:1px solid #cfd8e6;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;gap:1px;color:#2f5f9b;font-size:12px;font-weight:700;background:#fff}'
   +'.sp-lg .ic.rd{border-radius:999px;background:#e7edf6;border-color:#e7edf6}.sp-lg .ic svg{width:17px;height:17px}.sp-lg .ic.dg{color:#b42318}.sp-lg .ic.pri{background:#2f5f9b;border-color:#2f5f9b;color:#fff;font-weight:600;font-size:11px}'
   +'.sp-lg .ic.as:before{content:"";width:16px;height:11px;border-radius:3px;background:#c8e6b0;border:2px solid #d9534f}'
-  +'.sp-lg .r small{color:#66758a}';
+  +'.sp-lg .r small{color:#66758a}.sp-lg h5{margin:8px 0 3px;padding-top:7px;border-top:1px solid #e3e9f2;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#66758a}'
+  +'.sp-lg .ic.seat{position:relative;width:28px;min-width:28px;height:22px;margin:3px 0 0;border-radius:6px;background:#eaf0fa;border-color:#8fb0dc}.sp-lg .ic.seat.wh{background:#fff;border-color:#cfd8e6}.sp-lg .ic.seat.hw{background:#fff;border:3px solid #c52f2f}.sp-lg .r:has(.seat){padding:5px 0}'
+  +'.sp-lg .pl{position:absolute;top:-7px;right:-7px;padding:0 5px;border-radius:999px;background:#2f5f9b;color:#fff;font:700 10px/1.4 inherit;font-style:normal}.sp-lg .pl.or{top:auto;right:auto;bottom:-7px;left:-7px;background:#e39a3b;min-width:16px;text-align:center}';
  document.head.append(st);
  const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
  const svg=el=>{const s=el?.querySelector?.('svg');if(!s)return '';const c=s.cloneNode(true);c.removeAttribute('class');c.removeAttribute('style');return c.outerHTML};
  const shown=el=>!!el&&(el.offsetParent!==null||el.classList.contains('plan-actions-collapsed')||el.classList.contains('zoom-collapsed'));
  const off=el=>el.classList.contains('plan-actions-collapsed')||el.classList.contains('zoom-collapsed')||!!el.closest('.plan-actions-collapsed,.zoom-collapsed');
  const row=(icon,cls,text,isOff)=>'<div class="r'+(isOff?' off':'')+'"><span class="ic '+(cls||'')+'">'+icon+'</span><span>'+text+'</span></div>';
- function topRows(bar){const out=[];for(const c of bar.children){if(!shown(c)||c.matches('.vp-zoom-bg,.zoom-more,.sp-lg-btn,input,output'))continue;
+ function topRows(bar){const out=[],pl=[];for(const c of bar.children){if(!shown(c)||c.matches('.vp-zoom-bg,.zoom-more,.sp-lg-btn,input,output'))continue;
    if(c.matches('.plan-col-pair')){const T=['Einstellungen ein-/ausblenden','Noten der Klasse ein-/ausblenden','Spalte links/rechts tauschen'];[...c.querySelectorAll('button')].forEach((b,i)=>out.push(row(svg(b),'rd',esc(T[i]||b.getAttribute('aria-label')||''))));continue}
    if(c.matches('[data-zoom-minus]')){out.push(row('−&thinsp;+','rd','Zoom: kleiner / größer'));continue}if(c.matches('[data-zoom-plus]'))continue;
    if(c.matches('[data-zoom-fit]')){out.push(row(svg(c),'rd','Einpassen',off(c)));continue}
    if(c.matches('[data-zoom-reset]')){out.push(row(svg(c),'rd','Originalgröße 100 %',off(c)));continue}
    if(c.matches('.plan-assess-switch')){out.push(row('','rd as','Bewertungen am Platz ein-/ausblenden',off(c)));continue}
-   if(c.matches('.si-pill')){{const I=window.classroomSiIcons||{};out.push(row(I.count||'123','rd','Am Platz: Anzahl der mündlichen Noten'),row(I.le||'LE','rd','Am Platz: Stand der Lerneinheit (Abgabe-QR)'),row(I.trend||'↗','rd','Am Platz: Trend der mündlichen Mitarbeit'))};continue}
+   if(c.matches('.si-pill')){{const I=window.classroomSiIcons||{};pl.push(row(I.count||'123','rd','Anzahl der mündlichen Noten'),row(I.le||'LE','rd','Stand der Lerneinheit (Abgabe-QR)'),row(I.trend||'↗','rd','Trend der mündlichen Mitarbeit'))};continue}
    const t=c.getAttribute('aria-label')||c.textContent.trim();if(t)out.push(row(svg(c)||esc(t.slice(0,3)),'rd',esc(t),off(c)))}
+  /* 13.08: Markierungen an den Plätzen erklären */
+  out.push('<h5>Am Platz</h5>',...pl,row('<i class="pl">2/3</i>','seat','Erst 2 von 3 mündlichen Noten'),
+   row('<i class="pl or">M</i>','seat wh','Material fehlt'),row('','seat hw','Hausaufgabe fehlt'));
   return out}
  function botRows(bar){const out=[];const lab=b=>b.getAttribute('aria-label')||b.textContent.trim();
   for(const c of bar.children){if(!shown(c)||c.matches('.plan-actions-more,.sp-lg-btn,#studentSearchInput,.plan-actions-sep'))continue;const o=off(c);
