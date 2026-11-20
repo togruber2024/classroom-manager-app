@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 20.11.2026 · Version 13.23
+Stand: 20.11.2026 · Version 13.24
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1602,3 +1602,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.21: Lerneinheiten-Feinschliff (Kacheln, Absätze, Wirkungsgefüge, Tabellenhinweis, Glossar in Kopfzeile, Wischkarten, iPhone einspaltig); Versionsanzeige X.YY
 13.22: Wirkungsgefüge mit Einräumen der Kacheln (freie Plätze), numP mit Tausenderpunkten/Mio./ca., Vorschau ohne Autofokus
 13.23: Wirkungsgefüge – gleiche Kachelschrift in Auswahl und Feld; Ziehen im Feld ohne Versatz (dragify-Geist)
+13.24: dragify-Geist position:fixed erzwungen (Versatz bei gescrollter Seite)
