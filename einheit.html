@@ -146,6 +146,8 @@ details summary{cursor:pointer;color:var(--blue);font-weight:600;min-height:40px
 .deck{height:210px;max-width:520px}.scard{font-size:1.32rem;padding:20px 30px}
 .sw2 .deck{height:240px}@media (max-width:820px){.two.sw2{grid-template-columns:1fr}}
 @media (max-width:600px){.deck,.sw2 .deck{height:200px}.scard{font-size:1.12rem}#glFab.intop{font-size:0;gap:5px;padding:0 9px;min-height:38px}#glFab.intop i{font-size:.8rem}#glFab.intop .pl{font-size:.75rem}}
+
+.chslot{position:absolute;transform:translate(-50%,-50%);min-height:4.8em;box-sizing:border-box;border:2px dashed #c3cfe0;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#a6b3c6;font-size:.85rem;font-weight:600;background:#ffffff99}.chslot.tgt{border-color:#e8a23a;background:#fff8ec}.chslot.hov,.chn.hov{outline:3px solid #e8a23a}.chpool{min-height:58px;margin:12px 0}.chpool .chpc{white-space:normal;text-align:center;font-weight:650;padding:10px 14px;max-width:340px}@media (max-width:600px){.chw .chn,.chw .chslot{width:43%!important;max-width:43%!important}}
 </style></head><body><button type="button" id="who" hidden aria-label="Abgabe-QR zeigen"></button><div class="wrap" id="app"></div><div id="printBox"></div>
 <script src="glyph-icons.js"></script><script src="qr-code.js"></script><script src="unit-pdf.js"></script><script src="cm-html.js"></script>
 <script>
@@ -560,7 +562,7 @@ function wMark(k,o){const T=o.text||[],SG=mkSegs(T),P=o.pens||[],SOL={},FREE=new
    label (Karte beschriften), calc (Rechnen), chart (Diagramm lesen), src2 (zwei Quellen vergleichen) */
 const BIMG=k=>(BOOK&&BOOK.img&&BOOK.img[k]&&BOOK.img[k].src)||'';
 const pre=o=>typeof o.before==='function'?o.before():o.before||'';
-const numP=s=>{s=String(s??'').trim().replace(/\s/g,'').replace(/[^0-9,.\-−]/g,'').replace('−','-');if(/,/.test(s))s=s.replace(/\./g,'').replace(',','.');const v=parseFloat(s);return isFinite(v)?v:null};
+/* 13.22: Zahlen wie Schüler sie schreiben: „1.700.000“, „1,7 Mio.“, „ca. 13“, „4.500“ (Tausenderpunkte), „2 Mrd.“ */const numP=s=>{s=String(s??'').trim().toLowerCase();const m=/mrd|milliard/.test(s)?1e9:/mio|million/.test(s)?1e6:/tsd|tausend/.test(s)?1e3:1;s=s.replace(/\s/g,'').replace(/[^0-9,.\-−]/g,'').replace('−','-').replace(/^[.,]+|[.,]+$/g,'');if(/,/.test(s))s=s.replace(/\./g,'').replace(',','.');else if(/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');const v=parseFloat(s);return isFinite(v)?v*m:null};
 const numF=v=>{const r=Math.round(v*1000)/1000;return fmt(r).replace(/^(-?)\./,'$10.')};
 const tolOf=(q)=>{const t=q.tol;if(typeof t==='string'&&/%$/.test(t))return Math.abs(q.a)*parseFloat(t)/100;return +t||0};
 /* --- Platzieren mit Prüfen + zweitem Versuch (gemeinsam für grid und label) --- */
@@ -605,10 +607,29 @@ function wLabel(k,o){const P=o.pts,N=P.length,X=o.extra||[],ALL=[...P.map(p=>p[0
 function wChain(k,o){/* 12.38: o.given = schon vorgegebene Pfeile (grau, fest, zählen nicht) – für schrittweise wachsende Wirkungsgefüge */const NO=o.nodes,G=(o.given||[]).map(e=>e[0]+'>'+e[1]),S=o.edges.map(e=>e[0]+'>'+e[1]),NS=S.length,E=ST[k+'E']??=[],R=()=>ST[k+'R']||0;let pick=null;
  if(SOLV&&!ST[k])SOLVW.chain(k,o);
  const cols=Math.ceil(Math.sqrt(NO.length)),POS=o.pos||NO.map((_,i)=>[(i%cols+.5)/cols,(Math.floor(i/cols)+.5)/Math.ceil(NO.length/cols)]);
- const draw=()=>keep(k,()=>{const r=R(),L=ST[k+'L']||[];
+ /* 13.22: Erst die Kacheln ins Feld ziehen (freie Anordnung auf gleich weit entfernten Plätzen), dann Pfeile setzen. Die Anordnung gilt für alle Schritte desselben Wirkungsgefüges. */
+ const FAM=(D.steps||[]).filter(s=>s.w==='chain'&&s.o&&s.o.nodes&&s.o.nodes[0]===NO[0]),NMAX=Math.max(NO.length,...FAM.map(s=>s.o.nodes.length)),SC=NMAX<=6||innerWidth<600?2:3,SR=Math.ceil((NMAX+1)/SC),SLOT=[...Array(SC*SR)].map((_,i)=>[(i%SC+.5)/SC,(Math.floor(i/SC)+.5)/SR]),PL=ST['chP|'+NO[0]]??={},WS=';width:'+(SC===2?34:28)+'%';
+ const occ=s=>{for(const i in PL)if(PL[i]===s)return +i;return null},near=i=>{const q=POS[i]||[.5,.5];let b=null,bd=1e9;SLOT.forEach((z,s)=>{if(occ(s)!=null)return;const d=Math.hypot(z[0]-q[0],z[1]-q[1]);if(d<bd){bd=d;b=s}});return b},auto=i=>{if(PL[i]==null){const s=near(i);if(s!=null)PL[i]=s}};
+ if(SOLV||ST[k])NO.forEach((_,i)=>auto(i));(o.given||[]).flat().forEach(auto);
+ const ALL=()=>NO.every((_,i)=>PL[i]!=null),PP=i=>SLOT[PL[i]]||POS[i];
+ const put=(i,s)=>{if(s==='pool'){delete PL[i];return}s=+s;const j=occ(s);if(j===i)return;if(j!=null){if(j>=NO.length)return;const f=PL[i];if(f!=null)PL[j]=f;else delete PL[j]}PL[i]=s};
+ const place=()=>{const un=shuffleOnce(k+'pc',NO.map((_,i)=>i)).filter(i=>PL[i]==null),n=NO.length-un.length;
+  frame(o.title,pre(o)+'<div class="card"><h2>'+esc(o.h||'')+'</h2><p style="margin:0">Ziehe zuerst alle Kacheln ins Feld und ordne sie so an, wie du die Zusammenhänge siehst – oder tippe erst die Kachel, dann den Platz. Danach setzt du die Pfeile. <b>'+n+' von '+NO.length+' Kacheln</b></p>'+(ALL()?'<div class="row" style="margin-top:10px"><div class="sp"></div><button class="pri" data-mvok>Fertig – Pfeile setzen</button></div>':'')
+   +'<div class="pool chpool" data-drop="pool">'+(un.length?un.map(i=>'<button class="chip chpc'+(pick===i?' on':'')+'" data-pc="'+i+'" data-dg="'+i+'">'+md(NO[i])+'</button>').join(''):'<span class="muted" style="font-size:.85rem;align-self:center">Hierher ziehen, um eine Kachel aus dem Feld zu nehmen.</span>')+'</div>'
+   +'<div class="chw" style="height:'+Math.max(320,SR*125)+'px"><svg class="chs"></svg>'+SLOT.map((z,s)=>{const i=occ(s),st='left:'+z[0]*100+'%;top:'+z[1]*100+'%'+WS;if(i==null)return '<div class="chslot'+(pick!=null?' tgt':'')+'" data-slot="'+s+'" data-drop="'+s+'" style="'+st+'">hierher ziehen</div>';if(i>=NO.length)return '';return '<button class="chn'+(pick===i?' on':'')+'" data-n="'+i+'" data-dg="'+i+'" data-drop="'+s+'" style="'+st+'">'+md(NO[i])+'</button>'}).join('')+'</div></div>'+(o.after||''));
+  const W=app.querySelector('.chw'),sv=W.querySelector('svg'),th=Math.max(0,...[...W.querySelectorAll('.chn,.chslot')].map(b=>b.offsetHeight)),need=Math.ceil(SR*(th+40));if(W.clientHeight<need)W.style.height=need+'px';
+  const wr=W.getBoundingClientRect();sv.setAttribute('viewBox','0 0 '+wr.width+' '+wr.height);let h='<defs><marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#94a3b8"/></marker></defs>';
+  G.forEach(s=>{const [f,g]=s.split('>'),A=W.querySelector('[data-n="'+f+'"]'),B=W.querySelector('[data-n="'+g+'"]');if(!A||!B)return;const ra=A.getBoundingClientRect(),rb=B.getBoundingClientRect(),a={x:ra.left-wr.left+ra.width/2,y:ra.top-wr.top+ra.height/2,w:ra.width/2+5,h:ra.height/2+5},c={x:rb.left-wr.left+rb.width/2,y:rb.top-wr.top+rb.height/2,w:rb.width/2+5,h:rb.height/2+5},cut=(p,q)=>{const dx=q.x-p.x,dy=q.y-p.y,t=Math.min(p.w/Math.abs(dx||1e-9),p.h/Math.abs(dy||1e-9));return [p.x+dx*t,p.y+dy*t]},p1=cut(a,c),p2=cut(c,a);h+='<line x1="'+p1[0]+'" y1="'+p1[1]+'" x2="'+p2[0]+'" y2="'+p2[1]+'" stroke="#94a3b8" stroke-width="3" marker-end="url(#ahg)"/>'});sv.innerHTML=h;
+  const go=()=>{pick=null;save();draw()};const mo=app.querySelector('[data-mvok]');if(mo)mo.onclick=()=>{delete ST[k+'mv'];pick=null;save();draw()};
+  app.querySelectorAll('[data-pc]').forEach(b=>b.onclick=e=>{e.stopPropagation();const i=+b.dataset.pc;pick=pick===i?null:i;place()});
+  app.querySelectorAll('.chw [data-n]').forEach(b=>b.onclick=()=>{const i=+b.dataset.n;if(pick==null){pick=i;place();return}if(pick===i){pick=null;place();return}put(pick,PL[i]);go()});
+  app.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{if(pick==null)return;put(pick,b.dataset.slot);go()});
+  const pl=app.querySelector('.chpool');if(pl)pl.onclick=()=>{if(pick!=null&&PL[pick]!=null){put(pick,'pool');go()}};
+  dragify((dg,drop)=>{put(+dg,drop);go()})};
+ const draw=()=>keep(k,()=>{if(!ALL()||ST[k+'mv']){place();return}const r=R(),L=ST[k+'L']||[];
   frame(o.title,pre(o)+'<div class="card"><h2>'+esc(o.h||'')+'</h2><p style="margin:0">'+md(o.task||'Verbinde Ursache und Folge: Tippe erst die Ursache an, dann die Folge. Ein Pfeil entsteht. Nochmal so tippen löscht ihn.')+' <b>'+E.length+' Pfeile</b> <span class="muted">(gesucht: '+NS+')</span></p>'
-   +'<div class="chw" style="height:'+(o.hgt||Math.max(320,Math.ceil(NO.length/cols)*120))+'px"><svg class="chs"></svg>'+NO.map((t,i)=>'<button class="chn'+(pick===i?' on':'')+'" data-n="'+i+'" style="left:'+POS[i][0]*100+'%;top:'+POS[i][1]*100+'%">'+md(t)+'</button>').join('')+'</div>'
-   +(r<2?'<div class="row"><span class="muted">'+(pick!=null?'Jetzt die Folge antippen …':'')+'</span><div class="sp"></div><button class="pri" data-chk '+(E.length?'':'disabled')+'>'+(r?'Zweiter Versuch: prüfen':'Prüfen')+'</button></div>':'')
+   +'<div class="chw" style="height:'+Math.max(320,SR*125)+'px"><svg class="chs"></svg>'+NO.map((t,i)=>'<button class="chn'+(pick===i?' on':'')+'" data-n="'+i+'" style="left:'+PP(i)[0]*100+'%;top:'+PP(i)[1]*100+'%'+WS+'">'+md(t)+'</button>').join('')+'</div>'
+   +(r<2?'<div class="row">'+(r===0?'<button class="sec" data-mv>Kacheln verschieben</button>':'')+'<span class="muted">'+(pick!=null?'Jetzt die Folge antippen …':'')+'</span><div class="sp"></div><button class="pri" data-chk '+(E.length?'':'disabled')+'>'+(r?'Zweiter Versuch: prüfen':'Prüfen')+'</button></div>':'')
    +(r===1?fb(0,'⚠︎ '+(ST[k+'F']??0)+' von '+NS+' Punkten – diese zählen. Richtige Pfeile sind jetzt grün und fest, falsche sind gelöscht: <b>ein</b> zweiter Versuch (ohne Punkte).'):r===2?(ST[k+'F']===NS?fb(1,'⭐ Alle Zusammenhänge auf Anhieb richtig! '+esc(o.done||'')):fb(0,(ST[k+'F']??0)+' von '+NS+' Punkten beim ersten Versuch. Gestrichelt: fehlende Pfeile. '+esc(o.done||''))):'')+'</div>'+(o.after||''));
   const W=app.querySelector('.chw'),sv=W.querySelector('svg');
   const arrows=()=>{const wr=W.getBoundingClientRect();sv.setAttribute('viewBox','0 0 '+wr.width+' '+wr.height);const box=i=>{const b=W.querySelector('[data-n="'+i+'"]').getBoundingClientRect();return {x:b.left-wr.left+b.width/2,y:b.top-wr.top+b.height/2,w:b.width/2+5,h:b.height/2+5}};
@@ -617,11 +638,11 @@ function wChain(k,o){/* 12.38: o.given = schon vorgegebene Pfeile (grau, fest, z
    const CC=['#2f5f9b','#1f8a4c','#c2410c','#e8a23a','#94a3b8'];
    let h='<defs>'+CC.map(c=>'<marker id="ah'+c.slice(1)+'" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="'+c+'"/></marker>').join('')+'</defs>';
    G.forEach(s=>{h+=line(s,'#94a3b8')});E.forEach(s=>{h+=line(s,r===2?(S.includes(s)?'#1f8a4c':'#c2410c'):L.includes(s)?'#1f8a4c':'#2f5f9b')});if(r===2)S.filter(s=>!E.includes(s)).forEach(s=>{h+=line(s,'#e8a23a',1)});sv.innerHTML=h};
-  /* 13.01: größere Kacheln – Fläche so hoch machen, dass sich nichts überlappt */const fit=()=>{const ys=[...new Set(POS.map(p=>Math.round(p[1]*100)))].length,th=Math.max(...[...W.querySelectorAll('[data-n]')].map(b=>b.offsetHeight)),need=Math.ceil(ys*(th+36));if(W.clientHeight<need)W.style.height=need+'px'};fit();
+  /* 13.01: größere Kacheln – Fläche so hoch machen, dass sich nichts überlappt */const fit=()=>{const ys=SR,th=Math.max(...[...W.querySelectorAll('[data-n]')].map(b=>b.offsetHeight)),need=Math.ceil(ys*(th+36));if(W.clientHeight<need)W.style.height=need+'px'};fit();
   arrows();requestAnimationFrame(arrows);
   app.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{if(R()>=2)return;const i=+b.dataset.n;if(pick==null){pick=i;draw();return}if(pick===i){pick=null;draw();return}
    const s=pick+'>'+i,j=E.indexOf(s);if(G.includes(s)){pick=null;draw();return}if(j>=0){if(!(ST[k+'L']||[]).includes(s))E.splice(j,1)}else E.push(s);pick=null;save();draw()});
-  const chk=app.querySelector('[data-chk]');if(chk)chk.onclick=()=>{const ok=E.filter(s=>S.includes(s)),bad=E.filter(s=>!S.includes(s));
+  const mvb=app.querySelector('[data-mv]');if(mvb)mvb.onclick=()=>{ST[k+'mv']=1;pick=null;save();draw()};const chk=app.querySelector('[data-chk]');if(chk)chk.onclick=()=>{const ok=E.filter(s=>S.includes(s)),bad=E.filter(s=>!S.includes(s));
    if(R()===0){ST[k+'F']=Math.max(0,ok.length-bad.length);fin(k,ST[k+'F'],NS,S.map((s,i)=>ok.includes(s)?-1:i).filter(i=>i>=0));ST[k+'L']=ok;E.splice(0,E.length,...ok);ST[k+'R']=ok.length===NS?2:1}
    else ST[k+'R']=2;save();draw()}});
  draw();if(!window.__chR){window.__chR=1;addEventListener('resize',()=>{const W=app.querySelector('.chw');if(W&&CURK)goStep(CURK)})}}
@@ -684,7 +705,7 @@ function wCalc(k,o){const QS=o.qs,N=QS.length,A=ST[k+'A']??=[];if(SOLV&&!ST[k])S
     :a.n?fb(0,'✗ Noch nicht. <b>Ein</b> zweiter Versuch (ohne Punkte).'+(q.hint?' '+md(q.hint):'')):'')
    +(ST[k]?fb(ST[k].p===ST[k].t,'⭐ '+ST[k].p+' von '+ST[k].t+' beim ersten Versuch richtig. '+esc(o.done||'')):'')+'</div></div>');
   const sub=v=>{const c=A[qi]??={n:0,v:[]};if(c.e)return;c.v.push(v);c.n++;if(isOk(q,v)){c.ok=1;c.e=1}else if(c.n>=2)c.e=1;finish();save();draw()};
-  const go=app.querySelector('[data-go]'),inp=$('#cv');if(go){go.onclick=()=>{const v=numP(inp.value);if(v==null){inp.focus();return}sub(v)};inp.onkeydown=e=>{if(e.key==='Enter')go.click()};if(!SOLV&&!a.e)setTimeout(()=>inp.focus({preventScroll:true}),30)}
+  const go=app.querySelector('[data-go]'),inp=$('#cv');if(go){go.onclick=()=>{const v=numP(inp.value);if(v==null){inp.focus();return}sub(v)};inp.onkeydown=e=>{if(e.key==='Enter')go.click()};/* 13.22: in der Vorschau kein Autofokus – sonst blättern ← → nicht */if(!SOLV&&!a.e&&!/[?&]vorschau=1/.test(location.search))setTimeout(()=>inp.focus({preventScroll:true}),30)}
   if(q.tap!=null)app.querySelectorAll('[data-x]').forEach(r=>r.addEventListener('click',()=>sub(+r.dataset.x)));
   const nq=app.querySelector('[data-nq]');if(nq)nq.onclick=()=>{qi++;draw()};const pq=app.querySelector('[data-pq]');if(pq)pq.onclick=()=>{qi--;draw()}});draw()}
 
@@ -757,7 +778,7 @@ function caseRun(s,o){const k=s.key||s.k;if(!o||!o.cases)return WIDGET[s.w](k,o)
  r.addEventListener('input',()=>set(+r.value));bl.onclick=()=>set(0);br.onclick=()=>set(100)});
  const st=document.createElement('style');st.textContent='.cm-fade{margin:6px 0}.cf-st{position:relative;max-width:min(520px,100%);margin:0 auto}.cf-st img{display:block;width:100%;border-radius:10px}.cf-st .cf-b{position:absolute;inset:0;height:100%;object-fit:contain;transition:opacity .08s}.cf-row{display:flex;align-items:center;gap:10px;max-width:520px;margin:0 auto 10px;position:sticky;top:0;z-index:2;background:#fff;padding:6px 0}.cf-row input{flex:1;accent-color:#e8a23a;height:28px}.cf-row button{min-height:40px;padding:0 12px;border-radius:10px;border:1px solid #cfd8e6;background:#fff;font:inherit;font-weight:600;color:#5c6b80;cursor:pointer}.cf-row button.on{background:#fff4e0;border-color:#e8a23a;color:#c2410c}';document.head.append(st);
  new MutationObserver(fi).observe(document.body,{childList:true,subtree:true});fi()}
-/* 11.61: Vorschau – Pfeiltasten blättern durch die Stationen (nicht beim Tippen, nicht im Schülermodus) */if(/[?&]vorschau=1/.test(location.search)){window.cmPreviewStep=d=>{const ks=STEPS.map(s=>s[0]),i=CURK?ks.indexOf(CURK):-1,j=i+d;if(j<0){if(CURK)home();return}if(j<ks.length)goStep(ks[j])};addEventListener('keydown',e=>{if((e.key!=='ArrowLeft'&&e.key!=='ArrowRight')||e.altKey||e.metaKey||e.ctrlKey||e.shiftKey)return;const t=e.target;if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))return;e.preventDefault();cmPreviewStep(e.key==='ArrowRight'?1:-1)})}
+/* 11.61: Vorschau – Pfeiltasten blättern durch die Stationen (nicht beim Tippen, nicht im Schülermodus) */if(/[?&]vorschau=1/.test(location.search)){window.cmPreviewStep=d=>{const ks=STEPS.map(s=>s[0]),i=CURK?ks.indexOf(CURK):-1,j=i+d;if(j<0){if(CURK)home();return}if(j<ks.length)goStep(ks[j])};addEventListener('keydown',e=>{if((e.key!=='ArrowLeft'&&e.key!=='ArrowRight')||e.altKey||e.metaKey||e.ctrlKey||e.shiftKey)return;const t=e.target;if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))&&!(/^(INPUT|TEXTAREA)$/.test(t.tagName)&&!t.value))return;e.preventDefault();t&&t.blur&&t.blur();cmPreviewStep(e.key==='ArrowRight'?1:-1)})}
 
 const SOLVW={choose:(k,o)=>{ST.case=ST.case||o.opts[0][0];ST[k]={p:1,t:1}},gut:(k,o)=>{const J=JS(k);if(J.v==null)J.v=o.from?25:40;if(o.ask&&!J.t)J.t='(Lösungsansicht)';ST[k]={p:1,t:1}},
  scale:(k,o)=>{const J=JS(k);J.L={0:3,1:2};J.R={2:2};if(o.who)J.who=0;J.t=J.t||'(Lösungsansicht)';ST[k]={p:1,t:1}},
