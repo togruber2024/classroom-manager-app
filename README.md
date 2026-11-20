@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 20.11.2026 · Version 13.30
+Stand: 20.11.2026 · Version 13.31
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1609,3 +1609,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.28: txtHtml verbindet gleich markierte Nachbarsätze (jr/jl)
 13.29: TT-Auswertung zeigt passen nur nach Selbsteinschätzung
 13.30: Backup-Schulbuchmaterial: Modus auto/on/off (auto = Unterricht mit), iPhone immer ohne
+13.31: Lernordner nimmt Buchdatei (lps) an; Lernpakete: Pille „eigene Übung“ (Finger); Knopf „Pontes-Übungen Lnn“
