@@ -124,6 +124,13 @@ details summary{cursor:pointer;color:var(--blue);font-weight:600;min-height:40px
 .arrw{position:relative;padding-top:30px}.arrsvg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}.tok{display:inline-block;padding:1px 4px;border-radius:6px}.tok.pick{cursor:pointer;background:#f1f6fd;outline:1px dashed #9db6d8}.tok.gap{min-width:60px;text-align:center;border-bottom:3px solid var(--blue);font-weight:700}
 .gm{background:#dbe9fb!important;color:#1d4f91;font-weight:700}.gf{background:#fbdde6!important;color:#9b1c46;font-weight:700}.gn{background:#ddf3e3!important;color:#17603a;font-weight:700}.tok.no{background:var(--badbg);color:var(--bad);text-decoration:line-through}
 .kngleg{display:flex;gap:8px;margin-top:12px;font-size:.8rem}.kngleg span{padding:2px 10px;border-radius:999px}
+.kl{margin:10px 0 0}.klr{display:flex;align-items:center;gap:8px;margin:4px 0;transition:padding-left .2s}.klr .kt{flex:1;font:1.12rem/1.5 Georgia,serif;padding:6px 10px;border-radius:10px;border:1px solid transparent}
+.klr.l1 .kt{border-left:4px solid var(--blue);background:#f2f6fc}.klr.l2 .kt{border-left:4px solid #7a9cd0;background:#f6f9fd}.klr.ok .kt{background:var(--okbg);border-color:#9fd4b1}.klr.sol .kt{background:#eef3fb;border-color:#b9c9e4}.klr.no .kt{background:var(--badbg)}
+.klb{flex:none;width:44px;height:44px;border:1px solid #b9c6da;border-radius:10px;background:#fff;color:var(--blue);font-size:1.1rem}.klb:disabled{opacity:.35}
+.kltag{display:inline-block;font:700 .7rem sans-serif;color:#fff;background:var(--blue);border-radius:8px;padding:1px 7px;margin-right:8px;vertical-align:3px}.kltag.t2{background:#7a9cd0}.kltag.t0{background:#8a96a8}
+.dl{font:1.18rem/1.9 Georgia,serif}.dl .dw{display:inline;border:0;background:none;padding:2px 3px;margin:0 1px;border-radius:6px;font:inherit;color:inherit;cursor:pointer}.dl .dw.miss{background:var(--badbg);color:var(--bad)}.dl .dw.hit{background:var(--okbg);color:var(--ok);font-weight:700}
+.dl .dr{margin:2px 0}.dl .dr.l1{margin-left:38px;border-left:4px solid var(--blue);padding-left:10px}.dl .dr.l2{margin-left:76px;border-left:4px solid #7a9cd0;padding-left:10px}
+.dbars{display:grid;grid-template-columns:130px 1fr 70px;gap:8px 10px;align-items:center;margin:12px 0}.dbars i{display:block;height:26px;border-radius:8px;background:var(--blue)}.dbars i.b{background:#9aa8bc}.dclk{font:800 1.5rem sans-serif;color:var(--blue);text-align:center;margin:6px 0}
 .pant{text-align:center}.pword{font:800 3.2rem Georgia,serif;margin:18px 0;color:var(--blue)}.ptime{font-size:1.6rem;font-weight:800;color:#c2410c;margin-bottom:10px}
 .hero1 h1{margin:4px 0 8px}
 .time{display:inline-flex;align-items:center;gap:6px;margin-left:8px;padding:6px 12px;border-radius:999px;background:#eaf0fa;color:var(--blue);font-weight:700}
@@ -438,7 +445,44 @@ function wChain(k,o){/* 12.38: o.given = schon vorgegebene Pfeile (grau, fest, z
    else ST[k+'R']=2;save();draw()}});
  draw();if(!window.__chR){window.__chR=1;addEventListener('resize',()=>{const W=app.querySelector('.chw');if(W&&CURK)goStep(CURK)})}}
 
-const WID={mark:(st,o)=>wMark(st.k,o),grid:(st,o)=>wGrid(st.k,o),chain:(st,o)=>wChain(st.k,o),read:wRead,sorter:wSorter,swiper:wSwiper,quiz:wQuiz,pairs:wPairs,order:wOrder,tarn:wTarn,memory:wMemory,wheels:wWheels,build:wBuild,arrow:wArrow,pant:wPant};
+/* ===== 13.33: Einrücken (kolometrisches Verfahren) – Zeilen per Pfeil eine Ebene nach rechts/links ===== */
+const KLN=['Hauptsatz','Nebensatz 1. Grades','Nebensatz 2. Grades','Nebensatz 3. Grades'];
+const klTag=l=>'<span class="kltag t'+Math.min(l,2)+'">'+(l?'NS '+l:'HS')+'</span>';
+function wKolo(st,o){const k=st.k,L=o.lines,N=L.length,MX=o.max||2;let lv=ST[k+'L'];if(!Array.isArray(lv)||lv.length!==N)lv=ST[k+'L']=Array(N).fill(0);
+ const sol=ST[k+'X']??=[],R=()=>ST[k+'R']||0,fixed=j=>R()>0&&lv[j]===L[j][1];
+ const draw=()=>keep(k,()=>{const r=R();
+  frame('<div class="card">'+head(o)+'<div class="kl">'+L.map((x,j)=>{const l=lv[j],dis=fixed(j)||r>=2;return '<div class="klr l'+Math.min(l,2)+(sol.includes(j)?' sol':fixed(j)?' ok':'')+'" style="padding-left:'+(l*40)+'px">'
+   +(r<2?'<button class="klb" data-lt="'+j+'" aria-label="nach links" '+(dis||l<=0?'disabled':'')+'>◀</button><button class="klb" data-rt="'+j+'" aria-label="nach rechts" '+(dis||l>=MX?'disabled':'')+'>▶</button>':'')
+   +'<div class="kt">'+(r>=2?klTag(l):'')+md(x[0])+'</div></div>'}).join('')+'</div>'
+   +(r<2?'<div class="row"><span class="muted" style="font-size:.88rem">▶ rückt eine Zeile eine Ebene nach rechts (Nebensatz), ◀ wieder zurück. Hauptsätze bleiben ganz links.</span><div class="sp"></div><button class="pri" data-chk>'+(r?'Zweiter Versuch: prüfen':'Prüfen')+'</button></div>':'')
+   +(r===1?tries(N,ST[k].p):r===2?fb(ST[k].p===N,(ST[k].p===N?'⭐ Auf Anhieb richtig eingerückt! ':ST[k].p+' von '+N+' Zeilen beim ersten Versuch richtig. ')+md(o.done||'')):'')+'</div>');
+  app.querySelectorAll('[data-lt]').forEach(b=>b.onclick=()=>{const j=+b.dataset.lt;if(fixed(j)||R()>=2||lv[j]<=0)return;lv[j]--;save();draw()});
+  app.querySelectorAll('[data-rt]').forEach(b=>b.onclick=()=>{const j=+b.dataset.rt;if(fixed(j)||R()>=2||lv[j]>=MX)return;lv[j]++;save();draw()});
+  const chk=app.querySelector('[data-chk]');if(chk)chk.onclick=()=>{const wrong=L.map((x,j)=>lv[j]===x[1]?-1:j).filter(j=>j>=0);
+   if(R()===0){fin(k,N-wrong.length,N,wrong);if(wrong.length){wrong.forEach(j=>lv[j]=0);ST[k+'R']=1}else ST[k+'R']=2}else{wrong.forEach(j=>{lv[j]=L[j][1];sol.push(j)});ST[k+'R']=2}save();draw()}});draw()}
+/* ===== 13.33: Zeit-Duell – Prädikat des Hauptsatzes finden, einmal im Blocksatz, einmal eingerückt ===== */
+const dNorm=w=>String(w).replace(/[.,:;!?„“"()–]/g,'').replace(/\*/g,'').toLowerCase();
+function wDuel(st,o){const k=st.k,I=o.items,N=I.length,D=ST[k+'D']??={i:0,t:[],e:[]};let t0=0,run=false,miss=[],tick=null;
+ const avg=m=>{const v=D.t.filter((_,i)=>I[i].m===m);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0},sec=ms=>(ms/1000).toFixed(1).replace('.',',')+' s';
+ const words=(txt,i)=>txt.split(/\s+/).filter(Boolean).map((w,j)=>'<button class="dw'+(miss.includes(i+':'+j)?' miss':'')+'" data-dw="'+i+':'+j+'">'+md(w)+'</button>').join(' ');
+ const draw=()=>{clearInterval(tick);const i=D.i;
+  if(i>=N){const b=avg('b'),e=avg('e'),mx=Math.max(b,e,1),ok=D.e.filter(x=>!x).length;
+   frame('<div class="card">'+head(o)+'<h2 style="margin-top:12px">Ergebnis</h2><div class="dbars"><b>Blocksatz</b><i class="b" style="width:'+(b/mx*100)+'%"></i><span>'+sec(b)+'</span><b>eingerückt</b><i style="width:'+(e/mx*100)+'%"></i><span>'+sec(e)+'</span></div>'
+    +fb(e<b,(e<b?'⭐ Eingerückt warst du im Schnitt '+sec(b-e)+' schneller'+(b>0?' ('+Math.round((1-e/b)*100)+' %)':'')+'! ':'Diesmal warst du im Blocksatz nicht langsamer – probiere es mit einem längeren Satz noch einmal. ')+ok+' von '+N+' Prädikaten auf Anhieb richtig. '+md(o.done||''))
+    +'<div class="row"><div class="sp"></div><button class="back" data-again>Noch einmal (ohne Punkte)</button></div></div>');
+   const ag=app.querySelector('[data-again]');if(ag)ag.onclick=()=>{ST[k+'D']={i:0,t:[],e:[],again:1};save();wDuel(st,o)};return}
+  const it=I[i],mode=it.m==='e'?'eingerückt':'Blocksatz';
+  if(!run){frame('<div class="card">'+head(o)+'<div class="prog"><span>Runde '+(i+1)+' von '+N+' · <b>'+mode+'</b></span><div class="bar"><i style="width:'+(i/N*100)+'%"></i></div></div>'
+    +'<p>Gleich erscheint ein Satz <b>'+(it.m==='e'?'eingerückt':'als Blocksatz')+'</b>. Tippe so schnell wie möglich auf das <b>Prädikat des Hauptsatzes</b>. Die Zeit läuft ab dem Tippen auf „Start“.</p><div class="row"><div class="sp"></div><button class="pri" data-go>Start</button></div></div>');
+   app.querySelector('[data-go]').onclick=()=>{run=true;miss=[];t0=performance.now();draw()};return}
+  const body=it.m==='e'?it.lines.map((x,j)=>'<div class="dr l'+Math.min(x[1],2)+'">'+words(x[0],j)+'</div>').join(''):'<p style="margin:0">'+words(it.lines.map(x=>x[0]).join(' '),0)+'</p>';
+  frame('<div class="card">'+head(o)+'<div class="prog"><span>Runde '+(i+1)+' von '+N+' · <b>'+mode+'</b></span><div class="bar"><i style="width:'+(i/N*100)+'%"></i></div></div><div class="dclk" id="dclk">0,0 s</div><div class="dl">'+body+'</div><p class="muted" style="margin:10px 0 0">Tippe auf das Prädikat des Hauptsatzes.</p></div>');
+  tick=setInterval(()=>{const c=document.getElementById('dclk');if(c)c.textContent=sec(performance.now()-t0);else clearInterval(tick)},100);
+  app.querySelectorAll('[data-dw]').forEach(b=>b.onclick=()=>{const [li,wi]=b.dataset.dw.split(':').map(Number),src=it.m==='e'?it.lines[li][0]:it.lines.map(x=>x[0]).join(' '),w=src.split(/\s+/).filter(Boolean)[wi];
+   if([].concat(it.ans).map(dNorm).includes(dNorm(w))){D.t[i]=performance.now()-t0;D.e[i]=miss.length;b.classList.add('hit');run=false;D.i++;
+    if(D.i>=N&&!D.again){const ok=D.e.filter(x=>!x).length;fin(k,ok,N,D.e.map((x,j)=>x?j:-1).filter(j=>j>=0))}else save();clearInterval(tick);setTimeout(draw,450)}
+   else{if(!miss.includes(b.dataset.dw))miss.push(b.dataset.dw);b.classList.add('miss')}})};draw()}
+const WID={mark:(st,o)=>wMark(st.k,o),grid:(st,o)=>wGrid(st.k,o),chain:(st,o)=>wChain(st.k,o),read:wRead,sorter:wSorter,swiper:wSwiper,quiz:wQuiz,pairs:wPairs,order:wOrder,tarn:wTarn,memory:wMemory,wheels:wWheels,build:wBuild,arrow:wArrow,pant:wPant,kolo:wKolo,duel:wDuel};
 /* 11.47: Lehrkraft-Vorschau – „Lösungen“ zeigt jede Station schon richtig gelöst (in der Seite), „Lösungsblatt“ alles auf einer Seite */
 let SOLV=false,SNAP=null;
 function solveW(st,o){const k=st.k,T=n=>{ST[k]={p:n,t:n}};switch(st.type){
@@ -453,6 +497,8 @@ function solveW(st,o){const k=st.k,T=n=>{ST[k]={p:n,t:n}};switch(st.type){
  case 'build':ST[k+'A']=o.items.map(it=>[it[3],it[5]]);T(o.items.length);break;
  case 'arrow':ST[k+'A']=o.items.map(it=>({p:it.ans,r:[].concat(it.ref)[0]}));T(o.items.length*2);break;
  case 'read':ST[k+'A']=o.qs.map(q=>({w:[],r:q[1],e:1}));T(o.qs.length);break
+ case 'kolo':ST[k+'L']=o.lines.map(l=>l[1]);ST[k+'R']=2;T(o.lines.length);break;
+ case 'duel':ST[k+'D']={i:o.items.length,t:o.items.map(it=>it.m==='e'?4000:7000),e:o.items.map(()=>0)};T(o.items.length);break;
  case 'grid':{const C=o.cols.length,P={};o.items.forEach((it,i)=>P[i]=it[1]*C+it[2]);ST[k+'P']=P;ST[k+'R']=2;ST[k+'S']=[];T(o.items.length);break}
  case 'chain':{const S=o.edges.map(e=>e[0]+'>'+e[1]);ST[k+'E']=S.slice();ST[k+'L']=S.slice();ST[k+'F']=S.length;ST[k+'R']=2;T(S.length);break}
  case 'mark':{const M={};(o.marks||[]).forEach(([x,p])=>M[x]=p);ST[k+'M']=M;ST[k+'R']=2;ST[k+'F']=(o.marks||[]).length;ST[k+'W']=[];ST[k+'L']=Object.keys(M).map(Number);const Q=o.qs||[];ST[k+'A']=Q.map(q=>q[2]);ST[k+'B']=Q.map(q=>q[4]&&q[4].length?q[4][0]:null);T((o.marks||[]).length+Q.reduce((a,q)=>a+1+(q[4]&&q[4].length?1:0),0));break}}}

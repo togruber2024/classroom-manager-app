@@ -72,6 +72,8 @@ function labels(st,d){const o=d||st.own;if(!o)return [];switch(st.type){
  case 'build':return o.items.map(it=>[it[0],it[1]+it[2][it[3]]+(it[7]?' '+it[7]:'')+' '+it[4][it[5]]]);
  case 'read':{const T=o.paras.flat();return o.qs.map(q=>[q[0],T[q[1]]])}
  case 'arrow':return o.items.map(it=>[it.s.map((w,i)=>i===it.gap?'___':w).join(' '),it.opt[it.ans]+' → '+it.s[[].concat(it.ref)[0]].replace(/[,.]$/,'')]);
+ case 'kolo':return o.lines.map(l=>[l[0].replace(/\*\*/g,''),['Hauptsatz','Nebensatz 1. Grades','Nebensatz 2. Grades','Nebensatz 3. Grades'][l[1]]]);
+ case 'duel':return o.items.map(it=>[(it.m==='e'?'(eingerückt) ':'(Blocksatz) ')+it.lines.map(x=>x[0]).join(' ').replace(/\*\*/g,''),'Prädikat des Hauptsatzes: '+[].concat(it.ans).join(' … ')]);
  default:return []}}
 const C={mk:'Markieren',hgr:'Tabelle',kette:'Gefüge',lie:'Lesen',hel:'Helden',exe:'exemplum',seq:'Reihenfolge',ppp:'PPP',mem:'Memory',whl:'Formen',bau:'Baukasten',end:'Satzenden',tar:'Getarnt',wor:'Wortarten',cha:'Chaos',arr:'Relativ',sgl:'Satzglied',tab:'Kasus',adj:'Adjektiv',aci:'AcI',deu:'Fremdwörter',rel:'Unterschied',pan:'Pantomime'};
 for(const P of Object.values(LP))for(const st of P.steps)st.c=C[st.k]||st.k;
