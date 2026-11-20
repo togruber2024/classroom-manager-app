@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 20.11.2026 · Version 13.26
+Stand: 20.11.2026 · Version 13.27
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1605,3 +1605,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.24: dragify-Geist position:fixed erzwungen (Versatz bei gescrollter Seite)
 13.25: Schülerseiten inkl. Lernordner melden den Service Worker an (offline nutzbar), lernordner.html im Cache
 13.26: TT-Liste fest sortiert, TT-Kennung geräteunabhängig, Abgaben anderer Einheit nach Rückfrage übernehmen
+13.27: TT-Auswertung mit dauerhafter Karte „Abgabe sichern“ (QR + Datei), abgabe.js exportiert save

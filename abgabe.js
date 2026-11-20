@@ -62,5 +62,5 @@ window.cmAbgabeHash=async d=>{const {h,...r}=d||{};const txt='cm-abgabe-v1|'+JSO
    catch(e){if(e&&e.name==='AbortError')return false;alert('Die Abgabe-Datei konnte nicht erstellt werden: '+(e&&e.message||e));return false}setTimeout(()=>{if(btn.isConnected)btn.textContent=old},2500);return true}
   window.cmAbgabeCodes=codes;
   btn.onclick=showQr;update();if(roster&&!S.me)setTimeout(who,400);
-  return {update,show:showQr}};
+  return {update,show:showQr,save:saveFile}};
 })();
