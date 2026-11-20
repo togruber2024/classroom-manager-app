@@ -90,4 +90,4 @@ function pick(){const i=document.createElement('input');i.type='file';i.style.di
 $('#bPrint').onclick=()=>window.print();
 window.cmPreviewSolutions=on=>{SOL=!!on;render()};
 (async()=>{try{const u=window.CM_EMBED_BOOK||(ID?await IDB('readonly',st=>st.get(ID)):null);if(ok(u))D=u}catch{}render()})();
-</script><script src="glyph-icons.js"></script></body></html>
+</script><script src="glyph-icons.js"></script><script>if('serviceWorker' in navigator&&location.protocol!=='file:'&&!/[?&]vorschau=1/.test(location.search))navigator.serviceWorker.register('./sw.js').catch(()=>{});</script></body></html>

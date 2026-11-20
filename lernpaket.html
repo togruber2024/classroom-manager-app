@@ -516,4 +516,4 @@ save();if(P)document.title=P.title;if(ST.roster&&!ST.me)runWho();else home();upd
 /* 11.42: Lehrkraft-Vorschau – Knopf „Lösungen“ */
 window.cmPreviewSolutions=on=>{if(on&&!SOLV){SNAP=JSON.stringify(ST);SOLV=true}else if(!on&&SOLV){SOLV=false;try{ST=JSON.parse(SNAP)}catch{}}if(CURK)goStep(CURK);else home()};
 window.cmSolutionSheet=on=>cmPdf.solutions(on,pdfBlocks);
-</script></body></html>
+</script><script>if('serviceWorker' in navigator&&location.protocol!=='file:'&&!/[?&]vorschau=1/.test(location.search))navigator.serviceWorker.register('./sw.js').catch(()=>{});</script></body></html>

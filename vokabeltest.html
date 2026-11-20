@@ -331,4 +331,4 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
  document.getElementById('again').onclick=async()=>{if(await send()){document.querySelector('#done h2').textContent='Abgegeben ✓';document.getElementById('again').textContent='Noch einmal senden'}};
  document.getElementById('edit').onclick=()=>document.getElementById('done').classList.remove('on');if(draft.sent){sentBody=draft.body||makeBody();qrDone(sentBody,send)};
 })();
-</script></body></html>
+</script><script>if('serviceWorker' in navigator&&location.protocol!=='file:'&&!/[?&]vorschau=1/.test(location.search))navigator.serviceWorker.register('./sw.js').catch(()=>{});</script></body></html>

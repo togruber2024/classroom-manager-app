@@ -203,4 +203,4 @@ $('#scan').onclick=scan;addEventListener('storage',draw);addEventListener('pages
 window.cmLernordner={local,draw};
 })();
 </script>
-</body></html>
+<script>if('serviceWorker' in navigator&&location.protocol!=='file:'&&!/[?&]vorschau=1/.test(location.search))navigator.serviceWorker.register('./sw.js').catch(()=>{});</script></body></html>

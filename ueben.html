@@ -132,4 +132,4 @@ table.gt td small{display:block;color:var(--ok);font-weight:600}
  /* 11.47: Lösungsblatt – alle Aufgaben mit Lösung */window.cmSolutionSheet=on=>cmPdf.solutions(on,()=>{const out=[{t:'h2',s:P.t||'Grammatik'}];Q.forEach((it,i)=>{out.push({t:'h3',s:(i+1)+'. '+(it.ti||'')});if(it.k==='tab')out.push({t:'table',head:['',...it.cl],rows:it.rw.map((r,ri)=>[r,...it.sol[ri].map(f=>f==null?'–':String(f))])});else if(it.k==='det')out.push({t:'p',s:'**'+it.f+'**: '+solDet(it)});else out.push({t:'table',w:[.4,.6],head:[it.p||'',''],rows:it.sub.map((l,si)=>[l,it.sol[si][0]])})});return out});
  render();
 })();
-</script></body></html>
+</script><script>if('serviceWorker' in navigator&&location.protocol!=='file:'&&!/[?&]vorschau=1/.test(location.search))navigator.serviceWorker.register('./sw.js').catch(()=>{});</script></body></html>

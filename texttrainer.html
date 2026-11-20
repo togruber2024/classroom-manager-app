@@ -555,4 +555,4 @@ let SOL=false;
 window.cmPreviewSolutions=on=>{SOL=!!on;if(T)render()};
 /* 11.47: Lösungsblatt – Text mit Musterübersetzung Satz für Satz */window.cmSolutionSheet=on=>{if(!T)return;cmPdf.solutions(on,()=>[{t:'h2',s:T.title},{t:'table',w:[.5,.5],head:['Latein','Musterübersetzung'],rows:T.s.map(x=>[x.t,x.de||''])}])};
 init();
-</script></body></html>
+</script><script>if('serviceWorker' in navigator&&location.protocol!=='file:'&&!/[?&]vorschau=1/.test(location.search))navigator.serviceWorker.register('./sw.js').catch(()=>{});</script></body></html>
