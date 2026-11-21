@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 20.11.2026 · Version 13.35
+Stand: 21.11.2026 · Version 13.36
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1614,3 +1614,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.33: Lernpaket-Widgets kolo (Einrücken) und duel (Zeit-Duell); Lösungsansicht und Lösungsblatt-Labels
 13.34: IServ-Elternbrief statt E-Mail (Erinnerungen + Auffällig); Mail-Adressfelder und mailto entfernt
 13.35: Übersetzungs-Trainer – Abgaben werden dem richtigen Text der Lektion zugeordnet (gemeinsame Reihenfolge ttOrd)
+13.36: Übersetzungs-Trainer – Teilschritte bei Nebensätzen (Einleitung) und satzwertigen Konstruktionen (AcI: Kopfverb → Subjektsakkusativ → Prädikatsinfinitiv; PC/Abl. abs.: Partizip → Bezugswort/Nomen); Angaben S.kx/S.ge, sonst automatisch
