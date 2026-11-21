@@ -5539,7 +5539,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    if(s0&&(s0!==cx.subject||(j0&&j0!==+cx.jg))){let C=[];try{C=(B()?.classes?.()||[]).filter(c=>c.s===s0&&(!j0||jgOf(c.label)===j0))}catch{}
     if(C.length){const ST=rd(STAND)||{},c=C.find(c=>ST[s0+'::'+c.id]===id)||C[0];try{await top().classroomPins.goEin({s:s0,c:c.id,sel:id});return}catch{}}}
    FOR.add(id);sel=id;sideOpen=false;draw()});
-  if(!d.open)d.showModal()}
+  /* 13.46: beim Öffnen nicht ins Suchfeld springen – sonst klappt am iPad sofort die Tastatur auf */if(!d.open){d.tabIndex=-1;d.showModal();try{d.querySelector('.mt-q')?.blur();d.focus({preventScroll:true})}catch{}}}
  function ordGroups(){const G=new Map(),add=(s,j)=>{const k=s+'|'+j;if(!G.has(k))G.set(k,{s,j:+j,n:0})};
   for(const r of ordReihen())if(+r.jg){add(r.subject,r.jg);G.get(r.subject+'|'+r.jg).n++}
   for(const u of ordUnits())if(!u.unk&&+u.jg)add(u.subject,u.jg);
