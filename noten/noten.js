@@ -6776,8 +6776,9 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
   clone.querySelectorAll('input.tov-hidden,input[type=hidden],input[hidden]').forEach(e=>e.remove());/* 10.01: ausgeblendete Felder (gesperrter Test) nicht als Kästen zeigen */
   clone.querySelectorAll('input,select,textarea').forEach(input=>{
    const span=document.createElement('span');span.className=input.className;
-   if(input.closest('tbody td')&&!input.closest('.task-student-cell'))span.classList.add('previous-quarter-value');
+   if(input.closest('tbody td')&&!input.closest('.task-student-cell')&&!input.matches('select[data-homework-status]'))span.classList.add('previous-quarter-value');
    span.textContent=input.tagName==='SELECT'?input.selectedOptions[0]?.textContent||'—':input.value||'—';
+   /* 13.42: Hausaufgaben/Material im Vorquartal wie im aktuellen Quartal als Symbol */if(input.matches('select[data-homework-status]')){const v=input.value||'none',S={done:'✓',missing:'✗',excused:'E',absent:'A',none:'–'};span.className='hw-symbol hw-ro hw-st-'+v+(input.classList.contains('homework-warning')?' is-warning':'');span.textContent=S[v]||'–';span.title=input.selectedOptions[0]?.textContent||''}
    if(input.closest('.task-weight-control')&&input.value!==''&&Number.isFinite(Number(input.value)))span.textContent=(Math.trunc((Number(input.value)+1e-10)*100)/100).toLocaleString('de-DE',{maximumFractionDigits:2});
    if(input.type==='date'&&/^\d{4}-\d{2}-\d{2}$/.test(input.value))span.textContent=input.value.split('-').reverse().join('.');
    if(input.classList.contains('task-label-input'))span.textContent=input.value.trim();
@@ -6786,7 +6787,7 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
   clone.querySelectorAll('*').forEach(e=>{e.removeAttribute('id');for(const a of [...e.attributes])if(a.name.startsWith('data-')||a.name.startsWith('on')||['tabindex','contenteditable'].includes(a.name))e.removeAttribute(a.name)});
   clone.removeAttribute('id');
   clone.querySelectorAll('colgroup,.task-add-column,.task-spacer-column,.task-space-column').forEach(e=>e.remove());
-  clone.querySelectorAll('tbody td').forEach(cell=>{if(cell.cellIndex>0&&!cell.querySelector('.previous-quarter-value')){const value=cell.querySelector('.task-end-grade, .compact-cell-value, span');if(value)value.classList.add('previous-quarter-value')}});
+  clone.querySelectorAll('tbody td').forEach(cell=>{if(cell.cellIndex>0&&!cell.querySelector('.previous-quarter-value,.hw-ro')){const value=cell.querySelector('.task-end-grade, .compact-cell-value, span');if(value)value.classList.add('previous-quarter-value')}});
   const columns=clone.querySelector('tr')?.children.length||1;
   const widths=document.createElement('colgroup');for(let i=0;i<columns;i++){const col=document.createElement('col');col.style.width=(i===0?230:160)+'px';widths.append(col)}clone.prepend(widths);
   clone.style.setProperty('width',(230+(columns-1)*160)+'px','important');
@@ -6962,17 +6963,18 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
   clone.querySelectorAll('input.tov-hidden,input[type=hidden],input[hidden]').forEach(e=>e.remove());/* 10.01: ausgeblendete Felder (gesperrter Test) nicht als Kästen zeigen */
   clone.querySelectorAll('input,select,textarea').forEach(input=>{
    const span=document.createElement('span');span.className=input.className;
-   if(input.closest('tbody td')&&!input.closest('.task-student-cell'))span.classList.add('previous-quarter-value');
+   if(input.closest('tbody td')&&!input.closest('.task-student-cell')&&!input.matches('select[data-homework-status]'))span.classList.add('previous-quarter-value');
    span.textContent=input.tagName==='SELECT'?input.selectedOptions[0]?.textContent||'—':input.value||'—';
    if(input.closest('.task-weight-control')&&input.value!==''&&Number.isFinite(Number(input.value)))span.textContent=(Math.trunc((Number(input.value)+1e-10)*100)/100).toLocaleString('de-DE',{maximumFractionDigits:2});
    if(input.type==='date'&&/^\d{4}-\d{2}-\d{2}$/.test(input.value))span.textContent=input.value.split('-').reverse().join('.');
    if(input.classList.contains('task-label-input'))span.textContent=input.value.trim();
+   /* 13.42: Hausaufgaben/Material im Vorquartal als Symbol wie im aktuellen Quartal */if(input.matches('select[data-homework-status]')){const v=input.value||'none',S={done:'✓',missing:'✗',excused:'E',absent:'A',none:'–'};span.className='hw-symbol hw-ro hw-st-'+v+(input.classList.contains('homework-warning')?' is-warning':'');span.textContent=S[v]||'–';span.title=input.selectedOptions[0]?.textContent||''}
    input.replaceWith(span);
   });
   clone.querySelectorAll('*').forEach(e=>{e.removeAttribute('id');for(const a of [...e.attributes])if(a.name.startsWith('data-')||a.name.startsWith('on')||['tabindex','contenteditable'].includes(a.name))e.removeAttribute(a.name)});
   clone.removeAttribute('id');
   clone.querySelectorAll('colgroup,.task-add-column,.task-spacer-column,.task-space-column').forEach(e=>e.remove());
-  clone.querySelectorAll('tbody td').forEach(cell=>{if(cell.cellIndex>0&&!cell.querySelector('.previous-quarter-value')){const value=cell.querySelector('.task-end-grade, .compact-cell-value, span');if(value)value.classList.add('previous-quarter-value')}});
+  clone.querySelectorAll('tbody td').forEach(cell=>{if(cell.cellIndex>0&&!cell.querySelector('.previous-quarter-value,.hw-ro')){const value=cell.querySelector('.task-end-grade, .compact-cell-value, span');if(value)value.classList.add('previous-quarter-value')}});
   const columns=clone.querySelector('tr')?.children.length||1;
   const widths=document.createElement('colgroup');for(let i=0;i<columns;i++){const col=document.createElement('col');col.style.width=(i===0?230:160)+'px';widths.append(col)}clone.prepend(widths);
   clone.style.setProperty('width',(230+(columns-1)*160)+'px','important');
@@ -7277,6 +7279,7 @@ function classroomSelectTestQuarter(){const holder=classesBySubject[currentSubje
   +'.hw-symbol[data-status=excused],.hw-symbol-option[data-status=excused]{color:#315f99;background:#eef3fb;border-color:#c7d6ea;font-size:15px}'
   +'.hw-symbol[data-status=absent],.hw-symbol-option[data-status=absent]{color:#5b6472;background:#f1f3f6;border-color:#d5dbe3;font-size:15px}'
   +'.hw-symbol[data-status=none],.hw-symbol-option[data-status=none]{color:#9aa5b5;background:#fff}'
+  +'.hw-symbol.hw-ro{cursor:default}.hw-st-done{color:#15803d;background:#ecfdf3;border-color:#a7e3bd}.hw-st-missing{color:#fff;background:#e5484d;border-color:#d93c42}.hw-st-missing.is-warning{background:#b42318;border-color:#9b1c13}.hw-st-excused{color:#315f99;background:#eef3fb;border-color:#c7d6ea;font-size:15px}.hw-st-absent{color:#5b6472;background:#f1f3f6;border-color:#d5dbe3;font-size:15px}.hw-st-none{color:#9aa5b5}body[data-module=noten] td:has(>.hw-ro){text-align:center}'
   +'.hw-symbol-pop{position:fixed;z-index:1000;display:flex;gap:6px;padding:6px;background:#fff;border:1px solid #dce3ef;border-radius:12px;box-shadow:0 12px 30px #1c2b4626}'
   +'.hw-symbol-option{width:40px;height:38px;border:1px solid #d7e0ec;border-radius:9px;background:#fff;font:inherit;font-size:18px;font-weight:700;cursor:pointer}'
   +'.hw-symbol-option[aria-checked=true]{box-shadow:0 0 0 2px #2f5f9b}'

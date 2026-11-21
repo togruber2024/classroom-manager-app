@@ -4724,7 +4724,7 @@ html.sp-fit .sp-fit-box{overflow:auto;overscroll-behavior:auto;-webkit-overflow-
  const B=()=>{try{return NF()?.classroomBibliothek||null}catch{return null}};
  /* 12.56: „Lerneinheiten (iPad)“ – Start-QR, Abgaben scannen, Übersicht aller Einheiten – links neben dem Lesezeichen */
  const LUB='<button type="button" class="ein-curb ein-lu" style="margin-right:-4px" data-do="lu" data-k="" title="Material: alle Fächer und Jahrgänge – Lerneinheiten, Übersetzungs-Trainer, Vokabeln, Lernpakete" aria-label="Material"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M9 7h6M9 10.5h6M9 14h3"/><circle cx="12" cy="18.2" r=".6" fill="currentColor"/></svg></button>';
- const SUBJ={latein:'Latein',erdkunde:'Erdkunde',geschichte:'Geschichte'};
+ const SUBJ={latein:'Latein',erdkunde:'Erdkunde',geschichte:'Geschichte',physik:'Physik',biologie:'Biologie',chemie:'Chemie',deutsch:'Deutsch',englisch:'Englisch',mathematik:'Mathematik',politik:'Politik',religion:'Religion',musik:'Musik',kunst:'Kunst',franzoesisch:'Französisch'};
  const css=`html.cm-unterricht .container{grid-template-columns:1fr!important}
 html.cm-unterricht .container>.panel,html.cm-unterricht .sp-side-handle,html.cm-unterricht .classroom-sidebar-toggle{display:none!important}
 html.cm-unterricht .grid-container{display:flex!important;flex-direction:column;padding:0!important;overflow:hidden}
@@ -4843,7 +4843,8 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  /* 11.57: Unterrichtsreihen kommen aus Reihen-Dateien (.cmreihe). Eigene Änderungen (Reihenfolge, Namen, ausgeblendet, gelöscht,
     eigene Einträge) liegen nur auf diesem Gerät und bleiben erhalten, wenn eine neuere Fassung der Reihe geladen wird. */
  const EKEY='classroom-reihen-edit-v1';/* 13.41: eigene Reihenfolge der Reihen je Fach und Jahrgang */const OKEY='classroom-reihen-order-v1';const rOrd=(s,j)=>rd(OKEY)[s+'|'+(+j)]||[];const edAll=()=>rd(EKEY),edOf=id=>edAll()[id]||{},edSet=(id,e)=>{const a=edAll();a[id]=e;wr(EKEY,a)};
- function eff(r){const e=edOf(r.id),del=new Set(e.del||[]),names=e.names||{},hid=new Set(e.hid||[]),show=new Set(e.show||[]);const L=[...(r.entries||[]),...(e.own||[]).map(x=>({...x,own:1}))].filter(x=>!del.has(x.k));
+ /* 13.42: doppelte Schlüssel reparieren – beim Verschieben mehrerer Einheiten in derselben Millisekunde bekamen sie denselben Schlüssel und „klebten“ dann aneinander */function dupFix(r){const e=edOf(r.id),own=e.own||[];if(!own.length)return;const seen=new Set((r.entries||[]).map(x=>x.k));let ch=false;const ord=[...(e.order||[])];for(const o of own){if(seen.has(o.k)){const old=o.k;let n=2;while(seen.has(old+'_'+n))n++;o.k=old+'_'+n;const i=ord.indexOf(old);if(i>=0)ord.splice(i+1,0,o.k);ch=true}seen.add(o.k)}if(ch){e.own=own;if(e.order)e.order=ord;edSet(r.id,e)}}
+ function eff(r){dupFix(r);const e=edOf(r.id),del=new Set(e.del||[]),names=e.names||{},hid=new Set(e.hid||[]),show=new Set(e.show||[]);const L=[...(r.entries||[]),...(e.own||[]).map(x=>({...x,own:1}))].filter(x=>!del.has(x.k));
   const ord=e.order||[],pos=k=>{const i=ord.indexOf(k);return i<0?1e6:i};
   return L.map((x,i)=>({...x,i})).sort((a,b)=>pos(a.k)-pos(b.k)||a.i-b.i).map(x=>({k:x.k,t:names[x.k]||x.t,t0:x.t,u:x.u||null,...(x.les!=null?{les:String(x.les)}:{}),own:!!x.own,hid:hid.has(x.k)||(!!x.hid&&!show.has(x.k))}))}
  const lesJg=k=>(data?.lessons||[]).find(l=>l.k===String(k))?.jg;
@@ -5548,7 +5549,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   if(fromRid&&fromRid===toRid){const r=reiheOf(toRid),x=edOf(toRid),keys=eff(r).map(y=>y.k).filter(k=>k!==fromKey),i=before?keys.indexOf(before):-1;keys.splice(i<0?keys.length:i,0,fromKey);x.order=keys;edSet(toRid,clean(x));return}
   if(fromRid){const x=edOf(fromRid);x.own=x.own||[];x.del=x.del||[];if(x.own.some(o=>o.k===fromKey))x.own=x.own.filter(o=>o.k!==fromKey);else if(!x.del.includes(fromKey))x.del.push(fromKey);edSet(fromRid,clean(x))}
   if(toRid){const r=reiheOf(toRid),x=edOf(toRid);x.own=x.own||[];x.del=x.del||[];let k;const orig=(r.entries||[]).find(e=>e.u===uid);
-   if(orig&&x.del.includes(orig.k)){x.del=x.del.filter(z=>z!==orig.k);k=orig.k}else{k='mv'+Date.now().toString(36);x.own.push({k,t:u.title,u:uid})}
+   if(orig&&x.del.includes(orig.k)){x.del=x.del.filter(z=>z!==orig.k);k=orig.k}else{k='mv'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);x.own.push({k,t:u.title,u:uid})}
    if(x.hid)x.hid=x.hid.filter(z=>z!==k);edSet(toRid,clean(x));const y=edOf(toRid),keys=eff(r).map(e=>e.k).filter(z=>z!==k),i=before?keys.indexOf(before):-1;keys.splice(i<0?keys.length:i,0,k);y.order=keys;edSet(toRid,clean(y));
    if(u.unk||u.subject!==r.subject||+u.jg!==+r.jg)B()?.assignUnit(uid,r.subject,+r.jg)}}
  /* 11.70/11.72: Export einer Auswahl – Reihen als .cmreihe, einzelne Einheiten und Lektionen als .cmpaket, mehreres zusammen als Zip */
