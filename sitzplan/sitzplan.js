@@ -5639,7 +5639,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    /* Leiste unten: erscheint erst bei Auswahl */
    const nR=CHK.r.size,nU=CHK.u.size,nL=CHK.l.size,parts=[];if(nR)parts.push(nR+(nR===1?' Reihe':' Reihen'));if(nU)parts.push(nU+(nU===1?' einzelne Einheit':' einzelne Einheiten'));if(nL)parts.push(nL+(nL===1?' Lektion':' Lektionen'));
    const names=[...[...CHK.r].map(id=>reiheOf(id)).filter(Boolean).map(rName),...[...CHK.u].map(id=>ordUnits().find(u=>u.u===id)?.title).filter(Boolean),...[...CHK.l].map(k=>{const l=data.lessons.find(x=>x.k===k);return l?l.tag:''}).filter(Boolean)];
-   const bar=parts.length?'<div class="od-bar"><div class="od-sum"><b>'+(selOn(allG())?'Alles ausgewählt · '+parts.join(' · '):parts.join(' · ')+' ausgewählt')+'</b><span>'+esc(names.slice(0,4).join(' · ')+(names.length>4?' · …':''))+'</span></div><button type="button" class="od-bb" data-clear>Auswahl aufheben</button><button type="button" class="od-bb pri" data-export>Exportieren …</button></div>':'';
+   const bar=parts.length?'<div class="od-bar"><div class="od-sum"><b>'+(selOn(allG())?'Alles ausgewählt · '+parts.join(' · '):parts.join(' · ')+' ausgewählt')+'</b><span>'+esc(names.slice(0,4).join(' · ')+(names.length>4?' · …':''))+'</span></div><button type="button" class="od-bb" data-clear>Auswahl aufheben</button>'+(CHK.u.size?'<button type="button" class="od-bb" data-mvsel>In Reihe verschieben …</button>':'')+'<button type="button" class="od-bb pri" data-export>Exportieren …</button></div>':'';
    const st=dlg.querySelector('.od-mn')?.scrollTop||0;
    const AG=allG(),allOn=selOn(AG);dlg.innerHTML='<div class="od-hd"><h2>Inhalte organisieren</h2><button type="button" class="od-btn" data-load2>'+ICO.down+'Datei laden …</button><button type="button" class="od-btn" data-allsel>'+(allOn?ICO.box+'Alles abwählen':ICO.chk+'Alles auswählen')+'</button><input type="search" class="od-q" placeholder="Suchen …" value="'+esc(q)+'">'+(orgSel!=='unk'&&!orgSel.startsWith('latein|')&&!Q?'<button type="button" class="od-btn" data-newr>'+ICO.plus+'Neue Reihe</button>':'')+'<button type="button" class="od-x" data-x aria-label="Schließen">'+ICO.x+'</button></div><div class="od-bd">'+side+'<div class="od-mn">'+sel+main+'</div></div>'+bar;
    dlg.querySelector('.od-mn').scrollTop=st;wire()}
@@ -5708,6 +5708,17 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    dlg.querySelector('[data-grpsel]')?.addEventListener('click',()=>{const g=grpSel();if(g){setSel(g,!selOn(g));body()}});
    dlg.querySelector('[data-clear]')?.addEventListener('click',()=>{for(const k of ['r','u','l'])CHK[k].clear();body()});
    dlg.querySelector('[data-export]')?.addEventListener('click',e=>doExport(e.currentTarget));
+   /* 13.37: mehrere angehakte Einheiten auf einmal in eine Reihe verschieben (Reihenfolge wie angezeigt) */
+   dlg.querySelector('[data-mvsel]')?.addEventListener('click',e=>{e.stopPropagation();const btn=e.currentTarget;if(menu&&menu._b===btn)return closeMenu();closeMenu();
+    const seen=new Set(),src=[];dlg.querySelectorAll('.od-c[data-u]').forEach(c=>{const u=c.dataset.u;if(CHK.u.has(u)&&!seen.has(u)){seen.add(u);src.push([u,c.dataset.r||null,c.dataset.k||null])}});
+    for(const u of CHK.u)if(!seen.has(u)){let at=[u,null,null];for(const r of ordReihen()){const x=eff(r).find(y=>y.u===u);if(x){at=[u,r.id,x.k];break}}src.push(at)}
+    const RS=ordReihen().sort((a,b)=>String(a.subject).localeCompare(String(b.subject))||(+a.jg)-(+b.jg)||(+a.n||0)-(+b.n||0)||String(a.title).localeCompare(String(b.title)));let lg='';
+    menu=document.createElement('div');menu.className='od-menu';menu._b=btn;
+    menu.innerHTML='<h6>'+src.length+(src.length===1?' Einheit':' Einheiten')+' verschieben nach …</h6>'+RS.map(r=>{const g=(SUBJ[r.subject]||r.subject)+' · Jahrgang '+r.jg,h=g!==lg?'<h6>'+esc(g)+'</h6>':'';lg=g;return h+'<button type="button" data-to="'+esc(r.id)+'">'+esc(r.title)+'</button>'}).join('')+'<hr><button type="button" data-to="">Nicht in einer Reihe</button>';
+    dlg.append(menu);const bx=btn.getBoundingClientRect(),W=Math.min(300,innerWidth-16);menu.style.width=W+'px';menu.style.left=Math.max(8,Math.min(bx.right-W,innerWidth-W-8))+'px';const mh=Math.min(menu.scrollHeight,innerHeight-16);menu.style.maxHeight=(innerHeight-16)+'px';menu.style.overflowY='auto';menu.style.top=Math.max(8,bx.top-mh-4)+'px';
+    menu.onclick=t0=>{const t=t0.target.closest('button[data-to]');if(!t)return;t0.stopPropagation();closeMenu();const to=t.dataset.to||null;
+     for(const [u,rid,k] of src){if(rid===to)continue;if(!rid&&!to)continue;ordMove(u,rid,k,to,null)}
+     for(const [u] of src)CHK.u.delete(u);redraw()}});
    dlg.querySelectorAll('[data-menu]').forEach(x=>x.onclick=e=>{e.stopPropagation();menu&&menu._b===x?closeMenu():openMenu(x)});
    dlg.querySelectorAll('[data-pmenu]').forEach(x=>x.onclick=e=>{e.stopPropagation();if(menu&&menu._b===x)return closeMenu();closeMenu();
     menu=document.createElement('div');menu.className='od-menu';menu._b=x;menu.innerHTML='<button type="button" class="del" data-a="prm">'+ICO.del+'Aus der Reihe entfernen …</button>';dlg.append(menu);
