@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 21.11.2026 · Version 13.39
+Stand: 21.11.2026 · Version 13.40
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1618,3 +1618,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.37: Inhalte organisieren – mehrere angehakte Einheiten auf einmal in eine Reihe verschieben (Knopf in der Auswahlleiste)
 13.38: Übersetzungs-Trainer – Nebensatzeinleitung als erster Schritt (Phase e, X.ed); Prädikatsnomen (S.pn) zählt zum Prädikat
 13.39: Übersetzungs-Trainer – Prädikatsnomen auch im Nebensatz (S.npn)
+13.40: Inhalte organisieren – Ziehen ruckelfrei, Auto-Scroll am Rand
