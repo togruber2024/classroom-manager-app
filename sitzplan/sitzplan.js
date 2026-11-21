@@ -5408,7 +5408,8 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   dlg.showModal()})}
  /* Paket laden */
  function pickFiles(){return new Promise(res=>{const i=document.createElement('input');i.type='file';i.multiple=true;i.hidden=true;document.body.append(i);i.onchange=()=>{res([...i.files]);i.remove()};i.addEventListener('cancel',()=>{res([]);i.remove()});i.click()})}
- async function loadPkg(){const b=B();if(!b)return;/* 12.25: auch HTML-Dateien von Lerneinheiten */const all=window.cmHtmlToFiles?await cmHtmlToFiles(await pickFiles()):await pickFiles();if(!all.length)return;let r;
+ async function loadPkg(){const b=B();if(!b)return;/* 12.25: auch HTML-Dateien von Lerneinheiten */let picked=await pickFiles();/* 13.44: ZIP aus „Unterrichtsmaterial sichern“ enthält HTML-Dateien – vorher entpacken, damit sie wie einzelne HTML-Dateien gelesen werden */if(b.unzip){const ex=[];for(const f of picked){if(/\.zip$/i.test(f.name)||f.type==='application/zip'){try{const es=await b.unzip(await f.arrayBuffer());if(es.some(x=>/\.html?$/i.test(x.name))){for(const x of es)ex.push(new File([x.text],x.name.split('/').pop(),{type:/\.html?$/i.test(x.name)?'text/html':'application/json'}));continue}}catch{}}ex.push(f)}picked=ex}
+  const all=window.cmHtmlToFiles?await cmHtmlToFiles(picked):picked;if(!all.length)return;let r;
   /* 11.60: „Datei laden …“ für alles – Reihen bekommen ihren Dialog, der Rest wird zusammengeführt */
   const rs=[],fs=[];for(const f of all){let isR=/\.cmreihe$/i.test(f.name);if(!isR&&!/\.zip$/i.test(f.name)&&f.size<60e6){try{const head=await f.slice(0,400).text();isR=/"type"\s*:\s*"classroom-reihe"/.test(head)}catch{}}(isR?rs:fs).push(f)}
   if(rs.length){await reiheLoad(rs);if(!fs.length)return}
