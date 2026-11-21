@@ -4836,7 +4836,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
  function ctx(){const b=B();let c={};try{c=b?.context()||{}}catch{}const lab=c.label||'';
   return {subject:c.subject||'',label:lab,short:lab.replace(/^Klasse\s+/i,''),classId:c.classId||'',jg:jgOf(lab),key:(c.subject||'')+'::'+(c.classId||'')}}
  let data=null,openJg=new Set(),cx=null,ALA={};
- const load=async()=>{const b=B();if(!b)return null;return {lessons:b.lessons(),units:(await b.units()).map(u=>{const t=(edOf('_units').names||{})[u.u];return t?{...u,t0:u.title,title:t}:u}),reihen:(b.reihen?await b.reihen():[]).map(r=>{const e=edOf(r.id);let x=e.title?{...r,title:e.title}:r;/* 12.32: eigener Obertitel */if(typeof e.ch==='string')x={...x,ch0:r.ch||'',ch:e.ch};return x})}};/* 11.84: umbenannte Reihen */
+ const load=async()=>{const b=B();if(!b)return null;try{await b.ttReady?.()}catch{}return {lessons:b.lessons(),units:(await b.units()).map(u=>{const t=(edOf('_units').names||{})[u.u];return t?{...u,t0:u.title,title:t}:u}),reihen:(b.reihen?await b.reihen():[]).map(r=>{const e=edOf(r.id);let x=e.title?{...r,title:e.title}:r;/* 12.32: eigener Obertitel */if(typeof e.ch==='string')x={...x,ch0:r.ch||'',ch:e.ch};return x})}};/* 11.84: umbenannte Reihen */
  const blocks=l=>(l.nV?1:0)+(l.nW?1:0)+(l.gr.length?1:0)+(l.ueb?1:0)+(l.tt.length?1:0);
  const lname=l=>l.tag+(l.name?' '+l.name:'');
  /* Stand = aktuelle Lektion/Einheit dieser Lerngruppe */
