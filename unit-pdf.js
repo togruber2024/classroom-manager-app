@@ -62,7 +62,7 @@
   blocks.forEach((B,bi)=>{
    if(B.t==='h1'){para(B.s,19,'#1d2b40',true);y-=2}
    else if(B.t==='sub'){para(B.s,10,'#5c6b80');y-=6}
-   else if(B.t==='h2'||B.t==='h3'){const nx=blocks[bi+1];const nh=nx&&nx.t!=='h2'?Math.min(H(nx),FULL-H(B)):0;
+   else if(B.t==='h2'||B.t==='h3'){const nx=blocks[bi+1];const nh=nx&&nx.t!=='h2'?H(nx):0;/* 13.58: lange Blöcke (z. B. Quellentext) – nur der Anfang muss mit auf die Seite */
     /* Überschrift nie allein unten: mit dem folgenden Block (ganz, wenn er auf eine Seite passt) */
     if(y-H(B)-(nh<=FULL-H(B)?nh:60)<BOT)newPage();
     if(B.t==='h2'){if(y<TOP)y-=12;para(B.s,12.5,'#2f5f9b',true);ops.push(rgb('#c9d3e3')+' RG .8 w '+M+' '+(y-2).toFixed(2)+' m '+(PW-M)+' '+(y-2).toFixed(2)+' l S');y-=8}
