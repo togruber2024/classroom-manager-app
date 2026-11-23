@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 23.11.2026 · Version 13.61
+Stand: 23.11.2026 · Version 13.62
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1640,3 +1640,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.59: Hinweise zum Laden von Dateien zeigen den neuen Weg: Unterricht → Bibliothek → Bearbeiten → „Datei laden …“
 13.60: Lektionskopf am iPad: Titel und Symbole oben, Lektionsdatei und Lernkontrolle darunter; Sätze werden beim Scrollen am iPad nicht mehr orange
 13.61: iPhone · Noten: Ansicht-Knopf (Regler) blendet Markierung, Durchschnitt und Sortierung ein und aus; ohne Überschrift; zugeklappte Karten nur noch einzeilig
+13.62: iPhone · Noten: kompakte Karten sind Standard; der Knopf mit den Pfeilen nach außen klappt alle Karten aus und ist dann orange

@@ -9128,7 +9128,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  .pl-bar .pl-vo:not(#_){display:grid!important}
  .pl-bar .pl-row.plx1:not(#_){grid-template-columns:minmax(0,1fr) 40px 40px 40px 40px}
  .pl-bar:not(.pl-vo-open) .pl-row.plx2:not(#_){display:none!important}
- .pl-bar .pl-vo[aria-pressed=true]:not(#_){background:#fff4e8;border-color:#e8a25a;color:#e8790c}
+ .pl-bar .pl-vo[aria-pressed=true]:not(#_),.pl-bar .pl-fold[aria-pressed=true]:not(#_){background:#fff4e8!important;border-color:#e8a25a!important;color:#e8790c!important}
  .pl-bar .plx1>.pl-view button:not(#_){padding:0 6px!important}
  .pl-bar>.pl-head:not(#_),.pl-bar>.pl-stand:not(#_){display:none!important}
  .pl-bar:not(#_){padding-top:6px}
@@ -10144,7 +10144,7 @@ return}
 })();
 
 /* 8.69: Karten verkleinern – runder Knopf neben „1. Quartal“. Klein: Name, Noten und eine Zeile „Mitarbeit · HA · KA“; Antippen klappt einzelne Karten auf. */
-(()=>{const KEY='classroom-cards-folded-v1';let on=false;try{on=localStorage.getItem(KEY)==='1'}catch{}const open=new Set(),closed=new Set();/* 9.02: Schnellansicht (Mac/iPad) – einzelne Karten auch ohne „Verkleinern“ zuklappen */const quick=()=>document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch();/* 9.04: nur am Mac (ohne Touch) – am iPad öffnet ein Tipp die Noteneingabe wie am iPhone */
+(()=>{/* 13.62: iPhone – kompakte Karten sind Standard, der Knopf klappt aus (orange = ausgeklappt) */const PH=matchMedia('(max-width:600px)').matches,KEY=PH?'classroom-cards-folded-v2':'classroom-cards-folded-v1';let on=PH;try{const v=localStorage.getItem(KEY);if(v!=null)on=v==='1'}catch{}const ICA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7.5l4-4 4 4"/><path d="M4 10.5h16M4 13.5h16"/><path d="M8 16.5l4 4 4-4"/></svg>';const open=new Set(),closed=new Set();/* 9.02: Schnellansicht (Mac/iPad) – einzelne Karten auch ohne „Verkleinern“ zuklappen */const quick=()=>document.documentElement.classList.contains('cm-quick')&&!classroomDevice.touch();/* 9.04: nur am Mac (ohne Touch) – am iPad öffnet ein Tipp die Noteneingabe wie am iPhone */
  const short={'Sonstige Mitarbeit':'Mitarbeit','Klassenarbeit':'KA','Klassenarbeiten':'KA','Klausur':'Klausur','Klausuren':'Klausur','Tests':'Tests','Test':'Tests'};
  const nameOf=c=>c.querySelector('.qs-name')?.textContent.trim()||'';
  const cards=()=>[...document.querySelectorAll('.qs-cards>.qs-card:not(.qd-card)')];
@@ -10155,7 +10155,7 @@ return}
   for(const s of bars.querySelectorAll(':scope>.qs-sect')){const l=s.querySelector('.qs-sh-l span')?.textContent.trim();if(!l)continue;const ve=s.querySelector(':scope>.qs-sh .qs-val i')||s.querySelector(':scope>.qs-row>.qs-val i');/* 8.93: Wert steht seit 8.88 auch in der Kästchen-Zeile */const v=(ve?.textContent||'').trim()||'—';parts.push((short[l]||l)+' '+v)}
   for(const s of bars.querySelectorAll('.qs-sub .qs-sect')){if(!/Hausaufgaben/.test(s.querySelector('.qs-sh-l')?.textContent||''))continue;const vv=[...s.querySelectorAll('.qs-val')].find(e=>e.offsetParent||e.getClientRects().length);const n=((vv?.innerText||'').match(/\d+/g)||['0']).pop();parts.splice(parts.length?1:0,0,n==='0'?'HA ✓':'HA ✕'+n);break}
   return parts.join(' · ')}
- function apply(){for(const b of document.querySelectorAll('.pl-fold')){const t=on?'Karten wieder ganz zeigen':'Karten verkleinern';if(b.getAttribute('aria-pressed')!==String(on))b.setAttribute('aria-pressed',String(on));if(b.title!==t)b.title=t;if(b.getAttribute('aria-label')!==t)b.setAttribute('aria-label',t)}
+ function apply(){for(const b of document.querySelectorAll('.pl-fold')){const t=PH?(on?'Karten ausklappen':'Karten wieder einklappen'):on?'Karten wieder ganz zeigen':'Karten verkleinern',pr=String(PH?!on:on);if(PH&&!b.dataset.ica){b.dataset.ica='1';b.innerHTML=ICA}if(b.getAttribute('aria-pressed')!==pr)b.setAttribute('aria-pressed',pr);if(b.title!==t)b.title=t;if(b.getAttribute('aria-label')!==t)b.setAttribute('aria-label',t)}
   /* 9.75: Kurzzeilen aller eingeklappten Karten in einem Durchgang berechnen (einmal kurz aufklappen statt je Karte → nur ein Layout) */
   const all=cards(),fold=new Map(all.map(c=>[c,on?!open.has(nameOf(c)):quick()&&closed.has(nameOf(c))])),texts=new Map();
   if(on)keepScroll(()=>{const need=all.filter(c=>fold.get(c)),was=need.filter(c=>c.classList.contains('qs-folded'));for(const c of was)c.classList.remove('qs-folded');for(const c of need)texts.set(c,summary(c));for(const c of was)c.classList.add('qs-folded')})
