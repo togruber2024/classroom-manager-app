@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 22.11.2026 · Version 13.48
+Stand: 23.11.2026 · Version 13.49
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1627,3 +1627,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.46: Material: kein automatischer Sprung ins Suchfeld (iPad-Tastatur)
 13.47: iPad-Tests: Abgaben-Hinweis, Ergebnisse freigeben als Hauptknopf, Seitenleiste mit allen Tests (Mac/iPad)
 13.48: iPhone-Hinweis Klassenauswahl: Eintragen im Bereich Sitzplan
+13.49: Aufgabensammlung: Lösung als Fließtext und in Stichpunkten mit Materialbeleg
