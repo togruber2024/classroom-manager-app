@@ -52,6 +52,7 @@
    case 'list':return B.items.reduce((a,it)=>a+wrap(it,10.5,CW-14).length*14.5,0)+4;
    case 'box':return wrap(B.s,11,CW-24).length*15.5+16+10;
    case 'table':{const T=tbl(B);return (B.head?T.hgt(B.head,true)[1]:0)+B.rows.reduce((a,r)=>a+T.hgt(r,false)[1],0)+6}
+   case 'lines':return (B.lines||[]).length*14+(B.intro?wrap(B.intro,9.5,CW).length*13+4:0)+(B.foot?wrap(B.foot,8.5,CW-26).length*11.5+4:0)+8;
    case 'chart':return 206;case 'grade':return 74;
    case 'img':{const d=imgDim(B);return d?d.h+6+(B.cap?wrap(B.cap,8.5,CW).length*11.5+4:0):0}
    default:return 20}};
@@ -66,6 +67,8 @@
     if(B.t==='h2'){if(y<TOP)y-=12;para(B.s,12.5,'#2f5f9b',true);ops.push(rgb('#c9d3e3')+' RG .8 w '+M+' '+(y-2).toFixed(2)+' m '+(PW-M)+' '+(y-2).toFixed(2)+' l S');y-=8}
     else{y-=6;para(B.s,11,'#1d2b40',true);y-=2}}
    else if(B.t==='p'){if(B.keep)keep(H(B));para(B.s,B.sz||P.p,B.col||'#111111',B.b);y-=4}
+   /* 13.50: Quellentext mit festen Zeilen und Zeilennummern (5, 10, 15 …) */
+   else if(B.t==='lines'){if((B.lines||[]).length<=30)keep(H(B));if(B.intro)para(B.intro,9.5,'#5c6b80',false);const st=B.step||5;B.lines.forEach((l,i)=>{need(14);y-=14;const n=i+1;if(n%st===0){const ns=String(n);line([{w:ns}],M+18-wid(ns,8.5),y+2.6,8.5,'#7a889c')}line(wrap(l,10.5,CW-26)[0]||[],M+26,y+2.6,10.5,'#111111')});if(B.foot){y-=3;para(B.foot,8.5,'#5c6b80',false,M+26,CW-26)}y-=6}
    else if(B.t==='list'){keep(H(B));for(const it of B.items){const ls=wrap(it,10.5,CW-14);need(ls.length*14.5);ls.forEach((l,i)=>{y-=14.5;if(!i)line([{w:B.num?(B.items.indexOf(it)+1)+'.':'•',b:!!B.num}],M+1,y+2.6,10.5,'#2f5f9b');line(l,M+14,y+2.6,10.5,'#111111')})}y-=4}
    else if(B.t==='box'){const ls=wrap(B.s,11,CW-24);const h=ls.length*15.5+16;keep(h+10);need(h+6);y-=6;rect(M,y-h,CW,h,'#2f5f9b','#f1f6fd',1.4);let yy=y-8;for(const l of ls){yy-=15.5;line(l,M+12,yy+4,11,'#1d2b40')}y-=h+4}
    else if(B.t==='table'){const T=tbl(B),{ws,sz,lh,pad,hgt}=T;keep(H(B));
