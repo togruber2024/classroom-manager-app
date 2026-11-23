@@ -9062,13 +9062,16 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  /* 10.02: Leiste in drei logischen Zeilen – 1: Q1|Q2|Halbjahr · Karten verkleinern · Notenspiegel · Zufall,
     2: Markierung · Ø-Schalter · Sortierung, 3: Hinweise (teilen sich die Breite). Überall derselbe Abstand. */
  const DICE='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.5" cy="8.5" r="1.25" fill="currentColor"/><circle cx="12" cy="12" r="1.25" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.25" fill="currentColor"/></svg>';
+ const VOK='classroom-phone-viewopts-v1',VOI='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h7M17 8h2M5 16h2M12 16h7"/><circle cx="14.5" cy="8" r="2"/><circle cx="9.5" cy="16" r="2"/></svg>';
  function order(parent,kids){kids=kids.filter(Boolean);for(let i=0;i<kids.length;i++){if(parent.children[i]!==kids[i])parent.insertBefore(kids[i],parent.children[i]||null)}}
  function arrange(bar){const r1=bar.querySelector('.pl-row:not(.pl-row2):not(.pl-row3)'),r2=bar.querySelector('.pl-row2'),fold=bar.querySelector('.pl-fold'),hatch=bar.querySelector('.pl-hatch'),mean=bar.querySelector('.pl-mean'),flags=bar.querySelector('.pl-flags'),view=bar.querySelector('.pl-view');if(!r1||!r2||!fold||!hatch||!mean||!flags||!view)return;
   let ns=bar.querySelector('.pl-ns');if(!ns){ns=document.createElement('button');ns.type='button';ns.className='pl-ns';ns.title='Notenspiegel der Klasse';ns.setAttribute('aria-label','Notenspiegel der Klasse');ns.innerHTML=ICON;ns.onclick=e=>{e.stopPropagation();openList()}}
   let dice=bar.querySelector('.pl-dice');if(!dice){dice=document.createElement('button');dice.type='button';dice.className='pl-ns pl-dice';dice.title='Zufällig jemanden auswählen · lange drücken: Einstellungen';dice.setAttribute('aria-label','Zufällig jemanden auswählen');dice.innerHTML=DICE;bindDice(dice,bar)}
+  /* 13.61: Ansicht-Knopf – Markierung, Ø-Schalter und Sortierung auf- und zuklappen (gemerkt) */let vo=bar.querySelector('.pl-vo');if(!vo){vo=document.createElement('button');vo.type='button';vo.className='pl-ns pl-vo';vo.title='Ansicht: Markierung, Durchschnitt, Sortierung';vo.setAttribute('aria-label','Ansicht einstellen');vo.innerHTML=VOI;vo.onclick=e=>{e.stopPropagation();const o=!bar.classList.contains('pl-vo-open');try{localStorage.setItem(VOK,o?'1':'0')}catch{}bar.classList.toggle('pl-vo-open',o);vo.setAttribute('aria-pressed',String(o))}}
+  {let o=false;try{o=localStorage.getItem(VOK)==='1'}catch{}if(bar.classList.contains('pl-vo-open')!==o)bar.classList.toggle('pl-vo-open',o);if(vo.getAttribute('aria-pressed')!==String(o))vo.setAttribute('aria-pressed',String(o))}
   let r3=bar.querySelector('.pl-row3');if(!r3){r3=document.createElement('div');r3.className='pl-row pl-row3';r2.after(r3)}
   const half=bar.querySelector('.pl-half');if(half&&half.parentElement!==bar)r1.before(half);/* zweites Halbjahr: eigene Zeile darüber */
-  order(r1,[view,fold,ns,dice]);/* 10.03: Karten verkleinern vor Notenspiegel */order(r2,[hatch,mean,bar.querySelector('.pl-sort')]);order(r3,[bar.querySelector('.q1open'),flags]);
+  order(r1,[view,fold,ns,dice,vo]);/* 10.03: Karten verkleinern vor Notenspiegel */order(r2,[hatch,mean,bar.querySelector('.pl-sort')]);order(r3,[bar.querySelector('.q1open'),flags]);
   for(const [r,c] of [[r1,'plx1'],[r2,'plx2'],[r3,'plx3']])if(!r.classList.contains(c))r.classList.add('plx',c);
   /* weiße Auswahl mindestens kreisrund */const bh=Math.round(view.querySelector('button')?.getBoundingClientRect().height||0);if(bh&&bar.style.getPropertyValue('--plx-bh')!==bh+'px')bar.style.setProperty('--plx-bh',bh+'px');
   const hasHint=!!r3.querySelector('.q1open')||!flags.hidden;if(r3.hidden===hasHint)r3.hidden=!hasHint}
@@ -9119,6 +9122,24 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const st=document.createElement('style');st.textContent=`
  .pl-bar .pl-row.plx:not(#_){display:grid!important;align-items:center;column-gap:var(--plx-g,8px);flex-wrap:nowrap;margin-top:8px;justify-content:stretch}
  .pl-bar .pl-row.plx1:not(#_){grid-template-columns:minmax(0,1fr) 40px 40px 40px;margin-top:0}
+ .pl-bar .pl-vo:not(#_){display:none!important}
+ /* 13.61 (iPhone): Ansichtszeile nur bei offenem Ansicht-Knopf; ohne Überschrift und Hinweis; zugeklappte Karten einzeilig */
+ @media (max-width:600px){
+ .pl-bar .pl-vo:not(#_){display:grid!important}
+ .pl-bar .pl-row.plx1:not(#_){grid-template-columns:minmax(0,1fr) 40px 40px 40px 40px}
+ .pl-bar:not(.pl-vo-open) .pl-row.plx2:not(#_){display:none!important}
+ .pl-bar .pl-vo[aria-pressed=true]:not(#_){background:#fff4e8;border-color:#e8a25a;color:#e8790c}
+ .pl-bar .plx1>.pl-view button:not(#_){padding:0 6px!important}
+ .pl-bar>.pl-head:not(#_),.pl-bar>.pl-stand:not(#_){display:none!important}
+ .pl-bar:not(#_){padding-top:6px}
+ .qs-card.qs-folded:not(#_){padding:8px 10px 8px 16px!important;min-height:0!important}
+ .qs-cards>.qs-card.qs-folded:not(#_){margin-top:0!important;margin-bottom:0!important}
+ .qs-cards:has(>.qs-card.qs-folded):not(#_){gap:8px!important;row-gap:8px!important}
+ .qs-card.qs-folded>.qs-sum:not(#_){display:none!important}
+ .qs-card.qs-folded .qs-top:not(#_){margin:0!important;align-items:center}
+ .qs-card.qs-folded .qs-name:not(#_){font-size:1.02rem}
+ .qs-card.qs-folded .qs-big:not(#_){width:46px;height:40px;min-width:0;font-size:1.25rem;border-radius:11px;margin-left:auto}
+ }
  .pl-bar .pl-row.plx2:not(#_){grid-template-columns:minmax(0,1fr) auto auto}
  .pl-bar .pl-row.plx3:not(#_){display:flex!important;gap:var(--plx-g,8px)}.pl-bar .pl-row.plx3[hidden]{display:none!important}
  .pl-bar .plx>*:not(#_){margin:0!important}
