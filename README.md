@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 23.11.2026 · Version 13.53
+Stand: 23.11.2026 · Version 13.54
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1632,3 +1632,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.51: Schreibauftrag als eigene Station mit A/B, Schreibblatt in der PDF, Methodenhilfe Zitieren ab Jg. 9
 13.52: Musterlösung Schreibauftrag in Vorschau und Lösungsblatt, PDF am Mac direkt laden
 13.53: Anleitung iPad-Tests – mehrere Lehrkräfte; Materialbibliothek ohne Strich bei unbenutzten Einheiten
+13.54: Bibliothek oben im Seitenmenü, kein Ziehgriff an Reihen
