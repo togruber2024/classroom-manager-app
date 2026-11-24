@@ -2273,6 +2273,8 @@ window.addEventListener('resize',()=>{if(classroomDeferredRender.pending)setTime
  const TR='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12.5A1.5 1.5 0 0 0 8.5 21h7a1.5 1.5 0 0 0 1.5-1.5L18 7M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7"/></svg>';
  /* 10.50: Fortschritt (Mini-Fortschrittsbalken, Verlauf über die ganze Länge) und Übersicht (Tabelle) */
  const FO='<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="piFoGrad" gradientUnits="userSpaceOnUse" x1="2" x2="22" y1="0" y2="0"><stop offset="0" stop-color="#e6877d"/><stop offset=".3" stop-color="#f6d36b"/><stop offset=".52" stop-color="#fff36b"/><stop offset=".76" stop-color="#b9e08f"/><stop offset="1" stop-color="#5fcf91"/></linearGradient></defs><rect x="2" y="9" width="20" height="6" rx="3" fill="#e2e8f1"/><rect x="2" y="9" width="12" height="6" rx="3" fill="url(#piFoGrad)"/><rect x="11.6" y="5.2" width="4.8" height="13.6" rx="2.4" fill="#fff" stroke="#8ea4c2" stroke-width="1.1"/></svg>';
+ /* 13.88: Elternsprechtag – zwei Sprechblasen */
+ const EST='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5A2.5 2.5 0 0 1 5.5 3h8A2.5 2.5 0 0 1 16 5.5v4A2.5 2.5 0 0 1 13.5 12H9l-3.5 3v-3A2.5 2.5 0 0 1 3 9.5z"/><path d="M18 8h.5A2.5 2.5 0 0 1 21 10.5v4a2.5 2.5 0 0 1-2.5 2.5V20L15 17h-3.5A2.5 2.5 0 0 1 9 14.5V14"/></svg>';
  const OV='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 4.5v15"/></svg>';
  let foN=0;/* je Knopf eigene Verlauf-ID – sonst fehlt die Farbe, wenn der erste Knopf ausgeblendet ist */
  /* 12.53: eine gemeinsame Suche statt acht einzelner Durchläufe über die ganze Seite – gleiche Regeln, gleiche Reihenfolge */
@@ -2281,6 +2283,7 @@ window.addEventListener('resize',()=>{if(classroomDeferredRender.pending)setTime
   {sel:'.exam-progress-btn',text:'Fortschritt',svg:()=>{const id='piFo'+(++foN);return FO.split('piFoGrad').join(id)},title:'Fortschritt: wie viele schon korrigiert sind'},
   {sel:'.cm-ro-open',text:'Übersicht',svg:()=>OV,title:'Übersicht: alle Ergebnisse bildschirmfüllend (nur Ansicht)'},
   {sel:'[data-tclear]',text:'Eingaben löschen',svg:()=>TR,title:'Alle Rohpunkte dieses Tests löschen',cls:'pi-danger'},
+  {sel:'[data-est]',text:'Elternsprechtag',svg:()=>EST,title:'Elternsprechtag: Termine aus IServ einfügen – je Gespräch alle Bewertungen, Fehltage und Notizen'},
   {sel:'[data-student-overview]',text:'Schülerübersicht',svg:()=>SO,title:'Schülerübersicht: Bewertungen, Fehltage, Klassenliste bearbeiten'},
   {sel:'[data-task-action="clear-grades"],[data-homework-action="clear-entries"]',text:'Eingaben löschen',svg:()=>TR,title:'Alle Bewertungen dieser Seite löschen',cls:'pi-danger'},
   {sel:'.page-print-button,[data-page-print],.test-results-print',text:'Drucken',svg:()=>SVG,keepTitle:1}];
