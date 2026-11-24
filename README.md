@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 24.11.2026 · Version 13.64
+Stand: 24.11.2026 · Version 13.65
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1643,3 +1643,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.62: iPhone · Noten: kompakte Karten sind Standard; der Knopf mit den Pfeilen nach außen klappt alle Karten aus und ist dann orange
 13.63: Bibliothek: Kasten „Deine Klasse“ entfällt; Hinweis beim Darüberfahren über Jahrgänge korrigiert
 13.64: Erdkunde und Geschichte: neue Klassenarbeiten und Klausuren starten mit 50 Rohpunkten (bisher 45)
+13.65: Enter schließt einzelne Eingabefelder: Rohpunkte, Grenzen, Gewichtungen und das Suchfeld; in den Fenstern zum Anlegen bestätigt Enter direkt
