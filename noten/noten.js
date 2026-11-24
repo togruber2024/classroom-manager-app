@@ -5711,7 +5711,7 @@ function rulesHtml(t,big){if(t?.kind==='combo')return rulesHtml({...t,kind:''},b
  const ex=(c,txt)=>'<div class="vr-ex"><span class="vr-'+c+'">'+({ok:'✓',hf:'½',no:'✗'})[c]+'</span>'+txt+'</div>';
  return '<div class="vt-card vt-rules'+(big?' big':'')+'"><b class="vr-t">So wird bewertet</b><div class="vr-two">'
   +(lat?'<div><div class="vr-h">Latein – genau</div>'+ex('ok','<i>amicus</i> · m')+ex('no','<i>amikus</i> → 0 P')+'<div class="vr-n">j = i · Längenzeichen (ā) nicht nötig · Formen mit Komma oder Leerzeichen trennen</div></div>':'')
-  +'<div><div class="vr-h">Deutsch – 1 Fehler erlaubt</div>'+ex('ok','Freund')+ex('hf','Freunt → ½ P Abzug')+ex('no','Frunt → 0 P')+'<div class="vr-n">Eine richtige Bedeutung reicht · Groß-/Kleinschreibung egal</div></div></div></div>'}
+  +'<div><div class="vr-h">Deutsch – kleine Schreibfehler zählen nicht</div>'+ex('ok','Freund')+ex('ok','Freunt → voller Punkt, mit Hinweis zur Schreibweise')+ex('no','Feind → 0 P')+'<div class="vr-n">Eine richtige Bedeutung reicht · Groß-/Kleinschreibung egal</div></div></div></div>'}
 /* 12.89: Gruppe je Schüler:in laut Sitzplan (gleiche Verteilung wie „Gruppen im Sitzplan“) – Name → A/B */
 function seatGroupMap(t){const m=new Map(),groups=Object.keys(t.groups||{});if(groups.length<2)return m;const grid=vtSeatGrid(t);if(!grid)return m;
  const isName=v=>typeof v==='string'&&v&&v!=='X'&&v!=='PULT';const sRows=[...grid.keys()].filter(r=>(grid[r]||[]).some(isName)),sCols=[...new Set(sRows.flatMap(r=>grid[r].map((v,c)=>isName(v)?c:-1).filter(c=>c>=0)))].sort((a,b)=>a-b);
