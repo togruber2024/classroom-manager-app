@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 24.11.2026 · Version 13.70
+Stand: 24.11.2026 · Version 13.71
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1649,3 +1649,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.68: Lernpartner nach Leistung: Stärkste:r mit Schwächste:r, Note wählbar, Paare farbig markiert, Noten-Pillen auf Knopfdruck (nie im Datenschutz-/Smartboard-Modus)
 13.69: Lernpartner: Liste „Nach …“ zeigt nach einem Klassenwechsel die Noten der richtigen Klasse
 13.70: Notenauswahl bei Gruppen und Lernpartnern: nach Quartal/Halbjahr/Arbeiten gruppiert, kurze Namen, gleiche Werte nur einmal
+13.71: Notenauswahl: Klausur nicht mehr doppelt, kurze Namen ohne Thema, angelegte Arbeiten ohne Noten grau; Feld „Nach“ schmaler
