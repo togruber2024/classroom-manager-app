@@ -119,9 +119,17 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
   const notes=[];if(!rest.length)notes.push('leer');else if(miss.length)notes.push('fehlt/falsch: '+miss.join(', '));
   if(item.kind==='n'){const ok=(item.genus||[]).includes(ge);/* 10.23: richtiges Genus zählt immer */if(ok)p++;else notes.push(ge?'Genus falsch ('+ge+')':'Genus fehlt')}
   return {p,max,ge,note:notes.join(' · ')}}
+
+ /* 13.75: Synonyme bei der deutschen Bedeutung – feste Liste (Bindewörter, kleine Wörter, häufige gleichbedeutende Verben); Verben auch mit gleicher Vorsilbe (zurückverlangen = zurückfordern) */
+ const SYN_BASE=[['nämlich','denn'],['aber','jedoch','doch','allerdings'],['deshalb','daher','deswegen','darum'],['also','folglich'],['sehr','überaus','äußerst'],['auch','sogar'],['und','sowie'],['oder','bzw'],['nun','jetzt'],['sofort','sogleich','unverzüglich'],['oft','häufig'],['immer','stets'],['niemals','nie'],['schon','bereits'],['vielleicht','möglicherweise'],['gleichsam','sozusagen'],['obwohl','obgleich','obschon'],['weil','da'],['wenn','falls'],['endlich','schließlich'],['verlangen','fordern'],['beginnen','anfangen'],['erblicken','sehen'],['beeilen','eilen'],['bitten','ersuchen'],['erhalten','bekommen'],['schicken','senden'],['töten','umbringen'],['retten','bewahren'],['verteidigen','schützen'],['zögern','zaudern'],['verlassen','zurücklassen'],['erreichen','gelangen'],['erzählen','berichten'],['antworten','erwidern'],['ergreifen','packen'],['verbieten','untersagen'],['erlauben','gestatten'],['helfen','unterstützen'],['siegen','gewinnen'],['bauen','errichten'],['zerstören','vernichten'],['klein','gering'],['schnell','rasch'],['schön','hübsch'],['schwer','schwierig'],['leicht','einfach'],['furcht','angst'],['feind','gegner'],['gebäude','bauwerk']];
+ const SYNK='classroom-vocab-syn-v1',synSt=()=>{try{const o=JSON.parse(localStorage.getItem(SYNK)||'{}');return {off:o.off||[],add:o.add||[],lem:o.lem||{}}}catch{return {off:[],add:[],lem:{}}}},synSave=o=>{try{localStorage.setItem(SYNK,JSON.stringify(o))}catch{}};
+ const gKey=g=>g.join(' = ');
+ function synGroups(){const st=typeof localStorage!=='undefined'?synSt():{off:[],add:[]};return [...SYN_BASE.filter(g=>!st.off.includes(gKey(g))),...st.add].map(g=>g.map(w=>normDe(w)).filter(Boolean))}
+ function synCanon(ph,G){return ph.split(' ').map(w=>{for(const g of G)for(const m of [...g].sort((a,b)=>b.length-a.length)){if(m.includes(' '))continue;if(w===m)return g[0];if(m.length>=5&&w.length>m.length&&w.endsWith(m))return w.slice(0,w.length-m.length)+g[0]}return w}).join(' ').replace(/\bsich\s+/g,'')}
+ const lemKey=item=>normLat((item.need&&item.need[0])||item.form||'');
  function gradeMeaning(item,ans,others){
   const raw=String(ans.m||'').trim();if(!raw)return {p:0,max:1,note:'leer'};
-  const exp=new Set(),E0={};for(const m of item.meanings||[])for(const part of String(m).split(/[;,]/)){const n=normDe(part);if(n){exp.add(n);exp.add(compact(n));E0[n]=E0[n]||part.trim();E0[compact(n)]=E0[compact(n)]||part.trim()}}const orig0=e=>E0[e]||e;
+  const exp=new Set(),E0={};for(const m of item.meanings||[])for(const part of String(m).split(/[;,]/)){const n=normDe(part);if(n){exp.add(n);exp.add(compact(n));E0[n]=E0[n]||part.trim();E0[compact(n)]=E0[compact(n)]||part.trim()}}const orig0=e=>E0[e]||e;try{for(const x of (synSt().lem[lemKey(item)]||[])){const n=normDe(x);if(n){exp.add(n);exp.add(compact(n));E0[n]=E0[n]||x}}}catch{}const SG=synGroups(),expC=new Set([...exp].map(e=>synCanon(e,SG)));
   const rawP=raw.split(/[,;\/]|\s+(?:oder|bzw\.?)\s+/i),orig={};rawP.forEach(x=>{const n=normDe(x);if(n&&!orig[n])orig[n]=x.trim()});const pieces=rawP.map(normDe).filter(Boolean);
   const bag=x=>x.split(' ').sort().join(' '),bags=new Set([...exp].map(bag));
   let hits=0,part='',misses=[],typos=[];
@@ -130,7 +138,7 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
   const OTH=(others||[]).flatMap(o=>(o.meanings||[]).flatMap(m=>String(m).split(/[;,]/).map(normDe).filter(Boolean)).map(compact)).filter(o=>![...exp].map(compact).includes(o));
   const oneOff=p=>{const c=compact(p);if(c.length<3||OTH.includes(c))return '';let best='',bd=99;for(const e of exp){const ce=compact(e);if(!ce)continue;if(sk(c)===sk(ce))return orig0(e);if(c[0]!==ce[0])continue;const d=lev(c,ce);if(d<=allow(ce.length)&&d<bd){bd=d;best=e}}
    if(!best)return '';const ce=compact(best);for(const o of OTH)if(o===c||lev(c,o)<bd)return '';return orig0(best)};
-  for(const p of pieces){if(exp.has(p)||exp.has(compact(p))||bags.has(bag(p))){hits++;continue}
+  for(const p of pieces){if(exp.has(p)||exp.has(compact(p))||bags.has(bag(p))){hits++;continue}if(expC.has(synCanon(p,SG))){hits++;continue}
    {const ok=oneOff(p);if(ok){typos.push((orig[p]||p)+' → '+ok);continue}}
    let f='';for(const e of exp)if(e.length>=4&&p.length>=4&&(p.includes(e)||e.includes(p))){f=p.includes(e)?'mehr':'weniger';break}
    if(f&&!part)part=f;if(!f)misses.push(p)}
