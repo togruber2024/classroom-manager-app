@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 24.11.2026 · Version 13.82
+Stand: 24.11.2026 · Version 13.83
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1661,3 +1661,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.80: Vokabeltest: Der Kasten „So wird bewertet“ zeigt die aktuelle Regel – kleine Schreibfehler im Deutschen zählen nicht (voller Punkt mit Hinweis).
 13.81: Vokabeltest: Pluralwörter bei Adjektiven und Pronomen (z. B. ceteri, cuncti, nonnulli) – im Feld steht „Nom. Pl. m.“ statt „Nom. Sg. m.“.
 13.82: Vokabeltest: Bei Verben steht im Feld „Inf. Präs., 1. Pers. Sg. Präs.“; Spalte Grundform etwas breiter.
+13.83: Vokabeltest: „Drucken“ im Abgabe-Fenster erstellt dieselbe PDF wie beim Schüler (mit deinen Korrekturen). Beim Sichern/Teilen entsteht keine zusätzliche „Text“-Datei mehr.

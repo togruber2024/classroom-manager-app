@@ -124,7 +124,7 @@ const abKey=t=>t?.cm?.u?'cm-abgabe-'+t.cm.u:null;
 async function saveStand(btn){/* der Name aus der Abgabe reist mit – wer die Datei eines anderen lädt, gibt unter dessen Namen ab, und die Lehrkraft sieht es */
  const ak=abKey(T),ab=ak?ls.get(ak):null;const d={type:'classroom-text-trainer-stand',v:1,saved:new Date().toISOString(),t:T,st:ST,ab:ab?{me:ab.me||'',dv:ab.dv||'',cls:ab.cls||''}:null};
  const nm=('Zwischenstand '+T.title).replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/Ä/g,'Ae').replace(/Ö/g,'Oe').replace(/Ü/g,'Ue').replace(/ß/g,'ss').replace(/·/g,'-').normalize('NFD').replace(/[^\x20-\x7e]/g,'').replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,' ').trim()+'.json',file=new File([JSON.stringify(d)],nm,{type:'application/json'}),old=btn.textContent;
- try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:nm});btn.textContent='✓ gesichert'}
+ try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});btn.textContent='✓ gesichert'}
   else{const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=nm;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);btn.textContent='✓ geladen'}}
  catch(e){if(e&&e.name==='AbortError')return;alert('Der Zwischenstand konnte nicht gesichert werden: '+(e&&e.message||e))}
  setTimeout(()=>{if(btn.isConnected)btn.textContent=old},2500)}

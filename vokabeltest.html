@@ -291,7 +291,7 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
   const makeBody=()=>sealBody({type:'classroom-vokabeltest-abgabe',v:1,k:'kb',i:test.i,g:test.g,t:test.t,name:draft.name.trim(),ts:new Date().toISOString(),a:draft.a.map((a,i)=>i<nV?{l:a.l.trim(),ge:a.ge,m:a.m.trim()}:a)});let sentBody=null;
   async function send(){const body=sentBody||makeBody();
    const file=abFile(body,fileName());
-   try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:fileName()});return true}}catch(e){if(e?.name==='AbortError')return false}
+   try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file]});return true}}catch(e){if(e?.name==='AbortError')return false}
    const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
    document.getElementById('dmsg').textContent=(isIServ()?'Die Datei „'+file.name+'“ ist gesichert. Lade sie jetzt in IServ → Aufgaben hoch.':'Die Datei „'+file.name+'“ wurde gespeichert. Schicke sie an deine Lehrkraft (z. B. per AirDrop aus der Dateien-App).');return true}
   document.getElementById('go').onclick=()=>{if(!NM.need(draft))return;const open=N-done();if(!confirm((open?open+' Aufgabe'+(open>1?'n sind':' ist')+' noch nicht fertig. ':'')+'Test jetzt abgeben?'))return;draft.sent=true;sentBody=makeBody();draft.body=sentBody;save();qrDone(sentBody,send)};
@@ -324,7 +324,7 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
   const makeBody=()=>sealBody({type:'classroom-vokabeltest-abgabe',v:1,k:'gr',i:test.i,g:test.g,t:test.t,name:draft.name.trim(),ts:new Date().toISOString(),a:draft.a});let sentBody=null;
   async function send(){const body=sentBody||makeBody();
    const file=abFile(body,fileName());
-   try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:fileName()});return true}}catch(e){if(e?.name==='AbortError')return false}
+   try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file]});return true}}catch(e){if(e?.name==='AbortError')return false}
    const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
    document.getElementById('dmsg').textContent=(isIServ()?'Die Datei „'+file.name+'“ ist gesichert. Lade sie jetzt in IServ → Aufgaben hoch.':'Die Datei „'+file.name+'“ wurde gespeichert. Schicke sie an deine Lehrkraft (z. B. per AirDrop aus der Dateien-App).');return true}
   document.getElementById('go').onclick=()=>{if(!NM.need(draft))return;const open=test.q.filter((it,i)=>!full(it,draft.a[i])).length;if(!confirm((open?open+' Aufgabe'+(open>1?'n sind':' ist')+' noch nicht fertig. ':'')+'Test jetzt abgeben?'))return;draft.sent=true;sentBody=makeBody();draft.body=sentBody;save();qrDone(sentBody,send)};
@@ -352,7 +352,7 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
  async function send(){
   const body=sentBody||makeBody();
   const file=abFile(body,fileName());
-  try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:fileName()});return true}}catch(e){if(e?.name==='AbortError')return false}
+  try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file]});return true}}catch(e){if(e?.name==='AbortError')return false}
   const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
   document.getElementById('dmsg').textContent=(isIServ()?'Die Datei „'+file.name+'“ ist gesichert. Lade sie jetzt in IServ → Aufgaben hoch.':'Die Datei „'+file.name+'“ wurde gespeichert. Schicke sie an deine Lehrkraft (z. B. per AirDrop aus der Dateien-App).');return true}
  document.getElementById('go').onclick=async()=>{

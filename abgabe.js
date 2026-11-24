@@ -57,7 +57,7 @@ window.cmAbgabeHash=async d=>{const {h,...r}=d||{};const txt='cm-abgabe-v1|'+JSO
    d.h=await window.cmAbgabeHash(d);return d}
   async function saveFile(btn){if(!S.me){who();return}const old=btn.textContent;try{const d=await fileData(),ti=String(o.title||'Abgabe'),m=/Lektion\s+(\d+\w?)/.exec(ti),short=m?'L'+m[1]:ti.replace(/\s*·.*$/,'').slice(0,40);
     const nm=window.classroomSubFile?classroomSubFile(ti.replace(/\s*·\s*Abgabe.*$/,''),S.me):(short+' - '+S.me).replace(/[\\/:*?"<>|]/g,'')+'.cmabgabe'/* 12.80 */,file=new File([JSON.stringify(d)],nm,{type:'application/octet-stream'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:nm});btn.textContent='✓ gesichert'}
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});btn.textContent='✓ gesichert'}
     else{const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=nm;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);btn.textContent='✓ geladen'}}
    catch(e){if(e&&e.name==='AbortError')return false;alert('Die Abgabe-Datei konnte nicht erstellt werden: '+(e&&e.message||e));return false}setTimeout(()=>{if(btn.isConnected)btn.textContent=old},2500);return true}
   window.cmAbgabeCodes=codes;

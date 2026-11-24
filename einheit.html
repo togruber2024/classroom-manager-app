@@ -1042,7 +1042,7 @@ async function packQr(){return classroomQrPack(payObj())}
 async function abgHash(d){const {h,...r}=d||{};const txt='cm-abgabe-v1|'+JSON.stringify(r);try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(txt));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,24)}catch{let x=2166136261;for(let i=0;i<txt.length;i++){x^=txt.charCodeAt(i);x=Math.imul(x,16777619)>>>0}return ('f'+x.toString(16)).padEnd(24,'0')}}
 async function saveAbgFile(btn){if(!ST.me){runWho();return}const old=btn.textContent;try{const d={type:'classroom-abgabe',t:META.short||document.title,...payObj()};d.h=await abgHash(d);
   const nm=classroomSubFile(META.title||META.short||document.title,ST.me)/* 12.80 */,file=new File([JSON.stringify(d)],nm,{type:'application/octet-stream'});
-  if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:nm});btn.textContent='✓ gesichert'}
+  if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});btn.textContent='✓ gesichert'}
   else{const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=nm;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);btn.textContent='✓ geladen'}
   setTimeout(()=>{btn.textContent=old},2500)}catch(e){if(!(e&&e.name==='AbortError'))alert('Die Datei konnte nicht erstellt werden: '+((e&&e.message)||e))}}
 async function showQr(){if(!ST.me){runWho();return}const codes=await packQr();let k=0;const o=document.createElement('div');o.className='qrfull';

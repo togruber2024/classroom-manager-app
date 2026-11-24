@@ -5475,7 +5475,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   d.querySelectorAll('input[name=stu]').forEach(i=>i.onchange=pick);const first=d.querySelector(u?'input[value=u]':'input[value=r]');first.checked=true;pick();
   d.querySelector('[data-no]').onclick=()=>d.close();
   d.querySelector('form').onsubmit=e=>{e.preventDefault();const v=d.querySelector('input[name=stu]:checked')?.value,f=F[v];if(!f)return;d.close();
-   if(touchDev()){try{if(navigator.canShare?.({files:[f]})){navigator.share({files:[f],title:f.name}).catch(()=>{});return}}catch{}}
+   if(touchDev()){try{if(navigator.canShare?.({files:[f]})){navigator.share({files:[f]}).catch(()=>{});return}}catch{}}
    saveFile(f);alert('„'+f.name+'“ liegt jetzt in „Downloads“. Im Finder: rechte Maustaste › Teilen › AirDrop.')};
   d.showModal();
   const set=(v,r0,err)=>{const el=d.querySelector('[data-f="'+v+'"]');if(!el)return;if(!r0){el.textContent=err||'nicht möglich';el.classList.add('err');return}F[v]=r0.file;el.innerHTML=FI()+' '+esc(r0.file.name)+(r0.stand?.d?' · Stand '+stuDay(r0.stand.d):'');pick()};
@@ -5610,13 +5610,13 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
     if(!zf.length){alert('Es ist noch kein Unterrichtsmaterial geladen.');return}
     file=new File([zipStore(zf)],'Unterrichtsmaterial '+day+'.zip',{type:'application/zip'})}
    catch(e){alert('Export nicht möglich: '+(e&&e.message||e));return}finally{if(btn){btn.disabled=false;btn.textContent=t0}}
-   try{if(navigator.canShare?.({files:[file]})&&matchMedia('(pointer:coarse)').matches){await navigator.share({files:[file],title:file.name});return file.name}}catch(err){if(err?.name==='AbortError')return}
+   try{if(navigator.canShare?.({files:[file]})&&matchMedia('(pointer:coarse)').matches){await navigator.share({files:[file]});return file.name}}catch(err){if(err?.name==='AbortError')return}
    saveFile(file);return file.name}
   try{const pk=hasPk?await b.exportPkg(s,pkname().replace(/\.cmpaket$/,'')):null;
    if(!rs.length&&!o.all){if(!pk){alert('In der Auswahl ist nichts zum Exportieren.');return}file=new File([JSON.stringify(pk)],pkname(),{type:'application/json'})}
    else{const fs=[];for(const r of rs)fs.push(await reiheFile(r));if(fs.length===1&&!pk&&!o.all)file=fs[0];else{if(!fs.length&&!pk){alert('Es ist noch kein Unterrichtsmaterial geladen.');return}const used=new Set(),te=new TextEncoder(),zf=[];for(const f of fs){let nm=f.name,i=2;while(used.has(nm))nm=f.name.replace(/\.cmreihe$/,' ('+(i++)+').cmreihe');used.add(nm);zf.push({name:nm,data:new Uint8Array(await f.arrayBuffer())})}if(pk)zf.push({name:pkname(),data:te.encode(JSON.stringify(pk))});file=new File([zipStore(zf)],name,{type:'application/zip'})}}}
   catch(e){alert('Export nicht möglich: '+(e&&e.message||e));return}finally{if(btn){btn.disabled=false;btn.textContent=t0}}
-  try{if(navigator.canShare?.({files:[file]})&&matchMedia('(pointer:coarse)').matches){await navigator.share({files:[file],title:file.name});return file.name}}catch(err){if(err?.name==='AbortError')return}
+  try{if(navigator.canShare?.({files:[file]})&&matchMedia('(pointer:coarse)').matches){await navigator.share({files:[file]});return file.name}}catch(err){if(err?.name==='AbortError')return}
   saveFile(file);return file.name}
  /* 11.72: alles Unterrichtsmaterial – alle Reihen, Einheiten ohne Reihe und Latein-Lektionen ohne Reihe */
  function allSel(){const R=data?.reihen||[],inR=new Set(),lesR=new Set();for(const r of R)for(const x of eff(r)){if(x.u)inR.add(x.u);if(x.les!=null)lesR.add(String(x.les))}
