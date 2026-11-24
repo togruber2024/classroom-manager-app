@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 24.11.2026 · Version 13.77
+Stand: 24.11.2026 · Version 13.78
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1656,3 +1656,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.75: Vokabeltests: Synonyme bei der deutschen Bedeutung – feste Liste (auch mit Vorsilben), beim Korrigieren als Synonym merken, verwalten über das Test-Menü
 13.76: Vokabel- und Grammatiktests: Abgabe wahlweise per QR-Code oder als IServ-Aufgabe. Schüler sichern eine lesbare Abgabe-Datei und laden sie in IServ hoch; die Lehrkraft lädt die ZIP aus IServ. Mit Prüfsiegel (veränderte Dateien werden markiert) und Abgabezeit in der Auswertung.
 13.77: Live-Notenspiegel: Beim Überfahren steht nur noch die Note (z. B. „Note 2“) über den Namen, ohne Anzahl.
+13.78: Live-Notenspiegel: Anteil der Noten 5/6 in Prozent – rot ab 30 % (Oberstufe ab 50 %); Namen je Note nach Rohpunkten sortiert.
