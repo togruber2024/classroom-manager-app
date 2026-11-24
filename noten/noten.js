@@ -8934,7 +8934,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
  const on=()=>{try{return localStorage.getItem(KEY)==='1'}catch{return false}};
  const setOn=v=>{try{localStorage.setItem(KEY,v?'1':'0')}catch{}};
  /* Knopf im Notenspiegel-Fenster, links neben „Vergleichen“ */
- const btn=document.createElement('button');btn.type='button';btn.id='nsLiveButton';btn.className='ns-live-btn';btn.textContent='Neben der Tabelle';btn.title='Den Notenspiegel live rechts neben der Ergebnistabelle zeigen – er aktualisiert sich beim Eintragen.';
+ const btn=document.createElement('button');btn.type='button';btn.id='nsLiveButton';btn.className='ns-live-btn';btn.textContent='Live-Notenspiegel';btn.title='Den Notenspiegel live rechts neben der Ergebnistabelle zeigen – er aktualisiert sich beim Eintragen.';
  const place=()=>{const cmp=$('compareNotenspiegel');if(cmp&&btn.nextElementSibling!==cmp)cmp.before(btn)};
  const ctx=()=>{try{return typeof notenspiegelContext!=='undefined'?notenspiegelContext:null}catch{return null}};
  function syncBtn(){place();const c=ctx(),p=panel();btn.hidden=!(c&&p&&p.dataset.customPanel===c.pageKey&&!window.classroomNsTask);btn.classList.toggle('is-on',on());btn.setAttribute('aria-pressed',String(on()))}
