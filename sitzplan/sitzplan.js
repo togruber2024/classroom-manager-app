@@ -3693,6 +3693,7 @@ document.addEventListener('keydown',event=>{
   const sels=[...dlg.querySelectorAll('[data-col]')];if(!GC.cols.some(c=>c.id===opt.col)){const q=[...GC.cols].reverse().find(c=>/^Quartalsnote|^Klassenarbeit|^Halbjahresnote/.test(c.label))||GC.cols.at(-1);opt.col=q?q.id:''}
   for(const sel of sels){sel.innerHTML=GC.cols.length?GC.cols.map(c=>'<option value="'+esc(c.id)+'"'+(c.id===opt.col?' selected':'')+'>'+esc(c.label)+'</option>').join(''):'<option value="">keine Noten gefunden</option>';sel.disabled=!GC.cols.length}}
  function gradeOf(name){const c=GC.cols.find(x=>x.id===opt.col);if(!c)return null;const V=c.vals||(c.vals=Object.fromEntries(Object.entries(c.values).flatMap(([n,v])=>[[norm(n),v],[norm(display(n)),v]])));const v=V[norm(name)]??V[norm(display(name))];return typeof v==='number'?v:null}
+ /* 13.67: Oberstufe – Anzeige in Notenpunkten (eingeteilt wird weiter auf der Notenskala) */function npOf(name){const c=GC.cols.find(x=>x.id===opt.col);if(!c||!GC.pts||!c.np)return null;const V=c.npv||(c.npv=Object.fromEntries(Object.entries(c.np).flatMap(([n,v])=>[[norm(n),v],[norm(display(n)),v]])));const v=V[norm(name)]??V[norm(display(name))];return typeof v==='number'?v:null}
  const fmt=v=>v==null?'':(Math.round(v*10)/10).toLocaleString('de-DE');
  function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
  /* Zielwert: Tabu-Konflikte zählen am meisten, dann Abstand der Gruppenschnitte zum Klassenschnitt, dann m/w-Ausgleich (bei „gemischt“) */
@@ -3706,7 +3707,7 @@ document.addEventListener('keydown',event=>{
   return cur}
  function build(){
   const all=people(),present=opt.absent?all.filter(p=>!p.absent):all,n=present.length,perf=opt.perf!=='off'&&GC.cols.length?opt.perf:'';
-  for(const p of all)p.g=perf?gradeOf(p.name):null;
+  for(const p of all){p.g=perf?gradeOf(p.name):null;p.np=perf?npOf(p.name):null}
   let count=opt.mode==='count'?opt.count:Math.ceil(n/Math.max(1,opt.size));count=Math.max(1,Math.min(count,Math.max(1,n)));
   const tabu=(typeof tabuPaare!=='undefined'?tabuPaare:[]).map(t=>[String(t.s1||'').trim(),String(t.s2||'').trim()]).filter(t=>t[0]&&t[1]);
   const conflicts=g=>opt.tabu?g.reduce((c,members)=>c+tabu.filter(([a,b])=>members.some(m=>m.name===a)&&members.some(m=>m.name===b)).length,0):0;
@@ -3750,8 +3751,8 @@ document.addEventListener('keydown',event=>{
   const first=n=>display(n).split(/\s+/)[0]||display(n),lastOf=n=>{const d=display(n).split(/\s+/);return d.length>1?d[d.length-1]:''},fc={};for(const p of allP){const f=first(p.name);fc[f]=(fc[f]||0)+1}
   const nm=n=>opt.last?display(n):(fc[first(n)]>1&&lastOf(n)?first(n)+' '+lastOf(n)[0]+'.':first(n));
   const gch=g=>{if(opt.sex==='off')return '';const w=g.filter(p=>p.gender==='w').length,m=g.filter(p=>p.gender==='m').length;return `<span class="rg-v rg-sx">${w} w · ${m} m</span>`};
-  const pf=opt.perf!=='off'&&GC.cols.length,avg=g=>{const v=g.map(p=>p.g).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
-  grid.innerHTML=groups.length?groups.map((g,i)=>`<div class="rg-card"><h4 style="background:${colors[i%colors.length]}">Gruppe ${i+1}${gch(g)}${pf&&avg(g)!=null?`<span class="rg-v rg-avg">Ø ${fmt(avg(g))}</span>`:''}</h4><ul>${g.map(p=>`<li>${esc(nm(p.name))}${pf?`<span class="rg-v rg-g">${p.g==null?'–':fmt(p.g)}</span>`:''}</li>`).join('')}</ul></div>`).join(''):'<p class="rg-empty">Keine Schüler:innen in dieser Klasse.</p>';
+  const pf=opt.perf!=='off'&&GC.cols.length,sv=p=>GC.pts?p.np:p.g,avg=g=>{const v=g.map(sv).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
+  grid.innerHTML=groups.length?groups.map((g,i)=>`<div class="rg-card"><h4 style="background:${colors[i%colors.length]}">Gruppe ${i+1}${gch(g)}${pf&&avg(g)!=null?`<span class="rg-v rg-avg">Ø ${fmt(avg(g))}</span>`:''}</h4><ul>${g.map(p=>`<li>${esc(nm(p.name))}${pf?`<span class="rg-v rg-g">${sv(p)==null?'–':fmt(sv(p))}</span>`:''}</li>`).join('')}</ul></div>`).join(''):'<p class="rg-empty">Keine Schüler:innen in dieser Klasse.</p>';
  }
  function open(){
   let label='';try{const g=typeof classroomCurrentGroup==='function'?classroomCurrentGroup():null;label=g?.name||aktuelleKlasse||''}catch{}
@@ -3768,7 +3769,7 @@ document.addEventListener('keydown',event=>{
   for(let r=0;r<G.length;r++)for(let c=0;c<(G[r]||[]).length;c++){const a=nm(G[r][c]);if(!a)continue;for(const [dr,dc] of [[0,1],[1,0]]){const b=nm(G[r+dr]?.[c+dc]);if(b){S.add(a+SEP+b);S.add(b+SEP+a)}}}}catch{}return S}
  function buildLots(){
   const all=people(),present=opt.absent?all.filter(p=>!p.absent):all,n=present.length,perf=opt.lperf!=='off'&&GC.cols.length?opt.lperf:'';
-  for(const p of all)p.g=perf?gradeOf(p.name):null;
+  for(const p of all){p.g=perf?gradeOf(p.name):null;p.np=perf?npOf(p.name):null}
   const tabu=new Set();if(opt.tabu)for(const t of (typeof tabuPaare!=='undefined'?tabuPaare:[])){const a=String(t.s1||'').trim(),b=String(t.s2||'').trim();if(a&&b){tabu.add(a+SEP+b);tabu.add(b+SEP+a)}}
   const NB=opt.nb?neighbors():new Set();
   const ec=(a,b)=>{let c=0;const k=a.name+SEP+b.name;if(tabu.has(k))c+=1000;if(NB.has(k))c+=100;
