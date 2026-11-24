@@ -6109,7 +6109,24 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
      let col=cur.H.cols.find(x=>x.label===label);if(!col){col={id:cur.H.half+'|'+label,label,values:{},np:{}};cur.H.cols.push(col)}if(!h.summary||col.values[name]==null){col.values[name]=conv(val);if(pts)col.np[name]=val}})}}}
   try{for(const e of window.classroomExamValues?.(subject,classId)||[]){const H=hs.find(x=>x.half===e.halfYear);if(!H)continue;const vals={},np={};for(const [n,v] of Object.entries(e.values||{}))if(ok(v)){vals[n]=conv(v);if(pts)np[n]=v}if(!Object.keys(vals).length)continue;const d=e.date?new Date(e.date+'T12:00').toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}):'';H.cols.push({id:H.half+'|exam:'+e.id,label:(e.label||'Klassenarbeit')+(e.topic?' · '+e.topic:d?' · '+d:''),values:vals,np})}}catch{}
   for(const H of hs)if(H.lastT&&Object.keys(H.lastT).length)H.cols.push({id:H.half+'|lastTest',label:'Letztes Testergebnis',values:Object.fromEntries(Object.entries(H.lastT).map(([n,x])=>[n,x.v])),np:Object.fromEntries(Object.entries(H.lastT).filter(([,x])=>x.np!=null).map(([n,x])=>[n,x.np]))});
-  const live=hs.filter(H=>H.cols.some(c=>Object.keys(c.values).length)),H=live.at(-1);return H?{half:H.half,pts,cols:H.cols.filter(c=>Object.keys(c.values).length)}:{half:'',cols:[]}};
+  const live=hs.filter(H=>H.cols.some(c=>Object.keys(c.values).length)),H=live.at(-1);return H?{half:H.half,pts,cols:tidyCols(H.cols.filter(c=>Object.keys(c.values).length),pts)}:{half:'',cols:[]}};
+ /* 13.70: Liste aufräumen – gruppiert (Quartal/Halbjahr/Arbeiten), kurze Namen, gleiche Werte nur einmal (Quartalsnote vor Sonstiger vor Mündlicher Mitarbeit, Arbeit mit Thema vor Arbeit ohne) */
+ function tidyCols(cols,pts){const cut=(t,n)=>t.length>n?t.slice(0,n-1).trimEnd()+'…':t;
+  const info=c=>{const L=c.label;let m;let grp='Weitere',short=L,prio=1;
+   if((m=/^Quartalsnote\s*(Q\d)/.exec(L))){grp=m[1];short='Quartalsnote';prio=5}
+   else if(/^Halbjahresnote/.test(L)){grp='HJ';short='Halbjahresnote';prio=5}
+   else if(/exam:/.test(c.id)){grp='KA';short=cut(L,40);prio=4}
+   else if(/^(\d+\.\s*)?(Klausur|Klassenarbeit)/.test(L)){grp='KA';short=L.replace(/\s*\((Halbjahr|Q\d)\)$/,'');prio=3}
+   else if((m=/^(.*?)\s*\((Q\d|Halbjahr)\)$/.exec(L))){grp=m[2]==='Halbjahr'?'HJ':m[2];short=m[1].replace(/^MM$/,'Mündliche Mitarbeit');prio=/^Sonstige/.test(m[1])?4:/^MM$/.test(m[1])?2:3}
+   else if(/^Letztes Testergebnis/.test(L)){grp='Weitere';prio=1}
+   return {grp,short,prio}};
+  const sig=c=>Object.keys(c.values).sort().map(n=>n+'='+Math.round(c.values[n]*100)).join('|');
+  const out=[];for(const c of cols){const i=info(c);c.grp=i.grp;c.short=i.short;c.prio=i.prio;c.sig=sig(c);
+   const same=out.findIndex(o=>o.sig===c.sig&&o.grp===c.grp);
+   if(same<0){out.push(c);continue}if(c.prio>out[same].prio)out[same]=c}
+  const G={Q1:'1. Quartal',Q2:'2. Quartal',HJ:'Halbjahr',KA:pts?'Klausuren':'Klassenarbeiten',Weitere:'Weitere'},ord=['Q1','Q2','HJ','KA','Weitere'];
+  for(const c of out){c.grpLabel=G[c.grp]||c.grp;delete c.sig}
+  return out.sort((a,b)=>ord.indexOf(a.grp)-ord.indexOf(b.grp)||b.prio-a.prio)}
  window.addEventListener('message',event=>{
   const msg=event.data;if(event.source!==parent||!msg?.id)return;
   try{
