@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f6f8fc"><meta name="robots" content="noindex">
+<link rel="apple-touch-icon" href="lernordner-180.png"><link rel="icon" href="lernordner-192.png"><title>Übersetzungsvergleich</title>
+<!-- 13.85: Übersetzungsvergleich – Gruppenseite. Abschnitt und drei anonyme Schülerfassungen stehen im Link (#z1.…).
+     Die Gruppe markiert Fehler (Wort antippen → Fehlerart), schreibt die beste Fassung und gibt per QR-Code ab. Nichts geht an einen Server. -->
+<style>
+:root{--ink:#243247;--mut:#66758a;--line:#e3e9f1;--blue:#2f5f9b;--or:#e78a2b}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:#f6f8fc;font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;color:var(--ink)}
+#app{max-width:900px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 14px 40px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:12px}
+.k{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+h1{font-size:1.3rem;margin:2px 0}.lat{font-family:Georgia,"Times New Roman",serif;font-size:1.25rem;line-height:1.5;margin:6px 0 0}
+.fs{display:flex;gap:10px;align-items:flex-start}.fl{flex:none;width:30px;height:30px;border-radius:9px;background:var(--blue);color:#fff;font-weight:800;display:grid;place-items:center}
+.ft{font-size:1.08rem;line-height:1.9;margin-bottom:6px}
+.w{border-radius:5px;padding:1px 2px;cursor:pointer;-webkit-tap-highlight-color:transparent}.w:hover{background:#eef4fc}
+.w.m{text-decoration:underline wavy var(--or);text-underline-offset:5px;text-decoration-thickness:2px}.w.sel{background:#fde7cf}
+.tag{display:inline-block;font-size:.7rem;font-weight:700;color:#fff;background:var(--or);border-radius:6px;padding:0 6px;margin:0 2px;vertical-align:2px;line-height:1.55}.tag.gen{background:#8a97aa}
+.oml{display:inline-block;border:1.5px dashed var(--or);border-radius:8px;padding:0 7px;font-size:.92rem;color:#b25e12;margin:0 3px;background:#fff7ef;line-height:1.5}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{border:1.5px solid #d9e1ec;border-radius:999px;padding:4px 12px;font:inherit;font-size:.88rem;font-weight:600;color:var(--blue);background:#fff;cursor:pointer}
+.chip.on{background:var(--or);border-color:var(--or);color:#fff}.chip.ok{background:#e5f5ea;border-color:#bfe3cb;color:#1f8a4c}.chip.gen{border-style:dashed;color:#55657a}.chip.x{color:#b42318;border-color:#f1c9c4}
+.note{width:100%;margin-top:8px;border:1.5px solid #d9e1ec;border-radius:10px;padding:8px 10px;font:inherit;font-size:.95rem;min-height:40px;resize:vertical}
+textarea.best{width:100%;border:1.5px solid var(--blue);border-radius:12px;padding:10px;font:inherit;font-size:1.05rem;min-height:70px;resize:vertical}
+.btn{border:1.5px solid #d9e1ec;background:#fff;border-radius:11px;padding:10px 18px;font:inherit;font-weight:600;color:var(--blue);cursor:pointer}.btn:disabled{opacity:.45}.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row .sp{flex:1}.mut{color:var(--mut);font-size:.9rem}
+.pop{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);width:min(680px,calc(100vw - 20px));background:#fff;border:1px solid #d9e1ec;border-radius:16px;box-shadow:0 12px 34px #1f355a40;padding:12px 14px;z-index:20}
+.pr{display:flex;gap:10px;align-items:flex-start;margin:6px 0}.pl{width:46px;flex:none;font-size:11px;font-weight:700;color:#8a97aa;text-transform:uppercase;padding-top:8px}
+.pop input{flex:1;border:1.5px solid var(--or);border-radius:10px;padding:8px 10px;font:inherit}
+.qr{background:#fff;border-radius:16px;padding:14px;display:inline-block}.qr svg{width:min(78vw,430px);height:auto;display:block}
+.big{text-align:center}.done{display:inline-flex;gap:8px;background:#dff3e6;color:#2c7a4b;font-weight:700;padding:6px 14px;border-radius:20px}
+input.nm{width:100%;border:1.5px solid #d9e1ec;border-radius:12px;padding:12px;font:inherit;font-size:1.05rem}
+.prog{display:flex;gap:4px;margin:8px 0 0}.prog i{flex:1;height:5px;border-radius:3px;background:#dfe6ef}.prog i.d{background:var(--blue)}.prog i.c{background:#9db7d9}
+</style></head><body><div id="app"></div>
+<script src="qr-code.js"></script>
+<script>
+(async()=>{
+const app=document.getElementById('app');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const CATS=[['Form',['Kasus','Numerus','Genus','Person','Tempus','Modus','Genus verbi']],['Satz',['Bezug','Satzbau','Konstruktion']],['Wort',['Vokabel','Wortbedeutung','Wortauslassung']]];
+const b64=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
+let D;try{const h=decodeURIComponent(location.hash.slice(1));const raw=b64(h.slice(3));const bytes=h[0]==='z'?new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()):raw;D=JSON.parse(new TextDecoder().decode(bytes))}
+catch{app.innerHTML='<div class="card"><h1>Übersetzungsvergleich</h1><p class="mut">Der Link ist unvollständig. Bitte den QR-Code deiner Gruppe noch einmal scannen.</p></div>';return}
+/* D = {v,u,id,t,g,s:[[satzNr,latein,[A,B,C]]]} */
+const KEY='uv-'+D.id+'-'+D.g;let S;try{S=JSON.parse(localStorage.getItem(KEY)||'null')}catch{}
+S=S||{nm:'',cur:0,m:{}};const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}};
+const mOf=i=>S.m[i]??={f:[{},{},{}],b:''};const fOf=(i,f)=>{const m=mOf(i);m.f[f]??={};return m.f[f]};
+const words=t=>String(t||'').split(/(\s+)/);
+let pop=null;/* {i,f,w} */
+function render(){
+ if(S.sent){return showCodes()}
+ if(!S.nm){app.innerHTML='<div class="card"><div class="k">Übersetzungsvergleich · Gruppe '+esc(D.g)+'</div><h1>'+esc(D.t||'Übersetzung')+'</h1><p class="mut">Ihr vergleicht drei Übersetzungen aus eurer Klasse (ohne Namen), markiert die Fehler und schreibt die beste Fassung.</p><p style="margin:14px 0 6px"><b>Wer ist in eurer Gruppe?</b></p><input class="nm" id="nm" placeholder="z. B. Anna, Ben, Carla" autocomplete="off"><div class="row" style="margin-top:12px"><span class="sp"></span><button class="btn pri" id="go">Los geht’s</button></div></div>';
+  const go=()=>{const v=document.getElementById('nm').value.trim();if(!v){document.getElementById('nm').focus();return}S.nm=v;save();render()};document.getElementById('go').onclick=go;document.getElementById('nm').onkeydown=e=>{if(e.key==='Enter')go()};return}
+ const n=D.s.length,c=Math.min(S.cur||0,n-1),[nr,la,fs]=D.s[c],m=mOf(nr);
+ const prog='<div class="prog">'+D.s.map((x,k)=>'<i class="'+(k===c?'d':(S.m[x[0]]?.b||'').trim()?'c':'')+'"></i>').join('')+'</div>';
+ const fHtml=(t,f)=>{const st=fOf(nr,f),mk=st.mk||{};let wi=-1;const tx=words(t).map(p=>{if(/^\s+$/.test(p)||!p)return esc(p);wi++;const x=mk[wi];let h='<span class="w'+(x?' m':'')+(pop&&pop.i===nr&&pop.f===f&&pop.w===wi?' sel':'')+'" data-f="'+f+'" data-w="'+wi+'">'+esc(p)+'</span>';
+   if(x)h+=x.c==='Wortauslassung'?'<span class="oml">＋ fehlt: „'+esc(x.o||'')+'“</span>':'<span class="tag'+(x.c==='Fehler'?' gen':'')+'">'+esc(x.c)+'</span>';return h}).join('');
+  return '<div class="card"><div class="fs"><span class="fl">'+'ABC'[f]+'</span><div style="flex:1"><div class="ft">'+tx+'</div><div class="chips"><button type="button" class="chip'+(st.ok?' ok':'')+'" data-ok="'+f+'">✓ richtig</button>'+(Object.keys(mk).length?'<span class="mut" style="align-self:center">'+Object.keys(mk).length+' Fehler markiert</span>':'<span class="mut" style="align-self:center">Wort antippen, um einen Fehler zu markieren</span>')+'</div><textarea class="note" data-n="'+f+'" placeholder="Warum? (freiwillig)">'+esc(st.n||'')+'</textarea></div></div></div>'};
+ app.innerHTML='<div class="card"><div class="k">Übersetzungsvergleich · Gruppe '+esc(D.g)+'</div><h1>Satz '+esc(nr)+'</h1><p class="lat">'+esc(la)+'</p>'+prog+'</div>'
+  +fs.map((t,f)=>t?fHtml(t,f):'').join('')
+  +'<div class="card"><div class="k" style="margin-bottom:6px">Unsere beste Fassung</div><textarea class="best" id="best" placeholder="Schreibt hier eure beste Übersetzung dieses Satzes.">'+esc(m.b||'')+'</textarea></div>'
+  +'<div class="row"><span class="mut">Satz '+(c+1)+' von '+n+' · gespeichert</span><span class="sp"></span><button class="btn" id="prev"'+(c?'':' disabled')+'>‹ Zurück</button>'+(c<n-1?'<button class="btn pri" id="next">Weiter ›</button>':'<button class="btn pri" id="fin">Ergebnis abgeben</button>')+'</div>'
+  +(pop?popHtml():'');
+ app.querySelectorAll('[data-w]').forEach(s=>s.onclick=()=>{pop={i:nr,f:+s.dataset.f,w:+s.dataset.w};render()});
+ app.querySelectorAll('[data-ok]').forEach(b=>b.onclick=()=>{const st=fOf(nr,+b.dataset.ok);st.ok=!st.ok;save();render()});
+ app.querySelectorAll('[data-n]').forEach(t=>t.oninput=()=>{fOf(nr,+t.dataset.n).n=t.value;save()});
+ const best=document.getElementById('best');best.oninput=()=>{m.b=best.value;save()};
+ const go=d=>{S.cur=c+d;pop=null;save();render();window.scrollTo(0,0)};
+ document.getElementById('prev').onclick=()=>go(-1);document.getElementById('next')?.addEventListener('click',()=>go(1));
+ document.getElementById('fin')?.addEventListener('click',()=>{const miss=D.s.filter(x=>!(S.m[x[0]]?.b||'').trim()).map(x=>x[0]);if(miss.length&&!confirm('Bei Satz '+miss.join(', ')+' fehlt noch eure beste Fassung. Trotzdem abgeben?'))return;if(!miss.length&&!confirm('Ergebnis jetzt abgeben? Danach könnt ihr nichts mehr ändern.'))return;S.sent=Date.now();save();render()});
+ if(pop)bindPop(nr)}
+function popHtml(){const [nr,,fs]=D.s.find(x=>x[0]===pop.i),w=words(fs[pop.f]).filter(p=>p&&!/^\s+$/.test(p))[pop.w]||'',cur=fOf(pop.i,pop.f).mk?.[pop.w];
+ return '<div class="pop"><div class="k" style="margin-bottom:6px">„'+esc(w)+'“ – welche Fehlerart?</div>'+CATS.map(([l,a])=>'<div class="pr"><span class="pl">'+l+'</span><div class="chips">'+a.map(c=>'<button type="button" class="chip'+(cur?.c===c?' on':'')+'" data-c="'+c+'">'+(c==='Wortauslassung'?'Wortauslassung …':c)+'</button>').join('')+'</div></div>').join('')
+  +(pop.om?'<div class="pr"><span class="pl"></span><div class="row" style="flex:1"><input id="om" placeholder="Welches lateinische Wort fehlt?" value="'+esc(cur?.c==='Wortauslassung'?cur.o||'':'')+'"><button type="button" class="btn pri" data-omok>OK</button></div></div>':'')
+  +'<div class="pr"><span class="pl"></span><div class="chips"><button type="button" class="chip gen'+(cur?.c==='Fehler'?' on':'')+'" data-c="Fehler">Fehler – weiß nicht genau</button>'+(cur?'<button type="button" class="chip x" data-rm>Markierung entfernen</button>':'')+'<button type="button" class="chip" data-close>Schließen</button></div></div></div>'}
+function bindPop(nr){const st=fOf(pop.i,pop.f);st.mk??={};
+ app.querySelectorAll('.pop [data-c]').forEach(b=>b.onclick=()=>{const c=b.dataset.c;if(c==='Wortauslassung'){pop.om=1;render();setTimeout(()=>document.getElementById('om')?.focus(),30);return}st.mk[pop.w]={c};st.ok=false;pop=null;save();render()});
+ const ok=()=>{const v=(document.getElementById('om')?.value||'').trim();if(!v){document.getElementById('om')?.focus();return}st.mk[pop.w]={c:'Wortauslassung',o:v};st.ok=false;pop=null;save();render()};
+ app.querySelector('[data-omok]')?.addEventListener('click',ok);document.getElementById('om')?.addEventListener('keydown',e=>{if(e.key==='Enter')ok()});
+ app.querySelector('[data-rm]')?.addEventListener('click',()=>{delete st.mk[pop.w];pop=null;save();render()});
+ app.querySelector('[data-close]').onclick=()=>{pop=null;render()}}
+let codes=null,ci=0;
+async function showCodes(){
+ if(!codes){const m={};for(const [nr] of D.s){const x=S.m[nr];if(!x)continue;m[nr]={b:x.b||'',f:(x.f||[]).map(f=>({...(f.ok?{ok:1}:{}),...(f.mk&&Object.keys(f.mk).length?{mk:f.mk}:{}),...((f.n||'').trim()?{n:f.n.trim()}:{})}))}}
+  codes=await window.classroomQrPack({uv:1,u:D.u,id:D.id,g:D.g,nm:S.nm,ts:S.sent,m})}
+ const n=codes.length;ci=Math.min(ci,n-1);
+ app.innerHTML='<div class="card big"><span class="done">✓ Abgegeben</span><h1 style="margin-top:10px">Gruppe '+esc(D.g)+'</h1><p class="mut">'+esc(S.nm)+'</p><p>Zeigt diesen QR-Code eurer Lehrkraft'+(n>1?' – <b>Code '+(ci+1)+' von '+n+'</b>':'')+'.</p><div class="qr">'+window.classroomQrSvg(codes[ci],{ecc:'M',border:3})+'</div>'
+  +'<div class="row" style="justify-content:center;margin-top:12px">'+(n>1?'<button class="btn" id="cp"'+(ci?'':' disabled')+'>‹ Code '+ci+'</button><button class="btn pri" id="cn"'+(ci<n-1?'':' disabled')+'>Code '+(ci+2)+' ›</button>':'')+'</div></div>';
+ document.getElementById('cp')?.addEventListener('click',()=>{ci--;showCodes()});document.getElementById('cn')?.addEventListener('click',()=>{ci++;showCodes()})}
+render();
+})();
+</script></body></html>
