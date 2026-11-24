@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 24.11.2026 · Version 13.73
+Stand: 24.11.2026 · Version 13.74
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1652,3 +1652,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.71: Notenauswahl: Klausur nicht mehr doppelt, kurze Namen ohne Thema, angelegte Arbeiten ohne Noten grau; Feld „Nach“ schmaler
 13.72: Live-Notenspiegel: beim Darüberfahren über eine Säule erscheinen die Vornamen mit dieser Note, nach Leistung sortiert (im Datenschutzmodus ausgeblendet)
 13.73: Live-Notenspiegel: Namenskasten erscheint direkt am Mauszeiger und folgt ihm
+13.74: Vokabeltests: Schreibfehler in der deutschen Bedeutung werden toleriert (volle Punkte, Hinweis), falsche Bedeutungen bleiben falsch; Lernpartner sitzen nebeneinander; Arbeiten ohne Noten nur grau

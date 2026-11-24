@@ -4418,24 +4418,27 @@ window.LP=LP;window.lpLabels=labels;
   const notes=[];if(!rest.length)notes.push('leer');else if(miss.length)notes.push('fehlt/falsch: '+miss.join(', '));
   if(item.kind==='n'){const ok=(item.genus||[]).includes(ge);/* 10.23: richtiges Genus zählt immer */if(ok)p++;else notes.push(ge?'Genus falsch ('+ge+')':'Genus fehlt')}
   return {p,max,ge,note:notes.join(' · ')}}
- function gradeMeaning(item,ans){
+ function gradeMeaning(item,ans,others){
   const raw=String(ans.m||'').trim();if(!raw)return {p:0,max:1,note:'leer'};
-  const exp=new Set();for(const m of item.meanings||[])for(const part of String(m).split(/[;,]/)){const n=normDe(part);if(n){exp.add(n);exp.add(compact(n))}}
+  const exp=new Set(),E0={};for(const m of item.meanings||[])for(const part of String(m).split(/[;,]/)){const n=normDe(part);if(n){exp.add(n);exp.add(compact(n));E0[n]=E0[n]||part.trim();E0[compact(n)]=E0[compact(n)]||part.trim()}}const orig0=e=>E0[e]||e;
   const rawP=raw.split(/[,;\/]|\s+(?:oder|bzw\.?)\s+/i),orig={};rawP.forEach(x=>{const n=normDe(x);if(n&&!orig[n])orig[n]=x.trim()});const pieces=rawP.map(normDe).filter(Boolean);
   const bag=x=>x.split(' ').sort().join(' '),bags=new Set([...exp].map(bag));
   let hits=0,part='',misses=[],typos=[];
-  /* 10.62: Deutsch – genau 1 Buchstabe falsch/zu viel/zu wenig (ab 4 Buchstaben) = ½ Punkt Abzug, mehr Fehler = 0; Latein bleibt streng */
-  const oneOff=p=>{const c=compact(p);if(c.length<4)return false;for(const e of exp){const ce=compact(e);if(ce.length>=4&&lev(c,ce)===1)return true}return false};
+  /* 13.74: Deutsch – Schreibfehler toleriert (volle Punktzahl): typische Varianten (Groß/klein, ä/ae, ß/ss, Doppelbuchstaben, ie/i, d/t am Ende, Bindestriche) und kleine Abweichungen je nach Wortlänge (bis 5 Buchstaben 1, bis 10: 2, länger 3); erster Buchstabe muss stimmen; liegt die Antwort näher an einer anderen Bedeutung des Tests, zählt sie nicht. Latein bleibt streng */
+  const sk=s=>compact(s).replace(/(.)\1+/g,'$1').replace(/ie/g,'i').replace(/th/g,'t').replace(/dt\b|d\b/g,'t'),allow=n=>n<=2?0:n<=5?1:n<=10?2:3;
+  const OTH=(others||[]).flatMap(o=>(o.meanings||[]).flatMap(m=>String(m).split(/[;,]/).map(normDe).filter(Boolean)).map(compact)).filter(o=>![...exp].map(compact).includes(o));
+  const oneOff=p=>{const c=compact(p);if(c.length<3||OTH.includes(c))return '';let best='',bd=99;for(const e of exp){const ce=compact(e);if(!ce)continue;if(sk(c)===sk(ce))return orig0(e);if(c[0]!==ce[0])continue;const d=lev(c,ce);if(d<=allow(ce.length)&&d<bd){bd=d;best=e}}
+   if(!best)return '';const ce=compact(best);for(const o of OTH)if(o===c||lev(c,o)<bd)return '';return orig0(best)};
   for(const p of pieces){if(exp.has(p)||exp.has(compact(p))||bags.has(bag(p))){hits++;continue}
-   if(oneOff(p)){typos.push(orig[p]||p);continue}
+   {const ok=oneOff(p);if(ok){typos.push((orig[p]||p)+' → '+ok);continue}}
    let f='';for(const e of exp)if(e.length>=4&&p.length>=4&&(p.includes(e)||e.includes(p))){f=p.includes(e)?'mehr':'weniger';break}
    if(f&&!part)part=f;if(!f)misses.push(p)}
-  const tn=typos.length?'Rechtschreibfehler: '+typos.join(', ')+' (−½)':'';
-  if((hits||typos.length)&&!misses.length&&!part)return typos.length?{p:.5,max:1,note:tn}:{p:1,max:1};
-  if(hits||typos.length)return {q:true,s:typos.length?.5:1,max:1,note:[tn,'zusätzlich: '+[...misses,...(part?['(ähnlich)']:[])].join(', ')].filter(Boolean).join(' · ')};
+  const tn=typos.length?'Schreibfehler toleriert: '+typos.join(', '):'';
+  if((hits||typos.length)&&!misses.length&&!part)return typos.length?{p:1,max:1,note:tn,tol:typos}:{p:1,max:1};
+  if(hits||typos.length)return {q:true,s:1,max:1,tol:typos.length?typos:undefined,note:[tn,'zusätzlich: '+[...misses,...(part?['(ähnlich)']:[])].join(', ')].filter(Boolean).join(' · ')};
   if(part)return {q:true,s:part==='mehr'?1:0,max:1,note:'ähnlich wie die Lösung'};
   return {p:0,max:1,note:'falsch'}}
- function gradeAll(test,sub){const items=test.groups[sub.g]||[];return items.map((item,i)=>{const a=sub.a?.[i]||{};if(item&&item.k)return {lemma:window.classroomGrammar.grade(item,a),meaning:{p:0,max:0},ans:a};return {lemma:gradeLemma(item,a),meaning:gradeMeaning(item,a),ans:a}})}
+ function gradeAll(test,sub){const items=test.groups[sub.g]||[];return items.map((item,i)=>{const a=sub.a?.[i]||{};if(item&&item.k)return {lemma:window.classroomGrammar.grade(item,a),meaning:{p:0,max:0},ans:a};return {lemma:gradeLemma(item,a),meaning:gradeMeaning(item,a,items.filter(x=>x!==item&&x&&!x.k)),ans:a}})}
  window.classroomVocabGrade={gradeLemma,gradeMeaning,normDe,normLat};
  /* ---------- Link für die Schüler ---------- */
  function studentBase(){try{if(/github\.io$/.test(location.hostname)||/^https?:$/.test(location.protocol)&&!/^(localhost|127\.)/.test(location.hostname))return new URL('../vokabeltest.html',location.href).href}catch{}return 'https://togruber2024.github.io/classroom-manager-app/vokabeltest.html'}
