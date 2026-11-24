@@ -5890,9 +5890,9 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   const first=String(p.name).includes(',')?String(p.name).split(',').slice(1).join(',').trim():String(p.name).split(/\s+/)[0];const hit=Object.values(S).filter(x=>norm(x.n)===norm(first));return hit.length===1?hit[0]:null}
  /* Leistung für Lernpartner: Spalte aus dem Noten-Manager (Quartalsnote/Klassenarbeit/Halbjahresnote), sonst Mittel der mündlichen Noten */
  function performance(){const k=sourceKey(),w=nw();let GC=null;try{if(k&&w?.classroomGradeColumns)GC=w.classroomGradeColumns(k[0],k[1])}catch{}
-  const col=GC?.cols?.length?([...GC.cols].reverse().find(c=>/^Quartalsnote|^Klassenarbeit|^Halbjahresnote/.test(c.label))||GC.cols.at(-1)):null;
+  /* 13.68: Note für die Lernpartner wählbar (je Klasse gemerkt) */LPC=GC?.cols||[];const want=rd(LPK(),'');const col=GC?.cols?.length?(GC.cols.find(c=>c.id===want)||[...GC.cols].reverse().find(c=>/^Quartalsnote|^Klassenarbeit|^Halbjahresnote/.test(c.label))||GC.cols.at(-1)):null;LPCOL=col?.id||'';LPPTS=!!GC?.pts;LPNP=col?.np||null;
   const m=new Map();if(col){const V={};for(const [n,v] of Object.entries(col.values||{})){V[norm(n)]=v;V[norm(swap(n))]=v}for(const p of people()){const v=V[norm(p.name)]??V[norm(swap(p.name))];if(typeof v==='number')m.set(norm(p.name),v)}}
-  if(m.size>=4)return {label:col.label+(GC.half?' ('+GC.half+')':''),m};
+  if(m.size>=4){const np=new Map();if(LPPTS&&LPNP){const V={};for(const [n,v] of Object.entries(LPNP)){V[norm(n)]=v;V[norm(swap(n))]=v}for(const p of people()){const v=V[norm(p.name)]??V[norm(swap(p.name))];if(typeof v==='number')np.set(norm(p.name),v)}}return {label:col.label+(GC.half?' ('+GC.half+')':''),m,np}}
   const m2=new Map();for(const p of people()){const g=halfYearGrades(p);if(g.length)m2.set(norm(p.name),g.reduce((s,x)=>s+x.g,0)/g.length)}
   return m2.size>=4?{label:'Mittel der mündlichen Noten im Halbjahr',m:m2}:null}
 
@@ -5947,12 +5947,25 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   const go=document.getElementById('classroomStartButton');if(go&&go.onclick!==window.generiereSitzplan)go.onclick=window.generiereSitzplan;
  }
  function setLegend(html){if(!legend)return;if(!html){if(!legend.hidden)legend.hidden=true;return}if(legend.innerHTML!==html)legend.innerHTML=html;legend.hidden=false}
- const mark=cell=>{const on=!!cell.querySelector(':scope>.si-tag,:scope>.si-ab');if(cell.classList.contains('si-on')!==on)cell.classList.toggle('si-on',on)};
+ const mark=cell=>{const on=!!cell.querySelector(':scope>.si-tag,:scope>.si-ab,:scope>.si-lp');if(cell.classList.contains('si-on')!==on)cell.classList.toggle('si-on',on)};
  const setTag=(cell,cls,text,title)=>{let t=cell.querySelector(':scope>.si-tag');if(!text){if(t){t.remove();mark(cell)}return}if(!t){t=document.createElement('span');t.className='si-tag';t.setAttribute('aria-hidden','true');cell.append(t)}const c='si-tag '+(cls||'');if(t.className!==c)t.className=c;if(t.textContent!==text)t.textContent=text;mark(cell);if(title){cell.title=(cell.title||'')+' · '+title}};
  const cellName=cell=>gridData[Number(cell.dataset.row)]?.[Number(cell.dataset.col)];
 
  /* ③ A/B im Schachbrett: Reihen und Spalten mit Plätzen werden durchgezählt (leere Zwischenreihen zählen nicht) */
  const belegung=()=>document.querySelector('input[name="belegung"]:checked')?.value||'einzeln';
+ /* 13.68: Lernpartner – Paare farbig, Noten-Pillen nur auf Knopfdruck (nie im Datenschutz- oder Smartboard-Modus) */
+ let LPC=[],LPCOL='',LPPTS=false,LPNP=null,lpShow=false;const LPK=()=>'classroom-lp-col:'+(lessonSubject?.value||''),LPP=()=>'classroom-lp-pairs:'+(lessonSubject?.value||'');
+ const LPCOLS=['#dbeafe','#fde2c8','#d9f2e3','#efe0fb','#fff1b8','#fbd5dc','#d4f1f4','#e7e5e4','#e0e7ff','#fce7f3','#ecfccb'],LPBOR=['#7aa7e6','#e6a76c','#76c49a','#b48ad8','#d9b83b','#e48a9d','#5fbfca','#a8a29e','#8b9cf0','#e08cbf','#9ccc4a'];
+ const priv=()=>{const h=e=>e?.documentElement?.classList;try{return h(document).contains('classroom-privacy')||h(document).contains('classroom-beamer')||!!h(parent.document)?.contains('classroom-privacy')}catch{return h(document).contains('classroom-privacy')}};
+ function lpData(){try{return JSON.parse(rd(LPP(),'')||'null')}catch{return null}}
+ function paintLP(cells){const on=belegung()==='lernpartner',d=on?lpData():null,idx=new Map();
+  if(d)d.pairs.forEach(([a,b,ga,gb],i)=>{if(a)idx.set(norm(a),[i,ga]);if(b)idx.set(norm(b),[i,gb])});
+  const show=lpShow&&!priv();let n=0;
+  for(const c of cells){const nm=cellName(c),x=nm&&idx.get(norm(nm));let t=c.querySelector(':scope>.si-lp');
+   if(!x){if(c.classList.contains('si-lpc')){c.classList.remove('si-lpc');c.style.removeProperty('--lpb');c.style.removeProperty('--lpf')}if(t){t.remove();mark(c)}continue}
+   const [i,g]=x,col=i%LPCOLS.length;n++;c.classList.add('si-lpc');c.style.setProperty('--lpf',LPCOLS[col]);c.style.setProperty('--lpb',LPBOR[col]);
+   if(show&&g!=null){if(!t){t=document.createElement('span');t.className='si-lp';c.append(t)}const txt=fmt(g);if(t.textContent!==txt)t.textContent=txt}else if(t)t.remove();mark(c)}
+  return d&&n?d:null}
  function paintAB(cells){
   const on=belegung()==='klassenarbeit',seats=cells.filter(c=>{const n=cellName(c);return on&&n&&n!=='X'&&n!=='PULT'&&personOf(n)});
   const rows=[...new Set(seats.map(c=>+c.dataset.row))].sort((a,b)=>a-b),cols=[...new Set(seats.map(c=>+c.dataset.col))].sort((a,b)=>a-b);let a=0,b=0;
@@ -5962,8 +5975,8 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
 
  let painting=false;
  function paint(){if(painting)return;painting=true;try{
-  ensureUi();const cells=[...document.querySelectorAll('.room-grid .cell')],ab=paintAB(cells);
-  if(!mode){for(const c of cells)setTag(c);setLegend(ab?'Klassenarbeit: <b>Gruppe A</b> '+ab.a+' · <b>Gruppe B</b> '+ab.b+' – im Schachbrett, auch im Ausdruck':'');return}
+  ensureUi();const cells=[...document.querySelectorAll('.room-grid .cell')],ab=paintAB(cells),lp=paintLP(cells);lpSel();
+  if(!mode){for(const c of cells)setTag(c);setLegend(ab?'Klassenarbeit: <b>Gruppe A</b> '+ab.a+' · <b>Gruppe B</b> '+ab.b+' – im Schachbrett, auch im Ausdruck':lp?'<b>Lernpartner</b> nach '+esc(lp.label)+' · gleiche Farbe = ein Paar (stärkste:r + schwächste:r) '+(priv()?'<span class="si-lpn">Noten im Datenschutz-/Smartboard-Modus aus</span>':'<button type="button" class="si-lpb'+(lpShow?' on':'')+'" data-lpshow aria-pressed="'+lpShow+'">'+(lpShow?'Noten ausblenden':'Noten zeigen')+'</button>'):'');return}
   if(mode==='count'){const m=quarterCounts();if(!m){for(const c of cells)setTag(c);setLegend('Für diese Klasse gibt es noch keine Seite „Mündliche Mitarbeit“.');return}
    const vals=[...m.values()],avg=vals.length?vals.reduce((s,x)=>s+x,0)/vals.length:0;let zero=0,low=0;
    for(const c of cells){const p=personOf(cellName(c));if(!p){setTag(c);continue}const n=m.get(p.id)??0;const cls=n===0?'si-zero':n<avg-.5?'si-low':'';if(n===0)zero++;else if(cls)low++;setTag(c,cls,String(n),n+' mündliche Note'+(n===1?'':'n')+' im Quartal')}
@@ -6008,17 +6021,22 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    mk('lernpartner','Lernpartner nach Leistung','Paare aus stärkeren und förderbedürftigen Schüler:innen – nach der letzten Quartalsnote bzw. Klassenarbeit im Noten-Manager (sonst nach den mündlichen Noten). Tabu-Paare werden beachtet.'));
   const saved=rd(BEL_KEY,'');const r=saved&&sec.querySelector('input[value="'+saved+'"]');if(r)r.checked=true;
   sec.addEventListener('change',e=>{if(e.target.name==='belegung'){const v=e.target.value;wr(BEL_KEY,['klassenarbeit','lernpartner'].includes(v)?v:'');paint()}})}
+ function lpSel(){const r=document.querySelector('input[name="belegung"][value="lernpartner"]');if(!r)return;const lab=r.closest('label');let w=document.getElementById('lpColWrap');
+  if(!w){w=document.createElement('div');w.id='lpColWrap';w.className='si-lpw';w.innerHTML='<span>Nach</span><select id="lpColSel" aria-label="Note für die Lernpartner"></select>';lab.after(w);w.querySelector('select').onchange=e=>{wr(LPK(),e.target.value)}}
+  w.hidden=!r.checked;if(!r.checked)return;if(!LPC.length){try{performance()}catch{}}const sel=w.querySelector('select'),cur=rd(LPK(),'')||LPCOL,html=LPC.length?LPC.map(c=>'<option value="'+esc(c.id)+'"'+(c.id===cur?' selected':'')+'>'+esc(c.label)+'</option>').join(''):'<option value="">keine Noten gefunden</option>';if(sel.dataset.h!==html){sel.innerHTML=html;sel.dataset.h=html}sel.disabled=!LPC.length}
+ document.addEventListener('click',e=>{const b=e.target.closest?.('[data-lpshow]');if(!b)return;lpShow=!lpShow;paint()});
  function pick(v){const r=document.querySelector('input[name="belegung"][value="'+v+'"]');if(r)r.checked=true}
  function partnerPairs(){const perf=performance();if(!perf)return null;
   const present=schuelerEinzel.filter(s=>istAnwesend(s)&&String(s.name||'').trim()&&!(s.anker&&String(s.anker).trim()));
   const tabu=(a,b)=>tabuPaare.some(p=>[norm(p.s1),norm(p.s2)].includes(norm(a))&&[norm(p.s1),norm(p.s2)].includes(norm(b)));
   const graded=present.filter(s=>perf.m.has(norm(s.name))).sort((a,b)=>perf.m.get(norm(a.name))-perf.m.get(norm(b.name))||Math.random()-.5),rest=present.filter(s=>!perf.m.has(norm(s.name))).sort(()=>Math.random()-.5);
-  const h=Math.floor(graded.length/2),top=graded.slice(0,h),bot=graded.slice(h);
+  /* 13.68: Stärkste:r + Schwächste:r, Zweitstärkste:r + Zweitschwächste:r … */const h=Math.floor(graded.length/2),top=graded.slice(0,h),bot=graded.slice(graded.length-h).reverse(),mid=graded.length%2?[graded[h]]:[];
   for(let i=0;i<top.length;i++)if(tabu(top[i].name,bot[i].name)){const j=[i+1,i-1,i+2,i-2].find(j=>j>=0&&j<top.length&&!tabu(top[i].name,bot[j].name)&&!tabu(top[j].name,bot[i].name));if(j!=null)[bot[i],bot[j]]=[bot[j],bot[i]]}
-  const pairs=top.map((s,i)=>({s1:s.name,s2:bot[i].name,geschlecht:s.geschlecht||''}));const left=[...bot.slice(top.length),...rest];
+  const pairs=top.map((s,i)=>({s1:s.name,s2:bot[i].name,geschlecht:s.geschlecht||''}));const left=[...mid,...rest];
   while(left.length>1){const a=left.shift(),j=Math.max(0,left.findIndex(b=>!tabu(a.name,b.name)));pairs.push({s1:a.name,s2:left.splice(j,1)[0].name,geschlecht:a.geschlecht||''})}
   if(left.length)pairs.push({s1:left[0].name,s2:'',geschlecht:left[0].geschlecht||''});
-  return {pairs,label:perf.label,n:top.length}}
+  /* 13.68: Paare und Noten merken – für Farben und Noten-Pillen am Sitzplan */const gv=n=>{const k=norm(n);return perf.np?.has(k)?perf.np.get(k):perf.m.has(k)?perf.m.get(k):null};
+  return {pairs,label:perf.label,n:top.length,save:JSON.stringify({label:perf.label,pts:!!perf.np?.size,pairs:pairs.map(p=>[p.s1,p.s2,gv(p.s1),gv(p.s2)])})}}
  const origGen=window.generiereSitzplan;
  window.generiereSitzplan=function(){const v=belegung();
   if(v==='klassenarbeit'){pick('einzeln');try{origGen.apply(this,arguments)}finally{pick('klassenarbeit')}paint();const s=document.getElementById('placementStatus');if(s&&!s.hidden&&/platziert/.test(s.textContent))s.textContent=s.textContent.replace(/\.\s*$/,'')+' · Klassenarbeit: Gruppe A/B im Schachbrett.';return}
@@ -6026,7 +6044,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    const keep=schuelerPaare,keepSave=window.datenSpeichern;schuelerPaare=r.pairs;pick('festePaare');
    window.datenSpeichern=function(){schuelerPaare=keep;return keepSave.apply(this,arguments)};
    try{origGen.apply(this,arguments)}finally{schuelerPaare=keep;window.datenSpeichern=keepSave;pick('lernpartner')}
-   const s=document.getElementById('placementStatus');if(s&&!s.hidden&&/platziert/.test(s.textContent))s.textContent=s.textContent.replace(/\.\s*$/,'')+' · Lernpartner nach '+r.label+': '+r.n+' Paare stark + förderbedürftig.';paint();return}
+   const s=document.getElementById('placementStatus');if(s&&!s.hidden&&/platziert/.test(s.textContent)){wr(LPP(),r.save);s.textContent=s.textContent.replace(/\.\s*$/,'')+' · Lernpartner nach '+r.label+': '+r.n+' Paare stärkste:r + schwächste:r.'}paint();return}
   return origGen.apply(this,arguments)};
 
  /* Einbinden */
@@ -6044,7 +6062,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
    Schließen: ⓘ erneut, Tipp daneben oder Esc. Knöpfe im Menü „Mehr“ erscheinen blasser. */
 (()=>{
  const INFO='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.6" r=".6" fill="currentColor"/></svg>';
- const st=document.createElement('style');st.textContent=
+ const st=document.createElement('style');st.textContent='.room-grid .cell.si-lpc:not(#_){background:var(--lpf)!important;border-color:var(--lpb)!important;box-shadow:inset 0 0 0 1px var(--lpb)}.si-lp{position:absolute;right:-6px;top:-8px;z-index:3;min-width:22px;padding:1px 6px;border-radius:999px;font-size:11px;font-weight:800;line-height:1.45;text-align:center;background:#fff;color:#243247;border:1.5px solid var(--lpb,#9fb3cc);box-shadow:0 1px 3px #0002;pointer-events:none}.si-lpb{margin-left:8px;height:30px;padding:0 12px;border-radius:9px;border:1px solid #c9d6e8;background:#fff;color:#2f5f9b;font:inherit;font-weight:650;cursor:pointer}.si-lpb.on{background:#fff4e8;border-color:#e8a25a;color:#b45309}.si-lpn{margin-left:8px;color:#66758a;font-size:.9em}.si-lpw{display:flex;align-items:center;gap:8px;margin:4px 0 6px 28px;font-size:.92rem;color:#66758a}.si-lpw[hidden]{display:none}.si-lpw select{flex:1;min-width:0;height:36px;border:1px solid #c9d6e8;border-radius:9px;padding:0 8px;font:inherit;color:#243247;background:#fff}@media print{.si-lp{display:none}}'+
   'html body .classroom-plan-actions>.student-finder:not(#_):not(#__):not(#___){width:40px!important;min-width:40px!important;height:40px!important;border-radius:10px!important}html body .sp-lg-btn:not(#_):not(#__):not(#___){order:100;flex:none;width:32px!important;min-width:32px!important;height:32px!important;min-height:0!important;padding:0!important;margin:0 0 0 2px!important;border-radius:999px!important;border:1px solid #cfd8e6!important;background:#fff!important;color:#2f5f9b!important;display:inline-grid!important;place-items:center;box-shadow:none!important;cursor:pointer;align-self:center}'
   +'html body .classroom-plan-zoom>.sp-lg-btn:not(#_):not(#__):not(#___){width:40px!important;min-width:40px!important;height:40px!important;border:0!important;background:#e7edf6!important;margin-left:6px!important}'
   +'html body .sp-lg-btn[aria-expanded=true]:not(#_):not(#__):not(#___){background:#2f5f9b!important;border-color:#2f5f9b!important;color:#fff!important}.sp-lg-btn svg{width:19px;height:19px}'

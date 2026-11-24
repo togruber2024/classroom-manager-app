@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 24.11.2026 · Version 13.67
+Stand: 24.11.2026 · Version 13.68
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1646,3 +1646,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.65: Enter schließt einzelne Eingabefelder: Rohpunkte, Grenzen, Gewichtungen und das Suchfeld; in den Fenstern zum Anlegen bestätigt Enter direkt
 13.66: Notenspiegel-Fenster: Knopf „Neben der Tabelle“ heißt jetzt „Live-Notenspiegel“
 13.67: Gruppen und Lernpartner nach Leistung: Notenpunkte in Oberstufen-Kursen nicht mehr doppelt umgerechnet; Anzeige dort in Notenpunkten
+13.68: Lernpartner nach Leistung: Stärkste:r mit Schwächste:r, Note wählbar, Paare farbig markiert, Noten-Pillen auf Knopfdruck (nie im Datenschutz-/Smartboard-Modus)
