@@ -3762,7 +3762,7 @@ html.fs-view .fs-hide{display:none!important}
   if(!out.lesson){const fm=/L(?:ektion)?[\s_-]*(\d{1,2})\b/i.exec(fileName||'');if(fm)out.lesson=fm[1]}
   if(entries.length)out.sections.push({name:'Wortliste'+(out.lesson?' zu Lektion '+out.lesson:''),entries});return out}
  function parseAny(pages,fileName){const a=parseVocab(pages),b=parseTwoColumn(pages,fileName);const n=r=>r.sections.reduce((x,s)=>x+s.entries.length,0);const r=n(b)>n(a)?b:a;
-  /* Längenzeichen: für das ganze Dokument entscheiden, nicht je Wort */const all=r.sections.flatMap(s=>s.entries);const has=all.some(e=>MAC.test(e.lemma+e.info));all.forEach(e=>e.noMac=!has);return r}
+  /* Längenzeichen: für das ganze Dokument entscheiden, nicht je Wort */const all=r.sections.flatMap(s=>s.entries);const has=all.some(e=>MAC.test(e.lemma+e.info));all.forEach(e=>{e.noMac=!has;/* 13.97: „relī quī“ → „relīquī“ (pdf.js trennt manche Wörter) */if(e.info&&/\p{Ll} \p{Ll}/u.test(e.info)){const parts=e.info.split(','),sg=plain((parts[0]||'').trim().split(/\s+/)[0]||'');e.info=parts.map((x,i)=>{if(!i)return x;const t=x.trim().split(/\s+/);return t.length===2&&/^\p{Ll}+$/u.test(t[0])&&/^\p{Ll}+$/u.test(t[1])&&/[iī]$/.test(t[1])&&plain(t[0]).length<sg.length-2?' '+t[0]+t[1]:x}).join(',')}});return r}
  /* ---------- Formenlehre ---------- */
  const CASES=['Nom.','Gen.','Dat.','Akk.','Abl.'];
  const P=(sg,pl)=>({sg,pl});
@@ -3870,9 +3870,10 @@ html.fs-view .fs-hide{display:none!important}
   return null}
  function verbParadigm(lemma,info){
   const sg=(info.split(',')[0]||'').trim().split(/\s+/)[0];if(!sg)return null;const L=lemma,lp=plain(L),sp=plain(sg);
-  const stems=info.split(',').map(x=>x.trim().split(/\s+/)[0]).filter(x=>x&&x!=='–'&&!/^[+]/.test(x));
+  /* 13.97: im PDF-Text auseinandergerissene Stammformen („relī quī“) wieder zusammensetzen – sonst entstehen Formen wie „relistī“ */
+  const stems=info.split(',').map(x=>{const t=x.trim().split(/\s+/);if(t.length>1&&/^\p{Ll}+$/u.test(t[0])&&/^\p{Ll}+$/u.test(t[1])&&/[iī]$/.test(t[1])&&plain(t[0]).length<plain(sg).length-2&&plain(t[0]+t[1]).length<=plain(L).length+1)return t[0]+t[1];return t[0]}).filter(x=>x&&x!=='–'&&!/^[+]/.test(x));
   let ppp=null,perf=null,dep=/or$/.test(sp),semi=false;
-  for(const x of stems.slice(1)){const px=plain(x);if(/um$/.test(px))ppp=x;else if(/us$/.test(px)&&(dep||/\bsum\b/.test(info))){ppp=x.slice(0,-2)+'um';if(!dep)semi=true}else if(/i$/.test(px)&&!perf)perf=x}
+  for(const x of stems.slice(1)){const px=plain(x);if(/um$/.test(px))ppp=x;else if(/us$/.test(px)&&(dep||/\bsum\b/.test(info))){ppp=x.slice(0,-2)+'um';if(!dep)semi=true}else if(/i$/.test(px)&&!perf&&!(px.length<sp.length-3&&px.slice(0,3)===sp.slice(0,3)&&px.length<5))perf=x}
   const forms={},meta={},put=(arr,t,v,m,g)=>{(arr||[]).forEach((f,i)=>{if(!f||f==='–')return;const key=PERS[i]+' '+(m==='k'?'Konj. ':'')+TL[t]+(v==='p'&&!dep&&!(semi&&g)?' Pass.':'')+(g?' '+g:'');forms[key]=f;meta[key]={t,v,m,p:i,g}})};
   let conj='',st='',irr=null,unsure='';
   irr=dep?null:irregular(L,sg);
