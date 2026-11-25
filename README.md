@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 25.11.2026 · Version 13.89
+Stand: 25.11.2026 · Version 13.90
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1668,3 +1668,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.87: Test mit Assistent führt jetzt bis zum Ende: ausgeben, Abgaben einsammeln, prüfen, in die Noten, Ergebnisse freigeben – unterbrechbar mit „Fortsetzen“. Wiederholung und Übungen der Lektion wählbar. Elternsprechtag: Karten je Fach wie auf dem iPhone. iPhone: Blätter im Unterricht nach unten wegwischen.
 13.88: Elternsprechtag-Knopf als Symbol (zwei Sprechblasen) neben der Schülerübersicht.
 13.89: Elternsprechtag: Klingel zum Ende jedes Termins (Symbol oben, mit Countdown). Backup sichert jetzt auch Elternsprechtag, Übersetzungsvergleich, Gruppen, Synonyme und Reihenfolge der Reihen.
+13.90: Elternsprechtag: Geschwister, die in IServ untereinander stehen, werden jetzt alle erkannt (einmal „Neu einlesen“).
