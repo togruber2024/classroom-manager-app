@@ -61,7 +61,7 @@ h3{margin:18px 0 8px;font-size:.8rem;color:var(--mut);text-transform:uppercase;l
 const K='cm-lernordner-v1',$=q=>document.querySelector(q),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const rd=()=>{try{return JSON.parse(localStorage.getItem(K)||'{}')||{}}catch{return {}}},wr=a=>{try{localStorage.setItem(K,JSON.stringify(a))}catch{}};
 const sa=(()=>{try{return navigator.standalone===true||matchMedia('(display-mode: standalone)').matches}catch{return false}})();
-const PAGES=['einheit.html','texttrainer.html','ueben.html','uebungen.html','vokabeltest.html','lernpaket.html','lernordner.html'];
+const PAGES=['einheit.html','texttrainer.html','ueben.html','uebungen.html','vokabeltest.html','lernpaket.html','lernordner.html','vergleich.html'];/* 13.99: auch Übersetzungsvergleich */
 const subjOf=e=>e.subject||(['Übersetzungs-Trainer','Vokabeln üben','Übungen','Vokabeltest','Lernpaket'].includes(e.kind)?'latein':'');
 const SN={latein:'Latein',erdkunde:'Erdkunde',geschichte:'Geschichte',deutsch:'Deutsch',mathematik:'Mathematik',englisch:'Englisch',franzoesisch:'Französisch',musik:'Musik',kunst:'Kunst',religion:'Religion',biologie:'Biologie',physik:'Physik',politik:'Politik'},FA=window.CM_FACH||'';
  if(FA){$('#ttl').textContent=SN[FA];$('#ic').src='fach-'+FA+'-192.png'}try{sessionStorage.setItem('cm-lo-in','1')}catch{}
@@ -180,7 +180,7 @@ function fileOpen(){const i=document.createElement('input');i.type='file';i.styl
 function saveOrder(){const x=rd();let i=0;document.querySelectorAll('#app .lrow').forEach(r=>{const e=x[r.dataset.id];if(e)e.ord=i++});wr(x);try{if(smode()!=='fold')localStorage.setItem(SK,'own')}catch{}}
 $('#fopen').onclick=fileOpen;
 /* 12.11: „Link einfügen“ – ein Link aus AirDrop/Nachrichten öffnet sich in Safari; kopiert und hier eingefügt öffnet er sich in der Web-App (gleicher Speicher wie der Lernordner) */
-const linkOf=t=>{const m=String(t||'').match(/https?:\/\/\S+|(?:einheit|texttrainer|ueben|uebungen|vokabeltest|lernpaket)\.html\S*/);return m?local(m[0].replace(/[>)\]"'.,;]+$/,'')):null};
+const linkOf=t=>{const m=String(t||'').match(/https?:\/\/\S+|(?:einheit|texttrainer|ueben|uebungen|vokabeltest|lernpaket|vergleich)\.html\S*/);return m?local(m[0].replace(/[>)\]"'.,;]+$/,'')):null};
 function goLink(to){if(to){location.href=to;return true}return false}
 /* 12.64: Übersetzungs-Trainer – den Text schon hier auspacken und merken; kommt der lange Link beim Öffnen nicht ganz an, lädt der Trainer ihn trotzdem */
 const TTK='cm-texttrainer-last',ttOk=t=>!!(t&&t.type==='classroom-text-trainer'&&Array.isArray(t.s)&&t.s.length);
