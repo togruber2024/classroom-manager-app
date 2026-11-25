@@ -212,14 +212,14 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
    +(gRows.length?'<div class="card">'+(rows.length?'<b class="rh">Teil B · Grammatik</b>':'')+'<table class="rtb"><thead><tr><th>Aufgabe</th><th>deine Antworten</th><th class="rp">Punkte</th></tr></thead><tbody>'+gRows.join('')+'</tbody></table></div>':'');
   /* 12.79: Ergebnis als PDF – dieselben Tabellen, Fehler mit f, durchgestrichen, Lösung grün */
   const pb=document.getElementById('rpdf');if(pb)pb.onclick=async()=>{const t0=pb.lastChild.textContent;
-   const mk=h=>{const x=document.createElement('div');x.innerHTML=h;x.querySelectorAll('.rs').forEach(e=>e.replaceWith('[[s:'+(e.className.match(/rs-(ok|hf|no)/)||[])[1]+']] '));x.querySelectorAll('.rck,.rf').forEach(e=>e.remove());
+   const mk=h=>{const x=document.createElement('div');x.innerHTML=h;x.querySelectorAll('.rs').forEach(e=>e.remove());x.querySelectorAll('.rck').forEach(e=>e.replaceWith('[[s:ck]]'));x.querySelectorAll('.rf').forEach(e=>e.replaceWith('[[s:fx]]'));
     const wr=(sel,k)=>x.querySelectorAll(sel).forEach(e=>e.replaceWith('[['+k+':'+e.textContent.replace(/[\[\]]/g,'')+']]'));wr('del,s','w');wr('.rc','g');wr('.rw','w');
     x.querySelectorAll('small').forEach(e=>e.replaceWith('\n'+e.textContent));x.querySelectorAll('b').forEach(e=>e.replaceWith('**'+e.textContent+'**'));return x.textContent.replace(/[ \t]+/g,' ').replace(/ *\n */g,'\n').trim()};
    const tab=(el,w)=>({t:'table',w,sz:9.5,head:[...el.querySelectorAll('thead th')].map(th=>th.textContent),rows:[...el.querySelectorAll('tbody tr')].map(tr=>[...tr.children].map(td=>mk(td.innerHTML)))});
    const T=[...app.querySelectorAll('.rtb')],B=[{t:'h1',s:(E.t||'Vokabeltest')+' · Gruppe '+g},{t:'sub',s:[d.name,new Date().toLocaleDateString('de-DE')].filter(Boolean).join(' · ')},
     {t:'grade',sign:sg,bg:GC[0],fg:GC[1],s1:String(pts).replace('.',',')+' von '+String(tot).replace('.',',')+' Punkten ('+Math.round(r)+' %)',s2:'Automatisch berechnet – mit denselben Regeln wie bei deiner Lehrkraft.'}];
    if(gNote)B.push({t:'p',s:gNote,sz:9.5,col:'#5c6b80'});
-   if(rows.length){if(gRows.length)B.push({t:'h2',s:'Teil A · Vokabeln'});B.push(tab(T[0],[.2,.36,.32,.12]),{t:'p',s:'[[s:ok]] richtig     [[s:no]] falsch – Lösung grün daneben',sz:8.5,col:'#5c6b80'})}
+   if(rows.length){if(gRows.length)B.push({t:'h2',s:'Teil A · Vokabeln'});B.push(tab(T[0],[.2,.36,.32,.12]),{t:'p',s:'richtig[[s:ck]]     [[w:falsch]][[s:fx]] Lösung grün daneben',sz:8.5,col:'#5c6b80'})}
    if(gRows.length){if(rows.length)B.push({t:'h2',s:'Teil B · Grammatik'});B.push(tab(T[T.length-1],[.32,.56,.12]))}
    try{pb.lastChild.textContent='PDF wird erstellt …';const blob=cmPdf.build(B,{title:E.t||'Vokabeltest',foot:(E.t||'Vokabeltest')+' · '+(d.name||'')});await cmPdf.save(blob,(E.t||'Vokabeltest')+' '+(d.name||'')+'.pdf')}
    catch(e){alert('Die PDF konnte nicht erstellt werden: '+(e&&e.message||e))}finally{pb.lastChild.textContent=t0}};

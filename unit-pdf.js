@@ -16,10 +16,10 @@
  function runs(s){const out=[];let b=false;String(s??'').split(/(\[\[[a-z]+:[^\]]*\]\]|\*\*)/).forEach(part=>{if(!part)return;if(part==='**'){b=!b;return}
    const m=/^\[\[([a-z]+):([^\]]*)\]\]$/.exec(part);if(m&&m[1]==='s'){out.push({w:'',b,badge:m[2]});return}
    const st=m?m[1]:'';(m?m[2]:part).split(/(\s+)/).forEach(w=>{if(w)out.push({w,b:b||st==='g',st})})});return out}
- const BW=sz=>sz*1.55;
+ const BW=sz=>sz*1.55,BWb=(b,sz)=>b==='ck'||b==='fx'?sz*.9:BW(sz);/* 14.10: [[s:ck]] grüner Haken, [[s:fx]] rotes f – ohne Kästchen, wie in der Auswertung */
  function wrap(s,sz,maxW,bold){const lines=[];for(const para of String(s??'').split('\n')){let cur=[],cw=0;let open=false;
    /* **fett** über Zeilenumbrüche hinweg: Zustand je Absatz */
-   for(const r of runs(para)){const b=bold||r.b,isSp=!r.badge&&/^\s+$/.test(r.w),w=r.badge?BW(sz):wid(isSp?' ':r.w,sz,b);if(isSp){if(cur.length){cur.push({w:' ',b,st:r.st});cw+=w}continue}
+   for(const r of runs(para)){const b=bold||r.b,isSp=!r.badge&&/^\s+$/.test(r.w),w=r.badge?BWb(r.badge,sz):wid(isSp?' ':r.w,sz,b);if(isSp){if(cur.length){cur.push({w:' ',b,st:r.st});cw+=w}continue}
     if(cw+w>maxW&&cur.length){while(cur.length&&cur[cur.length-1].w===' ')cur.pop();lines.push(cur);cur=[];cw=0}cur.push({w:r.w,b,st:r.st,badge:r.badge});cw+=w}
    while(cur.length&&cur[cur.length-1].w===' ')cur.pop();lines.push(cur);void open}
   return lines.length?lines:[[]]}
@@ -35,10 +35,12 @@
   const need=h=>{if(y-h<BOT)newPage()};
   /* Ganz lassen: passt der Block auf eine leere Seite, aber nicht mehr auf diese → neue Seite */
   const keep=h=>{if(h<=FULL&&y-h<BOT)newPage()};
-  const line=(parts,x,yy,sz,col)=>{let s='BT '+rgb(col)+' rg';let cx=x,last=null,cc=col;const dec=[];for(const p of parts){if(p.badge){dec.push(['s',cx,p.badge]);cx+=BW(sz);continue}
+  const line=(parts,x,yy,sz,col)=>{let s='BT '+rgb(col)+' rg';let cx=x,last=null,cc=col;const dec=[];for(const p of parts){if(p.badge){dec.push(['s',cx,p.badge]);cx+=BWb(p.badge,sz);continue}
    const f=p.b?'/F2':'/F1',c=p.st==='x'?'#b42318':p.st==='g'?'#1f8a4c':col;if(c!==cc){s+=' '+rgb(c)+' rg';cc=c}if(f!==last){s+=' '+f+' '+sz+' Tf';last=f}s+=' 1 0 0 1 '+cx.toFixed(2)+' '+yy.toFixed(2)+' Tm ('+enc(p.w)+') Tj';const w=wid(p.w,sz,p.b);if(p.st==='x'||p.st==='w')dec.push([p.st,cx,w]);cx+=w}ops.push(s+' ET');
    for(const [k,dx,v] of dec){if(k==='x')ops.push(rgb('#b42318')+' RG .9 w '+dx.toFixed(2)+' '+(yy+sz*.3).toFixed(2)+' m '+(dx+v).toFixed(2)+' '+(yy+sz*.3).toFixed(2)+' l S');
     else if(k==='w'){const y0=yy-sz*.2,st=sz*.18;let d=dx.toFixed(2)+' '+y0.toFixed(2)+' m';for(let t=dx+st,i=1;t<=dx+v+.01;t+=st,i++)d+=' '+t.toFixed(2)+' '+(y0+(i%2?-.8:0)).toFixed(2)+' l';ops.push(rgb('#b42318')+' RG .7 w '+d+' S')}
+    else if(v==='ck'){const y0=yy-sz*.02;ops.push(rgb('#1f8a4c')+' RG 1.1 w 1 J 1 j '+(dx+sz*.12).toFixed(2)+' '+(y0+sz*.32).toFixed(2)+' m '+(dx+sz*.32).toFixed(2)+' '+(y0+sz*.1).toFixed(2)+' l '+(dx+sz*.7).toFixed(2)+' '+(y0+sz*.62).toFixed(2)+' l S 0 J 0 j')}
+    else if(v==='fx'){ops.push('BT '+rgb('#d92d20')+' rg /F1 '+sz.toFixed(2)+' Tf 1 0 0 1 '+(dx+sz*.25).toFixed(2)+' '+yy.toFixed(2)+' Tm (f) Tj ET')}
     else{const bw=BW(sz)-3,bh=sz*1.2,by=yy-sz*.27,C={ok:['#e5f5ea','#1f8a4c'],hf:['#fff4d6','#8a6a00'],no:['#fdeceb','#b42318']}[v]||['#eef2f7','#5c6b80'];rect(dx,by,bw,bh,null,C[0]);
      if(v==='ok')ops.push(rgb(C[1])+' RG 1.2 w 1 J 1 j '+(dx+bw*.27).toFixed(2)+' '+(by+bh*.5).toFixed(2)+' m '+(dx+bw*.45).toFixed(2)+' '+(by+bh*.3).toFixed(2)+' l '+(dx+bw*.75).toFixed(2)+' '+(by+bh*.72).toFixed(2)+' l S 0 J 0 j');
      else{const g=v==='hf'?'\xbd':'f',fs=v==='hf'?sz*.95:sz*1.1,fn=v==='hf'?'/F2':'/F3',gw=v==='hf'?wid('½',fs,true):fs*.3;ops.push('BT '+rgb(C[1])+' rg '+fn+' '+fs.toFixed(2)+' Tf 1 0 0 1 '+(dx+(bw-gw)/2).toFixed(2)+' '+(by+bh*.24).toFixed(2)+' Tm ('+g+') Tj ET')}}}};
