@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 25.11.2026 · Version 14.05
+Stand: 25.11.2026 · Version 14.06
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1684,3 +1684,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.03: Vokabeltest-Auswertung wie beim Schüler: Grundform Wort für Wort (grüner Haken, durchgestrichen, Fehlendes grün), Genus in der Grundform; eingeklappte Testliste repariert.
 14.04: Vokabeltest-Auswertung: Kästchen vorne entfallen – Haken direkt an den Wörtern und der Bedeutung, doppelte Hinweise entfernt.
 14.05: Auswertung: falsche Wörter rot unterstrichen mit schlankem f; Elternsprechtag standardmäßig eingeklappt (orange = ausgeklappt), Klingel klappt das laufende Gespräch auf.
+14.06: Fenster: doppeltes „Schließen“ neben dem ✕ entfällt (außer Backup); Elternsprechtag: Notizfeld je Geschwisterkind, iPhone-Knopfzeile rechtsbündig.
