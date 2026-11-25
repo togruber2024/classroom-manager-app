@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 25.11.2026 · Version 13.93
+Stand: 25.11.2026 · Version 13.94
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1672,3 +1672,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.91: Sitzplan: ältere Version „Für heute übernehmen“. Elternsprechtag: kompaktes Drucklayout und eine Knopfzeile mit Druckersymbol.
 13.92: Sitzplan: ältere Version für das Datum übernehmen, von dem du kommst (z. B. „Für 24.11. übernehmen“), oder per Kalender für ein anderes Datum.
 13.93: iPad-Tests: „Alle als PDF“ unter Abgaben – alle korrigierten Abgaben in der Schülerversion als eine PDF, jedes Kind auf neuer Seite.
+13.94: Elternsprechtag: am iPhone unter Noten ab 7 Tage vorher ein Hinweis-Knopf; im Elternsprechtag-Fenster Datenschutzmodus neben der Klingel (nur ein Gespräch offen).
