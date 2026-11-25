@@ -12,11 +12,11 @@
  const clean=s=>String(s??'').replace(/­/g,'').replace(/[≈]/g,'~').replace(/[✓✔]/g,'+').replace(/[✗✘]/g,'x').replace(/[→]/g,'->').replace(/[←]/g,'<-').replace(/[\u{1F000}-\u{1FFFF}☀-➿️]/gu,'').replace(/[^\u0000-\u00ff\u20ac\u201a\u201e\u2026\u2018\u2019\u201c\u201d\u2022\u2013\u2014\u2122]/gu,ch=>{const b=ch.normalize('NFD')[0];return b&&b.charCodeAt(0)<256?b:'?'});
  const enc=s=>{let o='';for(const ch of clean(s)){const c=ch.codePointAt(0);const b=MAP[ch]??(c<256?c:63);const x=String.fromCharCode(b);o+=x==='('||x===')'||x==='\\'?'\\'+x:x}return o};
  const rgb=h=>{h=(h||'#000').replace('#','');if(h.length===3)h=h.replace(/./g,'$&$&');return [0,2,4].map(i=>(parseInt(h.slice(i,i+2),16)/255).toFixed(3)).join(' ')};
- /* 12.79: Auszeichnungen für Korrekturen – [[x:falsch]] rot durchgestrichen, [[g:Lösung]] grün fett, [[w:Fast]] rot unterstrichelt, [[s:ok|hf|no]] Kästchen ✓ ½ f */
+ /* 12.79: Auszeichnungen für Korrekturen – [[x:falsch]] rot durchgestrichen, [[g:Lösung]] grün fett, [[r:Lösung]] rot fett (14.14), [[w:Fast]] rot unterstrichelt, [[s:ok|hf|no]] Kästchen ✓ ½ f */
  function runs(s){const out=[];let b=false;String(s??'').split(/(\[\[[a-z]+:[^\]]*\]\]|\*\*)/).forEach(part=>{if(!part)return;if(part==='**'){b=!b;return}
    const m=/^\[\[([a-z]+):([^\]]*)\]\]$/.exec(part);if(m&&m[1]==='s'){out.push({w:'',b,badge:m[2]});return}
-   const st=m?m[1]:'';(m?m[2]:part).split(/(\s+)/).forEach(w=>{if(w)out.push({w,b:b||st==='g',st})})});return out}
- const BW=sz=>sz*1.55,BWb=(b,sz)=>b==='ck'||b==='fx'?sz*.9:b==='om'?sz*1.7:BW(sz);/* 14.10: [[s:ck]] grüner Haken, [[s:fx]] rotes f – ohne Kästchen, wie in der Auswertung */
+   const st=m?m[1]:'';(m?m[2]:part).split(/(\s+)/).forEach(w=>{if(w)out.push({w,b:b||st==='g'||st==='r',st})})});return out}
+ const BW=sz=>sz*1.55,BWb=(b,sz)=>b==='ck'||b==='fx'?sz*.9:b==='om'?sz*1.45:BW(sz);/* 14.10: [[s:ck]] grüner Haken, [[s:fx]] rotes f – ohne Kästchen, wie in der Auswertung */
  function wrap(s,sz,maxW,bold){const lines=[];for(const para of String(s??'').split('\n')){let cur=[],cw=0;let open=false;
    /* **fett** über Zeilenumbrüche hinweg: Zustand je Absatz */
    for(const r of runs(para)){const b=bold||r.b,isSp=!r.badge&&/^\s+$/.test(r.w),w=r.badge?BWb(r.badge,sz):wid(isSp?' ':r.w,sz,b);if(isSp){if(cur.length){cur.push({w:' ',b,st:r.st});cw+=w}continue}
@@ -36,11 +36,11 @@
   /* Ganz lassen: passt der Block auf eine leere Seite, aber nicht mehr auf diese → neue Seite */
   const keep=h=>{if(h<=FULL&&y-h<BOT)newPage()};
   const line=(parts,x,yy,sz,col)=>{let s='BT '+rgb(col)+' rg';let cx=x,last=null,cc=col;const dec=[];for(const p of parts){if(p.badge){dec.push(['s',cx,p.badge]);cx+=BWb(p.badge,sz);continue}
-   const f=p.b?'/F2':'/F1',c=p.st==='x'?'#b42318':p.st==='g'?'#1f8a4c':col;if(c!==cc){s+=' '+rgb(c)+' rg';cc=c}if(f!==last){s+=' '+f+' '+sz+' Tf';last=f}s+=' 1 0 0 1 '+cx.toFixed(2)+' '+yy.toFixed(2)+' Tm ('+enc(p.w)+') Tj';const w=wid(p.w,sz,p.b);if(p.st==='x'||p.st==='w')dec.push([p.st,cx,w]);cx+=w}ops.push(s+' ET');
+   const f=p.b?'/F2':'/F1',c=p.st==='x'?'#b42318':p.st==='g'?'#1f8a4c':p.st==='r'?'#d92d20':col;if(c!==cc){s+=' '+rgb(c)+' rg';cc=c}if(f!==last){s+=' '+f+' '+sz+' Tf';last=f}s+=' 1 0 0 1 '+cx.toFixed(2)+' '+yy.toFixed(2)+' Tm ('+enc(p.w)+') Tj';const w=wid(p.w,sz,p.b);if(p.st==='x'||p.st==='w')dec.push([p.st,cx,w]);cx+=w}ops.push(s+' ET');
    for(const [k,dx,v] of dec){if(k==='x')ops.push(rgb('#b42318')+' RG .9 w '+dx.toFixed(2)+' '+(yy+sz*.3).toFixed(2)+' m '+(dx+v).toFixed(2)+' '+(yy+sz*.3).toFixed(2)+' l S');
     else if(k==='w'){const y0=(yy-sz*.22).toFixed(2);ops.push(rgb('#b42318')+' RG 1 w '+dx.toFixed(2)+' '+y0+' m '+(dx+v).toFixed(2)+' '+y0+' l S')}
     else if(v==='ck'){const y0=yy-sz*.02;ops.push(rgb('#1f8a4c')+' RG 1.1 w 1 J 1 j '+(dx+sz*.12).toFixed(2)+' '+(y0+sz*.32).toFixed(2)+' m '+(dx+sz*.32).toFixed(2)+' '+(y0+sz*.1).toFixed(2)+' l '+(dx+sz*.7).toFixed(2)+' '+(y0+sz*.62).toFixed(2)+' l S 0 J 0 j')}
-    else if(v==='om'){const w=sz*1.2,h=sz*.78,x0=dx+sz*.15,y0=yy-sz*.16,P=[[0.05555555555555555,0.4583333333333333],[0.17777777777777778,0.4583333333333333],[0.30000000000000004,0.1166666666666667],[0.5333333333333333,0.8833333333333333],[0.9444444444444444,0.8833333333333333],[0.9444444444444444,0.6749999999999999]];ops.push('q 1 j 1 J '+rgb('#d92d20')+' RG .95 w '+P.map((p,k)=>(x0+p[0]*w).toFixed(2)+' '+(y0+p[1]*h).toFixed(2)+(k?' l':' m')).join(' ')+' S Q')}/* 14.13: Auslassungszeichen (Wurzel-Haken) */
+    else if(v==='om'){const y0=yy-sz*.02,X=f=>(dx+sz*f).toFixed(2),Y=f=>(y0+sz*f).toFixed(2);ops.push(rgb('#d92d20')+' RG 1.1 w 1 J 1 j '+X(.12)+' '+Y(.32)+' m '+X(.32)+' '+Y(.1)+' l '+X(.7)+' '+Y(.62)+' l '+X(1)+' '+Y(.62)+' l '+X(1)+' '+Y(.44)+' l S 0 J 0 j')}/* 14.13: Auslassungszeichen (Wurzel-Haken) */
     else if(v==='fx'){ops.push('BT '+rgb('#d92d20')+' rg /F1 '+sz.toFixed(2)+' Tf 1 0 0 1 '+(dx+sz*.25).toFixed(2)+' '+yy.toFixed(2)+' Tm (f) Tj ET')}
     else{const bw=BW(sz)-3,bh=sz*1.2,by=yy-sz*.27,C={ok:['#e5f5ea','#1f8a4c'],hf:['#fff4d6','#8a6a00'],no:['#fdeceb','#b42318']}[v]||['#eef2f7','#5c6b80'];rect(dx,by,bw,bh,null,C[0]);
      if(v==='ok')ops.push(rgb(C[1])+' RG 1.2 w 1 J 1 j '+(dx+bw*.27).toFixed(2)+' '+(by+bh*.5).toFixed(2)+' m '+(dx+bw*.45).toFixed(2)+' '+(by+bh*.3).toFixed(2)+' l '+(dx+bw*.75).toFixed(2)+' '+(by+bh*.72).toFixed(2)+' l S 0 J 0 j');
