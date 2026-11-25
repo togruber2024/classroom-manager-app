@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 25.11.2026 · Version 13.97
+Stand: 25.11.2026 · Version 13.98
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1676,3 +1676,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 13.95: Elternsprechtag am iPhone: alle Knöpfe in einer Zeile (Neu einlesen als Symbol).
 13.96: Elternsprechtag: fehlende Hausaufgaben/Material einzeln mit Datum, Gewichtungen wie auf dem iPhone; Datenschutzmodus: Noten unscharf (Fach antippen zeigt sie), Notizfeld lesbar.
 13.97: Vokabel-PDF: auseinandergerissene Stammformen (z. B. „relī quī“) werden zusammengesetzt – keine falschen Formen wie „relistī“ mehr.
+13.98: Vokabel-PDF: Abschnittsüberschriften wie „Repetitio“ werden nicht mehr als Vokabel gelesen oder in Tests verwendet.
