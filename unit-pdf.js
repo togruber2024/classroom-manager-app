@@ -11,7 +11,7 @@
  const MAP={'€':128,'‚':130,'„':132,'…':133,'‘':145,'’':146,'“':147,'”':148,'•':149,'–':150,'—':151,'™':153};
  const clean=s=>String(s??'').replace(/­/g,'').replace(/[≈]/g,'~').replace(/[✓✔]/g,'+').replace(/[✗✘]/g,'x').replace(/[→]/g,'->').replace(/[←]/g,'<-').replace(/[\u{1F000}-\u{1FFFF}☀-➿️]/gu,'').replace(/[^\u0000-\u00ff\u20ac\u201a\u201e\u2026\u2018\u2019\u201c\u201d\u2022\u2013\u2014\u2122]/gu,ch=>{const b=ch.normalize('NFD')[0];return b&&b.charCodeAt(0)<256?b:'?'});
  const enc=s=>{let o='';for(const ch of clean(s)){const c=ch.codePointAt(0);const b=MAP[ch]??(c<256?c:63);const x=String.fromCharCode(b);o+=x==='('||x===')'||x==='\\'?'\\'+x:x}return o};
- const rgb=h=>{h=(h||'#000').replace('#','');return [0,2,4].map(i=>(parseInt(h.slice(i,i+2),16)/255).toFixed(3)).join(' ')};
+ const rgb=h=>{h=(h||'#000').replace('#','');if(h.length===3)h=h.replace(/./g,'$&$&');return [0,2,4].map(i=>(parseInt(h.slice(i,i+2),16)/255).toFixed(3)).join(' ')};
  /* 12.79: Auszeichnungen für Korrekturen – [[x:falsch]] rot durchgestrichen, [[g:Lösung]] grün fett, [[w:Fast]] rot unterstrichelt, [[s:ok|hf|no]] Kästchen ✓ ½ f */
  function runs(s){const out=[];let b=false;String(s??'').split(/(\[\[[a-z]+:[^\]]*\]\]|\*\*)/).forEach(part=>{if(!part)return;if(part==='**'){b=!b;return}
    const m=/^\[\[([a-z]+):([^\]]*)\]\]$/.exec(part);if(m&&m[1]==='s'){out.push({w:'',b,badge:m[2]});return}

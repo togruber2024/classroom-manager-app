@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 25.11.2026 · Version 14.11
+Stand: 25.11.2026 · Version 14.12
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1690,3 +1690,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.09: Vokabelbibliothek: Lesefehler aus den Buch-PDFs werden bereinigt (Randnotizen, Übungstexte, getrennte Wörter, falsches Genus bei marītus) – auch in der gespeicherten Bibliothek.
 14.10: PDF-Export der Vokabeltests zeigt die neuen Korrekturzeichen (grüner Haken, rot unterstrichen mit f); Button heißt „Als PDF exportieren“
 14.11: PDF-Export: falsche Wörter gerade rot unterstrichen statt Schlangenlinie
+14.12: Vokabeltest-Ergebnis (PDF und Schüleransicht) in den Notenfarben der App, Zeichen dunkel; „--“/„---“ im PDF wieder sichtbar
