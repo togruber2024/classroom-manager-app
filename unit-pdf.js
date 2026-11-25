@@ -16,7 +16,7 @@
  function runs(s){const out=[];let b=false;String(s??'').split(/(\[\[[a-z]+:[^\]]*\]\]|\*\*)/).forEach(part=>{if(!part)return;if(part==='**'){b=!b;return}
    const m=/^\[\[([a-z]+):([^\]]*)\]\]$/.exec(part);if(m&&m[1]==='s'){out.push({w:'',b,badge:m[2]});return}
    const st=m?m[1]:'';(m?m[2]:part).split(/(\s+)/).forEach(w=>{if(w)out.push({w,b:b||st==='g',st})})});return out}
- const BW=sz=>sz*1.55,BWb=(b,sz)=>b==='ck'||b==='fx'?sz*.9:BW(sz);/* 14.10: [[s:ck]] grüner Haken, [[s:fx]] rotes f – ohne Kästchen, wie in der Auswertung */
+ const BW=sz=>sz*1.55,BWb=(b,sz)=>b==='ck'||b==='fx'?sz*.9:b==='om'?sz*1.7:BW(sz);/* 14.10: [[s:ck]] grüner Haken, [[s:fx]] rotes f – ohne Kästchen, wie in der Auswertung */
  function wrap(s,sz,maxW,bold){const lines=[];for(const para of String(s??'').split('\n')){let cur=[],cw=0;let open=false;
    /* **fett** über Zeilenumbrüche hinweg: Zustand je Absatz */
    for(const r of runs(para)){const b=bold||r.b,isSp=!r.badge&&/^\s+$/.test(r.w),w=r.badge?BWb(r.badge,sz):wid(isSp?' ':r.w,sz,b);if(isSp){if(cur.length){cur.push({w:' ',b,st:r.st});cw+=w}continue}
@@ -40,6 +40,7 @@
    for(const [k,dx,v] of dec){if(k==='x')ops.push(rgb('#b42318')+' RG .9 w '+dx.toFixed(2)+' '+(yy+sz*.3).toFixed(2)+' m '+(dx+v).toFixed(2)+' '+(yy+sz*.3).toFixed(2)+' l S');
     else if(k==='w'){const y0=(yy-sz*.22).toFixed(2);ops.push(rgb('#b42318')+' RG 1 w '+dx.toFixed(2)+' '+y0+' m '+(dx+v).toFixed(2)+' '+y0+' l S')}
     else if(v==='ck'){const y0=yy-sz*.02;ops.push(rgb('#1f8a4c')+' RG 1.1 w 1 J 1 j '+(dx+sz*.12).toFixed(2)+' '+(y0+sz*.32).toFixed(2)+' m '+(dx+sz*.32).toFixed(2)+' '+(y0+sz*.1).toFixed(2)+' l '+(dx+sz*.7).toFixed(2)+' '+(y0+sz*.62).toFixed(2)+' l S 0 J 0 j')}
+    else if(v==='om'){const w=sz*1.2,h=sz*.78,x0=dx+sz*.15,y0=yy-sz*.16,P=[[0.05555555555555555,0.4583333333333333],[0.17777777777777778,0.4583333333333333],[0.30000000000000004,0.1166666666666667],[0.5333333333333333,0.8833333333333333],[0.9444444444444444,0.8833333333333333],[0.9444444444444444,0.6749999999999999]];ops.push('q 1 j 1 J '+rgb('#d92d20')+' RG .95 w '+P.map((p,k)=>(x0+p[0]*w).toFixed(2)+' '+(y0+p[1]*h).toFixed(2)+(k?' l':' m')).join(' ')+' S Q')}/* 14.13: Auslassungszeichen (Wurzel-Haken) */
     else if(v==='fx'){ops.push('BT '+rgb('#d92d20')+' rg /F1 '+sz.toFixed(2)+' Tf 1 0 0 1 '+(dx+sz*.25).toFixed(2)+' '+yy.toFixed(2)+' Tm (f) Tj ET')}
     else{const bw=BW(sz)-3,bh=sz*1.2,by=yy-sz*.27,C={ok:['#e5f5ea','#1f8a4c'],hf:['#fff4d6','#8a6a00'],no:['#fdeceb','#b42318']}[v]||['#eef2f7','#5c6b80'];rect(dx,by,bw,bh,null,C[0]);
      if(v==='ok')ops.push(rgb(C[1])+' RG 1.2 w 1 J 1 j '+(dx+bw*.27).toFixed(2)+' '+(by+bh*.5).toFixed(2)+' m '+(dx+bw*.45).toFixed(2)+' '+(by+bh*.3).toFixed(2)+' l '+(dx+bw*.75).toFixed(2)+' '+(by+bh*.72).toFixed(2)+' l S 0 J 0 j');
