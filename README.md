@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 25.11.2026 · Version 14.08
+Stand: 25.11.2026 · Version 14.09
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1687,3 +1687,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.06: Fenster: doppeltes „Schließen“ neben dem ✕ entfällt (außer Backup); Elternsprechtag: Notizfeld je Geschwisterkind, iPhone-Knopfzeile rechtsbündig.
 14.07: Test-Assistent: bei IServ-Abgabe eigener Schritt „Test über IServ verteilen“ (Link kopieren, Aufgabe anlegen); Hinweis im Testfenster zeigt „Weiter mit …“.
 14.08: Test-Assistent: oben „Klasse · Lektion · ändern“, Striche zählen nur offene Schritte; „So wird bewertet“ im Stil der Auswertung (Haken hinter dem Wort, rot unterstrichen mit f).
+14.09: Vokabelbibliothek: Lesefehler aus den Buch-PDFs werden bereinigt (Randnotizen, Übungstexte, getrennte Wörter, falsches Genus bei marītus) – auch in der gespeicherten Bibliothek.

@@ -3766,8 +3766,23 @@ html.fs-view .fs-hide{display:none!important}
  /* 13.98: Abschnittsüberschriften der Buch-PDF (z. B. „Repetitio“) sind keine Vokabeln – beim Einlesen und beim Erstellen von Tests auslassen */
  const HEADS=new Set(['repetitio','repetitiones','vocabula','vocabulum','lectio','lectiones','exercitatio','exercitationes','textus','index','grammatica','summarium']);
  function isHeading(e){const l=plain(NFC(String(e?.lemma||'')).trim()).toLowerCase();return HEADS.has(l)&&!/\b[mfn]\.|ōnis|onis/.test(String(e?.info||''))}
+ /* 14.09: Lesefehler aus den Buch-PDFs bereinigen (Randnotizen, Übungstexte, getrennte Wörter) – beim Einlesen, beim Auswerten und einmalig in der gespeicherten Bibliothek */
+ const FIXES=[
+  [/^incipere$/,e=>/bauen|eines fremden/.test(e.info+' '+e.meaning),{info:'incipiō, coepī, coeptum',meaning:'anfangen, beginnen'}],
+  [/^permittere$/,e=>/beständig|Papst|Erdkreis|Ewigkeit/.test(e.info+' '+e.meaning),{info:'permittō, permīsī, permissum',meaning:'erlauben, gestatten'}],
+  [/^maritus$/,e=>/weggehen|mors\.|entfernen/.test(e.info+' '+e.meaning),{info:'marītī m.',meaning:'der Ehemann'}],
+  [/^considere$/,e=>/No-li|Setze/.test(e.meaning),{meaning:'sich hinsetzen, sich niederlassen'}],
+  [/^praestare$/,e=>/CornElia|cantäre/.test(e.meaning),{meaning:'sich hervortun, sich auszeichnen; (jdn.) übertreffen'}]];
+ function cleanEntry(e){if(!e||typeof e!=='object')return e;let o=e;const set=(k,v)=>{if(o[k]!==v){if(o===e)o={...e};o[k]=v}};const lp=plain(String(e.lemma||'').trim());
+  for(const [re,test,fix] of FIXES)if(re.test(lp)&&test({info:String(e.info||''),meaning:String(e.meaning||'')}))for(const [k,v] of Object.entries(fix))set(k,v);
+  let m=String(o.meaning||'');const m0=m;m=m.replace(/\s+\d+\s+[A-ZÄÖÜ][\s\S]*$/,'').replace(/\b([A-ZÄÖÜ][a-zäöüß]{2,}) (heit|keit|schaft)\b/g,'$1$2').replace(/\b(meinet|deinet|seinet|unseret|euret|ihret) wegen\b/g,'$1wegen').trim();if(m!==m0&&m)set('meaning',m);
+  /* Grundform mit angehängter Angabe („inquit 3. P. Sg.“, „praeesse, praesum, praefuī, –“) */let L=String(o.lemma||'');const mm=/^(\S+)\s+(\d\.\s*P\.\s*(Sg|Pl)\.?)$/.exec(L);if(mm){set('lemma',mm[1]);set('info',(mm[2]+' '+String(o.info||'')).trim())}
+  else if(/^[^\s,]+(re|ri|sse|lle)\s*,/.test(plain(L))&&L.split(',').length>=3){const p=L.split(',');set('lemma',p[0].trim());set('info',(p.slice(1).map(x=>x.trim()).join(', ')+(o.info?' '+o.info:'')).trim())}
+  /* getrennte Stammformen „relī quī“ */const parts=String(o.info||'').split(','),sg=plain((parts[0]||'').trim().split(/\s+/)[0]||'');if(parts.length>1){const np=parts.map((x,i)=>{if(!i)return x;const t=x.trim().split(/\s+/);return t.length===2&&/^\p{Ll}+$/u.test(t[0])&&/^\p{Ll}+$/u.test(t[1])&&/[iī]$/.test(t[1])&&plain(t[0]).length<sg.length-2?' '+t[0]+t[1]:x}).join(',');if(np!==o.info)set('info',np)}
+  return o}
+ function cleanLib(lib){let n=0;for(const L of Object.values(lib?.lessons||{}))for(const sec of L.sections||[])sec.entries=(sec.entries||[]).map(e=>{const c=cleanEntry(e);if(c!==e)n++;return c});return n}
  function parseAny(pages,fileName){const a=parseVocab(pages),b=parseTwoColumn(pages,fileName);const n=r=>r.sections.reduce((x,s)=>x+s.entries.length,0);const r=n(b)>n(a)?b:a;
-  /* Längenzeichen: für das ganze Dokument entscheiden, nicht je Wort */const all=r.sections.flatMap(s=>s.entries);const has=all.some(e=>MAC.test(e.lemma+e.info));for(const sec of r.sections)sec.entries=sec.entries.filter(e=>!isHeading(e));all.forEach(e=>{e.noMac=!has;/* 13.97: „relī quī“ → „relīquī“ (pdf.js trennt manche Wörter) */if(e.info&&/\p{Ll} \p{Ll}/u.test(e.info)){const parts=e.info.split(','),sg=plain((parts[0]||'').trim().split(/\s+/)[0]||'');e.info=parts.map((x,i)=>{if(!i)return x;const t=x.trim().split(/\s+/);return t.length===2&&/^\p{Ll}+$/u.test(t[0])&&/^\p{Ll}+$/u.test(t[1])&&/[iī]$/.test(t[1])&&plain(t[0]).length<sg.length-2?' '+t[0]+t[1]:x}).join(',')}});return r}
+  /* Längenzeichen: für das ganze Dokument entscheiden, nicht je Wort */const all=r.sections.flatMap(s=>s.entries);const has=all.some(e=>MAC.test(e.lemma+e.info));for(const sec of r.sections)sec.entries=sec.entries.filter(e=>!isHeading(e)).map(cleanEntry);all.forEach(e=>{e.noMac=!has;/* 13.97: „relī quī“ → „relīquī“ (pdf.js trennt manche Wörter) */if(e.info&&/\p{Ll} \p{Ll}/u.test(e.info)){const parts=e.info.split(','),sg=plain((parts[0]||'').trim().split(/\s+/)[0]||'');e.info=parts.map((x,i)=>{if(!i)return x;const t=x.trim().split(/\s+/);return t.length===2&&/^\p{Ll}+$/u.test(t[0])&&/^\p{Ll}+$/u.test(t[1])&&/[iī]$/.test(t[1])&&plain(t[0]).length<sg.length-2?' '+t[0]+t[1]:x}).join(',')}});return r}
  /* ---------- Formenlehre ---------- */
  const CASES=['Nom.','Gen.','Dat.','Akk.','Abl.'];
  const P=(sg,pl)=>({sg,pl});
@@ -3957,7 +3972,7 @@ html.fs-view .fs-hide{display:none!important}
   if(end==='am')return st+'ae '+g+'.';if(end==='em')return st+'is '+g+'.';
   if(end==='um'){if(g!=='n')return st+'ī '+g+'.';if(plain(st+end)===pl)return st+'ī n.'}
   return info}
- function analyze(e){const lemma=NFC(e.lemma).replace(/\s+/g,' ').trim();let info=earlyInfo(lemma,NFC(e.info).trim());
+ function analyze(e){e=cleanEntry(e);const lemma=NFC(e.lemma).replace(/\s+/g,' ').trim();let info=earlyInfo(lemma,NFC(e.info).trim());
   if(e.noMac===true||e.noMac===undefined&&!MAC.test(lemma+info)){const r=analyze0(lemma,expandInfo(lemma,info),e);return r.kind==='?'||r.kind==='x'?r:stripLex(r)}
   return analyze0(lemma,expandInfo(lemma,info),e)}
  function analyze0(lemma,info,e){
@@ -4073,7 +4088,7 @@ html.fs-view .fs-hide{display:none!important}
  const isWh=pages=>pages.some(p=>p.some(i=>/WH-?\s*Vokabular\s+zu\s+Lektion/i.test(i.s)));
  const lessonOrder=k=>/^T/.test(k)?100+ +k.slice(1):+k;
  const lessonLabel=k=>/^T/.test(k)?'Transitio '+k.slice(1):k==='0'?'Salvē! (S)':'Lektion '+k;
- root.classroomVocabPdf={isHeading,pageKey,parseBook,parseWhBook,isWh,lessonOrder,lessonLabel,pdfItems,parseVocab,parseTwoColumn,parseAny,analyze,draw,redrawOne,shortLabel,plain,learned,PONTES,nounParadigm,adjParadigm,pronParadigm,verbParadigm,CASES};
+ root.classroomVocabPdf={cleanEntry,cleanLib,isHeading,pageKey,parseBook,parseWhBook,isWh,lessonOrder,lessonLabel,pdfItems,parseVocab,parseTwoColumn,parseAny,analyze,draw,redrawOne,shortLabel,plain,learned,PONTES,nounParadigm,adjParadigm,pronParadigm,verbParadigm,CASES};
 })(typeof window!=='undefined'?window:globalThis);
 ;
 
@@ -4934,7 +4949,7 @@ pb.onclick=e=>{e.stopPropagation();pm.hidden=!pm.hidden;/* 12.33: Menü immer ga
  const BOOKS={main:{key:'classroom-vocab-library-v1',title:'Klett Pontes Gesamtband (2020)',sub:'iPad-Vokabeltest: Lektion wählen, ausgeben, auswerten'},
   wh:{key:'classroom-vocab-library-wh-v1',title:'Klett Pontes Gesamtband (2020) – Wiederholungsvokabular',sub:'Zu Beginn einer Lektion ihr Wiederholungsvokabular abfragen'}};
  let cur='main';const B=()=>BOOKS[cur];
- const libOf=id=>{try{const v=JSON.parse(localStorage.getItem(BOOKS[id].key)||'null');return v&&v.lessons&&Object.keys(v.lessons).length?v:null}catch{return null}};
+ const libOf=id=>{try{const v=JSON.parse(localStorage.getItem(BOOKS[id].key)||'null');/* 14.09: Lesefehler einmalig in der gespeicherten Bibliothek bereinigen */if(v&&v.lessons&&!libOf.done?.[id]){(libOf.done??={})[id]=1;try{if(window.classroomVocabPdf?.cleanLib?.(v))localStorage.setItem(BOOKS[id].key,JSON.stringify(v))}catch{}}return v&&v.lessons&&Object.keys(v.lessons).length?v:null}catch{return null}};
  const lib=()=>libOf(cur);
  const keysOf=l=>Object.keys(l.lessons).sort((a,b)=>window.classroomVocabPdf.lessonOrder(a)-window.classroomVocabPdf.lessonOrder(b));
  let bookSel=new Set();
