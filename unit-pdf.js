@@ -38,7 +38,7 @@
   const line=(parts,x,yy,sz,col)=>{let s='BT '+rgb(col)+' rg';let cx=x,last=null,cc=col;const dec=[];for(const p of parts){if(p.badge){dec.push(['s',cx,p.badge]);cx+=BWb(p.badge,sz);continue}
    const f=p.b?'/F2':'/F1',c=p.st==='x'?'#b42318':p.st==='g'?'#1f8a4c':col;if(c!==cc){s+=' '+rgb(c)+' rg';cc=c}if(f!==last){s+=' '+f+' '+sz+' Tf';last=f}s+=' 1 0 0 1 '+cx.toFixed(2)+' '+yy.toFixed(2)+' Tm ('+enc(p.w)+') Tj';const w=wid(p.w,sz,p.b);if(p.st==='x'||p.st==='w')dec.push([p.st,cx,w]);cx+=w}ops.push(s+' ET');
    for(const [k,dx,v] of dec){if(k==='x')ops.push(rgb('#b42318')+' RG .9 w '+dx.toFixed(2)+' '+(yy+sz*.3).toFixed(2)+' m '+(dx+v).toFixed(2)+' '+(yy+sz*.3).toFixed(2)+' l S');
-    else if(k==='w'){const y0=yy-sz*.2,st=sz*.18;let d=dx.toFixed(2)+' '+y0.toFixed(2)+' m';for(let t=dx+st,i=1;t<=dx+v+.01;t+=st,i++)d+=' '+t.toFixed(2)+' '+(y0+(i%2?-.8:0)).toFixed(2)+' l';ops.push(rgb('#b42318')+' RG .7 w '+d+' S')}
+    else if(k==='w'){const y0=(yy-sz*.22).toFixed(2);ops.push(rgb('#b42318')+' RG 1 w '+dx.toFixed(2)+' '+y0+' m '+(dx+v).toFixed(2)+' '+y0+' l S')}
     else if(v==='ck'){const y0=yy-sz*.02;ops.push(rgb('#1f8a4c')+' RG 1.1 w 1 J 1 j '+(dx+sz*.12).toFixed(2)+' '+(y0+sz*.32).toFixed(2)+' m '+(dx+sz*.32).toFixed(2)+' '+(y0+sz*.1).toFixed(2)+' l '+(dx+sz*.7).toFixed(2)+' '+(y0+sz*.62).toFixed(2)+' l S 0 J 0 j')}
     else if(v==='fx'){ops.push('BT '+rgb('#d92d20')+' rg /F1 '+sz.toFixed(2)+' Tf 1 0 0 1 '+(dx+sz*.25).toFixed(2)+' '+yy.toFixed(2)+' Tm (f) Tj ET')}
     else{const bw=BW(sz)-3,bh=sz*1.2,by=yy-sz*.27,C={ok:['#e5f5ea','#1f8a4c'],hf:['#fff4d6','#8a6a00'],no:['#fdeceb','#b42318']}[v]||['#eef2f7','#5c6b80'];rect(dx,by,bw,bh,null,C[0]);
