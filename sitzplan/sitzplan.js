@@ -168,7 +168,7 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
  const read=()=>{try{const v=JSON.parse(sessionStorage.getItem(KEY)||'null');return v&&v.on?v:null}catch{return null}};
  const PAL=['#5fcf91','#b9e08f','#fff36b','#f6d36b','#e6877d','#c8635e'];
  // Namen: Text unscharf (Schatten statt Schrift), Felder bleiben scharf umrandet.
- const NAME='html.classroom-privacy :is(input[type=text],input:not([type]),input[type=search],textarea):not(.lu-q):not(.task-name-input):not(.task-label-input):not([data-exam-topic-field]):not(.help-search):not([data-test-name]):not([name=testPass]):not(.ui-dialog input)';
+ const NAME='html.classroom-privacy :is(input[type=text],input:not([type]),input[type=search],textarea):not(.lu-q):not(.task-name-input):not(.task-label-input):not([data-exam-topic-field]):not(.help-search):not([data-test-name]):not([name=testPass]):not(.ui-dialog input):not(.est-note)';
  const T=':is(.task-table,.homework-table,.compact-entry-table,.test-detail-results)';
  const CELL=':is(span,input,select,button,label):not(.task-remove):not(.student-remove-button):not(.task-add-button):not(:has(*))';
  const GRADE='html.classroom-privacy '+T+' tbody td:not(:first-child) '+CELL+',html.classroom-privacy '+T+' tbody .task-end-grade,html.classroom-privacy .so-val';

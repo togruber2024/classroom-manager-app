@@ -168,7 +168,7 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
  const read=()=>{try{const v=JSON.parse(sessionStorage.getItem(KEY)||'null');return v&&v.on?v:null}catch{return null}};
  const PAL=['#5fcf91','#b9e08f','#fff36b','#f6d36b','#e6877d','#c8635e'];
  // Namen: Text unscharf (Schatten statt Schrift), Felder bleiben scharf umrandet.
- const NAME='html.classroom-privacy :is(input[type=text],input:not([type]),input[type=search],textarea):not(.lu-q):not(.task-name-input):not(.task-label-input):not([data-exam-topic-field]):not(.help-search):not([data-test-name]):not([name=testPass]):not(.ui-dialog input)';
+ const NAME='html.classroom-privacy :is(input[type=text],input:not([type]),input[type=search],textarea):not(.lu-q):not(.task-name-input):not(.task-label-input):not([data-exam-topic-field]):not(.help-search):not([data-test-name]):not([name=testPass]):not(.ui-dialog input):not(.est-note)';
  const T=':is(.task-table,.homework-table,.compact-entry-table,.test-detail-results)';
  const CELL=':is(span,input,select,button,label):not(.task-remove):not(.student-remove-button):not(.task-add-button):not(:has(*))';
  const GRADE='html.classroom-privacy '+T+' tbody td:not(:first-child) '+CELL+',html.classroom-privacy '+T+' tbody .task-end-grade,html.classroom-privacy .so-val';
@@ -6366,10 +6366,23 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
   const G={Q1:'1. Quartal',Q2:'2. Quartal',HJ:'Halbjahr',KA:pts?'Klausuren':'Klassenarbeiten',TN:'Teilnoten der '+(pts?'Klausuren':'Klassenarbeiten'),Weitere:'Weitere'},ord=['Q1','Q2','HJ','KA','TN','Weitere'];
   for(const c of out){c.grpLabel=G[c.grp]||c.grp;delete c.sig}
   return out.sort((a,b)=>ord.indexOf(a.grp)-ord.indexOf(b.grp)||b.prio-a.prio)}
+ /* 13.96: Zusatzangaben je Fach·Klasse·Halbjahr für den Elternsprechtag – fehlende Hausaufgaben/Material mit Datum und die Gewichtungen (wie die iPhone-Karte) */
+ function detailsFor(name){const wanted=normalize(name),out={},today=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  for(const [subject,classes] of Object.entries(classesBySubject||{}))for(const item of classes||[]){const values=subjectStates?.[subject+'::class::'+item.id]?.customValues||{},groups=item.examGroups||[];
+   const years=groups.filter(g=>g.type==='halfYear');if(!years.length)years.push({id:null,label:''});
+   for(const year of years){const content=groups.filter(g=>(g.halfYearId||null)===(year.id||null)),sg=content.find(g=>g.type==='quarterSummary'),sem=content.find(g=>g.type==='semester'),settings=values[sg?.pages?.[0]]||{},semS=values[sem?.pages?.[0]]||{};
+    const miss=mat=>{const l=[];let any=false;for(const g of content.filter(g=>g.type==='homework'&&!!g.material===mat))(g.pages||[]).forEach((pg,q)=>{const d=values[pg]||{},st=(d.students||[]).find(x=>normalize(x.name)===wanted);if(!st)return;any=true;for(const a of d.assignments||[]){if(a.date&&a.date>today)continue;if(st.statuses?.[a.id]==='missing')l.push({date:a.date||'',q})}});return any?l.sort((x,y)=>x.date<y.date?-1:1):null};
+    const ha=miss(false),ma=miss(true);
+    const hasPerson=ha||ma||content.some(g=>(g.pages||[]).some(k=>(values[k]?.students||[]).some(x=>normalize(x.name)===wanted)));if(!hasPerson)continue;
+    const nq=Math.max(1,...content.filter(g=>['performance','homework','tests'].includes(g.type)).map(g=>g.pages?.length||0));
+    const w=[];for(let q=0;q<nq;q++){const x=window.classroomSubjectOtherWeights?.(subject)||settings.otherParticipationWeights?.[q]||semS.otherParticipationWeights?.[q]||{participation:80,tests:20};w.push({participation:Number(x.participation),tests:Number(x.tests)})}
+    const fw=semS.finalWeights?{other:Number(semS.finalWeights.other??50),exams:Number(semS.finalWeights.exams??50)}:{other:50,exams:50};
+    out[[subjects?.[subject]?.label||subject,item.label,year.label].filter(Boolean).join(' · ')]={ha,ma,w,fw}}}
+  return out}
  window.addEventListener('message',event=>{
   const msg=event.data;if(event.source!==parent||!msg?.id)return;
   try{
-   if(msg.type==='classroom:student-profile'){saveCurrentSubject();reply(msg,{blocks:blocksFor(collect(msg.keys||null),msg.keys||null,msg.name),palette:palette()})}
+   if(msg.type==='classroom:student-profile'){saveCurrentSubject();let details={};try{details=detailsFor(msg.name)}catch{}reply(msg,{blocks:blocksFor(collect(msg.keys||null),msg.keys||null,msg.name),palette:palette(),details})}
    else if(msg.type==='classroom:subject-compare'){saveCurrentSubject();reply(msg,{subjects:compareData(msg.keys||[]),palette:palette()})}
    else if(msg.type==='classroom:archive-sheets'){const sheets=withArchive(msg.values||{},()=>window.classroomExcelExport.collect(true));reply(msg,{sheets:sheets.map(s=>({name:s.name,label:s.label,subjectLabel:s.subjectLabel,classKey:s.classKey,rows:s.rows}))})}
    else if(msg.type==='classroom:new-school-year'){reply(msg,newSchoolYear(msg.plan||{}))}
