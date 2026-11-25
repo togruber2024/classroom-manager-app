@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 25.11.2026 · Version 14.17
+Stand: 25.11.2026 · Version 14.18
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1696,3 +1696,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.15: Elternsprechtag-Datenschutzmodus: alle Namen unscharf (auch in der offenen Karte, Antippen zeigt sie), ohne Hinweistexte
 14.16: Sperr-Schalter bei Tests und Klassenarbeiten: offenes Schloss, solange nicht gesperrt
 14.17: Überall ✕ statt „Schließen“: Ergebnis-Übersicht, Abgabe-QR, QR-Scanner, Lösungen, Smartboard-Vollbild; Frühwarn-✕ einheitlich
+14.18: Elternsprechtag am iPhone: ✕ oben rechts neben der Überschrift; Einlesen-Fenster mit ✕
