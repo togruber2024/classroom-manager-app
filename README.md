@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 25.11.2026 · Version 14.15
+Stand: 25.11.2026 · Version 14.16
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1694,3 +1694,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.13: Vokabeltest: rotes Auslassungszeichen vor fehlenden Teilen (Fenster, Schüleransicht und PDF)
 14.14: Vokabeltest: Auslassungszeichen nur bei fehlenden Wörtern und als verlängerter Haken; Lösungen rot statt grün
 14.15: Elternsprechtag-Datenschutzmodus: alle Namen unscharf (auch in der offenen Karte, Antippen zeigt sie), ohne Hinweistexte
+14.16: Sperr-Schalter bei Tests und Klassenarbeiten: offenes Schloss, solange nicht gesperrt

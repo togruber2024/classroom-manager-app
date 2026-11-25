@@ -1,5 +1,5 @@
 /* 12.38: Strich-Symbole statt Textzeichen.
-   Ersetzt in sichtbarem Text die Zeichen ☰ ▾ ▸ › ‹ ✕ 🔒 ▶ ⠿ ✓ ⋯ ··· ⭐ ⚠ durch Strich-Symbole (24er-Raster, Strichstärke 2, runde Enden).
+   Ersetzt in sichtbarem Text die Zeichen ☰ ▾ ▸ › ‹ ✕ 🔒 🔓 ▶ ⠿ ✓ ⋯ ··· ⭐ ⚠ durch Strich-Symbole (24er-Raster, Strichstärke 2, runde Enden).
    Das Zeichen bleibt unsichtbar im Text erhalten – textContent, Kopieren und Vergleiche im Code ändern sich nicht.
    Ausgenommen: Eingabefelder, Auswahllisten, Skripte, Druckseiten-Text in Attributen (title, aria-label). */
 (()=>{if(window.__glyphIcons)return;window.__glyphIcons=true;
@@ -11,13 +11,14 @@
   '▸':S('<path d="M9 6l6 6-6 6"/>'),'›':S('<path d="M9 6l6 6-6 6"/>'),'‹':S('<path d="M15 6l-6 6 6 6"/>'),
   '✕':S('<path d="M6 6l12 12M18 6L6 18"/>'),
   '🔒':S('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'),
+  '🔓':S('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.9-.9"/>'),/* 14.16: offenes Schloss */
   '▶':S('<path d="M7 5l12 7-12 7z"/>'),
   '⠿':S(dot(9,6)+dot(15,6)+dot(9,12)+dot(15,12)+dot(9,18)+dot(15,18)),
   '✓':S('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
   '⋯':S(dot(5,12,1.6)+dot(12,12,1.6)+dot(19,12,1.6)),'···':S(dot(5,12,1.6)+dot(12,12,1.6)+dot(19,12,1.6)),
   '⭐':S('<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.9z"/>'),
   '⚠':S('<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/>')};
- const RX=/···|⚠[︎️]?|[☰▾▴▸›‹✕▶⠿✓⋯]|🔒|⭐️?/;const RXG=new RegExp(RX.source,'g');
+ const RX=/···|⚠[︎️]?|[☰▾▴▸›‹✕▶⠿✓⋯]|🔒|🔓|⭐️?/;const RXG=new RegExp(RX.source,'g');
  const SKIP=new Set(['SCRIPT','STYLE','TEXTAREA','INPUT','SELECT','OPTION','TITLE','NOSCRIPT','CODE','PRE','svg','SVG']);
  const css=document.createElement('style');css.textContent='.gi{display:inline-flex;align-items:center;justify-content:center;vertical-align:-.14em;line-height:1}.gi>svg{width:1.05em;height:1.05em;flex:none}.gi-t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.gi-star>svg{color:#e0a020}.gi-grip>svg{width:1.1em;height:1.1em}';(document.head||document.documentElement).append(css);
  const ok=t=>{for(let e=t.parentNode;e&&e.nodeType===1;e=e.parentNode){if(SKIP.has(e.nodeName)||e.isContentEditable||e.classList?.contains('gi')||e.hasAttribute?.('data-no-glyph'))return false}return true};
