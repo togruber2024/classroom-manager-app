@@ -242,7 +242,13 @@ input.in:focus{outline:none;border-color:#8fb0dc;box-shadow:0 0 0 3px #8fb0dc44}
  try{const h=decodeURIComponent(location.hash.slice(1));if(!h)throw new Error('Kein Test im Link. Bitte den QR-Code noch einmal scannen.');
   let bytes;if(h.startsWith('z1.')){if(typeof DecompressionStream!=='function')throw new Error('Bitte Safari aktualisieren.');bytes=new Uint8Array(await new Response(new Blob([b64(h.slice(3))]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())}
   else if(h.startsWith('j1.'))bytes=b64(h.slice(3));else throw new Error('Der Link ist unvollständig. Bitte den QR-Code noch einmal scannen.');
-  test=JSON.parse(new TextDecoder().decode(bytes));if(!Array.isArray(test.r)&&!Array.isArray(test.q))throw new Error('Der Link ist beschädigt.')}
+  test=JSON.parse(new TextDecoder().decode(bytes));
+  /* 14.01: gemeinsamer Link für alle Gruppen – Gruppe wählen (gemerkt) */
+  if(test.M&&typeof test.M==='object'){const gs=Object.keys(test.M).sort(),first=test.M[gs[0]]||{},GK='vt-grp-'+(first.i||'');let g='';try{g=localStorage.getItem(GK)||''}catch{}
+   if(!test.M[g]){g=await new Promise(res=>{document.body.innerHTML='<main style="max-width:560px;margin:12vh auto;padding:0 20px;font:17px/1.45 -apple-system,Inter,system-ui,sans-serif;color:#243247;text-align:center"><h1 style="font-size:1.5rem;margin:0 0 6px">'+esc(test.t||first.t||'Vokabeltest')+'</h1><p style="color:#5c6b80;margin:0 0 22px">Welche Gruppe hast du? Schau auf den Sitzplan oder frag deine Lehrkraft.</p><div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">'+gs.map(x=>'<button type="button" data-pg="'+esc(x)+'" style="min-width:140px;height:110px;border:2px solid #2f5f9b;border-radius:18px;background:#fff;color:#2f5f9b;font:inherit;font-size:1.6rem;font-weight:800">Gruppe '+esc(x)+'</button>').join('')+'</div></main>';
+    document.querySelectorAll('[data-pg]').forEach(b=>b.onclick=async()=>{const x=b.dataset.pg;if(!(await new Promise(r=>r(confirm('Gruppe '+x+' – sicher?')))))return;try{localStorage.setItem(GK,x)}catch{}res(x)})});location.reload();return}
+   test=test.M[g]}
+  if(!Array.isArray(test.r)&&!Array.isArray(test.q))throw new Error('Der Link ist beschädigt.')}
  catch(e){fail(e.message||String(e));return}
  document.title=(test.t||'Vokabeltest')+' · Gruppe '+test.g;
  if(test.k==='gr'){grammarPage();return}
