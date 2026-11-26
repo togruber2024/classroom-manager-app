@@ -10010,6 +10010,9 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
     const a=numOf(cellOf(table,name,h1)?.text),b=numOf(cellOf(table,name,h2)?.text),v=a!=null&&b!=null?(a+b)/2:(a??b);if(v==null)continue;
     const el=sect(re)?.querySelector('.qs-row>.qs-val i');if(!el)continue;const t=String(Math.round(v*100)/100).replace('.',',');
     setVal(el,{text:t,cls:typeof taskGradeClass==='function'?taskGradeClass(v,pts?'gradePoints':'participation'):el.className})}
+   /* 14.30: wie beim Elternsprechtag – „Sonstige Mitarbeit · Halbjahr“ wiederholt den Ø oben: Anteil (z. B. 66,7 %) nach oben, Zeile weg; ohne Tests kein eigener Ø bei Mündlich */
+   {const so=sect(/^Sonstige Mitarbeit$/),sh=[...card.querySelectorAll('.qs-sect')].find(x=>/^Sonstige Mitarbeit · Halbjahr/.test((x.querySelector('.qs-sh-l')?.textContent||'').trim()));if(so&&sh){const w=sh.querySelector('.qs-w'),l=so.querySelector('.qs-sh-l');if(w&&l&&!l.querySelector('.qs-w'))l.append(w);sh.remove()}
+    if(!sect(/^Tests/)){const mv=sect(/^Mündliche Mitarbeit/)?.querySelector('.qs-row>.qs-val');if(mv)mv.style.visibility='hidden'}}
    card.dataset.hj='1';changed=true}
   /* 8.80: nur bei Änderungen neu falten – sonst Endlosschleife (Flackern beim Scrollen) */if(changed)window.classroomCardsFold?.apply?.()}
  function run(){const lite=document.documentElement.classList.contains('ph-lite');const built=[];for(const panel of document.querySelectorAll('[data-quarter-summary]'))if(!lite||panel.dataset.customPanel===activePage){build(panel);fracBox=null;built.push(panel);try{halfify(panel)}catch(e){console.warn('Halbjahresansicht',e)}}/* 8.36: nur glatte Werte → Dezimal/Tendenz sperren */const lock=!built.some(pn=>[...pn.querySelectorAll('[data-frac]')].some(b=>b.dataset.frac==='1'));if(window.classroomCardsMeanLocked!==lock){window.classroomCardsMeanLocked=lock;document.dispatchEvent(new Event('classroom-cards-mean-lock'))}}
