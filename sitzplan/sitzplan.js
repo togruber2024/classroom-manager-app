@@ -5806,6 +5806,7 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   dlg.onclick=e=>{if(menu&&!e.target.closest('.od-menu'))closeMenu()};
   body();if(dlg.showModal&&!dlg.open)dlg.showModal()}
  /* Lerngruppe gewechselt → neu zeichnen, mit ihrer aktuellen Lektion */
+ /* 14.21: Fach gewechselt (gleiche Klasse) → neu zeichnen */{let lastK=null;setInterval(()=>{if(!on||document.hidden)return;let k='';try{k=ctx().key}catch{}if(lastK!==null&&k!==lastK){sel=null;q='';render()}lastK=k},600)}
  const title=document.getElementById('titelKlasse');if(title)new MutationObserver(()=>{if(on){sel=null;q='';render()}}).observe(title,{childList:true,characterData:true,subtree:true});
  window.addEventListener('storage',e=>{if(on&&e.key&&/^classroom-(vocab|grammar|text-trainer|lerneinheiten)/.test(e.key))render()});
  /* Beim Laden: Modus vom Hauptfenster übernehmen */
