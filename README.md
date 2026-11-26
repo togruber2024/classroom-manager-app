@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 26.11.2026 · Version 14.30
+Stand: 26.11.2026 · Version 14.31
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1709,3 +1709,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.28: Elternsprechtag: Termine abhaken (war da / nicht gekommen), 4 Notenpunkte mit eigener Schraffur, digitale Lerneinheiten ausgeblendet; Fachvorgaben: Anteil digitaler Lerneinheiten neben Tests
 14.29: Elternsprechtag: Sonstige Mitarbeit mit Q1 und Q2, doppelte Quartalsnoten-Zeile entfällt, ohne Tests kein Mündlich-Ø; nachgetragene Termine: Haken rechts, Löschen im Ändern-Fenster; iPhone-Halbjahreskarte ebenso aufgeräumt
 14.30: Elternsprechtag: eingetragene Quartalsnoten sind maßgeblich (ohne Eintrag Kommawert), Ø daraus; Stift direkt neben „nachgetragen“
+14.31: Unterricht: Nachhilfe-Paket – Übersetzungs-Trainer mehrerer Lektionen als eine Datei für Schüler; Quartalsnoten: Gewichtung nur noch in den Fachvorgaben
