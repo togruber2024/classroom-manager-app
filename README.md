@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 26.11.2026 · Version 14.37
+Stand: 27.11.2026 · Version 14.38
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1716,3 +1716,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.35: Elternsprechtag: Teilbereiche abgekürzt (SoMi, MM, HA, MA), Noten bündig, mehr Platz für die Noten
 14.36: Nachhilfe-Paket: Schalter „Musterübersetzung mitgeben“ – die Schüler sehen sie nach „Übersetzungen abschließen“ zum Vergleichen
 14.37: Aufgeräumt: tote Code-Zweige, unbenutzte Funktionen und Stile entfernt (keine sichtbare Änderung)
+14.38: iPhone-Halbjahr: Ø der Sonstigen Mitarbeit aus Q1 und Q2 (eingetragene Quartalsnote maßgeblich); Gewichtung auch auf der Halbjahresnoten-Seite nur noch in den Fachvorgaben
