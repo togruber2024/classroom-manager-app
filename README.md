@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 26.11.2026 · Version 14.27
+Stand: 26.11.2026 · Version 14.28
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1706,3 +1706,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.25: Elternsprechtag: in der Sek I Noten mit Tendenz (3,33 → 3−), Klassenarbeiten als ganze Noten
 14.26: Elternsprechtag: Klassenarbeiten in der Sek I ebenfalls mit Tendenz
 14.27: Elternsprechtag: Farbe der Notenfelder passt in der Sek I zur angezeigten Note (2 einfarbig, 2− gestreift) wie in der Notentabelle
+14.28: Elternsprechtag: Termine abhaken (war da / nicht gekommen), 4 Notenpunkte mit eigener Schraffur, digitale Lerneinheiten ausgeblendet; Fachvorgaben: Anteil digitaler Lerneinheiten neben Tests
