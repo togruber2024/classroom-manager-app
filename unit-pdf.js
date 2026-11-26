@@ -35,7 +35,7 @@
   const need=h=>{if(y-h<BOT)newPage()};
   /* Ganz lassen: passt der Block auf eine leere Seite, aber nicht mehr auf diese → neue Seite */
   const keep=h=>{if(h<=FULL&&y-h<BOT)newPage()};
-  const line=(parts,x,yy,sz,col)=>{let s='BT '+rgb(col)+' rg';let cx=x,last=null,cc=col;const dec=[];for(const p of parts){if(p.badge){dec.push(['s',cx,p.badge]);cx+=BWb(p.badge,sz);continue}
+  const line=(parts,x,yy,sz,col,jw)=>{let s='BT '+rgb(col)+' rg';let cx=x,last=null,cc=col;const dec=[];/* 14.20: Blocksatz – Zusatzabstand auf die Leerzeichen verteilen */let ex=0;if(jw){const nat=parts.reduce((a,p)=>a+(p.badge?BWb(p.badge,sz):wid(p.w,sz,p.b)),0),ns=parts.filter(p=>!p.badge&&/^\s+$/.test(p.w)).length;if(ns&&jw>nat)ex=Math.min((jw-nat)/ns,sz*1.2)}for(const p of parts){if(p.badge){dec.push(['s',cx,p.badge]);cx+=BWb(p.badge,sz);continue}if(ex&&/^\s+$/.test(p.w)){cx+=wid(p.w,sz,p.b)+ex;continue}
    const f=p.b?'/F2':'/F1',c=p.st==='x'?'#b42318':p.st==='g'?'#1f8a4c':p.st==='r'?'#d92d20':col;if(c!==cc){s+=' '+rgb(c)+' rg';cc=c}if(f!==last){s+=' '+f+' '+sz+' Tf';last=f}s+=' 1 0 0 1 '+cx.toFixed(2)+' '+yy.toFixed(2)+' Tm ('+enc(p.w)+') Tj';const w=wid(p.w,sz,p.b);if(p.st==='x'||p.st==='w')dec.push([p.st,cx,w]);cx+=w}ops.push(s+' ET');
    for(const [k,dx,v] of dec){if(k==='x')ops.push(rgb('#b42318')+' RG .9 w '+dx.toFixed(2)+' '+(yy+sz*.3).toFixed(2)+' m '+(dx+v).toFixed(2)+' '+(yy+sz*.3).toFixed(2)+' l S');
     else if(k==='w'){const y0=(yy-sz*.22).toFixed(2);ops.push(rgb('#b42318')+' RG 1 w '+dx.toFixed(2)+' '+y0+' m '+(dx+v).toFixed(2)+' '+y0+' l S')}
@@ -75,7 +75,7 @@
    else if(B.t==='np'){if(y<TOP-1)newPage()}
    else if(B.t==='rule'){const g=B.gap||26;y-=10;while(y-g>BOT){y-=g;ops.push(rgb('#c9d3e3')+' RG .6 w '+M+' '+y.toFixed(2)+' m '+(PW-M)+' '+y.toFixed(2)+' l S')}newPage()}
    /* 13.50: Quellentext mit festen Zeilen und Zeilennummern (5, 10, 15 …) */
-   else if(B.t==='lines'){if((B.lines||[]).length<=30)keep(H(B));if(B.intro)para(B.intro,9.5,'#5c6b80',false);const st=B.step||5;B.lines.forEach((l,i)=>{need(14);y-=14;const n=i+1;if(n%st===0){const ns=String(n);line([{w:ns}],M+18-wid(ns,8.5),y+2.6,8.5,'#7a889c')}line(wrap(l,10.5,CW-26)[0]||[],M+26,y+2.6,10.5,'#111111')});if(B.foot){y-=3;para(B.foot,8.5,'#5c6b80',false,M+26,CW-26)}y-=6}
+   else if(B.t==='lines'){if((B.lines||[]).length<=30)keep(H(B));if(B.intro)para(B.intro,9.5,'#5c6b80',false);const st=B.step||5;const LL=B.lines.map(l=>wrap(l,10.5,CW-26)[0]||[]),LW=LL.map(ps=>ps.reduce((a,p)=>a+(p.badge?0:wid(p.w,10.5,p.b)),0)),LC=B.lines.map(l=>String(l).trim().length),MX=Math.max(0,...LW),MC=Math.max(0,...LC);B.lines.forEach((l,i)=>{need(14);y-=14;const n=i+1;if(n%st===0){const ns=String(n);line([{w:ns}],M+18-wid(ns,8.5),y+2.6,8.5,'#7a889c')}const nx=B.lines[i+1],tx=String(l).trim(),q=MX?LW[i]/MX:0,jw=nx!=null&&q>=.7&&!/^\s*•/.test(nx)&&/\s/.test(tx)&&!(/[.:!?“"]$/.test(tx)&&q<.93)?MX:0;line(LL[i],M+26,y+2.6,10.5,'#111111',jw)});if(B.foot){y-=3;para(B.foot,8.5,'#5c6b80',false,M+26,CW-26)}y-=6}
    else if(B.t==='list'){keep(H(B));for(const it of B.items){const ls=wrap(it,10.5,CW-14);need(ls.length*14.5);ls.forEach((l,i)=>{y-=14.5;if(!i)line([{w:B.num?(B.items.indexOf(it)+1)+'.':'•',b:!!B.num}],M+1,y+2.6,10.5,'#2f5f9b');line(l,M+14,y+2.6,10.5,'#111111')})}y-=4}
    else if(B.t==='box'){const ls=wrap(B.s,11,CW-24);const h=ls.length*15.5+16;keep(h+10);need(h+6);y-=6;rect(M,y-h,CW,h,'#2f5f9b','#f1f6fd',1.4);let yy=y-8;for(const l of ls){yy-=15.5;line(l,M+12,yy+4,11,'#1d2b40')}y-=h+4}
    else if(B.t==='table'){const T=tbl(B),{ws,sz,lh,pad,hgt}=T;keep(H(B));
