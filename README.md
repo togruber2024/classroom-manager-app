@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 26.11.2026 · Version 14.22
+Stand: 26.11.2026 · Version 14.23
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1701,3 +1701,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.20: Lerneinheiten: Texte mit Zeilennummern im Blocksatz (Stationen, Material und PDF)
 14.21: Unterricht: Seite aktualisiert sich beim Fachwechsel in derselben Klasse
 14.22: Elternsprechtag: Termine nachtragen (＋) mit Auswahl freier 5-Minuten-Termine; nachgetragene Termine ändern, löschen, bleiben beim Neu-Einlesen
+14.23: Elternsprechtag: ✕ beim Neu-Einlesen führt zurück zur Terminliste; Einfügen-Symbol vor dem Plus
