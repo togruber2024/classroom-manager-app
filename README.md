@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 26.11.2026 · Version 14.35
+Stand: 26.11.2026 · Version 14.36
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1714,3 +1714,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.33: Nachhilfe-Paket: nichts vorausgewählt, Lektionen per Rechteck ziehen wählen, „Speichern“ legt die Datei direkt in Downloads ab, ✕ mittig
 14.34: Elternsprechtag: Schraffur nach Tendenz wie in der Notentabelle (2+ mehr Hellgrün, 1− mehr Dunkelgrün)
 14.35: Elternsprechtag: Teilbereiche abgekürzt (SoMi, MM, HA, MA), Noten bündig, mehr Platz für die Noten
+14.36: Nachhilfe-Paket: Schalter „Musterübersetzung mitgeben“ – die Schüler sehen sie nach „Übersetzungen abschließen“ zum Vergleichen

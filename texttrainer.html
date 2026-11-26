@@ -86,7 +86,7 @@ const ttKeys=()=>{try{return JSON.parse(localStorage.getItem(TKK)||'{}')||{}}cat
 let DE=null;const DEPV=/[?&]vorschau=1/.test(location.search);
 async function deLoad(){DE=null;if(!T)return;if(DEPV){DE=T.s.map(x=>x.de||'');return}const K=ttKeys();
  if(T.dz){const sk=K[T.dk];if(!sk)return;try{const raw=ub64(T.dz),key=await crypto.subtle.importKey('raw',ub64(sk),'AES-GCM',false,['decrypt']);DE=JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:raw.slice(0,12)},key,raw.slice(12))))}catch{DE=null}}
- else if(K['t:'+thOf(T.title)])DE=T.s.map(x=>x.de||'')}
+ else if(T.op||K['t:'+thOf(T.title)])DE=T.s.map(x=>x.de||'')/* 14.36: Nachhilfe-Paket mit Musterübersetzung (op) – sichtbar nach dem Abschließen */}
 function ttKeyIn(txt){const m=/#ttk\.([A-Za-z0-9_-]*)\.([A-Za-z0-9_-]*)\.([a-z0-9]+)/.exec(String(txt||''));if(!m)return false;const K=ttKeys();if(m[1]&&m[2])K[m[1]]=m[2];K['t:'+m[3]]=1;try{localStorage.setItem(TKK,JSON.stringify(K))}catch{}return true}
 async function ttUnlockScan(){if(!window.cmScanQr){alert('Scanne den Code mit „QR scannen“ in deinem Lernordner.');return}cmScanQr(async txt=>{if(!ttKeyIn(txt))return false;await deLoad();if(DE)alert('Musterübersetzung freigeschaltet ✓');else alert('Dieser Code gehört zu einem anderen Text.');render();return true},'Freischalt-Code deiner Lehrkraft scannen')}
 /* 11.45: Abgabe-QR – gezählt: fertige Sätze (mit Selbsteinschätzung) und davon ohne Hilfe; Klassenliste kommt mit dem Link (t.cm) */
