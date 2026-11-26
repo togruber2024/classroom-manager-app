@@ -138,7 +138,6 @@ const HU=()=>Object.assign({name:'Passiv-Jäger',task:'Tippe alle Formen im <b>P
 /* 11.77: neue Reihenfolge – erst Vokabeln und Grammatik, dann übersetzen, danach Inhalt */
 const TABS0=[['gr','Grammatik'],['vo','Vokabular bekannt?'],['pp',''],['ab','Ablativ-Detektiv'],['tr','Übersetzen'],['ev','Zeitstrahl'],['pr','Wer ist gemeint?'],['sm','Stilmittel'],['res','Auswertung']];
 const VOC=()=>(T&&Array.isArray(T.voc)?T.voc:[]);
-const voLocked=()=>VOC().length>0&&!(ST.vo&&ST.vo.done)&&!ST.voFree&&!PREV;
 /* 12.24: Stationen nacheinander – eine Station ist erst frei, wenn alle davor abgeschlossen sind (bereits begonnene bleiben offen) */
 const stDone=k=>k==='gr'?ST.gr?.ph==='d':k==='vo'?!!(ST.vo&&ST.vo.done)||!!ST.voFree:k==='pp'?!!ST.ppDone||ST.pp.length===T.pp.length:k==='res'?true:badgeOk(k);
 const stStarted=k=>k==='gr'?!!ST.gr:k==='pp'?ST.pp.length>0||!!ST.ppMiss:k==='ev'?ST.evFirst!=null||!!ST.evOk:k==='res'||k==='vo'?false:!!badge(k)&&!/^0\//.test(badge(k));
