@@ -6458,7 +6458,8 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
     const nq=Math.max(1,...content.filter(g=>['performance','homework','tests'].includes(g.type)).map(g=>g.pages?.length||0));
     const w=[];for(let q=0;q<nq;q++){const x=window.classroomSubjectOtherWeights?.(subject)||settings.otherParticipationWeights?.[q]||semS.otherParticipationWeights?.[q]||{participation:80,tests:20};w.push({participation:Number(x.participation),tests:Number(x.tests)})}
     const fw=semS.finalWeights?{other:Number(semS.finalWeights.other??50),exams:Number(semS.finalWeights.exams??50)}:{other:50,exams:50};
-    out[[subjects?.[subject]?.label||subject,item.label,year.label].filter(Boolean).join(' · ')]={ha,ma,w,fw}}}
+    /* 14.52: Datum der Klassenarbeiten (wie auf dem iPhone) */const kad={};for(const g of content){if(['performance','homework','tests','halfYear','semester','schoolYear','quarterSummary'].includes(g.type))continue;const ds=(g.pages||[]).flatMap(k=>(values[k]?.tasks||[]).map(t=>t.date)).filter(d=>/^\d{4}-\d\d-\d\d$/.test(d||'')).sort();const d=[g.examDate,g.date].find(x=>/^\d{4}-\d\d-\d\d$/.test(x||''))||ds[0];if(d)kad[g.label]=d.slice(8,10)+'.'+d.slice(5,7)+'.'}
+    out[[subjects?.[subject]?.label||subject,item.label,year.label].filter(Boolean).join(' · ')]={ha,ma,w,fw,kad}}}
   return out}
  window.addEventListener('message',event=>{
   const msg=event.data;if(event.source!==parent||!msg?.id)return;
@@ -10036,7 +10037,10 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
     setVal(el,{text:t,cls:typeof taskGradeClass==='function'?taskGradeClass(v,pts?'gradePoints':'participation'):el.className})}
    /* 14.30: wie beim Elternsprechtag – „Sonstige Mitarbeit · Halbjahr“ wiederholt den Ø oben: Anteil (z. B. 66,7 %) nach oben, Zeile weg; ohne Tests kein eigener Ø bei Mündlich */
    {const so=sect(/^Sonstige Mitarbeit$/),sh=[...card.querySelectorAll('.qs-sect')].find(x=>/^Sonstige Mitarbeit · Halbjahr/.test((x.querySelector('.qs-sh-l')?.textContent||'').trim()));if(so&&sh){const w=sh.querySelector('.qs-w'),l=so.querySelector('.qs-sh-l');if(w&&l&&!l.querySelector('.qs-w'))l.append(w);sh.remove()}
-    if(!sect(/^Tests/)){const mv=sect(/^Mündliche Mitarbeit/)?.querySelector('.qs-row>.qs-val');if(mv)mv.style.visibility='hidden'}}
+    /* 14.52: Ø bei Mündlich auch ohne Tests zeigen (Wunsch: sonst wirkt die Zeile leer) */
+    /* 14.52: wie im Elternsprechtag – ohne Klassenarbeit fallen „Klassenarbeit“ und „Halbjahr ∑“ weg, „Digitale Lerneinheiten“ bei 0 % */
+    for(const x of [...card.querySelectorAll('.qs-sect')]){const lab=(x.querySelector('.qs-sh-l')?.textContent||'').trim(),empty=!x.querySelector('.qs-sq,.qs-seq .qs-t,.qs-seq i')&&[...x.querySelectorAll('.qs-val i')].every(i=>/^(—|-|)$/.test(i.textContent.trim()));
+     if((/^(Klassenarbeit|Klausur|\d+\. (Klassenarbeit|Klausur))/.test(lab)||/^Halbjahr\s*[∑Σ]/.test(lab))&&empty)x.remove();else if(/^Digitale Lerneinheiten/.test(lab)&&/(^|\D)0\s*%/.test(x.querySelector('.qs-w')?.textContent||''))x.remove()}}
    card.dataset.hj='1';changed=true}
   /* 8.80: nur bei Änderungen neu falten – sonst Endlosschleife (Flackern beim Scrollen) */if(changed)window.classroomCardsFold?.apply?.()}
  function run(){const lite=document.documentElement.classList.contains('ph-lite');const built=[];for(const panel of document.querySelectorAll('[data-quarter-summary]'))if(!lite||panel.dataset.customPanel===activePage){build(panel);fracBox=null;built.push(panel);try{halfify(panel)}catch(e){console.warn('Halbjahresansicht',e)}}/* 8.36: nur glatte Werte → Dezimal/Tendenz sperren */const lock=!built.some(pn=>[...pn.querySelectorAll('[data-frac]')].some(b=>b.dataset.frac==='1'));if(window.classroomCardsMeanLocked!==lock){window.classroomCardsMeanLocked=lock;document.dispatchEvent(new Event('classroom-cards-mean-lock'))}}

@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 27.11.2026 · Version 14.51
+Stand: 27.11.2026 · Version 14.52
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1731,3 +1731,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.49: Lernordner: Nachhilfe-Paket in einem eigenen Ordner, Lektionen in richtiger Reihenfolge (L2 vor L10, langer Lektionstext vor Ergänzungstext); Papierkorb beim Bearbeiten auch bei langen Titeln sichtbar
 14.50: Übersetzungs-Trainer: Bei mehreren Sätzen mit eigenem Prädikat fragt die Subjekt-Aufgabe nach den Subjekten aller Sätze; Nachhilfe-Paket als Selbststudium – „Abschließen“ statt „Abgeben“, danach die Musterübersetzung
 14.51: Lernordner: Ordner wie „Nachhilfe Latein“ oder „L16“ lassen sich samt Aufgaben löschen (Liste bearbeiten → Papierkorb am Ordner); Übersetzungsvergleich: Vornamen der Gruppe neben „Gruppe n“ (bei Gruppen aus dem Sitzplan aus der Einteilung)
+14.52: Elternsprechtag und iPhone-Noten angeglichen: Ø bei der Mündlichen Mitarbeit auch ohne Tests; Klassenarbeit im Elternsprechtag mit Note und Datum; am iPhone entfallen leere Zeilen (ohne Klassenarbeit) und „Digitale Lerneinheiten“ bei 0 %
