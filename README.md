@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 27.11.2026 · Version 14.56
+Stand: 27.11.2026 · Version 14.57
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1736,3 +1736,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.54: Elternsprechtag und iPhone: Beim Antippen der Klassenarbeit wechselt auch die große Note oben mit (Vergleichswert mit der genauen Note, zählt nicht)
 14.55: Klassenarbeit antippen: das Kästchen zeigt jetzt die genaue Note genauso wie der Durchschnitt (z. B. 1+/1).
 14.56: Schülerübersicht mit Notenkarten wie im Elternsprechtag; Klick auf eine Karte startet die Notenbesprechung mit allen Fächern der Klasse nebeneinander (Selbsteinschätzung, Quartalsnote, Halbjahresnote – auch Zwischennoten wie 2-3).
+14.57: Notenbesprechung: kleine Notenwahl direkt am Feld; Karten ein Drittel breit (bei vielen Noten halb, auf dem iPad je nach Breite halb oder ganz).
