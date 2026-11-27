@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 27.11.2026 · Version 14.65
+Stand: 28.11.2026 · Version 14.66
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1745,3 +1745,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.63: iPad-Tests: Der Hinweis „Test mit Assistent“ zeigt den richtigen Schritt und erscheint als schmale Leiste mit normalem Button.
 14.64: Überall ✕ oben rechts statt „Schließen“. Nachschreiber: Die iPad-Abgabe wird samt eigenen Vokabeln in den Ziel-Test übernommen – der Nachschreibtest kann danach gelöscht werden.
 14.65: ✕ steht auf einer Linie mit den Knöpfen daneben; das Fenster „iPad-Tests“ hat oben mehr Abstand.
+14.66: Klassenarbeiten mit Teilnoten (z. B. Übersetzung/Aufgaben) in Schülerübersicht, Elternsprechtag und am iPhone; mehrere Klassenarbeiten in einer Zeile; Test/Tests und Klassenarbeit/Klassenarbeiten je nach Anzahl
