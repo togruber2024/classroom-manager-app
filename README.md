@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 28.11.2026 · Version 14.67
+Stand: 28.11.2026 · Version 14.68
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1747,3 +1747,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.65: ✕ steht auf einer Linie mit den Knöpfen daneben; das Fenster „iPad-Tests“ hat oben mehr Abstand.
 14.66: Klassenarbeiten mit Teilnoten (z. B. Übersetzung/Aufgaben) in Schülerübersicht, Elternsprechtag und am iPhone; mehrere Klassenarbeiten in einer Zeile; Test/Tests und Klassenarbeit/Klassenarbeiten je nach Anzahl
 14.67: Pfeiltasten links/rechts wechseln in Schülerübersicht und Notenbesprechung den Schüler; etwas mehr Abstand zwischen Prozentangabe und Noten; am iPhone „Test“ bei nur einem Test
+14.68: Notenbesprechung: das Notenfenster schließt sich bei Klick oder Tipp außerhalb
