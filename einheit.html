@@ -844,7 +844,16 @@ function runPol(){const G=ST.polG??={},sol=ST.polX??=[],R=()=>ST.polR||0;const o
 
 const ABBR=new Set(['ca','z','B','bzw','usw','v','Chr','Nr','St','Jh','u','a','M','vgl','S','Mio','Mrd','Bio','d','h']);
 const sents=a=>{a=String(a);const o=[];let c='';for(let i=0;i<a.length;i++){c+=a[i];if('.!?'.includes(a[i])&&(i===a.length-1||(/\s/.test(a[i+1])&&/^\s+[A-ZÄÖÜ„"(*\[0-9]/.test(a.slice(i+1,i+4))&&!(a[i]==='.'&&ABBR.has((c.match(/([A-Za-zÄÖÜäöüß]+)\.$/)||[])[1]))))){o.push(c.trim());c=''}}if(c.trim())o.push(c.trim());return o};
-function txtHtml(T,cls){let i=0;/* 13.28: gleich markierte Nachbarsätze als ein durchgehender Bereich */const col=c=>(/\bm[cr]\b/.exec(c||'')||[''])[0];return T.p.map(p=>{if(p.q)return '<p class="tq">'+esc(p.q)+'</p>';const S=sents(p.a),k0=i;i+=S.length;const C=S.map((_,j)=>cls(k0+j)||''),J=C.map((c,j)=>j<S.length-1&&col(c)&&col(c)===col(C[j+1]));return '<p class="tp">'+S.map((x,j)=>'<span class="sn'+C[j]+(J[j]?' jr':'')+(j&&J[j-1]?' jl':'')+'" data-si="'+(k0+j)+'">'+md(x)+(J[j]?' </span>':'</span> ')).join('')+'</p>'}).join('')}
+/* 14.47: Markier-Text mit festen Zeilen und Zeilennummern (T.ln) – Sätze bleiben antippbar, auch wenn sie über Zeilen laufen; Zeilen wie im Material (Blocksatz, Trennung am Zeilenende) */
+function txtLnHtml(T,cls){const src=[],pend=new Set();let k=0;for(const p of T.p){if(p.q)continue;for(const x of sents(p.a)){for(const ch of String(x))if(!/\s/.test(ch))src.push([ch,k]);k++}pend.add(src.length)}
+ let q=0;const col=c=>(/\bm[cr]\b/.exec(c||'')||[''])[0],C={};const cl=j=>C[j]??=(cls(j)||'');
+ return '<div class="lnt">'+T.ln.map((l,li)=>{const L=String(l),pc=[];for(let x=0;x<L.length;x++){const ch=L[x];if(/\s/.test(ch)){pc.push([ch,null]);continue}
+   if(q<src.length&&src[q][0]===ch){pc.push([ch,src[q][1]]);q++}else pc.push([ch,q<src.length?src[q][1]:(src.at(-1)||[0,0])[1]])}
+  /* Leerzeichen zwischen zwei Teilen desselben Satzes gehören zum Satz */for(let x=0;x<pc.length;x++)if(pc[x][1]==null){let a=x-1,b=x+1;while(b<pc.length&&pc[b][1]==null)b++;if(a>=0&&b<pc.length&&pc[a][1]===pc[b][1])for(let y=x;y<b;y++)pc[y][1]=pc[a][1];x=b-1}
+  let h='',cur=undefined,buf='';const flush=()=>{if(!buf)return;h+=cur==null?esc(buf):'<span class="sn'+cl(cur)+'" data-si="'+cur+'">'+esc(buf)+'</span>';buf=''};
+  for(const [ch,si] of pc){if(si!==cur){flush();cur=si}buf+=ch}flush();
+  const last=li===T.ln.length-1||pend.has(q);return '<span class="lnn">'+((li+1)%5===0?li+1:'')+'</span><span class="lnl'+(last?'':' j')+'">'+h+'</span>'}).join('')+'</div>'}
+function txtHtml(T,cls){if(Array.isArray(T.ln)&&T.ln.length)return txtLnHtml(T,cls);let i=0;/* 13.28: gleich markierte Nachbarsätze als ein durchgehender Bereich */const col=c=>(/\bm[cr]\b/.exec(c||'')||[''])[0];return T.p.map(p=>{if(p.q)return '<p class="tq">'+esc(p.q)+'</p>';const S=sents(p.a),k0=i;i+=S.length;const C=S.map((_,j)=>cls(k0+j)||''),J=C.map((c,j)=>j<S.length-1&&col(c)&&col(c)===col(C[j+1]));return '<p class="tp">'+S.map((x,j)=>'<span class="sn'+C[j]+(J[j]?' jr':'')+(j&&J[j-1]?' jl':'')+'" data-si="'+(k0+j)+'">'+md(x)+(J[j]?' </span>':'</span> ')).join('')+'</p>'}).join('')}
 function runTxt(){const {T,K}=txSrc();const M=ST.txtM??={},A=ST.txtA??=[],B=ST.txtB??=[],R=()=>ST.txtR||0;let pen='c',qi=SOLV?0:Math.min(B.filter(x=>x!=null).length,BEL.length-1);const NM=K.c.length+K.r.length;
  const tgt=k=>K.c.includes(k)?'c':K.r.includes(k)?'r':null,part=()=>R()<2?'a':'b';
  const markScore=()=>{let ok=0,bad=0;for(const [k,v] of Object.entries(M)){const t=tgt(+k);if(t===v)ok++;else bad++}return Math.max(0,ok-bad)};

@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 27.11.2026 · Version 14.46
+Stand: 27.11.2026 · Version 14.47
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1726,3 +1726,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.44: Lerneinheiten: Fachbegriffe sind überall im Text unterstrichen, auch in Zusammensetzungen (z. B. Deviseneinnahmen); Karten mit Fachbegriffen bekommen ein „?“ mit Erklärung; beim Karte beschriften gibt es eine größere Trefferfläche um die Punkte
 14.45: Elternsprechtag und iPhone-Noten: errechnete Werte als Tendenz in Zwischenschritten (3, 3/3−, 3−, 3-4, 4+, 4+/4, 4 …) statt Kommazahl – beide gleich dargestellt; iPhone startet auf Tendenz
 14.46: Übersetzungsvergleich: Eingescannte Gruppenergebnisse bleiben erhalten, auch wenn der Text auf dem Gerät fehlt oder neu geladen wurde; iPhone: Sortieren nach Note und „Auffällig“ erkennen die Zwischenstufen (3/3−, 4+/4)
+14.47: Lerneinheiten: Markier-Stationen zeigen den Text mit festen Zeilen und Zeilennummern wie im Material (Blocksatz) – Sätze bleiben über Zeilen hinweg antippbar
