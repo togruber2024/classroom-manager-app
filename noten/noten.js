@@ -9908,12 +9908,12 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
    box.append(caption('Halbjahresnote ='));
    if(other)box.append(barRow(other,wo,0));
    if(q1)box.append(sect('1. Quartal',50,q1,null,1));
-   if(mm||tests||dig){box.append(caption('2. Quartal',50,1));if(mm)box.append(sect('Mündliche Mitarbeit',wm,mm,mmList,2,{avg:1}));if(tests)box.append(sect('Tests',wt,tests,testList,2,{avg:1,kind:'t'}));if(dig)box.append(sect('Digitale Lerneinheiten',null,dig,null,2,{avg:1}))}
+   if(mm||tests||dig){box.append(caption('2. Quartal',50,1));if(mm)box.append(sect('Mündliche Mitarbeit',wm,mm,mmList,2,{avg:1}));if(tests)box.append(sect(testList.length===1?'Test':'Tests',wt,tests,testList,2,{avg:1,kind:'t'}));if(dig)box.append(sect('Digitale Lerneinheiten',null,dig,null,2,{avg:1}))}
    const kaTile=e=>kaTileOf(e,examDates);
    if(exams.length===1)box.append(sect(ka(exams[0]),we,kaMean(exams[0]),kaTile(exams[0]),0,{kind:'ka'}));else if(exams.length)box.append(kaAll(exams,we));
   }else{
    /* 9.76: Die Gewichtung Sonstige Mitarbeit : Klassenarbeit steht bei „Sonstige Mitarbeit · Halbjahr“ / „Klassenarbeit · Halbjahr“ / „Halbjahr ∑“ (100 %);
-      oben die Sonstige Mitarbeit des Quartals ohne Prozent, Mündlich/Tests mit ihrem Anteil daran. */const hjRows=items.some(it=>/^SoMi · Halbjahr/.test(it.head)),fw=hjRows?finalWeights():null;if(other)box.append(barRow(other,null,0));/* Bestandteile der Sonstigen Mitarbeit leicht eingerückt mit senkrechtem Strich */const sub=document.createElement('div');sub.className='qs-sub';if(mm||prev.mm?.length)sub.append(sect('Mündliche Mitarbeit',wm,mm,mmList,0,{avg:1,prev:prev.mm}));if(tests||prev.tests?.length)sub.append(sect('Tests',wt,tests,testList,0,{avg:1,kind:'t',prev:prev.tests}));if(dig)sub.append(sect('Digitale Lerneinheiten',wd,dig,null,0,{avg:1}));if(sub.childElementCount){if(!other)sub.className='qs-sub-flat';box.append(sub)}
+      oben die Sonstige Mitarbeit des Quartals ohne Prozent, Mündlich/Tests mit ihrem Anteil daran. */const hjRows=items.some(it=>/^SoMi · Halbjahr/.test(it.head)),fw=hjRows?finalWeights():null;if(other)box.append(barRow(other,null,0));/* Bestandteile der Sonstigen Mitarbeit leicht eingerückt mit senkrechtem Strich */const sub=document.createElement('div');sub.className='qs-sub';if(mm||prev.mm?.length)sub.append(sect('Mündliche Mitarbeit',wm,mm,mmList,0,{avg:1,prev:prev.mm}));if(tests||prev.tests?.length)sub.append(sect(testList.length===1?'Test':'Tests',wt,tests,testList,0,{avg:1,kind:'t',prev:prev.tests}));if(dig)sub.append(sect('Digitale Lerneinheiten',wd,dig,null,0,{avg:1}));if(sub.childElementCount){if(!other)sub.className='qs-sub-flat';box.append(sub)}
    /* 9.76: Klassenarbeit(en) des Halbjahres nur zusammen mit den Halbjahreszeilen (2. Quartal) – zwischen „Sonstige Mitarbeit · Halbjahr“ und „Halbjahr ∑“ */if(hjRows){const one=exams.length<=1;if(!one)tail.push(kaAll(exams,fw?fw.exams:null));else for(const e of exams)tail.push(sect(ka(e)+(one?' · Halbjahr':''),null,kaMean(e),kaTileOf(e,examDates),0,{kind:'ka',pct:one&&fw?fw.exams:null}));
    /* 8.10: noch keine Klassenarbeit – trotzdem aufführen (ohne Note, mit Gewichtung) */if(!exams.length&&fw)tail.push(sect('Klassenarbeit · Halbjahr',null,null,null,0,{pct:fw.exams}))}
   }
@@ -10060,7 +10060,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
   const setv=(el,it)=>{if(!el)return;if(!it){el.textContent='—';el.className='qs-abs qs-none';return}const f=fmtMean(it.text,it.cls);el.textContent=f.text;el.className=f.cls||''};
   setv(sect(/^Sonstige Mitarbeit/)?.querySelector(':scope>.qs-sh .qs-val i'),cellOfHead(/^Sonstige Mitarbeit$/));
   {const s=sect(/^Mündliche Mitarbeit/);if(s)setv([...s.querySelectorAll('.qs-val i')].pop(),cellOfHead(/^MM · Mittelwert/))}
-  {const s=sect(/^Tests/);if(s)setv([...s.querySelectorAll('.qs-val i')].pop(),cellOfHead(/^Tests · Mittelwert/))}
+  {const s=sect(/^Tests?(?![a-zäöü])/);if(s)setv([...s.querySelectorAll('.qs-val i')].pop(),cellOfHead(/^Tests · Mittelwert/))}
   /* 9.81: Notenbesprechung in zwei Schritten – zuerst nur die mündliche Seite (Sonstige Mitarbeit mit Mündlich, Tests, HA/Material)
      und die Felder Selbsteinschätzung / Quartalsnote. Sind beide eingetragen, erscheint darunter „Halbjahr im Überblick“:
      Sonstige Mitarbeit · Halbjahr, Klassenarbeit/Klausur, Halbjahr ∑ und das Feld für die eigene Halbjahresnote. */
@@ -10122,7 +10122,7 @@ if(parent!==window)for(const name of ['pointerdown','input','change','paste','dr
      /* 14.38: Ø aus den angezeigten Werten – eingetragene Quartalsnote maßgeblich, sonst errechnete Sonstige Mitarbeit (wie im Elternsprechtag) */{const ns=[q1,q2].map(v=>v?gradeNum(v.text):null).filter(x=>x!=null&&Number.isFinite(x)).map(x=>Math.abs(x*3-Math.round(x*3))<.04?Math.round(x*3)/3:x);const el=val.querySelector('i');if(ns.length&&el){const m=ns.reduce((a,b)=>a+b,0)/ns.length;try{setVal(el,{text:String(Math.round(m*100)/100).replace('.',','),cls:taskGradeClass(pts?m:m,pts?'gradePoints':'participation')})}catch{}}}
      if(!val.querySelector('small')&&(val.querySelector('i')?.textContent.trim()||'—')!=='—'){const o=document.createElement('small');o.textContent='Ø';val.prepend(o)}row.append(seq,val);so.append(row)}}}
    /* Ø Q1 und Ø Q2 je zur Hälfte – nur Anzeige */
-   for(const [re,h1,h2] of [[/^Mündliche Mitarbeit/,/^Q1 · MM · Mittelwert/,/^MM · Mittelwert/],[/^Tests/,/^Q1 · Tests · Mittelwert/,/^Tests · Mittelwert/]]){
+   for(const [re,h1,h2] of [[/^Mündliche Mitarbeit/,/^Q1 · MM · Mittelwert/,/^MM · Mittelwert/],[/^Tests?(?![a-zäöü])/,/^Q1 · Tests · Mittelwert/,/^Tests · Mittelwert/]]){
     const a=numOf(cellOf(table,name,h1)?.text),b=numOf(cellOf(table,name,h2)?.text),v=a!=null&&b!=null?(a+b)/2:(a??b);if(v==null)continue;
     const el=sect(re)?.querySelector('.qs-row>.qs-val i');if(!el)continue;const t=String(Math.round(v*100)/100).replace('.',',');
     setVal(el,{text:t,cls:typeof taskGradeClass==='function'?taskGradeClass(v,pts?'gradePoints':'participation'):el.className})}
