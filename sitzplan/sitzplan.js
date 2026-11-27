@@ -277,6 +277,25 @@ window.classroomDataOrder=list=>{const a=[...(list||[])];if(!a.some(r=>r?.parent
  const sm=P.showModal;P.showModal=function(){const r=sm.apply(this,arguments);try{deco(this);watch(this)}catch(e){}return r};
  window.classroomDialogStyle=deco;
 })();
+/* 14.64: Überall ✕ oben rechts statt „Schließen“ unten – ein Fenster mit einem Text-Knopf „Schließen“ bekommt oben rechts ein ✕,
+   das denselben Knopf auslöst; der Text-Knopf verschwindet. Fenster mit eigenem ✕ bleiben unverändert. */
+(()=>{const X='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+ const st=document.createElement('style');st.textContent='dialog.cm-hasx{position:fixed}dialog .cm-x:not(#_){position:absolute;top:12px;right:12px;z-index:5;width:40px!important;height:40px!important;min-width:0!important;min-height:0!important;padding:0!important;margin:0!important;display:inline-grid!important;place-items:center;border:1px solid #cbd6e5!important;border-radius:10px!important;background:#fff!important;color:var(--primary,#2f5f9b)!important;cursor:pointer;box-shadow:none!important}dialog .cm-x:hover{background:#f3f6fb!important}dialog.cm-hasx .cm-xh{display:none!important}dialog.cm-hasx{padding-top:max(var(--cmx-pt,0px),0px)}';document.head.append(st);
+ const txt=b=>(b.textContent||'').replace(/\s+/g,' ').trim();
+ const hasOwnX=d=>[...d.querySelectorAll('button,[role=button]')].some(b=>!b.classList.contains('cm-x')&&b.offsetParent!==null&&(/^[✕×✖]$/.test(txt(b))||(!txt(b)&&/schließen/i.test(b.getAttribute('aria-label')||b.title||''))));
+ function fix(d){if(!d.open||d.dataset.cmxOff!=null)return;const btns=[...d.querySelectorAll('button')].filter(b=>!b.classList.contains('cm-x')&&/^(Schließen|Schliessen)$/.test(txt(b)));
+  let x=d.querySelector(':scope>.cm-x');if(!btns.length){if(x&&!d.querySelector('.cm-xh')){x.remove();d.classList.remove('cm-hasx')}return}
+  if(!x&&hasOwnX(d))return;
+  for(const b of btns)b.classList.add('cm-xh');
+  if(!x){x=document.createElement('button');x.type='button';x.className='cm-x';x.title='Schließen';x.setAttribute('aria-label','Schließen');x.innerHTML=X;d.prepend(x)}
+  requestAnimationFrame(()=>clear(d,x));x.onclick=e=>{e.preventDefault();e.stopPropagation();const t=[...d.querySelectorAll('button.cm-xh')].find(b=>d.contains(b));if(t)t.click();else d.close()};d.classList.add('cm-hasx')}
+ /* Was oben rechts unter dem ✕ liegt (z. B. „Am Smartboard zeigen“), rückt nach links */
+ function clear(d,x){if(!x.isConnected)return;const r=x.getBoundingClientRect(),D=d.getBoundingClientRect();if(!r.width)return;const seen=new Set();
+  for(const [px,py] of [[r.left+4,r.top+r.height/2],[r.left+r.width/2,r.top+4],[r.left+r.width/2,r.bottom-4],[r.left+4,r.bottom-4],[r.left+4,r.top+4]]){for(let el of document.elementsFromPoint(px,py)){if(el===x||x.contains(el)||el===d||!d.contains(el))continue;
+    while(el.parentElement&&el.parentElement!==d&&el.parentElement.getBoundingClientRect().width<D.width*0.5)el=el.parentElement;if(el.getBoundingClientRect().width>=D.width*0.5||seen.has(el))continue;seen.add(el)}}
+  for(const el of seen){const cur=parseFloat(getComputedStyle(el).marginRight)||0,need=el.getBoundingClientRect().right-(r.left-8);if(need>0)el.style.setProperty('margin-right',(cur+need)+'px','important')}}
+ let tm=0;const run=()=>{clearTimeout(tm);tm=setTimeout(()=>document.querySelectorAll('dialog[open]').forEach(fix),30)};
+ new MutationObserver(run).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['open']});})();
 ;
 
 /* ==== hooks.js ==== */
