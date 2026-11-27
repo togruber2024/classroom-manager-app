@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 27.11.2026 · Version 14.41
+Stand: 27.11.2026 · Version 14.42
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1721,3 +1721,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.39: iPhone: Ø-Werte mit Komma bekommen die Farbe ihrer Tendenz (4,05 einfarbig wie 4, 4,3 wie 4−, 4,5 wie 4−5), auch im Tendenz-Modus; Rechnung unverändert
 14.40: Elternsprechtag: Kommawerte ohne eingetragene Quartalsnote in der Farbe ihrer Tendenz (wie am iPhone)
 14.41: Tendenz genau in der Mitte zweier Stufen zeigt beide (z. B. 3/3−) – Elternsprechtag und iPhone; eingetragene Tendenznoten werden exakt gerechnet (3− = 3⅓)
+14.42: Lerneinheiten: Falsch gelegte Karten bleiben nach dem Prüfen rot im falschen Feld liegen und werden in ein neues Feld gezogen (Sortieren, Tabelle, Karte beschriften); das Glossar zeigt alle Fachbegriffe sofort und schließt mit ✕
