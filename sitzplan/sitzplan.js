@@ -5326,7 +5326,11 @@ html.ein-dragging,html.ein-dragging *{cursor:col-resize!important;user-select:no
   /* Dialoge des Noten-Managers: kurz zu „Noten“ wechseln, nach dem Schließen zurück */
   const T=top()?.document;const back0=[...(T?.querySelectorAll('[data-view][aria-selected="true"]')||[])][0];
   const skip=v=>{try{top().classroomCoverSkip=v;top().classroomCoverUpdate?.()}catch{}};skip(true);T?.getElementById('tab-noten')?.click();await new Promise(r=>setTimeout(r,60));let dl=null;try{dl=b.act(d,k)}catch(e){skip(false);alert(e.message);return}if(!dl||!back0)skip(false);
-  if(dl&&back0){const back=()=>{setTimeout(()=>{/* 12.74: „Zur Notentabelle“ – in Noten bleiben */if(NF().cmStayNoten){NF().cmStayNoten=false;skip(false);return}const W=NF().document;if([...W.querySelectorAll('dialog')].some(x=>x.open)){W.addEventListener('close',back,{capture:true,once:true});return}back0.click();skip(false)},0)};dl.addEventListener('close',back,{once:true})}}
+  /* 14.48: Datenschutz – solange ein Fenster aus „Unterricht“ in den Noten offen ist, bleibt die Notentabelle dahinter unsichtbar; ist kein Fenster mehr offen, geht es zurück (auch nach Folgefenstern wie dem Übersetzungsvergleich) */
+  if(dl&&back0){const W=NF().document;if(!W.getElementById('cmOnlyDlgCss')){const st=W.createElement('style');st.id='cmOnlyDlgCss';st.textContent='body.cm-only-dlg *{visibility:hidden!important}body.cm-only-dlg dialog[open],body.cm-only-dlg dialog[open] *{visibility:visible!important}';W.head.append(st)}W.body.classList.add('cm-only-dlg');
+   let idle=0;const tm=setInterval(()=>{const open=[...W.querySelectorAll('dialog')].some(x=>x.open),onNoten=T?.getElementById('tab-noten')?.getAttribute('aria-selected')==='true';
+    /* 12.74: „Zur Notentabelle“ – in Noten bleiben */if(NF().cmStayNoten||!onNoten){NF().cmStayNoten=false;clearInterval(tm);W.body.classList.remove('cm-only-dlg');skip(false);return}
+    if(open){idle=0;return}if(++idle<2)return;clearInterval(tm);W.body.classList.remove('cm-only-dlg');back0.click();skip(false)},250)}}
  /* Üben: QR-Code (ohne Note, ohne Abgabe) */
  async function practice(kind,k,el){const b=B();let r=null;if(el){el.disabled=true}try{r=await b.practice(kind,k)}catch(e){alert('Üben nicht möglich: '+e.message)}finally{if(el)el.disabled=false}
   if(!r){alert('Dafür fehlen noch Inhalte.');return}
