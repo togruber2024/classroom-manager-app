@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 27.11.2026 · Version 14.55
+Stand: 27.11.2026 · Version 14.56
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1735,3 +1735,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.53: Klassenarbeit zählt mit der glatten Note (wie auf der Arbeit); Elternsprechtag und iPhone: Antippen der Klassenarbeit zeigt die genaue Note und die Halbjahresnote damit zum Vergleich, „!“ wenn sich die glatte Note ändern würde; 1+ wird nicht mehr als 1 angezeigt; Tests mit Bewertungszeichen; Excel-Halbjahresnote wie die App
 14.54: Elternsprechtag und iPhone: Beim Antippen der Klassenarbeit wechselt auch die große Note oben mit (Vergleichswert mit der genauen Note, zählt nicht)
 14.55: Klassenarbeit antippen: das Kästchen zeigt jetzt die genaue Note genauso wie der Durchschnitt (z. B. 1+/1).
+14.56: Schülerübersicht mit Notenkarten wie im Elternsprechtag; Klick auf eine Karte startet die Notenbesprechung mit allen Fächern der Klasse nebeneinander (Selbsteinschätzung, Quartalsnote, Halbjahresnote – auch Zwischennoten wie 2-3).

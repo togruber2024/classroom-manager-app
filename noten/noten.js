@@ -6375,6 +6375,25 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
    out.push({key,subject,subjectLabel:subjects[subject]?.label||subject,classLabel:item.label||'',system,halfYears:hys,exams});
   }
   return out}
+ /* 14.56: Notenbesprechung aus der Schülerübersicht – Selbsteinschätzung, Quartalsnote und eigene Halbjahresnote in jedem Fach der Klasse.
+    Gespeichert genau dort, wo die Quartals- bzw. Halbjahresübersicht sie ablegt (Fach kurz als aktuelles Fach, danach zurück). */
+ function inClass(key,fn){const [subject,classId]=String(key||'').split('::');if(!subjects[subject]||!(classesBySubject[subject]||[]).some(c=>c.id===classId))throw new Error('Fach nicht gefunden');saveCurrentSubject();const s0=currentSubject,c0=currentClassId,sw=s0!==subject||c0!==classId;let r;
+  if(sw){currentSubject=subject;currentClassId=classId}try{r=fn(subject)}finally{if(sw){currentSubject=s0;currentClassId=c0}}
+  if(r?.changed){try{localStorage.setItem(storageKey,JSON.stringify(subjectStates))}catch{}if(!sw){try{saveCurrentSubject();renderAll(true);setPage(activePage)}catch(e){console.warn(e)}}}return r}
+ function review(half,name,field,value){const subject=currentSubject,item=(classesBySubject[subject]||[]).find(c=>c.id===currentClassId),groups=subjectExamGroups(subject),pts=classUsesGradePoints(subject),lc=n=>String(n||'').trim().toLowerCase(),nm=lc(name);
+  const hys=groups.filter(g=>g.type==='halfYear'),hy=hys.find(g=>String(g.label||'').trim()===String(half||'').trim())||hys.at(-1)||{id:null},hid=hy.id??null,same=g=>(g.halfYearId??null)===hid;
+  const q=Number(item?.sharedQuarterSelection?.[hid])||0,perf=groups.find(g=>g.type==='performance'&&!g.digital&&!g.material&&same(g)&&g.pages?.[q]),oral=perf?taskPageData(subject,perf.pages[q]):null,st=oral?.students?.find(x=>lc(x.name)===nm);
+  const sum=groups.find(g=>g.type==='quarterSummary'&&same(g)),settings=sum?customPageValues(subject,sum.pages[0]):null,rv=st?(st.quarterReview??={}):settings?((settings.reviews??={})[nm]??={}):null;
+  const sem=q>=1?groups.find(g=>g.type==='semester'&&same(g)):null,fin=sem?(customPageValues(subject,sem.pages[0]).finalGrades??={}):null;
+  const num=v=>v===''||v==null||v==='x'||!Number.isFinite(Number(v))?null:Number(v);
+  const tl=g=>{if(Math.abs(g%1-.5)<1e-8)return Math.floor(g)+'-'+Math.ceil(g);const t=Math.round(g*3)/3,b=Math.round(t);return b+(t<b-1e-6?'+':t>b+1e-6?'−':'')};
+  const out=(v,final)=>{const n=num(v);if(n==null)return null;if(pts){const p=final?n:participationPoints(n);return {text:String(Math.round(p)),grade:Math.max(1,Math.min(6,(17-p)/3))}}return {text:tl(n),grade:n}};
+  let changed=false;
+  if(field){if(field==='final'?!fin:!rv)throw new Error('Hier gibt es kein Feld dafür');const t=String(value??'').trim().replace(/[−–—]/g,'-');let v='';
+   if(t){let p=null;const m=!pts&&/^([1-6])([+-])$/.exec(t);if(m)p={value:String(Number(m[1])+(m[2]==='+'?-1/3:1/3)),absence:false};else p=parseParticipationGrade(t);if(!p||p.absence)throw new Error('Keine gültige Note: '+value);v=field==='final'&&pts?participationPoints(p.value):p.value}
+   if(field==='final')fin[nm]=v;else{rv[field]=v;if(oral){oral.quarterReviewEnabled=true;oral.quarterReviewDate||=new Date().toISOString().slice(0,10)}}changed=true}
+  const opts=pts?Array.from({length:16},(_,i)=>String(15-i)):['1+','1','1−','1-2','2+','2','2−','2-3','3+','3','3−','3-4','4+','4','4−','4-5','5+','5','5−','5-6','6']/* 14.56: auch Zwischennoten wie am iPhone */;
+  return {changed,q:'Q'+(q+1),pts,opts,canReview:!!rv,canFinal:!!fin,self:rv?out(rv.self):null,teacher:rv?out(rv.teacher):null,final:fin?out(fin[nm],true):null}}
  // Notenfarben genau wie in den Tabellen (abhängig von der Farbgestaltung).
  function palette(){const out=[''];for(let g=1;g<=6;g++){const e=document.createElement('span');e.className='compact-cell-value g'+g;e.style.cssText='position:absolute;left:-9999px';document.body.append(e);const c=getComputedStyle(e);out.push({bg:c.backgroundColor,fg:c.color});e.remove()}return out}
  let memo={key:'',raw:'',sheets:null};
@@ -6469,6 +6488,8 @@ function seatMapHtml(t,big){const groups=Object.keys(t.groups||{});if(groups.len
    else if(msg.type==='classroom:subject-compare'){saveCurrentSubject();reply(msg,{subjects:compareData(msg.keys||[]),palette:palette()})}
    else if(msg.type==='classroom:archive-sheets'){const sheets=withArchive(msg.values||{},()=>window.classroomExcelExport.collect(true));reply(msg,{sheets:sheets.map(s=>({name:s.name,label:s.label,subjectLabel:s.subjectLabel,classKey:s.classKey,rows:s.rows}))})}
    else if(msg.type==='classroom:new-school-year'){reply(msg,newSchoolYear(msg.plan||{}))}
+   else if(msg.type==='classroom:review-get'){reply(msg,{palette:palette(),items:(msg.keys||[]).map(k=>{try{return {key:k.key,...inClass(k.key,()=>review(k.half,msg.name))}}catch(e){return {key:k.key,error:e.message}}})})}
+   else if(msg.type==='classroom:review-set'){const r=inClass(msg.key,()=>review(msg.half,msg.name,msg.field,msg.value));reply(msg,r)}
    else if(msg.type==='classroom:select-class'){
     if(msg.subject&&subjects[msg.subject]&&msg.subject!==currentSubject)setSubject(msg.subject);
     if(msg.classId&&(classesBySubject[currentSubject]||[]).some(c=>c.id===msg.classId))selectClass(msg.classId);
