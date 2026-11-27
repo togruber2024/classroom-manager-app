@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 27.11.2026 · Version 14.62
+Stand: 27.11.2026 · Version 14.63
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1742,3 +1742,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.60: Tests: Detailseiten werden repariert (leere Seite beim Öffnen nach dem Zusammenführen), neue Tests bekommen eindeutige Seiten. Neu: „In anderen Test übernehmen“ für Nachschreiber (anteilig nach Prozent).
 14.61: Nachschreiber: Nach „In anderen Test übernehmen“ lässt sich die iPad-Abgabe weiter über das i neben dem Namen öffnen.
 14.62: Testseite: oben Thema, Tests-Übersicht (mittig), Datum und Zurückgegeben (rechts); darunter iPad-Auswertung und „In anderen Test übernehmen“ (weiß).
+14.63: iPad-Tests: Der Hinweis „Test mit Assistent“ zeigt den richtigen Schritt und erscheint als schmale Leiste mit normalem Button.
