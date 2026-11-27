@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 27.11.2026 · Version 14.43
+Stand: 27.11.2026 · Version 14.44
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1723,3 +1723,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.41: Tendenz genau in der Mitte zweier Stufen zeigt beide (z. B. 3/3−) – Elternsprechtag und iPhone; eingetragene Tendenznoten werden exakt gerechnet (3− = 3⅓)
 14.42: Lerneinheiten: Falsch gelegte Karten bleiben nach dem Prüfen rot im falschen Feld liegen und werden in ein neues Feld gezogen (Sortieren, Tabelle, Karte beschriften); das Glossar zeigt alle Fachbegriffe sofort und schließt mit ✕
 14.43: Nachhilfe-Paket Latein: Alle Stationen sind jederzeit frei – man muss sie nicht mehr nacheinander freischalten (gilt für neu gespeicherte Pakete)
+14.44: Lerneinheiten: Fachbegriffe sind überall im Text unterstrichen, auch in Zusammensetzungen (z. B. Deviseneinnahmen); Karten mit Fachbegriffen bekommen ein „?“ mit Erklärung; beim Karte beschriften gibt es eine größere Trefferfläche um die Punkte
