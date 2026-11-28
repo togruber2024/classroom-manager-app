@@ -2380,6 +2380,93 @@ h3.t{font-size:14px;margin:18px 0 8px;color:#2f5f9b}.pw{max-width:380px;margin:1
 })();
 ;
 
+/* ==== results-transfer.js ==== */
+/* 14.70: Ergebnisse per AirDrop – am iPhone/iPad eingesammelte Abgaben (iPad-Tests, Lerneinheiten mit Übersetzungs-Trainer,
+   Übersetzungsvergleich) als kleine Datei (.cmergebnisse) senden; am Mac über jeden Import-Weg (Wiederherstellen, Bibliothek, Datei ins
+   Fenster ziehen) einlesen. Die Abgaben werden einsortiert, nichts am Mac wird überschrieben: Fehlendes kommt dazu, bei derselben Abgabe
+   gilt die neuere – Korrekturen der Lehrkraft am Mac bleiben dabei erhalten. */
+(()=>{
+ const FMT='classroom-manager-results',VT='classroom-vocab-tests-v1',LE='classroom-lerneinheiten-v1',UV='classroom-uv-v1';
+ const rd=k=>{try{return JSON.parse(localStorage.getItem(k)||'{}')||{}}catch{return {}}};
+ const isObj=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+ const n=o=>Object.keys(o||{}).length;
+ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+ const alertX=m=>(window.classroomAlert||alert)(m);
+ const stamp=d=>{const p=x=>String(x).padStart(2,'0');return p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+d.getFullYear()+' '+p(d.getHours())+'-'+p(d.getMinutes())};
+
+ /* ---------- Senden (iPhone/iPad) ---------- */
+ function collect(f){const T={},L={},U={};let subs=0,tests=0,units=0,groups=0,title='';/* f: {vt:id} oder {le:id} – nur diese Abgaben; ohne f alles */
+  for(const [id,t] of Object.entries(rd(VT)))if(isObj(t)&&n(t.subs)&&(!f||f.vt===id)){T[id]=t;tests++;subs+=n(t.subs);if(f)title=t.title||''}
+  for(const [id,e] of Object.entries(rd(LE)))if(isObj(e)&&n(e.subs)&&(!f||f.le===id)){L[id]=e;units++;subs+=n(e.subs);if(f)title=String(e.unit?.title||e.title||'')}
+  for(const [id,e] of Object.entries(rd(UV)))if(isObj(e)&&n(e.res)&&(!f||f.le===id)){U[id]=e;groups+=n(e.res)}
+  return {data:{[VT]:T,[LE]:L,[UV]:U},subs,tests,units,groups,title}}
+ window.classroomResultsExport=async f=>{const c=collect(f);
+  if(!c.subs&&!c.groups){await alertX(f?'Hier ist noch keine Abgabe eingesammelt.':'Auf diesem Gerät sind noch keine eingesammelten Ergebnisse.');return false}
+  const body=JSON.stringify({format:FMT,version:1,createdAt:new Date().toISOString(),extras:c.data});
+  const file=new File([body],'Ergebnisse '+(c.title?c.title.replace(/[\\/:*?"<>|]+/g,' ').slice(0,60).trim()+' ':'')+stamp(new Date())+'.cmergebnisse',{type:'application/octet-stream'});
+  try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'Ergebnisse'});return true}}catch(e){if(e?.name==='AbortError')return false;console.warn(e)}
+  const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);return true};
+
+ /* ---------- Einlesen (Mac) ---------- */
+ const head=async f=>{try{return await f.slice(0,300).text()}catch{return ''}};
+ window.classroomIsResultsFile=async f=>!!f&&(/\.cmergebnisse$/i.test(f.name||'')||(f.size<50e6&&/"format"\s*:\s*"classroom-manager-results"/.test(await head(f))));
+ const tsv=x=>{const v=Number(x);if(Number.isFinite(v))return v;const d=Date.parse(x);return isNaN(d)?0:d};
+ function mergeSubs(a,b,keep,st,tag){/* a: hier, b: aus der Datei – liefert die zusammengeführten Abgaben */const o={...(a||{})};
+  for(const [k,s] of Object.entries(b||{})){const l=o[k];if(!l){o[k]=s;st.neu++;st.by[tag]=(st.by[tag]||0)+1;continue}
+   if(tsv(s?.ts)>tsv(l?.ts)){const x={...s};for(const f of keep)if(l[f]!==undefined)x[f]=l[f];o[k]=x;st.akt++}else st.da++}
+  return o}
+ function mergeResults(inc){const st={neu:0,akt:0,da:0,by:{},tests:new Set()};const X=inc?.extras||{},out={};
+  {const A=rd(VT),B=X[VT]||{};for(const [id,t] of Object.entries(B)){if(!isObj(t))continue;const l=A[id];
+    if(!l){A[id]=t;const k=n(t.subs);st.neu+=k;st.by.vt=(st.by.vt||0)+k;if(k)st.tests.add(t.title||'iPad-Test');continue}
+    const before=st.neu;l.subs=mergeSubs(l.subs,t.subs,['over'],st,'vt');if(st.neu>before)st.tests.add(l.title||'iPad-Test')}out[VT]=A}
+  {const A=rd(LE),B=X[LE]||{};for(const [id,e] of Object.entries(B)){if(!isObj(e))continue;const l=A[id];
+    if(!l){A[id]=e;const k=n(e.subs);st.neu+=k;st.by.le=(st.by.le||0)+k;continue}
+    l.subs=mergeSubs(l.subs,e.subs,['tr','ov','wr'],st,'le');if(l.unit==null&&e.unit!=null)l.unit=e.unit}out[LE]=A}
+  {const A=rd(UV),B=X[UV]||{};for(const [id,e] of Object.entries(B)){if(!isObj(e))continue;const l=A[id];
+    if(!l){A[id]=e;const k=n(e.res);st.neu+=k;st.by.uv=(st.by.uv||0)+k;continue}
+    l.res=mergeSubs(l.res,e.res,[],st,'uv')}out[UV]=A}
+  return {out,st}}
+ function summary(st,when){return new Promise(res=>{const d=document.createElement('dialog');d.className='classroom-dialog rt-dialog';
+  const pl=(k,a,b)=>k+' '+(k===1?a:b),row=(l,k)=>k?'<li><span>'+l+'</span><b data-no-decimal>'+k+'</b></li>':'';
+  const tests=[...st.tests];
+  d.innerHTML='<h2>Ergebnisse übernommen</h2><p class="rt-sub">Datei'+(when?' vom '+esc(when):'')+'</p>'
+   +(st.neu||st.akt?'<ul class="rt-list">'+row('iPad-Tests – neue Abgaben',st.by.vt)+row('Lerneinheiten – neue Abgaben',st.by.le)+row('Übersetzungsvergleich – neue Gruppenergebnisse',st.by.uv)+row('Aktualisiert (neuer als hier)',st.akt)+row('Schon vorhanden',st.da)+'</ul>'
+    +(tests.length?'<p class="rt-sub">'+esc(tests.slice(0,4).join(' · '))+(tests.length>4?' …':'')+'</p>':'')
+    :'<p>Alle '+pl(st.da,'Abgabe war','Abgaben waren')+' schon vorhanden – es gab nichts Neues.</p>')
+   +'<p class="rt-note">Die Datei enthält Namen und Ergebnisse. Lösche sie jetzt aus „Downloads“ – die App selbst kann das nicht.</p>'
+   +'<div class="classroom-dialog-actions"><button type="button" class="primary" data-ok>OK</button></div>';
+  document.body.append(d);d.querySelector('[data-ok]').onclick=()=>d.close();d.addEventListener('close',()=>{d.remove();res()});d.showModal()})}
+ window.classroomResultsImport=async f=>{let inc;try{inc=JSON.parse(await f.text())}catch{await alertX('Die Datei „'+f.name+'“ ist keine gültige Ergebnis-Datei.');return false}
+  if(inc?.format!==FMT||!isObj(inc.extras)){await alertX('Die Datei „'+f.name+'“ ist keine gültige Ergebnis-Datei.');return false}
+  const {out,st}=mergeResults(inc);
+  if(st.neu||st.akt){try{for(const [k,v] of Object.entries(out))localStorage.setItem(k,JSON.stringify(v))}catch(e){await alertX('Speichern nicht möglich: '+e.message);return false}}
+  const t=new Date(inc.createdAt);await summary(st,isNaN(t)?'':t.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}));
+  if(st.neu||st.akt)for(const fr of document.querySelectorAll('iframe')){try{fr.contentWindow.location.reload()}catch{}}
+  return true};
+
+ /* 14.70: Lerneinheiten/Reihen (.cmeinheit, .cmreihe, ZIP, HTML einer Lerneinheit) gehen in die Bibliothek */
+ const unitWin=()=>[...document.querySelectorAll('iframe')].map(fr=>{try{return fr.contentWindow}catch{return null}}).find(w=>w?.classroomLoadUnitFiles);
+ const isUnitFile=async f=>{if(/\.(cmeinheit|cmreihe|zip)$/i.test(f.name||''))return true;if(!/\.html?$/i.test(f.name||''))return false;try{return !(await f.text()).includes('<script id="cmbk"')/* Backup-HTML trägt das Backup in #cmbk */}catch{return false}};
+ const loadUnits=async fs=>{const w=unitWin();if(!w){await alertX('Lerneinheiten lassen sich nur laden, wenn der Bereich „Unterricht“ eingeschaltet ist.');return false}return w.classroomLoadUnitFiles(fs)};
+ window.classroomImportAny=async f=>{if(await classroomIsResultsFile(f))return classroomResultsImport(f);if(await isUnitFile(f))return loadUnits([f]);return null};
+ /* Jeder Import-Weg erkennt die Datei: „Wiederherstellen“ (auch der Pfeil oben) … */
+ if(typeof window.classroomRestoreFile==='function'){const orig=window.classroomRestoreFile;window.classroomRestoreFile=async f=>{const r=await classroomImportAny(f);return r===null?orig(f):r}}
+ {const i=document.getElementById('classroomBackupFile');if(i){/* iPhone/iPad kennen die eigenen Endungen nicht und grauen sie sonst aus – dort jede Datei zulassen */if(matchMedia('(pointer:coarse)').matches)i.removeAttribute('accept');else if(!/cmergebnisse/.test(i.accept))i.accept+=',.cmergebnisse,.cmeinheit,.cmreihe,.zip,application/zip'}}
+ /* … und Ziehen ins Fenster (auch über Sitzplan/Noten) */
+ const isFiles=e=>[...(e.dataTransfer?.types||[])].includes('Files');
+ const onDrop=async e=>{if(!isFiles(e))return;e.preventDefault();const fs=[...e.dataTransfer.files];for(const f of fs){
+   if(/\.(json|html?|xlsx|cmergebnisse|cmeinheit|cmreihe|zip)$/i.test(f.name)){try{await window.classroomRestoreFile(f)}catch(er){await alertX('„'+f.name+'“ konnte nicht geladen werden: '+er.message)}continue}
+   await alertX('„'+f.name+'“ ist kein Backup, keine Ergebnis-Datei und keine Lerneinheit.')}};
+ const hook=doc=>{if(!doc||doc.__cmRt)return;doc.__cmRt=1;doc.addEventListener('dragover',e=>{if(isFiles(e)){e.preventDefault();e.dataTransfer.dropEffect='copy'}});doc.addEventListener('drop',onDrop)};
+ hook(document);const hookFrames=()=>{for(const fr of document.querySelectorAll('iframe')){try{hook(fr.contentDocument)}catch{}fr.addEventListener('load',()=>{try{hook(fr.contentDocument)}catch{}})}};
+ hookFrames();new MutationObserver(hookFrames).observe(document.body,{childList:true});setTimeout(hookFrames,1500);
+
+ const css=document.createElement('style');css.textContent='.rt-dialog{max-width:480px;width:min(480px,calc(100vw - 24px));box-sizing:border-box}.rt-dialog h2{margin:0 0 4px}.rt-sub{color:#66758a;font-size:.88rem;margin:0 0 8px}.rt-list{list-style:none;margin:10px 0;padding:0;border:1px solid #dbe3ee;border-radius:12px}.rt-list li{display:flex;justify-content:space-between;gap:12px;padding:9px 12px;border-top:1px solid #eef2f7}.rt-list li:first-child{border-top:0}.rt-list b{color:#2f5f9b;font-variant-numeric:tabular-nums}.rt-note{font-size:.85rem;color:#8a5a00;background:#fff4e0;border:1px solid #f3d29a;border-radius:10px;padding:8px 10px}'
+  ;
+ document.head.append(css);
+})();
+;
+
 /* ==== timetable.js ==== */
 /* Stundenplan: Zeiten einmal eintragen – die Klassen erkennt die App selbst aus den Eingaben (Bewertungen, Hausaufgaben,
    Abwesenheiten zum heutigen Datum, auch in der Pause direkt nach der Stunde). Ab zwei Wochen mit derselben Klasse in derselben
@@ -2780,7 +2867,7 @@ h3.t{font-size:14px;margin:18px 0 8px;color:#2f5f9b}.pw{max-width:380px;margin:1
 (()=>{
  const C=window.classroomHelpContent=[
   // „Neu“: die letzten 10 neuen Funktionen (neueste oben, [Titel, Text, Wo, Version]) – bei jeder Version pflegen.
-  {id:'neu',title:'Neu',cards:true,news:true,items:[['Neu in 14.69','Aufräumen ohne sichtbare Änderung: ungenutzte Fächertabelle und alte Stile entfernt, Notenkarten-Regeln zusammengefasst, Teilnoten für Mac und iPhone gemeinsam ausgelesen','Allgemein','14.69'],['Neu in 14.68','Notenbesprechung: das Notenfenster schließt sich bei Klick oder Tipp außerhalb','Noten','14.68'],['Neu in 14.67','Pfeiltasten links/rechts wechseln in Schülerübersicht und Notenbesprechung den Schüler; etwas mehr Abstand zwischen Prozentangabe und Noten; am iPhone „Test“ bei nur einem Test','Noten','14.67'],['Neu in 14.66','Klassenarbeiten mit Teilnoten (z. B. Übersetzung/Aufgaben) in Schülerübersicht, Elternsprechtag und am iPhone; mehrere Klassenarbeiten in einer Zeile; Test/Tests und Klassenarbeit/Klassenarbeiten je nach Anzahl','Noten','14.66'],['Neu in 14.65','✕ steht auf einer Linie mit den Knöpfen daneben; das Fenster „iPad-Tests“ hat oben mehr Abstand.','Bedienung','14.65'],['Neu in 14.64','Überall ✕ oben rechts statt „Schließen“. Nachschreiber: Die iPad-Abgabe wird samt eigenen Vokabeln in den Ziel-Test übernommen – der Nachschreibtest kann danach gelöscht werden.','Bedienung','14.64'],['Neu in 14.63','iPad-Tests: Der Hinweis „Test mit Assistent“ zeigt den richtigen Schritt und erscheint als schmale Leiste mit normalem Button.','Noten','14.63'],['Neu in 14.62','Testseite: oben Thema, Tests-Übersicht (mittig), Datum und Zurückgegeben (rechts); darunter iPad-Auswertung und „In anderen Test übernehmen“ (weiß).','Noten','14.62'],['Neu in 14.61','Nachschreiber: Nach „In anderen Test übernehmen“ lässt sich die iPad-Abgabe weiter über das i neben dem Namen öffnen.','Noten','14.61'],['Neu in 14.60','Tests: Detailseiten werden repariert (leere Seite beim Öffnen nach dem Zusammenführen), neue Tests bekommen eindeutige Seiten. Neu: „In anderen Test übernehmen“ für Nachschreiber (anteilig nach Prozent).','Noten','14.60']]},
+  {id:'neu',title:'Neu',cards:true,news:true,items:[['Neu in 14.70','Ergebnisse per AirDrop: beim Abgaben-Scannen (iPad-Tests, Lerneinheiten) mit „AirDrop“ an Mac oder iPad senden; der Backup-Pfeil und Ziehen ins Fenster laden Backups, Ergebnis-Dateien und Lerneinheiten/Reihen','Noten','14.70'],['Neu in 14.69','Aufräumen ohne sichtbare Änderung: ungenutzte Fächertabelle und alte Stile entfernt, Notenkarten-Regeln zusammengefasst, Teilnoten für Mac und iPhone gemeinsam ausgelesen','Allgemein','14.69'],['Neu in 14.68','Notenbesprechung: das Notenfenster schließt sich bei Klick oder Tipp außerhalb','Noten','14.68'],['Neu in 14.67','Pfeiltasten links/rechts wechseln in Schülerübersicht und Notenbesprechung den Schüler; etwas mehr Abstand zwischen Prozentangabe und Noten; am iPhone „Test“ bei nur einem Test','Noten','14.67'],['Neu in 14.66','Klassenarbeiten mit Teilnoten (z. B. Übersetzung/Aufgaben) in Schülerübersicht, Elternsprechtag und am iPhone; mehrere Klassenarbeiten in einer Zeile; Test/Tests und Klassenarbeit/Klassenarbeiten je nach Anzahl','Noten','14.66'],['Neu in 14.65','✕ steht auf einer Linie mit den Knöpfen daneben; das Fenster „iPad-Tests“ hat oben mehr Abstand.','Bedienung','14.65'],['Neu in 14.64','Überall ✕ oben rechts statt „Schließen“. Nachschreiber: Die iPad-Abgabe wird samt eigenen Vokabeln in den Ziel-Test übernommen – der Nachschreibtest kann danach gelöscht werden.','Bedienung','14.64'],['Neu in 14.63','iPad-Tests: Der Hinweis „Test mit Assistent“ zeigt den richtigen Schritt und erscheint als schmale Leiste mit normalem Button.','Noten','14.63'],['Neu in 14.62','Testseite: oben Thema, Tests-Übersicht (mittig), Datum und Zurückgegeben (rechts); darunter iPad-Auswertung und „In anderen Test übernehmen“ (weiß).','Noten','14.62'],['Neu in 14.61','Nachschreiber: Nach „In anderen Test übernehmen“ lässt sich die iPad-Abgabe weiter über das i neben dem Namen öffnen.','Noten','14.61']]},
   {id:'start',title:'Erste Schritte',items:[
    ['Alles bleibt auf deinem Gerät','Der Classroom-Manager speichert alle Daten nur im Browser dieses Geräts – ohne Cloud und ohne Konto. Deshalb sind regelmäßige Backups wichtig (siehe „Backup und Datenschutz“).'],
    ['Drei Bereiche','Oben wechselst du zwischen Sitzplan-Manager (Sitzplan, Bewerten in der Stunde, Mitarbeit, Hausaufgaben und Material), Unterrichts-Manager (Reihen, Lektionen, Lerneinheiten für das iPad, Lernkontrollen) und Noten-Manager (Bewertungen, Tests, Klassenarbeiten und Klausuren, Zeugnisnoten). Alle drei nutzen dieselben Klassen und Schülerlisten.'],

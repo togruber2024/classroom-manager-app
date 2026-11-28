@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 28.11.2026 · Version 14.69
+Stand: 28.11.2026 · Version 14.70
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1749,3 +1749,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.67: Pfeiltasten links/rechts wechseln in Schülerübersicht und Notenbesprechung den Schüler; etwas mehr Abstand zwischen Prozentangabe und Noten; am iPhone „Test“ bei nur einem Test
 14.68: Notenbesprechung: das Notenfenster schließt sich bei Klick oder Tipp außerhalb
 14.69: Aufräumen ohne sichtbare Änderung: ungenutzte Fächertabelle und alte Stile entfernt, Notenkarten-Regeln zusammengefasst, Teilnoten für Mac und iPhone gemeinsam ausgelesen
+14.70: Ergebnisse per AirDrop: beim Abgaben-Scannen (iPad-Tests, Lerneinheiten) mit „AirDrop“ an Mac oder iPad senden; der Backup-Pfeil und Ziehen ins Fenster laden Backups, Ergebnis-Dateien und Lerneinheiten/Reihen
