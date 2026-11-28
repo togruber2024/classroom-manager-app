@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 28.11.2026 · Version 14.73
+Stand: 28.11.2026 · Version 14.74
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1753,3 +1753,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.71: Notentabellen (Mac/iPad): beim Scrollen gleiten Titelzeile und Hinweistext der Seite weg – mehr Zeilen sichtbar; ganz oben kommt alles zurück
 14.72: Notentabellen: Titelzeile und Hinweistext scrollen fließend mit weg; neue ⓘ-Legende ganz rechts in der Werkzeugzeile jeder Notenseite
 14.73: Legende unter den Notentabellen: Mitarbeitszeichen ohne Notenwörter (sehr stark · stark · solide · schwach · sehr schwach · keine)
+14.74: Unterricht: die Seitenleiste lässt sich nicht mehr schmaler als 100 % ziehen (wie im Sitzplan)
