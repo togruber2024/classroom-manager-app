@@ -2957,7 +2957,7 @@ if(fromPdf&&window.parent!==window)parent.postMessage({type:'classroom:learn-gen
 /* ==== noten/compact-view.js ==== */
 // Read-only projection of the rendered entries; it never writes assessment data.
 (()=>{
- const legendText='✓ erledigt · ✗ fehlt · E entschuldigt · A abwesend · — kein Eintrag · Mitarbeit: ++ sehr gut, + gut, o befriedigend, − ausreichend, −− mangelhaft, −−− ungenügend';
+ const legendText='✓ erledigt · ✗ fehlt · E entschuldigt · A abwesend · — kein Eintrag · Mitarbeit: ++ sehr stark, + stark, o solide, − schwach, −− sehr schwach, −−− keine';
  function legend(panel){if(panel.querySelector('.compact-view-legend'))return;const note=document.createElement('p');note.className='compact-view-legend';note.textContent=legendText;panel.append(note)}
  document.addEventListener('click',event=>{if(event.target.closest('input,select,textarea,button,a'))return;const row=event.target.closest('.compact-entry-table tbody tr');if(!row)return;const table=row.closest('table'),on=!row.classList.contains('compact-row-selected');table.querySelectorAll('.compact-row-selected').forEach(r=>r.classList.remove('compact-row-selected'));row.classList.toggle('compact-row-selected',on)});
  const enabled=new Set();
