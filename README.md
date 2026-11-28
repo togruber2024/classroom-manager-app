@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 28.11.2026 · Version 14.79
+Stand: 28.11.2026 · Version 14.80
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1759,3 +1759,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.77: iPad-Tests ohne Sitzplan: A- und B-Gruppe werden angesagt, die Schüler:innen wählen ihre Gruppe am iPad (kein „laut Sitzplan“ mehr)
 14.78: iPad-Tests ohne Sitzplan: die Gruppe wird nicht mehr aus gespeicherten Sitzplandaten vorgegeben – nach dem Namen wählen die Schüler:innen A oder B
 14.79: iPad-Tests: „Alle iPad-Tests“ im Seitenmenü, Assistent mit Pfeiltasten und stets sichtbarem „Weiter“, IServ-Abgabe links und vorausgewählt, eigene Vokabelanzahl (wird gemerkt), schmalerer A/B-Schalter, „Am Smartboard zeigen“ rechts in der Reiterzeile; ✕ oben rechts sauber ausgerichtet
+14.80: iPad-Tests: „Alle iPad-Tests“ im ＋-Test-Menü; bei IServ-Abgabe sind die Ausgabe-QR-Codes zugeklappt (nur falls der IServ-Link nicht geht)
