@@ -10454,6 +10454,34 @@ return}
  addEventListener('scroll',sync,{passive:true});addEventListener('resize',sync);document.addEventListener('click',()=>setTimeout(sync,350),true);try{parent.addEventListener('click',()=>setTimeout(sync,350),true)}catch{}setTimeout(sync,600);setTimeout(sync,2000);sync()})();
 ;
 
+/* ==== noten/top-collapse.js ==== */
+/* 14.71: Notentabelle nach unten scrollen → Titelzeile (mit Knöpfen) und Hinweistext der Seite gleiten weg – Kopf- und Navigationszeile
+   der App bleiben stehen; ganz oben (Tabelle wieder oben) kommt alles zurück. Nur Mac/iPad mit eingepasster Fläche (fit-panel), nicht am iPhone. */
+(()=>{
+ const root=document.documentElement;
+ let on=false,lock=0,lastTop=0,lastWrap=null,rt=0,ty=null;
+ function set(v){if(v===on)return;on=v;lock=Date.now()+450;/* Übergang nur rund ums Ein-/Ausblenden aktiv – sonst bleibt die Seite unberührt */clearTimeout(set.t);root.classList.add('cm-tanim');if(!v)set.t=setTimeout(()=>{if(!on)root.classList.remove('cm-tanim')},420);
+  setTimeout(()=>{if(on===v)root.classList.toggle('cm-tcol',v)},20);/* Fläche/Tabelle neu einpassen – während und nach dem Gleiten */for(const ms of [60,160,320])setTimeout(()=>{try{window.classroomSizeWraps?.()}catch{}dispatchEvent(new Event('resize'))},ms);}
+ const usable=()=>root.classList.contains('fit-panel')&&!root.classList.contains('ph-lite');
+ document.addEventListener('scroll',e=>{const w=e.target;if(!(w instanceof Element)||!w.classList.contains('table-wrap')||!w.closest('.fit-box'))return;
+  const t=w.scrollTop,up=t<lastTop;lastTop=t;lastWrap=w;if(!usable()){if(on)set(false);return}if(Date.now()<lock){clearTimeout(rt);rt=setTimeout(()=>{if(on&&lastWrap?.scrollTop<=0)set(false)},lock-Date.now()+30);return}
+  if(!on&&t>24&&w.scrollHeight-w.clientHeight>160)set(true);else if(on&&t<=0&&up)set(false)},true);
+ /* ganz oben weiter nach oben wischen/scrollen (ohne Scroll-Ereignis): ebenfalls zurückholen */
+ const atTop=e=>{const w=e.target?.closest?.('.fit-box .table-wrap');return on&&w&&w.scrollTop<=0};
+ document.addEventListener('wheel',e=>{if(e.deltaY<0&&atTop(e)&&Date.now()>=lock)set(false)},{passive:true,capture:true});
+ document.addEventListener('touchstart',e=>{ty=e.touches[0]?.clientY??null},{passive:true,capture:true});
+ document.addEventListener('touchmove',e=>{const y=e.touches[0]?.clientY;if(ty!=null&&y-ty>12&&atTop(e)&&Date.now()>=lock)set(false)},{passive:true,capture:true});
+ /* Seitenwechsel: wieder alles zeigen */
+ if(typeof window.setPage==='function'){const o=window.setPage;window.setPage=function(...a){set(false);lastTop=0;return o.apply(this,a)}}
+ addEventListener('pagehide',()=>set(false));
+ const st=document.createElement('style');st.textContent=/* alles vor der Tabelle in der Fläche (Titelzeile mit Knöpfen, Hinweistext …) – auch nach Neuaufbau der Seite */'html.cm-tanim .fit-box>:has(~.table-wrap){transition:max-height .28s ease,margin .28s ease,padding .28s ease,opacity .2s ease;max-height:600px}'
+  +'html.cm-tcol .fit-box>:has(~.table-wrap):not(#_){max-height:0!important;min-height:0!important;margin-top:0!important;margin-bottom:0!important;padding-top:0!important;padding-bottom:0!important;border-width:0!important;opacity:0;overflow:hidden!important;pointer-events:none}'
+  +'.fit-box{transition:padding-top .28s ease}html.cm-tcol .fit-box:not(#_){padding-top:10px!important}'
+  +'@media (prefers-reduced-motion:reduce){.fit-box>*,.fit-box{transition:none!important}}';
+ document.head.append(st);
+})();
+;
+
 /* ==== noten/mean-guard.js ==== */
 /* 8.36: Dreifachschalter „2,3 | 2− | 2“ (bzw. „10,6 | 11“) über den Ergebnisspalten: Solange alle Ergebnisse glatte Noten sind,
    sehen die drei Darstellungen gleich aus – dann sind Dezimal und Tendenz ausgegraut und nicht antippbar, „Gerundet“ ist markiert.
