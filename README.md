@@ -1,7 +1,7 @@
 # Classroom-Manager
 
 CLASSROOM-MANAGER – BEDIENUNGSANLEITUNG
-Stand: 28.11.2026 · Version 14.77
+Stand: 28.11.2026 · Version 14.78
 Untertitel: Die lokale Unterrichts- & Notenverwaltung
 
 Kurzfassung: Der „?“-Button oben rechts öffnet die Hilfe mit Suche (Kapitel „Neu“: die letzten zehn neuen Funktionen); dieselben Texte stehen
@@ -1757,3 +1757,4 @@ Version 5.48: Sitzplan-Bewertungen und Tischfarben verwenden nach automatischer 
 14.75: ⓘ-Legende der Notenseiten: obere vier Symbole rund wie in der Leiste
 14.76: Suchfeld der Hilfe endet vor dem ✕; Pfeil nach oben: Auswahl „Neuestes Backup“ oder „Datei auswählen …“ (Ergebnisse, Lerneinheiten, anderes Backup)
 14.77: iPad-Tests ohne Sitzplan: A- und B-Gruppe werden angesagt, die Schüler:innen wählen ihre Gruppe am iPad (kein „laut Sitzplan“ mehr)
+14.78: iPad-Tests ohne Sitzplan: die Gruppe wird nicht mehr aus gespeicherten Sitzplandaten vorgegeben – nach dem Namen wählen die Schüler:innen A oder B
