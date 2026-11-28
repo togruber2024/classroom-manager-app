@@ -10455,30 +10455,83 @@ return}
 ;
 
 /* ==== noten/top-collapse.js ==== */
-/* 14.71: Notentabelle nach unten scrollen → Titelzeile (mit Knöpfen) und Hinweistext der Seite gleiten weg – Kopf- und Navigationszeile
-   der App bleiben stehen; ganz oben (Tabelle wieder oben) kommt alles zurück. Nur Mac/iPad mit eingepasster Fläche (fit-panel), nicht am iPhone. */
+/* 14.71/14.72: Notentabelle nach unten scrollen → Titelzeile (mit Knöpfen) und Hinweistext der Seite scrollen mit weg, Pixel für Pixel
+   mit Finger/Trackpad (wie die Adressleiste in Safari); zurückscrollen holt sie genauso fließend wieder. Kopf- und Navigationszeile der
+   App bleiben stehen. Nur Mac/iPad mit eingepasster Fläche (fit-panel), nicht am iPhone. */
 (()=>{
  const root=document.documentElement;
- let on=false,lock=0,lastTop=0,lastWrap=null,rt=0,ty=null;
- function set(v){if(v===on)return;on=v;lock=Date.now()+450;/* Übergang nur rund ums Ein-/Ausblenden aktiv – sonst bleibt die Seite unberührt */clearTimeout(set.t);root.classList.add('cm-tanim');if(!v)set.t=setTimeout(()=>{if(!on)root.classList.remove('cm-tanim')},420);
-  setTimeout(()=>{if(on===v)root.classList.toggle('cm-tcol',v)},20);/* Fläche/Tabelle neu einpassen – während und nach dem Gleiten */for(const ms of [60,160,320])setTimeout(()=>{try{window.classroomSizeWraps?.()}catch{}dispatchEvent(new Event('resize'))},ms);}
  const usable=()=>root.classList.contains('fit-panel')&&!root.classList.contains('ph-lite');
- document.addEventListener('scroll',e=>{const w=e.target;if(!(w instanceof Element)||!w.classList.contains('table-wrap')||!w.closest('.fit-box'))return;
-  const t=w.scrollTop,up=t<lastTop;lastTop=t;lastWrap=w;if(!usable()){if(on)set(false);return}if(Date.now()<lock){clearTimeout(rt);rt=setTimeout(()=>{if(on&&lastWrap?.scrollTop<=0)set(false)},lock-Date.now()+30);return}
-  if(!on&&t>24&&w.scrollHeight-w.clientHeight>160)set(true);else if(on&&t<=0&&up)set(false)},true);
- /* ganz oben weiter nach oben wischen/scrollen (ohne Scroll-Ereignis): ebenfalls zurückholen */
- const atTop=e=>{const w=e.target?.closest?.('.fit-box .table-wrap');return on&&w&&w.scrollTop<=0};
- document.addEventListener('wheel',e=>{if(e.deltaY<0&&atTop(e)&&Date.now()>=lock)set(false)},{passive:true,capture:true});
- document.addEventListener('touchstart',e=>{ty=e.touches[0]?.clientY??null},{passive:true,capture:true});
- document.addEventListener('touchmove',e=>{const y=e.touches[0]?.clientY;if(ty!=null&&y-ty>12&&atTop(e)&&Date.now()>=lock)set(false)},{passive:true,capture:true});
- /* Seitenwechsel: wieder alles zeigen */
- if(typeof window.setPage==='function'){const o=window.setPage;window.setPage=function(...a){set(false);lastTop=0;return o.apply(this,a)}}
- addEventListener('pagehide',()=>set(false));
- const st=document.createElement('style');st.textContent=/* alles vor der Tabelle in der Fläche (Titelzeile mit Knöpfen, Hinweistext …) – auch nach Neuaufbau der Seite */'html.cm-tanim .fit-box>:has(~.table-wrap){transition:max-height .28s ease,margin .28s ease,padding .28s ease,opacity .2s ease;max-height:600px}'
-  +'html.cm-tcol .fit-box>:has(~.table-wrap):not(#_){max-height:0!important;min-height:0!important;margin-top:0!important;margin-bottom:0!important;padding-top:0!important;padding-bottom:0!important;border-width:0!important;opacity:0;overflow:hidden!important;pointer-events:none}'
-  +'.fit-box{transition:padding-top .28s ease}html.cm-tcol .fit-box:not(#_){padding-top:10px!important}'
-  +'@media (prefers-reduced-motion:reduce){.fit-box>*,.fit-box{transition:none!important}}';
- document.head.append(st);
+ /* erstes sichtbares Element vor der Tabelle; seine Oberkante wird um „off“ nach oben gezogen */
+ const firstPre=w=>{for(const c of w.parentElement.children){if(c===w)return null;if(c.getClientRects().length)return c}return null};
+ let cur=null,raf=0;
+ function apply(w){const box=w.parentElement,f=firstPre(w);if(!f){return}
+  if(cur&&cur.f!==f){cur.f.style.marginTop='';cur.f.style.opacity=''}
+  if(!cur||cur.f!==f){const cs=getComputedStyle(f);cur={f,base:parseFloat(cs.marginTop)||0,h:0}}
+  /* Höhe aller Elemente vor der Tabelle – gemessen, solange nichts verschoben ist */
+  const off0=cur.off||0;if(!off0){cur.h=Math.max(0,w.getBoundingClientRect().top-f.getBoundingClientRect().top-6);cur.pad=parseFloat(getComputedStyle(box).paddingTop)||0}const h=cur.h,ex=Math.max(0,cur.pad-10)/* auch den oberen Innenabstand der Fläche bis auf 10 px */;
+  const off=usable()?Math.min(Math.max(0,w.scrollTop),h+ex):0;if(Math.abs(off-off0)<.5&&cur.applied)return;cur.off=off;cur.applied=true;
+  f.style.marginTop=off?(cur.base-Math.min(off,h))+'px':'';box.style.paddingTop=off>h?(cur.pad-(off-h))+'px':'';box.classList.toggle('tc-moving',off>0);
+  for(let s=f;s&&s!==w;s=s.nextElementSibling)s.style.opacity=off?String(Math.max(0,1-Math.min(off,h)/Math.max(1,h)*1.4)):'';
+  try{window.classroomSizeWraps?.()}catch{}}
+ document.addEventListener('scroll',e=>{const w=e.target;if(!(w instanceof Element)||!w.classList.contains('table-wrap')||!w.closest('.fit-box')||w.parentElement!==w.closest('.fit-box'))return;
+  cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>apply(w))},true);
+ /* Seitenwechsel: alles zurücksetzen */
+ const reset=()=>{if(cur){let s=cur.f;cur.f.style.marginTop='';while(s){s.style.opacity='';s=s.nextElementSibling}const bx=cur.f.parentElement;if(bx){bx.classList.remove('tc-moving');bx.style.paddingTop=''}}cur=null};
+ if(typeof window.setPage==='function'){const o=window.setPage;window.setPage=function(...a){reset();return o.apply(this,a)}}
+ const st=document.createElement('style');st.textContent='.fit-box.tc-moving{overflow:hidden!important}';document.head.append(st);
+})();
+;
+
+/* ==== noten/toolbar-legend.js ==== */
+/* 14.72: ⓘ ganz rechts in der Werkzeugzeile jeder Notenseite (eckig wie die übrigen Knöpfe) – Legende wie im Sitzplan:
+   jedes sichtbare Bedienelement der Zeile mit Symbol und kurzer Erklärung. */
+(()=>{
+ const INFO='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.6" r=".6" fill="currentColor"/></svg>';
+ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const vis=e=>!!e&&e.offsetParent!==null&&e.getClientRects().length>0;
+ /* kurze Erklärung, eine Zeile */
+ /* Zweite Zeile (Variante „zwei Zeilen“) */
+ const SUB=[['.previous-quarter-toggle','Berechnung bleibt unverändert'],['.ps-seg','alphabetisch oder nach Note'],['.hatch-seg','aus · Farbe · Rahmen · Schraffur'],['.seg-toggle','Bewertungszeichen oder Noten'],['.compact-view-toggle','alle Spalten schmal'],['.fs-btn','Tabelle samt Kopfleiste'],['.tr-est','Termine aus IServ, Gesprächsnotizen'],['.student-overview-button','Bewertungen, Fehltage, Klassenliste'],['.notenspiegel-button','Verteilung der Noten'],['.page-print-button','Seite drucken, als PDF oder Excel'],['.ew-btn','Abwärtstrend, Hausaufgaben, knapp vor 5'],['.cm-pin-pg','oben über die Nadel schnell erreichbar'],['.clear-students-button','alle Bewertungen dieser Seite']];
+ const subOf=c=>{for(const [sel,v] of SUB)if(c.matches(sel))return v;return ''};
+ const SHORT=[['.previous-quarter-toggle',c=>(c.querySelector('span')?.textContent.trim()||'Anderes Quartal')+' ein-/ausblenden'],['.ps-seg','Sortieren'],['.hatch-seg','Farbmarkierung: aus · Farbe · Rahmen · Schraffur'],['.seg-toggle','Anzeige: Zeichen oder Noten'],
+  ['.compact-view-toggle','Kompaktansicht'],['.fs-btn','Vollbild'],['.tr-est','Elternsprechtag'],['.student-overview-button','Schülerübersicht'],['.notenspiegel-button','Notenspiegel'],['.page-print-button','Drucken und Exportieren'],
+  ['.ew-btn','Auffällige Schüler:innen'],['.cm-pin-pg','Seite anheften'],['.clear-students-button','Alle Eingaben löschen'],['.task-tendency-toggle',c=>c.textContent.trim()]];
+ const textOf=c=>{for(const [sel,v] of SHORT)if(c.matches(sel))return typeof v==='function'?v(c):v;const t=String(c.getAttribute('aria-label')||c.title||c.textContent.trim()||'');return t.split(/:| – |\. /)[0].trim().slice(0,40)};
+ function controls(st){const out=[];for(const area of st.querySelectorAll(':scope>.oral-display-actions,:scope>.task-actions'))for(const c of area.children){if(!vis(c)||c.classList.contains('nl-info'))continue;out.push(c)}
+  return out.sort((a,b)=>{const A=a.getBoundingClientRect(),B=b.getBoundingClientRect();return Math.abs(A.top-B.top)>12?A.top-B.top:A.left-B.left})}
+ function iconOf(c){const cl=x=>{const k=x.cloneNode(true);k.removeAttribute('id');k.removeAttribute('class');k.removeAttribute('style');return k.outerHTML};
+  if(c.matches('.mean-seg'))return '<span class="nl-seg">'+[...c.querySelectorAll('button')].filter(vis).map(b=>{const i=b.querySelector('i.hs-sw');return '<span class="nl-sg">'+(i?i.outerHTML:esc(b.textContent.trim()))+'</span>'}).join('')+'</span>';
+  if(c.matches('.previous-quarter-toggle'))return '<span class="nl-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 6.1A10 10 0 0 1 12 6c5 0 9 6 9 6a17 17 0 0 1-2.6 3.2M6.6 6.6C4.3 8.1 3 12 3 12s4 6 9 6a9 9 0 0 0 4.1-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg><b class="nl-q">'+esc(c.querySelector('span')?.dataset.q||'')+'</b></span>';
+  if(c.matches('.compact-view-toggle'))return '<span class="nl-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16"/><path d="M3 12h6M6 9l3 3-3 3"/><path d="M21 12h-6M18 9l-3 3 3 3"/></svg></span>';
+  const sv=c.querySelector('svg'),gi=c.querySelector('.gi'),badge=c.querySelector('.qbadge,.pq-badge,.ew-n');
+  if(sv)return '<span class="nl-ic'+(c.classList.contains('pi-danger')?' nl-dg':'')+'">'+cl(sv)+'</span>';if(gi)return '<span class="nl-ic">'+gi.outerHTML+'</span>';
+  return '<span class="nl-ic nl-tx">'+esc((c.textContent||'').trim().slice(0,12))+'</span>'}
+ let pop=null,owner=null;
+ function close(){pop?.remove();pop=null;owner?.setAttribute('aria-expanded','false');owner=null}
+ function open(btn){close();const st=btn.closest('.section-title');if(!st)return;
+  pop=document.createElement('div');pop.className='nl-pop nl-two';pop.setAttribute('role','dialog');pop.setAttribute('aria-label','Legende');
+  pop.innerHTML='<h4>Legende<button type="button" aria-label="Legende schließen">×</button></h4>';
+  for(const c of controls(st)){const r=document.createElement('div');r.className='nl-r';const sb=subOf(c);r.innerHTML='<span class="nl-icw" style="justify-content:flex-end">'+iconOf(c)+'</span><span class="nl-t"><b>'+esc(textOf(c)).replace(/^(Farbmarkierung)(:.*)$/,'$1<span class="nl-1">$2</span>')+'</b>'+(sb?'<small>'+esc(sb)+'</small>':'')+'</span>';pop.append(r)}
+  pop.querySelector('h4 button').onclick=close;document.body.append(pop);owner=btn;btn.setAttribute('aria-expanded','true');
+  const R=btn.getBoundingClientRect(),w=pop.offsetWidth,h=pop.offsetHeight;let left=Math.min(innerWidth-w-8,Math.max(8,R.right-w)),y=R.bottom+8;if(y+h>innerHeight-8)y=Math.max(8,innerHeight-h-8);
+  pop.style.left=left+'px';pop.style.top=y+'px'}
+ function ensure(){for(const ta of document.querySelectorAll('section.panel .section-title>.task-actions')){let b=ta.querySelector(':scope>.nl-info');
+   if(!b){b=document.createElement('button');b.type='button';b.className='nl-info';b.innerHTML=INFO;b.setAttribute('aria-label','Legende');b.title='Legende: was die Symbole dieser Leiste bedeuten';b.setAttribute('aria-expanded','false');b.dataset.buttonHelp='true';
+    b.addEventListener('click',e=>{e.stopPropagation();if(owner===b)close();else open(b)})}
+   if(!b.parentElement)ta.append(b)}}
+ document.addEventListener('pointerdown',e=>{if(pop&&!pop.contains(e.target)&&!e.target.closest?.('.nl-info'))close()},true);
+ document.addEventListener('keydown',e=>{if(pop&&e.key==='Escape')close()});
+ addEventListener('resize',close);addEventListener('scroll',e=>{if(pop&&!pop.contains(e.target))close()},true);
+ let planned=false;const run=()=>{if(planned)return;planned=true;requestAnimationFrame(()=>{planned=false;try{ensure()}catch(e){console.warn(e)}})};
+ if(typeof classroomOnDomChange==='function')classroomOnDomChange(run);else new MutationObserver(run).observe(document.body,{childList:true,subtree:true});run();
+ const css=document.createElement('style');css.textContent='html.ph-lite .nl-info{display:none!important}.section-title .nl-info:not(#_){display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:42px;height:40px;padding:0;border:1px solid #a8bdd8;border-radius:10px;background:#fff;color:#2f5f9b;cursor:pointer;outline:none}.section-title .nl-info:not(#_):hover{background:#f3f7fc}.section-title .nl-info[aria-expanded=true]:not(#_){background:#e8f0fb;border-color:#9bb6dc}.nl-info svg{width:20px;height:20px}'
+  +'.nl-pop{position:fixed;z-index:20000;background:#fff;border:1px solid #dce3ef;border-radius:14px;box-shadow:0 12px 32px rgba(35,61,96,.18);padding:9px 12px 8px;font:13px/1.3 -apple-system,Inter,system-ui,sans-serif;color:#243247;min-width:0;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow:auto;animation:nlIn .12s ease-out}@keyframes nlIn{from{opacity:0;transform:translateY(-4px)}}'
+  +'.nl-pop h4{margin:0 0 6px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#66758a;display:flex;justify-content:space-between;align-items:center;gap:12px}.nl-pop h4 button{border:0;background:none;color:#8a97aa;font-size:17px;line-height:1;padding:0 2px;cursor:pointer}'
+  +'.nl-pop{display:grid;grid-template-columns:auto 1fr;column-gap:10px}.nl-pop h4{grid-column:1/-1}.nl-pop .nl-r{display:contents}.nl-pop .nl-r>span{white-space:nowrap;padding:4px 0;border-top:1px solid #f0f3f8;align-self:stretch;display:flex;align-items:center}.nl-pop .nl-r:first-of-type>span{border-top:0}.nl-pop .nl-q{position:absolute;top:-6px;right:-8px;padding:0 4px;border-radius:8px;background:#9aa9bd;color:#fff;font:800 9px/14px system-ui}.nl-pop .nl-ic{position:relative}'
+  +'.nl-pop .nl-icw{display:flex;justify-content:flex-end}.nl-pop .nl-ic{flex:none;min-width:30px;height:30px;padding:0 5px;box-sizing:border-box;border:1px solid #cfd8e6;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#2f5f9b;background:#fff}.nl-pop .nl-ic svg{width:17px;height:17px}.nl-pop .nl-ic svg:not([stroke]){fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.nl-pop .nl-t{flex-direction:column;align-items:flex-start!important;justify-content:center}.nl-pop .nl-t b{font-weight:500}.nl-pop .nl-t small{display:none;color:#66758a;font-size:11.5px;margin-top:1px}.nl-pop.nl-two .nl-t small{display:block}.nl-pop.nl-two .nl-1{display:none}.nl-pop .nl-ic.nl-dg{color:#c4382c;border-color:#f3c7c3}.nl-pop .nl-tx{font-size:12px;font-weight:700}'
+  +'.nl-pop .nl-seg{display:inline-flex;gap:2px;padding:2px;border-radius:9px;background:#e7edf6}.nl-pop .nl-sg{min-width:26px;height:24px;padding:0 5px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border-radius:7px;background:#fff;color:#2f5f9b;font-size:11.5px;font-weight:700}.nl-pop .nl-sg .hs-sw{display:block;width:18px;height:12px;border-radius:3px}'
+  +'.section-title>.task-actions>.nl-info:not(#_){order:20000!important}';
+ document.head.append(css);
 })();
 ;
 
